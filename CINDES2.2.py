@@ -1,4 +1,5 @@
 #!/bin/env python 
+# add this line on hydra/INDES
 #
 #
 #   THIS VERSION WAS TAKEN FROM ~/PYTHON/PHENID/BDE*/BDE_no_freq.py 13-10-2015
