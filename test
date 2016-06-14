@@ -1,0 +1,8 @@
+#!/bin/env python
+
+d = {'a':2,'b':'bee'}
+bla = "///"
+
+d["c"] = bla
+
+print d

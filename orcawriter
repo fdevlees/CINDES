@@ -1,0 +1,37 @@
+#!/bin/env python
+
+def orca_writer(zmat,index,**paras):
+    filename= paras['identify'] + str(index) + '.inp'
+    basis = paras['basis']
+    if basis[0]==6: #so if basis in form starting with 6 as 6-31G(d,p) etc
+        basis = '_' + basis.replace('-','_') #change to _6_31G(d,p)
+        if '(' in basis:
+            b= re.split('(\()',basis) #changes to ['_6_31G','(','d,p)']
+            basis= b[0]
+            pol = ''.join( b[1:])
+            pol = pol.replace('(','_')
+            pol = pol.replace(',','_')
+            pol = pol.replace(')','')
+    with open('filename') as fid:
+        fid.write('# '+ filename)
+        fid.write(paras['orcaline'] + '\n')
+        fid.write('%base '+ filename +'\n')
+        fid.write('%output\n  Print[ P_Mulliken ] 1\nend')
+        fid.write('%basis\n  Basis ' + basis+'\n')
+        if pol: fid.write('  Pol ' + pol + '\nend\n')
+        fid.write('%method\n  functional '+paras['functional'] + '\n')
+        if paras['functional'] in ['B3LYP','b3lyp','B3P86','B3P','b3p','b3p86']:
+            fid.write('  LDAOpt C_VWN3\n')
+        fid.write('end\n')
+        fid.write('* int '+paras['charge'] + ' ' + paras['mult'] + '\n')
+        #------THIS is still Gaussian: -------
+        for i in range(len(zmat)):
+            for item in zmat[i]:
+                fid.writelines("%s " % item)
+            fid.write("\n")
+        fid.write("*\n")
+        #-----------
+        if not paras['multiplejob']==0:
+            fid.write('$new_job\n')
+        
+

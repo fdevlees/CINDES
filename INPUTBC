@@ -1,0 +1,86 @@
+property stab
+timelimit 25000000
+timestep 300
+maxiter 10
+restart 2 COH100_CCHHH_CNOO100_CH_N_CNHCHHH
+sites 18 22 30 34 42 46
+positions 2 6 7 9 11 12
+basisset 6-31G(d)
+functional b3lyp
+identify pheb_
+natomscore 13
+nch3 9
+montecarlo 0
+END
+nsubsit1 11
+N
+C H
+C F
+C C H H H
+C C F F F
+C N H H 100
+C N O O 100
+C O H 100
+C C O O H 100
+C N H C H H H
+C O C H H H
+nsubsit2 11
+N
+C H
+C F
+C C H H H
+C C F F F
+C N H H 100
+C N O O 100
+C O H 100
+C C O O H 100
+C N H C H H H
+C O C H H H
+nsubsit3 11
+N
+C H
+C F
+C C H H H
+C C F F F
+C N H H 100
+C N O O 100
+C O H 100
+C C O O H 100
+C N H C H H H
+C O C H H H
+nsubsit4 11
+N
+C H
+C F
+C C H H H
+C C F F F
+C N H H 100
+C N O O 100
+C O H 100
+C C O O H 100
+C N H C H H H
+C O C H H H
+nsubsit5 11
+N
+C H
+C F
+C C H H H
+C C F F F
+C N H H 100
+C N O O 100
+C O H 100
+C C O O H 100
+C N H C H H H
+C O C H H H
+nsubsit6 11
+N
+C H
+C F
+C C H H H
+C C F F F
+C N H H 100
+C N O O 100
+C O H 100
+C C O O H 100
+C N H C H H H
+C O C H H H

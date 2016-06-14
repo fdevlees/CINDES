@@ -1,0 +1,51 @@
+#!/bin/env python
+
+import os
+import fnmatch
+import cclib
+from cclib.parser import ccopen
+from pprint import pprint
+import logging
+
+onefile = 0
+path = os.getcwd()
+data = []
+option = 0
+identify = 'dia_' #filespecifier 
+
+if onefile == 1:
+   print "do only one file"
+   f = ccopen(path + '/' + identify + 'S_COH_B_CF_B.log')
+   f.logger.setLevel(logging.ERROR)
+   datatje = f.parse()
+   data.append(datatje.scfenergies-datatje.scfenergies[-2])
+else:    
+   logfiles = []
+   allfiles = os.listdir('data')
+   for file in allfiles:
+       if fnmatch.fnmatch(file, identify + '*.log'):
+           logfiles.append(path + '/data/' + file)
+
+   for file in logfiles:
+       f = ccopen(file)
+       f.logger.setLevel(logging.ERROR)
+       datatje = f.parse()
+       data.append(datatje.scfenergies-datatje.scfenergies[-2])
+
+#print "data:"
+#pprint(data)
+
+import matplotlib.pyplot as plt
+
+if onefile == 1:
+    plt.plot(data[0])
+    plt.plot(data[0]+1)
+    plt.show()
+else:
+    for item in data:
+        #print "item: ",item
+        plt.plot(item[:-1])
+plt.axis([0,150,0,10])
+plt.show()
+
+
