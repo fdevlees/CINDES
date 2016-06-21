@@ -84,8 +84,16 @@ def matrixmerger2(core,active,passive):
         tmfid.write(pprint.pformat(totalmat))
     return totalmat       
 
-def indexmaker(confs,data,table):
+def get_configurations(startconf,array,k):
+    'select on site k all the configurations with the different functionalizations for that site present in array'
+    configurations =  [ startconf[0:k] + [array[k][i]] + startconf[k+1:] for i in range(len(array[k]))]
+    logging.debug(pprint.pformat(configurations))
+    return configurations
+
+def indexmaker2(startconf,array,k,table): #for CINDES2.3.py 
     '''checks for confs already calculated'''
+    confs = get_configurations(startconf,array,k)
+    data=[]
     indices = []
     for i in range(len(confs)):
 	index = contoind(confs[i])
@@ -101,6 +109,31 @@ def indexmaker(confs,data,table):
                     confs.remove(confje)
                     # add that item from table to data
                     data.append(item)
+        if not data == []:
+            logging.info('filled data with ones already calced:' + pprint.pformat(data))
+    return indices,data,confs,indicesfull #indicesfull are all the indices. 
+
+def indexmaker(confs,data,table):
+    '''checks for confs already calculated'''
+    data=[]
+    indices = []
+    for i in range(len(confs)):
+	index = contoind(confs[i])
+	#pp.pprint(confs[i])
+	indices.append(index)
+    indicesfull = indices[:]
+    if not table == []:
+        for item in table:
+            for index,confje in izip(indices[:],confs[:]):
+                if item[0] == index and not item[-1]==0: #if 0 then only guessed value.
+                    # remove that from the configurations
+                    indices.remove(index)
+                    confs.remove(confje)
+                    # add that item from table to data
+                    if item[-1]==1:
+                        data.append(item)
+                    else:
+                        data.append(item + [1] )
         if not data == []:
             logging.info('filled data with ones already calced:' + pprint.pformat(data))
     return indices,data,confs,indicesfull #indicesfull are all the indices. 

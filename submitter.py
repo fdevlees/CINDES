@@ -35,6 +35,9 @@ def nosubmit(path,index,identify): # not tested
     return 123456
 
 def jobstatus(jobid):
+    """ this function is not used anymore because it occured once that jobids changed during the calculation
+    or that jobs need to be resubmitted because of torque problems. In that case jobids change
+    Jobs are now declared ready when there exists a <name>.com.<6digits> file. (which can be empty)"""
     p1 = subprocess.Popen(['qstat'], stdout=subprocess.PIPE)
     p2 = subprocess.Popen(['grep','-w','%s' % jobid],stdin=p1.stdout, stdout=subprocess.PIPE)
     p1.stdout.close() # Allow p1 to receive a SIGPIPE if p2 exits.

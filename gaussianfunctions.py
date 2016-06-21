@@ -1,0 +1,295 @@
+"""gaussian functions
+The main function of this module is to calculate the values of all the given indices
+
+The input:
+    - the indices of the molecules to calculate
+    - the configurations of the molecules to calculate (this may be redundant)
+    - the data list. The results are appended to this list and returned.
+    - the molecular framework given as a dictionary with keys: 'core', 'active' and 'passive'
+    - the instance of the Run class. This instance contains all keywords/options that control the workflow
+
+The output:
+    - the data that is calculated. It is appended to the given data list!
+
+J.L. Teunissen, 20th June 2016
+
+"""
+
+import submitter as subm
+from copy import  deepcopy
+import glob
+from pprint import pprint
+import pprint
+import time
+from writings import log_io
+import logging
+import construction as zcon
+import datareader
+once=0
+
+# PROCEDURE
+#data = gausf.procedure(myrun,confs,indices,data,kwargs)
+def procedure(myrun,confs,indices,data,TZmat):
+    global once
+    if myrun.no1sub==1 and once==0:
+        once = 1
+        print " "
+    else:
+        # 1. Make the files
+        filemaker(confs,indices,myrun,**TZmat) #----------------------------------HERE IS THE FILEWRITER CALL
+
+    # 2. now the jobs have to be submitted 
+    jobids = submission(indices,myrun)
+
+    # 3. test of all jobs are ready | later change to two minutes or so. 
+    jobtester(indices,myrun,jobids)
+
+    # 4. read jobs
+    data = datareader.datareader(indices,jobids,myrun.path,data,myrun.__dict__)
+
+    return data
+
+# 1. file making
+@log_io()
+def filemaker(confs,indices,myrun,passive,active,core): #----- dict with info for filewriter has to pass here)
+    ''' jkl'''
+    path = myrun.path
+    fileparameters = myrun.__dict__
+    for i in range(len(confs)):
+	c = deepcopy(core)
+	a = deepcopy(active)
+	p = deepcopy(passive)
+	logging.debug("i=" + str(i))
+	mat = zcon.constructor2(confs[i],c,a,p)
+        if not myrun.stab==1:
+            zcon.filewriter2(mat,indices[i],**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
+        else:
+            # 1. WRITE radical input with filewriterA
+            zcon.filewriterA(mat,indices[i],**fileparameters) #here we have to use makers to construct the AH files
+
+            # 2. make a folder with the indexname in /data/indices[i]
+            if not os.path.exists(path + '/' + indices[i]): #path is $WORKDIR/data
+                os.makedirs(path + '/' + indices[i])
+                # and make sure ID_gauss is in the folder!
+                shutil.copy(path +'/ID_gauss',path+'/'+indices[i])
+
+            # 3. reopen written A-file to extract Z-matrix to make the AH files
+            filename = fileparameters['path'] + '/' + fileparameters['identify'] + str(indices[i]) + ".com" #same line as in filewriter. open it again.
+            zmat = extract_zmat(filename)
+
+            # 4. use zmat to make the AH files with the positions stored in fileparameters['positions']
+            for pos in fileparameters['positions']:
+                zmat2 = deepcopy(zmat)
+                hornot = maker1(zmat2,pos,indices[i],**fileparameters) #returns a value indicating if there is already a hydrogen (or a nitrogen)
+                # FOR NOW ONLY DO ONE POSSIBILITY THIS IS EASIER BECAUSE WE KNOW EXACTLY HOW MANY JOBS THERE HAVE TO BE SUBMITTED
+                #if not hornot == 1: #if not there are two ways to place the hydrogen.
+                    #maker2(zmat,pos,indices[i],**fileparameters)
+    return
+
+def extract_zmat(filename):
+    """This function is used to make the A-H files for the stab property"""
+
+    logging.debug("filename: " + filename)
+    multcharge = re.compile('^\-?[0-9]\s[0-9]') #only set the compiler
+    with open(filename) as fid: #again open as fid
+        for line in fid:
+            if multcharge.match(line): #from where there is a match it reads the subsequant lines as the zmat
+                zmat=[]
+                line=next(fid)
+                while not line == '\n': #until empty line
+                    zmat.append(line.split())
+                    line=next(fid)
+                break #so that only the first match is used. after the other matches there is no zmat
+    return zmat
+
+def maker1(zmat,pos,index,**fileparameters):
+    """makes new file with hydrogen attached on first dihedral"""
+    zmatnew = deepcopy(zmat)
+    spos = str(pos) #spos is string of pos. pos = position
+    h=0
+    #print "zmat[spos-1]:",zmat[pos-1]
+    #print "pos:",spos
+    #print "fileparamters ncore:", fileparameters['ncore']
+    logging.debug(pprint.pformat(zmat))
+    #print "zmat[fileparameters['ncore']:]:"
+    #pp.pprint(zmat[fileparameters['ncore']:])
+    if zmat[pos-1][0] == 'N':
+        item = zmat[pos-1]
+        h=1
+        if len(item)==1: #when pos is 1 so first index of a zmat
+            hline = ['H',1,0.9,2,109.5,3,126.0]
+        elif len(item)==3: #when pos is 2 so second index of a zmat
+            hline = ['H',2,0.9,3,109.5,4,126.0]
+        else:
+            bondindex=item[1] #or if item only has length 1
+            dihedralindex=item[3]
+            hline= ['H',spos,0.9,bondindex,109.5,item[3],126.0]#LOOK AT THIS
+    else:
+        for item in zmatnew[fileparameters['ncore']:]:
+            #print "in loop", "spos:",spos,"str(item[1]",str(item[1])
+            if str(item[1]) == spos:
+                if item[0] == 'H': h=1
+                hline=item[:]
+                item[6] = '126.0'
+                hline[6] = '234.0'
+                hline[0] = 'H'
+                #print "hline:",hline
+    zmatnew.append(hline)
+    zcon.filewriterAH(zmatnew,spos,index,**fileparameters) #now it is important where this will be written.
+    return h
+
+def maker2(zmat,pos,index,**fileparameters):
+    '''makes new file with hydrogen attached on second dihedral.
+    this is only necessary when there is not already another hydrogen on the compound
+    or that the site is nitrogen or possibly sulfur doped. '''
+    zmatnew = zmat[:]
+    spos = str(pos)
+    h=0
+    #print "pos:",spos
+    for item in zmatnew[fileparameters['ncore']:]:
+        if str(item[1]) == spos:
+            hline=item[:]
+            item[6] = '234.0'
+            hline[6] = '126.0'
+            hline[0] = 'H'
+    zmatnew.append(hline)
+    zcon.filewriterAH(zmatnew,spos + '_2',index,**fileparameters)
+    return
+
+# 2. submission
+@log_io()
+def submission(indices,myrun):
+    global once
+    fileparameters = myrun.__dict__
+    indicesall = deepcopy(indices) #here i copy the indices. The indices are submitted. The indicesall are not all submitted but are all read out.
+    if myrun.stab==1: #then submit also the jobs in folders
+        if fileparameters['try_ready']==1:
+            print "try_ready activated"
+            indices,paths = try_ready_test(indices,myrun.path,fileparameters,returnpath=True)
+            print "indices:", indices
+        jobids = submit_stab(indices,myrun,jobids)
+    elif once==1 and fileparameters['no1sub']==1:
+        print "submit skipped"
+        once = 2
+    else:
+        #MOST IMPORTANT PART
+        if myrun.try_ready==1:
+            print "try_ready activated"
+            indices = try_ready_test(indicesall,myrun.path,fileparameters)
+        jobids = submit_normal(indices,myrun) #In here is decided to run on shell or to really submit!
+    logging.info("----- END all jobs are submitted ----------")
+    return jobids
+
+def try_ready_test(indices,path,fileparameters,returnpath=False):
+    """ Jobtester 3 looks which files shouldn't be submitted anymore. These are removed from the indices list and this list is returned
+
+        - Note that this function does return new indices and no jobids
+    """
+    paths = [] #here we are going to make a list of paths of the jobs
+    if 'positions' in fileparameters: positions = fileparameters['positions']
+    for i in range(len(indices)):
+        path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + indices[i] + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+        paths.append(path1)
+        if fileparameters['stab']==1: #property is global variable
+            for pos in fileparameters['positions']:
+                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+                paths.append(path2)
+    indicescopy = deepcopy(indices)
+    #print "paths:", paths
+    newpaths = paths[:]
+    if fileparameters['stab']==1: #test if all necessary A and AH calculations are performed
+        k=0
+        for i in range(len(indices)): # all indices
+            l=0
+            if glob.glob(paths[k]): # test A
+                print "already calculated:", paths[k]
+                newpaths.remove(paths[k])
+                l+=1
+            for j in range(len(positions)): # test all AH
+                k +=1
+                if glob.glob(paths[k]):
+                    print "already calculated:", paths[k]
+                    newpaths.remove(paths[k])
+                    l+=1
+            print "len(positions):", len(positions)
+            print "l:", l
+            if l == len(positions) + 1: #if all AH and A then remove from indices
+                indices.remove(indicescopy[i])
+            k+=1
+    else:
+        for i in range(len(paths)):
+            if glob.glob(paths[i]):
+                print "already calculated:", indicescopy[i]
+                indices.remove(indicescopy[i])
+    if returnpath:
+        return indices,newpaths
+    else:
+        return indices
+
+def submit_normal(indices,myrun):
+    jobids = []
+    for item in indices:
+        name = item + '.com'
+        if myrun.nosub ==2:
+            time.sleep(1)
+            jobid = subm.nosubmit(myrun.path,item,myrun.identify)
+            print item + 'submitted'
+        else:
+            jobid = subm.submit(myrun.path,name,myrun.identify).strip()
+        jobids.append(jobid)
+    return jobids
+
+def submit_stab(indices,myrun,jobids):
+    for item in indices:
+        name1 = item + '.com'
+        jobid = subm.submit(path,name1,fileparameters['identify']).strip()
+        jobids.append(jobid)
+        for pos in fileparameters['positions']:
+            path2 = path + '/' + item
+            name2 = item + '_' + str(pos) + '.com'
+            jobid = subm.submit(path2,name2,fileparameters['identify']).strip()
+            jobids.append(jobid)
+    return jobids
+
+# 3. testing
+@log_io(signator='=')
+def jobtester(indices,myrun,jobids=[]):
+    """ this tester test if the jobs are ready by looking for a file <name>.com.o<6digits>.
+
+        - even if try_ready is activated all indices are used. And the already ready ones are immediately recognized as ready. 
+        - they are just not submitted again.
+        - note that jobids are not used!
+        - function returns nothing but returns when all jobs are ready! this function therefore can take very long!
+    """
+    path = myrun.path
+    fileparameters = myrun.__dict__
+    tijdje = 0
+    paths = [] #here we are going to make a list of paths of the jobs
+    for i in range(len(indices)):
+        path1 = path + '/' + fileparameters['identify'] + indices[i] + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+        paths.append(path1)
+        if fileparameters['stab']==1: #property is global variable
+            for pos in fileparameters['positions']:
+                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+                paths.append(path2)
+    while True: # then we remove each item of the paths that exists. If every path exists, all jobs are ready
+        if tijdje>fileparameters['timelimit']:
+            print "time is up"
+            break
+        pathscopy= paths[:]
+        for pathje in pathscopy:
+            if glob.glob(pathje):
+                paths.remove(pathje)
+                print "ready: ", pathje[:-25]
+        if paths==[]:
+            break
+        print "time/h:", tijdje/3600, "len paths:", len(paths),
+        time.sleep(fileparameters['timestep'])
+        tijdje+=fileparameters['timestep']
+    logging.info("All jobs are READY")
+    time.sleep(fileparameters['extrawaittime']) #just wait for the files to write back before opening them
+    return
+
+
+
+
