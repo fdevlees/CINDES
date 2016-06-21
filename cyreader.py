@@ -264,6 +264,7 @@ def main():
 
     if args.tplot: #get a tablebin like plot
         import seaborn as sb
+        colors = sb.hls_palette(10,l=.4) #l=lightness the smaller the darker. 
         print "tablebin-like plot"
         binlist = []
         start=0
@@ -278,12 +279,16 @@ def main():
              binlist.append(binlistje)
         pp.pprint(binlist)
         #tags=['ro','bs','g^','c*','mp','yv','k+','r|','bd','gh']
-        tags=['o','s','^','*','p','v','+','|','d','h']
+        tags=['o','s','^','*','p','v','<','>','d','h']
         for i in range(len(binlist)):
             for j in range(len(binlist[i])):
                 a = np.array(binlist[i][j]).T
                 site = totalruns[i][j][0][1][-2]
-                a, = plt.plot(a[0],a[1],tags[site]+'-')
+                a, = plt.plot(a[0],a[1],tags[site]+'-',color=colors[site],
+                                                       markersize=5)
+                plt.setp(a, linewidth=1)
+                ax=plt.gca()
+                ax.xaxis.grid(False) 
                 if i==0: 
                     a.set_label('site:'+str(site+1))
             plt.axvline(x= binlist[i][-1][-1][0]+0.5, linewidth=2, color = 'k')
@@ -294,7 +299,9 @@ def main():
         # sort both labels and handles by labels
         labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: int(t[0][5:])))
         ax.legend(handles, labels)        
-
+        leg = plt.gca().get_legend()
+        ltext  = leg.get_texts()
+        plt.setp(ltext, fontsize=14) 
         #plt.ylabel('property value')
         plt.ylabel(args.label)
         plt.title('chronological order of property vs molecular structures')

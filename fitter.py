@@ -680,7 +680,7 @@ def regression(table, indices,identify, **kwargs):
         myrun = Diamantane('dia')
     else:
         raise SystemExit('No identify_ identified')
-    #print "table:", table
+    print "table:", table
     myrun.extract(table=table)
     #print "done extraction"
     clf = myrun.linreg(model='Ridge',alpha=1e-4)
