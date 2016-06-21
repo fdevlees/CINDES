@@ -1,4 +1,4 @@
-#!/bin/env python 
+#!/bin/env python
 #
 # I'm here
 #
@@ -34,7 +34,7 @@ import reader as r # this reads the zmatrix in gaussian format
 import submitter as subm
 import datareader
 #import mailer
- 
+
 class Unbuffered(object):
     def __init__(self,stream):
         self.stream = stream
@@ -88,7 +88,6 @@ def filemaker(confs,indices,fileparameters,passive,active,core,**kwargs): #-----
         logging.debug("in filemaker kwargs:")
         logging.debug(pprint.pformat(fileparameters))
         #now use this variable to test if we have to make all kind of extra files or not
-         
 
         if not fileparameters['stab']==1:
 	    zcon.filewriter2(mat,indices[i],**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
@@ -179,7 +178,6 @@ def maker2(zmat,pos,index,**fileparameters):
     zcon.filewriterAH(zmatnew,spos + '_2',index,**fileparameters)
     return
 # ----- end of maker2
-                
 def submittingprocedure(confs,indices,path,data,fileparameters,**kwargs):
     global once
     # here submitting thing knows at least the path
@@ -196,7 +194,6 @@ def submittingprocedure(confs,indices,path,data,fileparameters,**kwargs):
             print " "
         else:
             #pp.pprint(kwargs)
-            
             filemaker(confs,indices,fileparameters,**kwargs) #----------------------------------HERE IS THE FILEWRITER CALL
             print "----- END making of the files -------------"
         # now the jobs have to be submitted 
@@ -225,7 +222,7 @@ def submittingprocedure(confs,indices,path,data,fileparameters,**kwargs):
             once = 2
         else:
             if fileparameters['try_ready']==1:
-                indices = jobtester3(indicesall,path,fileparameters)
+                indices = jobtester3(indices,path,fileparameters)
             for item in indices:
                 name = item + '.com'
                 if fileparameters['nosub']==2:
@@ -312,7 +309,7 @@ def jobtester2(indices,jobids,path,fileparameters):
         tijdje+=fileparameters['timestep']
     logging.info("All jobs are READY")
     time.sleep(fileparameters['extrawaittime']) #just wait for the files to write back before opening them
-    return           
+    return
 
 def randomconf_old(subarray):
     '''this function makes a random configuration. choosing one sub for each site'''
@@ -346,7 +343,7 @@ def generate(p):
 
 @log_io()
 def montecarloprocedure(fileparameters, subarray, maxi, table,**kwargs): #version 4/10/2015
-    #MONTE CARLO PROCEDURE. 
+    #MONTE CARLO PROCEDURE.
                #maxsite = montecarloprocedure(beta, array, maximum, table)
     # INPUT: beta - maximum - table - array
     # OUTPUT: maxsite
@@ -385,7 +382,7 @@ def montecarloprocedure(fileparameters, subarray, maxi, table,**kwargs): #versio
         if fileparameters['ml']==1:
             print "ml_instance:", ml_instance
             print "indje:", indje
-            erandom_ML = learning.MC_test_ind(ml=ml_instance, indices=[indje],**kwargs) 
+            erandom_ML = learning.MC_test_ind(ml=ml_instance, indices=[indje],**kwargs)
             print "erandom_ML:", erandom_ML
 
         # calculate the gradient energy. > resulttry
@@ -434,7 +431,8 @@ def runspecs(param):
         else:
             param['gaussianline1'] =  '# opt ub3lyp/6-31g(d) pop=npa \n'
             param['gaussianline2'] =  '# geom=check guess=read b3lyp/6-311+G(d,p) scf=xqc\n' #also for 456
-            param['gaussianline3'] =  '# geom=check guess=read b3p86/6-311+G(d,p) scf=xqc\n' #also for 7
+            param['gaussianline3'] = ( '# geom=check guess=read '
+                                      'b3p86/6-311+G(d,p) scf=xqc\n' ) #also for 7a
     elif param['polar']==1:
         if param['volume']==1:
             param['gaussianline'] = '# opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
@@ -443,19 +441,18 @@ def runspecs(param):
             param['gaussianline'] = '# opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
             param['gaussianlinepolar'] = '#p geom=allcheck guess=read polar '+param['functional']+'/'+param['basisset']+'\n'
     elif param['ip']==1 or param['ea']==1:
-        param['gaussianline'] = '# opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
+        param['gaussianline'] = '#p opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
         param['twojob']=1
         #param['multiplejobs']=1
-        param['gaussianline2'] = '# geom=check guess=read ' + param['functional'] +'/'+ param['basisset'] +'\n'
+        param['gaussianline2'] = '#p geom=check guess=read ' + param['functional'] +'/'+ param['basisset'] +'\n'
     else:
         if param['property']=='dipole':
             logging.warning('NO Geometry optimization will be performed!!!')
-            param['gaussianline'] = '# ' + param['functional'] +'/'+ param['basisset'] +'\n'
+            param['gaussianline'] = '#p ' + param['functional'] +'/'+ param['basisset'] +'\n'
         else:
-            param['gaussianline'] = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-        if param['twojob'] == 1: 
-            param['gaussianline2'] = '# geom=check guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-    
+            param['gaussianline'] = '#p opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
+        if param['twojob'] == 1:
+            param['gaussianline2'] = '#p geom=check guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
     for key in ['ip','ea','polar']:
         if param[key]==1:
             param['multiplejobs']+=1
@@ -889,7 +886,9 @@ def main(param,array,startconf):
     
             indices,data,configurations,allindices = zcon.indexmaker(configurations,data,table)
 
-            print "indices:",indices, "allindices:", allindices
+            print "indices:",indices
+            print "JOS"
+            print "allindices:", allindices
             if param['ml']==1 and not table==[] and not allindices==[]:
                 import learning as ml
                 #preds_ml = ml.machinelearning3(allindices,table,**TZmat)            
