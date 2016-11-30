@@ -12,7 +12,10 @@ def submit(path,index,identify,script='ID_gauss'):
     print( 'filename:'),
     print( filename)
     command = './' + script
-    jobid = subprocess.check_output([command,filename],cwd=path)
+    try:
+        jobid = subprocess.check_output([command,filename],cwd=path)
+    except subprocess.CalledProcessError as e:
+        print "submitting error:", repr(e)
     return jobid
 
 def nosubmit_orca(path,index,identify):
@@ -43,6 +46,15 @@ def jobstatus(jobid):
     p1.stdout.close() # Allow p1 to receive a SIGPIPE if p2 exits.
     output = p2.communicate()[0]
     return output
+
+def qsta():
+    try:
+        p1 = subprocess.check_output(['qsta'])
+    except subprocess.CalledProcessError,e:
+        print "subprocess.CalledProcessError"
+        print repr(e)
+        p1 = False
+    return p1
 
 if __name__ == "__main__":
     import sys

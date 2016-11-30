@@ -11,7 +11,7 @@ class prettyfloat(float):
     def __repr__(self):
         return "%-0.4f" % self
 
-class Molecule():
+class Logfile():
 
     def __init__(self,name):
         self.data = []
@@ -247,7 +247,7 @@ def datareader(indices,jobids,path,data,fileparameters):
     return data
 
 def gausread(filename,prop,multiplejobs=0,rdvindex=1):
-    mymol = Molecule(filename)
+    mymol = Logfile(filename)
     extra = []
     if prop in ['natom','natoms']:
         mymol.extract(coords=1)
@@ -368,7 +368,7 @@ def normaltermination(filepaths,debug=False):
     return 
 
 def errortermination(path,debug=False):
-    mymol=Molecule(path) #read outputfile
+    mymol=Logfile(path) #read outputfile
     mymol.extract(coords=1) #extract file with also the coordinates
     import utils
     t=utils.PeriodicTable()
@@ -427,7 +427,7 @@ def errortermination(path,debug=False):
 if __name__ == "__main__":
     import sys
     filename = sys.argv[1]
-    mymol = Molecule(filename)
+    mymol = Logfile(filename)
     print mymol , "mymol"
     print mymol.name , "mymol.name"
     print mymol.fid ,'mymol.fid'

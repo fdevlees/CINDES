@@ -14,8 +14,6 @@ The output:
 J.L. Teunissen, 20th June 2016
 
 """
-debug=0
-safe=False
 
 import submitter as subm
 from copy import  deepcopy
@@ -23,93 +21,56 @@ import glob
 from pprint import pprint
 import pprint
 import time
-from writings import log_io, sprint
+from writings import log_io
 import logging
 import construction as zcon
+import molprowriter as mwriter
 import datareader
-
-# for stab:
-import re
-import os
-import shutil
 once=0
-
-
-def get_secret_data(tablefilename,indices):
-    '''checks for confs already calculated'''
-    import pickle
-    with open(tablefilename,'rb') as f:
-        secret_table = pickle.load(f)
-    if debug:
-        print "secret_table:"
-        sprint(10,secret_table)
-    column = 1 ################################################################################## COLUMN CHANGE HERE
-    tabledict = dict( ( [ item[0], item[column] ] for item in secret_table ) )
-    data = []
-    for index in indices:
-        data.append( [ index, 1.0, tabledict[index]] )
-        if debug: print "table_dict[index:]", tabledict[index], index
-    return data
-
 
 # PROCEDURE
 #data = gausf.procedure(myrun,confs,indices,data,kwargs)
-def procedure(myrun,confs,indices_tocal,data_nocal,TZmat):
+def procedure(myrun,confs,indices,data,TZmat):
     global once
-    print "nconfs:", len(confs)
-    print "n_indices_tocal:", len(indices_tocal)
-    print "n_data_nocal:", len(data_nocal)
     if myrun.no1sub==1 and once==0:
         once = 1
         print " "
-    elif myrun.nosub==3:
-        print "SECRET DATA activated"
-        tablefilename = myrun.nosub_file
-        data_calc = get_secret_data(tablefilename, indices_tocal)
-        data_all  = data_calc + data_nocal
-        return data_all
     else:
         # 1. Make the files
-        filemaker(indices_tocal,myrun,**TZmat) #----------------------------------HERE IS THE FILEWRITER CALL
+        filemaker(confs,indices,myrun,**TZmat) #----------------------------------HERE IS THE FILEWRITER CALL
 
-    if not indices_tocal==[]:
-        # 2. now the jobs have to be submitted 
-        jobids = submission(indices_tocal,myrun)
+    # 2. now the jobs have to be submitted 
+    jobids = submission(indices,myrun)
 
-        # 3. test of all jobs are ready
-        jobtester(indices_tocal,myrun,jobids)
+    # 3. test of all jobs are ready
+    jobtester(indices,myrun,jobids)
 
-        # 4. test normal termination and read jobs #NOTE data_nocal is passed to this one. results are appended to it
-        data_calc = datareader.datareader(indices_tocal,jobids,myrun.path,myrun.__dict__)
+    # 4. read jobs
+    data = datareader.datareader(indices,jobids,myrun.path,data,myrun.__dict__)
 
-        # 5. add ones to each data_calc element. this means the values are obtained by real calculation
-        for item in data_calc:
-            item.insert(1,1)
-    else: data_calc = []
+    # 5. add ones to each data element. this means the values are obtained by real calculation
+    for item in data:
+        item.insert(1,1)
 
-    # 6. merge data_calc and data_nocal to data_all
-    data_all = data_calc + data_nocal
-
-    return data_all
+    return data
 
 # 1. file making
 @log_io()
-def filemaker(indices,myrun,passive,active,core): #----- dict with info for filewriter has to pass here)
+def filemaker(confs,indices,myrun,passive,active,core): #----- dict with info for filewriter has to pass here)
     ''' jkl'''
     path = myrun.path
     fileparameters = myrun.__dict__
-    for i in range(len(indices)):
-        c = deepcopy(core)
-        a = deepcopy(active)
-        p = deepcopy(passive)
-        logging.debug("i=" + str(i))
-        conf = zcon.indtocon(indices[i])
-        mat = zcon.constructor2(conf,c,a,p)
+    for i in range(len(confs)):
+	c = deepcopy(core)
+	a = deepcopy(active)
+	p = deepcopy(passive)
+	logging.debug("i=" + str(i))
+	mat = zcon.constructor2(confs[i],c,a,p)
         if not myrun.stab==1:
-            zcon.filewriter2(mat,indices[i],**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
+            mwriter.filewriter2(mat,indices[i],**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
         else:
             # 1. WRITE radical input with filewriterA
-            zcon.filewriterA(mat,indices[i],**fileparameters) #here we have to use makers to construct the AH files
+            mwriter.filewriterA(mat,indices[i],**fileparameters) #here we have to use makers to construct the AH files
 
             # 2. make a folder with the indexname in /data/indices[i]
             if not os.path.exists(path + '/' + indices[i]): #path is $WORKDIR/data
@@ -211,7 +172,7 @@ def submission(indices,myrun):
             print "try_ready activated"
             indices,paths = try_ready_test(indices,myrun.path,fileparameters,returnpath=True)
             print "indices:", indices
-        jobids = submit_stab(indices,myrun)
+        jobids = submit_stab(indices,myrun,jobids)
     elif once==1 and fileparameters['no1sub']==1:
         print "submit skipped"
         once = 2
@@ -222,7 +183,6 @@ def submission(indices,myrun):
             indices = try_ready_test(indicesall,myrun.path,fileparameters)
         jobids = submit_normal(indices,myrun) #In here is decided to run on shell or to really submit!
     logging.info("----- END all jobs are submitted ----------")
-    if safe: time.sleep(15) # wait 15 seconds. to be sure that the jobs appear in the qstat command
     return jobids
 
 def try_ready_test(indices,path,fileparameters,returnpath=False):
@@ -285,16 +245,15 @@ def submit_normal(indices,myrun):
         jobids.append(jobid)
     return jobids
 
-def submit_stab(indices,myrun,jobids=[]):
-    path = myrun.path
+def submit_stab(indices,myrun,jobids):
     for item in indices:
         name1 = item + '.com'
-        jobid = subm.submit(path,name1,myrun.identify).strip()
+        jobid = subm.submit(path,name1,fileparameters['identify']).strip()
         jobids.append(jobid)
-        for pos in myrun.positions:
+        for pos in fileparameters['positions']:
             path2 = path + '/' + item
             name2 = item + '_' + str(pos) + '.com'
-            jobid = subm.submit(path2,name2,myrun.identify).strip()
+            jobid = subm.submit(path2,name2,fileparameters['identify']).strip()
             jobids.append(jobid)
     return jobids
 
@@ -308,20 +267,6 @@ def jobtester(indices,myrun,jobids=[]):
         - note that jobids are not used!
         - function returns nothing but returns when all jobs are ready! this function therefore can take very long!
     """
-    test_ready = myrun.test_ready
-    path = myrun.path
-    fileparameters = myrun.__dict__
-    if test_ready==1:
-        test_ready1(indices,myrun)
-    elif test_ready==2:
-        test_ready2(indices,myrun)
-    elif test_ready==3:
-        test_ready3(indices,myrun)
-    else:
-        raise SystemExit('no valid test_ready value')
-    return
-
-def test_ready1(indices,myrun):
     path = myrun.path
     fileparameters = myrun.__dict__
     tijdje = 0
@@ -351,99 +296,6 @@ def test_ready1(indices,myrun):
     time.sleep(fileparameters['extrawaittime']) #just wait for the files to write back before opening them
     return
 
-def test_ready2(indices,myrun):
-    completedjobs = []
-    fileparameters = myrun.__dict__
-    tijdje = 0
-    files = [] #here we are going to make a list of filenames of the jobs
-    for i in range(len(indices)):
-        file1 = fileparameters['identify'] + indices[i] + '.com'
-        files.append(file1)
-        if fileparameters['stab']==1: #property is global variable
-            for pos in fileparameters['positions']:
-                file2 = fileparameters['identify'] + indices[i] + '_' + str(pos) + '.com'
-                files.append(file2)
-    while True:
-        count=0
-        if tijdje>fileparameters['timelimit']:
-            print "time is up"
-            break
-        filescopy = files[:]
-        njobs = len(filescopy)
-        qsta_raw = subm.qsta()
-        if qsta_raw==False:
-            print "No jobs!"
-            break
-        qsta_out = [ item.split() for item in subm.qsta().split('\n') ]
-        #states,jobs = zip(*[ (item[2],item[4]) for item in qsta_out if len(item)>4 ])
-        states = []
-        jobs = []
-        for item in qsta_out:
-            if len(item)==4:
-                states.append(item[1])
-                jobs.append(item[3])
-            elif len(item)==5:
-                states.append(item[2])
-                jobs.append(item[4])
-        if debug:
-            print "states:",states
-            print "jobs:",jobs
-            print "files:", files
-        for filetje in filescopy:
-            for state,job in zip(states,jobs):
-                if filetje==job:
-                    if state in ['Q','R']: #so if job still in queue and not has state=='C'
-                        count += 1 #so count all the jobs still in queue
-                    elif state in ['H','E']:
-                        print "ERROR jobs on hold or Error"
-                        count +=1
-                    else:
-                        assert state=='C'
-                        if job not in completedjobs:
-                            print 'JOB completed:',job
-                            completedjobs.append(job)
-                    if debug:
-                        print "found a job: ", state, job, filetje
-        print "there are still %d jobs in queue and %d jobs are ready | waittime=%f uur" % (count, njobs-count,float(tijdje)/3600.)
-        if count==0: #so no jobs anymore in queue
-            break
-        time.sleep(fileparameters['timestep'])
-        tijdje+=fileparameters['timestep']
-    logging.info("All jobs are READY")
-    time.sleep(fileparameters['extrawaittime']) #just wait for the files to write back before opening them
-    return
 
-def test_ready3(indices,myrun):
-    '''this could be something using a line as :
-        touch ${PBS_JOBID}.completed
-    in the jobscript ID_gauss
-    '''
-    path = myrun.path
-    fileparameters = myrun.__dict__
-    tijdje = 0
-    paths = [] #here we are going to make a list of paths of the jobs
-    for i in range(len(indices)):
-        path1 = path + '/' + fileparameters['identify'] + indices[i] + '.completed'
-        paths.append(path1)
-        if fileparameters['stab']==1: #property is global variable
-            for pos in fileparameters['positions']:
-                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + '.completed'
-                paths.append(path2)
-    while True: # then we remove each item of the paths that exists. If every path exists, all jobs are ready
-        if tijdje>fileparameters['timelimit']:
-            print "time is up"
-            break
-        pathscopy= paths[:]
-        for pathje in pathscopy:
-            if glob.glob(pathje):
-                paths.remove(pathje)
-                print "ready: ", pathje[:-25]
-        if paths==[]:
-            break
-        print "time/h:", tijdje/3600, "len paths:", len(paths),
-        time.sleep(fileparameters['timestep'])
-        tijdje+=fileparameters['timestep']
-    logging.info("All jobs are READY")
-    time.sleep(fileparameters['extrawaittime']) #just wait for the files to write back before opening them
-    return
-    pass
+
+

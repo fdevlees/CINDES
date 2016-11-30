@@ -3,11 +3,16 @@
 ########################
 #####   IMPORTS    #####
 ########################
+if True:
+    import seaborn as sns
+    sns.set(style="white")
+    cmap = sns.diverging_palette(220, 10, as_cmap=True)
 
 import pickle
 from pprint import pprint
 import matplotlib.pyplot as plt
-from re import findall
+<<<<<<< merge_fitter.py
+from re import findall, split
 import numpy as np
 from sklearn import linear_model, cross_validation, metrics
 from abc import ABCMeta, abstractmethod
@@ -108,7 +113,8 @@ def multibar_plot(X,seq,std=0,fig=0,ax=0):
         fig1 = plt.figure()
         ax = fig1.add_subplot(111)
     from cycler import cycler
-    colors = ('orangered','darkcyan','red','indianred','darkred','deeppink','g','b','y','c')
+    colors = sns.color_palette("deep",n_colors=9)
+    #colors = ('orangered','darkcyan','red','indianred','darkred','deeppink','g','b','y','c')
     #labels = ('site1','site2','site3','site4','site5','site6')
     labels = tuple( 'site '+str(i+1) for i in range(len(X[0])) )
     N = len(X)
@@ -214,7 +220,7 @@ seq = ['CH','CCHHH','CCFFF','N','CF','CCl','CNHH','CNOO','CCN','CSH','COH','CCOO
 
 class Dataset(): #abstract data class
     #__metaclass__ = ABCMeta
-    def __init__(self,name):
+    def __init__(self,name,*args,**kwargs):
         self.name = name
         return
 
@@ -222,6 +228,7 @@ class Dataset(): #abstract data class
         #confs, data = self.readfile(cutoff=20.0)
         if table==[]:
             print "read table from tablebin"
+<<<<<<< merge_fitter.py
             confs, data = self.readfile(**kwargs)
             column=1
         else:
@@ -232,6 +239,20 @@ class Dataset(): #abstract data class
             column = 0
         self.X = self.extractX(confs)
         self.Y = self.extractY(data,column=column)
+=======
+            column=1
+            print("column: ", column)
+            self.confs, data = self.readfile(column=column,**kwargs)
+            self.Y = self.extractY(data,column=1)
+        else:
+            print "read table from call"
+            inds = [ item[0] for item in table ]
+            preconfs = [ indtocon(item) for item in inds]
+            data = [ item[1:] for item in table ]
+            column = 0
+            self.Y = self.extractY(data,column=column)
+        self.X = self.extractX(self.confs)
+>>>>>>> 2fitter.py
         #print "extraction succesfull"
         if args.verbose<0:
             print "X:",self.X.shape
@@ -242,6 +263,12 @@ class Dataset(): #abstract data class
             n = min(2,len(self.Y))
             sprint(n,self.X,self.Y)
         return
+
+    def extract2(self):
+        self.X2 = self.extract2DX(self.confs)
+        #hits = np.sum(self.X2, axis=0).reshape([12,15]).astype(int)
+        hits = np.sum(self.X2, axis=0).reshape([11,11]).astype(int)
+        return hits
 
     def analyze(self,data):
         '''analyzes the structure of the data file'''
@@ -260,8 +287,8 @@ class Dataset(): #abstract data class
             for i,item in enumerate(data[0]):
                 print i, item
         return
-               
-    def openfile(self,file='tablebin'):
+
+def openfile(self,file='tablebin'):
         ruwdata = []
         #with open(file,'rb') as fid:
         if True:
@@ -278,7 +305,11 @@ class Dataset(): #abstract data class
                 print ruwdata[0][i]
         return ruwdata
 
+<<<<<<< merge_fitter.py
     def readfile(self,cutoff=True,**kwargs):
+=======
+    def readfile(self,cutoff=False,column=1,**kwargs):
+>>>>>>> 2fitter.py
         '''extracts the data from filename: name '''
         ruwdata = self.openfile(**kwargs)
         datar=ruwdata[-1][:] # last entry in tablebin
@@ -294,7 +325,11 @@ class Dataset(): #abstract data class
         if cutoff:
             print "cutoff applied 15 eV"
             cutoff = 15.0
+<<<<<<< merge_fitter.py
             data = [ [ item[0], float(item[1])] for item in datar if float(item[1])<cutoff ] 
+=======
+            data = [ [ item[0], float(item[column])] for item in datar if float(item[1])<cutoff ] 
+>>>>>>> 2fitter.py
         self.data = data
         confs = [ indtocon(item[0]) for item in data ]
         indices = [ item[0] for item in data ]
@@ -366,6 +401,76 @@ class Dataset(): #abstract data class
         sprint(100,predictions, self.data[-100:])
         return predictions
 
+<<<<<<< merge_fitter.py
+=======
+    def linreg_analyse2(self,clf,hits=[],model='OLS',**kwargs):
+        Rscore = clf.score(self.X2,self.Y)
+        print "total score {}:".format(model), Rscore 
+        if args.verbose>2: print clf.coef_ #also very large coefficients
+
+        #C = clf.coef_.reshape([12,15])[:]
+        C = clf.coef_.reshape([11,11])[:]
+        if args.verbose>1 and args.plot:
+            import matplotlib.ticker as ticker
+            C[C == 0.00000] = np.nan
+            print "Coef matrix:", C
+            #plt.matshow(C)
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            if True:
+                cax = sns.heatmap(C, cmap=cmap,
+                    square=True, xticklabels=self.seq, yticklabels=self.seq,
+                    linewidths=.5, fmt="d", cbar_kws={"shrink": .5}, ax=ax )
+                cax2= sns.heatmap(hits,annot=True,alpha=0.0,fmt="d",cbar=False)
+            else:
+                cax = ax.matshow(C, interpolation='nearest')
+                fig.colorbar(cax)
+                #cax = ax.matshow(C)
+            #ax.set_xticklabels([' '] + seq[0:16],rotation='vertical')
+            #ax.set_yticklabels([' '] + seq[0:13],rotation='horizontal')
+            #ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
+            #ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
+            if False and not args.fraction:
+                for (i, j), z in np.ndenumerate(hits):
+                    if not z==0:
+                        ax.text(j, i, '{:4d}'.format(z), ha='center', va='center')
+            plt.show()
+ 
+        print "small test:"
+        sprint(5,clf.predict(self.X2), self.Y)
+        if args.verbose>0:
+            if args.fraction:
+                preds_train = clf.predict(self.X_train)
+                preds_test  = clf.predict(self.X_test)
+                rmse_train = metrics.mean_squared_error(preds_train, self.Y_train)
+                mae_train = metrics.mean_absolute_error(preds_train, self.Y_train)
+                rmse_test = metrics.mean_squared_error(preds_test, self.Y_test)
+                mae_test = metrics.mean_absolute_error(preds_test, self.Y_test)
+                print "small comparison prediction vs real target value (training):"
+                sprint(5,preds_train, self.Y_train)
+                print "small comparison prediction vs real target value (testing):"
+                sprint(5,preds_test, self.Y_test)
+                print "RMSE training:", rmse_train
+                print "MAE training:",  mae_train
+                print "RMSE test:", rmse_test
+        
+            plt.show()
+
+        #plot the dataset vs the predictions. has to be straight line for good fit
+        if args.xyplot and args.verbose>0:
+            if args.fraction:
+                print "training red / test bleu"
+                plt.plot(preds_train,self.Y_train,'ro',alpha=0.5)
+                plt.plot(preds_test,self.Y_test,'bo',alpha=0.25)
+            else:
+                plt.plot(clf.predict(self.X2),self.Y,'ro')
+            plt.show()
+        if args.fraction:
+            return rmse_train, mae_train, rmse_test, rmse_train, Rscore
+        else:
+            return
+
+>>>>>>> 2fitter.py
     def linreg_analyse(self,clf,model='OLS',**kwargs):
 
         # SCORES
@@ -442,6 +547,10 @@ class Dataset(): #abstract data class
                 smeans.append(np.mean(total))
                 sstds.append(np.std(total))
                 bar_plot2(smeans,std=sstds)
+<<<<<<< merge_fitter.py
+=======
+                
+>>>>>>> 2fitter.py
             plt.show()
  
         if args.plot>1:
@@ -454,7 +563,11 @@ class Dataset(): #abstract data class
         else:
             return
 
+<<<<<<< merge_fitter.py
     def linreg(self,model,alpha=0,intercept=True,printing=0,**kwargs):
+=======
+    def linreg(self,model,alpha=0,intercept=True,printing=0,twosite=False,**kwargs):
+>>>>>>> 2fitter.py
         '''does the linear regression and finds the useful parameters'''
         
         if model == 'LinearRegression':
@@ -462,6 +575,7 @@ class Dataset(): #abstract data class
         elif model in ['Ridge']:
             clf = linear_model.Ridge(alpha=alpha,fit_intercept=intercept,tol=0.001,solver='auto')
         elif model in ['RidgeCV','ridgecv']:
+<<<<<<< merge_fitter.py
             
             clf = linear_model.RidgeCV(alphas=alpha, fit_intercept=intercept, store_cv_values=True)
         
@@ -469,12 +583,36 @@ class Dataset(): #abstract data class
             sprint(5,self.X)
             sprint(5,self.Y)       
         if args.fraction:
+=======
+            clf = linear_model.RidgeCV(alphas=alpha, fit_intercept=intercept, store_cv_values=True)
+        
+        if args.verbose>2:
+            if twosite:
+                sprint(5,self.X2)
+            else:
+                sprint(5,self.X)
+            sprint(5,self.Y)       
+        if args.fraction:
+          if twosite:
+            self.X_train, self.X_test, self.Y_train, self.Y_test = cross_validation.train_test_split(self.X2,self.Y, train_size = args.fraction)
+            print "size training set:", np.shape(self.Y_train)
+            print "size test set:", np.shape(self.Y_test)
+            clf.fit(self.X_train, self.Y_train)
+          else:
+>>>>>>> 2fitter.py
             self.X_train, self.X_test, self.Y_train, self.Y_test = cross_validation.train_test_split(self.X,self.Y, train_size = args.fraction)
             print "size training set:", np.shape(self.Y_train)
             print "size test set:", np.shape(self.Y_test)
             clf.fit(self.X_train, self.Y_train)
         else:
+<<<<<<< merge_fitter.py
             clf.fit(self.X,self.Y)
+=======
+            if twosite:
+                clf.fit(self.X2,self.Y)
+            else:
+                clf.fit(self.X,self.Y)
+>>>>>>> 2fitter.py
 
         return clf
 
@@ -518,7 +656,14 @@ class Adamantane(Dataset):
             print "dim site0", site0.shape
         for k in range(len(confs)): # for all the configurations:
             for i in range(len(confs[k])): #for all the groups in the configuration
+<<<<<<< merge_fitter.py
                 j = seq.index(confs[k][i]) #find the index of the group of that sequence
+=======
+                group = confs[k][i]
+                if group=='CNOO60':
+                    group='CNOO'
+                j = seq.index(group) #find the index of the group of that sequence
+>>>>>>> 2fitter.py
                 if i == 0:
                     site0[k,j]=1 #index is number of configuration , number of group
                 if i == 1:
@@ -553,11 +698,82 @@ class Adamantane(Dataset):
             X = np.concatenate((site0,site1,site2,site3,site4,site5,site6,site7,site8,site9),axis=1)
         return X
 
+<<<<<<< merge_fitter.py
+=======
+
+    def extract2DX(self,confs):
+        nC= len(confs)
+        nter = 12
+        nsec = 15
+        X = np.zeros( [ nC , nter*nsec ] )
+        #bonds = ( (0,4),(2,4),(1,5),(3,5) )
+        bonds = ( (0,9),(0,5),(0,7),
+                  (3,9),(3,4),(3,8),
+                  (2,6),(2,8),(2,7),
+                  (1,4),(1,5),(1,6) )
+        
+        for k in range(len(confs)): # for all the configurations:
+            B = np.zeros([12,15]) #so tertiary * secondairy sites
+            #B = ( B04, B24, B15, B35 )
+            #loop over all combinations 
+            for combi in bonds:
+                i1,i2 = combi
+                group1 = confs[k][i1]
+                group2 = confs[k][i2]
+                if group1=='CNOO60':
+                    group1='CNOO'
+                if group2=='CNOO60':
+                    group2='CNOO'
+                gr1 = seq.index(group1)
+                gr2 = seq.index(group2)
+                B[ gr1, gr2 ] += 1
+            if True: # so make one total matrix were all combis are combined
+                #Btotal = np.sum( B , axis = 0)
+                Bflatten = B.flatten()
+                X[k] = Bflatten
+        print "X2 constructed; shape X2:", np.shape(X)
+        return X
+
+############################ END CLASS ADAMANTANE
+
+############################ START CLASS DIAMANTANE
+>>>>>>> 2fitter.py
 class Diamantane(Dataset):
     '''Diamantane class'''
 
     ngps = (12,12,12,12,15,15) #for every instance this is same
 
+<<<<<<< merge_fitter.py
+=======
+    def extract2DX(self,confs):
+        nC= len(confs)
+        nter = 12
+        nsec = 15
+        X = np.zeros( [ nC , nter*nsec ] )
+        bonds = ( (0,4),(2,4),(1,5),(3,5) )
+        
+        for k in range(len(confs)): # for all the configurations:
+            B04 = np.zeros([12,15]) #so tertiary * secondairy sites
+            B24 = np.zeros([12,15]) #so tertiary * secondairy sites
+            B15 = np.zeros([12,15]) #so tertiary * secondairy sites
+            B35 = np.zeros([12,15]) #so tertiary * secondairy sites
+            B = ( B04, B24, B15, B35 )
+            #loop over all combinations 
+            for combi,bmatrix in zip(bonds,B):
+                i1,i2 = combi
+                group1 = confs[k][i1]
+                group2 = confs[k][i2]
+                gr1 = seq.index(group1)
+                gr2 = seq.index(group2)
+                bmatrix[ gr1, gr2 ] = 1
+            if True: # so make one total matrix were all combis are combined
+                Btotal = np.sum( B , axis = 0)
+                Bflatten = Btotal.flatten()
+                X[k] = Bflatten
+        print "X2 constructed; shape X2:", np.shape(X)
+        return X
+
+>>>>>>> 2fitter.py
     def extractX(self,confs):
         nC= len(confs)
         #global seq
@@ -605,6 +821,68 @@ class Diamantane(Dataset):
         X = np.concatenate((site0,site1,site2,site3,site4,site5),axis=1)
         return X
 
+<<<<<<< merge_fitter.py
+=======
+class Phenalene(Dataset):
+    
+    def __init__(self,nsites,*args,**kwargs):
+        self.ngps = nsites * (12,)
+        self.seq = [ 'N', 'CH', 'CF', 'CCFFF', 'CCHHH', 'COH', 'CNOO', 'CNHH', 'CCOOH', 'COCHHH', 'CNHCHHH' ]
+        global seq
+        seq = self.seq
+        return 
+
+    def extractX(self,confs):
+        nC= len(confs)
+        nsites = len(self.ngps)
+        if args.verbose>2:
+            for i in range(10):
+                print confs[i]
+            print "self.seq:", self.seq
+            print "len confs:", len(confs)
+            print "len confs[0]:", len(confs[0])
+        LoS = []
+        for i in range(nsites):
+            LoS.append( np.zeros( [nC, self.ngps[i] ] ) )
+        if args.verbose>1: print "dim site0", LoS[0].shape
+        for k in range(len(confs)): # for all the configurations:
+            for i in range(len(confs[k])): #for all the groups in the configuration
+                group = confs[k][i]
+                cleangroup = split('(\d+)',group)[0]               
+                j = self.seq.index(cleangroup) #find the index of the group of that sequence
+                LoS[i][k,j] = 1
+        X = np.concatenate(LoS,axis=1)
+        return X
+
+    def extract2DX(self,confs):
+        nC= len(confs)
+        X = np.zeros( [ nC , 121 ] )
+        bonds = ( (0,6),(5,6),(4,8),(3,8),(1,7),(2,7),
+                  (0,1),(2,3),(4,5) )
+        
+        for k in range(len(confs)): # for all the configurations:
+            B = []
+            for combi in bonds:
+                B.append( np.zeros( [11,11] ) )
+            #loop over all combinations 
+            for combi,bmatrix in zip(bonds,B):
+                i1,i2 = combi
+                group1 = confs[k][i1]
+                cleangroup1 = split('(\d+)',group1)[0]               
+                group2 = confs[k][i2]
+                cleangroup2 = split('(\d+)',group2)[0]               
+                gr1 = self.seq.index(cleangroup1)
+                gr2 = self.seq.index(cleangroup2)
+                bmatrix[ gr1, gr2 ] = 1
+                bmatrix[ gr2, gr1 ] = 1
+            if True: # so make one total matrix were all combis are combined
+                Btotal = np.sum( B , axis = 0)
+                Bflatten = Btotal.flatten()
+                X[k] = Bflatten
+        print "X2 constructed; shape X2:", np.shape(X)
+        return X
+
+>>>>>>> 2fitter.py
 #####################################
 #####       MAIN PROGRAM       ######
 #####################################
@@ -616,13 +894,21 @@ def main(args):
         myrun = Adamantane(args.file)
     elif any(item in identify for item in ['dia','dilu','diho','dimi','dima','dilumi']):
         myrun = Diamantane(args.file)
+<<<<<<< merge_fitter.py
+=======
+    elif 'phe' in identify:
+        myrun = Phenalene(name=args.file,nsites=9)
+>>>>>>> 2fitter.py
     else:
         raise SystemExit('no identify was identified')
     myrun.extract(file=args.file)
     linmodels = [ 'LinearRegression', 'Ridge']
     
     allerrors = []
+<<<<<<< merge_fitter.py
     print "args.times:", args.times
+=======
+>>>>>>> 2fitter.py
     for i in range(args.times[0]):
         if args.ols:
             clf_LS = myrun.linreg(model=linmodels[0])
@@ -640,8 +926,16 @@ def main(args):
             clf_RidgeCV = myrun.linreg(model='RidgeCV',alpha=alpha)
             if args.analyse:
                 myrun.linreg_analyse(clf_RidgeCV,model='RidgeCV')
-    #print "I'm here"
-    if args.ridge or args.ols or args.ridgecv:
+        if args.twosite:
+            hits = myrun.extract2()
+            print hits
+            if True:
+                print "args.ridge:", 1e-4
+                clf_Ridge2D = myrun.linreg(model='Ridge', alpha=1e-4,twosite=True)
+                if args.analyse:
+                    errors = myrun.linreg_analyse2(clf_Ridge2D,hits=hits,model='Ridge')
+                    allerrors.append(errors)
+    if args.ridge or args.ols or args.ridgecv or args.twosite:
         try:
             for item in allerrors:
                 print " ".join(map(str,item))
@@ -714,6 +1008,7 @@ if __name__ == "__main__":
     parser.add_argument("-n","--analyseinput",action="store_true",help="do a short analysis of the input")
     parser.add_argument("-N","--times",action="store",nargs=1,default=[1], type=int, help="do N times")
     parser.add_argument("-o","--ols",action="store_true",help="do an ordinary least square regression")
+    parser.add_argument("-t","--twosite",action="store_true",help="do an ordinary least square regression")
     parser.add_argument("-p","--plot",action="count",help="make also a plot of the data")
     parser.add_argument("-r","--ridge",action="store",nargs='?',type=float,const=1e-4,help="do a ridge regression")
     parser.add_argument("-f","--fraction",action="store",nargs='?',type=float,const=0.5,help="take only a fraction of data set")

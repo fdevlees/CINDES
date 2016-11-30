@@ -1,4 +1,5 @@
 #!/bin/env python
+''' this one converts a zmatrix file to a .com file'''
 import sys
 filename = sys.argv[1]
 import re

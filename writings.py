@@ -82,16 +82,20 @@ def sprint(n,*args,**kwargs):
     '''tries to prints the first n items of iterable objects'''
     def printitem(item):
         if isinstance(item,float):
+          try:
             if float(int(item))==item and item<10000.0: #for whole numbers as floats that are not too large
                 print '{:4.0f}.'.format(item),
             else:
                 print '{:10.4e}'.format(item),
+          except ValueError:
+            print '{:4.0f}.'.format(0.0),
         else:
             print item,
     #if kwargs:
     #    dictlist = kwargs.items()
     #    args = tuple(dictlist) + args
-    for i in range(n):
+    minlen = min([ len(arg) for arg in args ])
+    for i in range(min((n,minlen))):
         for item in args:
             try:
                 a = item[i]
@@ -106,6 +110,54 @@ def sprint(n,*args,**kwargs):
                     printitem(a)
         print
     return
+
+
+def complexprint(data, func=lambda arg: arg, strfunc= lambda *s: s):
+    ''' this function prints all first level items of a collection(list/tuple/dict) on one line 
+    with the option of applying a function on each first level item.  
+    a strfunc argument is available to be applied on each string encountered.
+
+    example 1.
+    - I have a large nested list. with a lot of strings / tuples / nested list and i want to print each item on one line
+    - I want also all strings that contain underscores to be splitted up:
+    complexprint(data, strfunc= lambda x:x.split('_')
+
+    example 2.
+    - I have a large nested list
+    - I want of each first dimension item only the minimum configuration:
+    complexprint(data, func = lambda y: min(y, key= lambda x:x[1]) )
+
+    example 3.
+    - to do
+
+    '''
+    def printje(item, level=1):
+        if level>10:
+            print "type was:", type(item)
+            print "max recursion reached"
+            raise SystemExit('stop')
+        if type(item) in [list,tuple,dict]:
+            for it in item:
+                printje(it,level=level+1)
+        else:
+            if type(item)==str:
+                for it in strfunc(item): #string function. 
+                    print it,
+            else:
+                print item,
+        return
+
+    for totalcycle in data:
+        # totalcycle = 0func(totalcycle) # a function on zeroth level
+        for siterun in totalcycle:
+            item = func(siterun) # a function on first level
+            printje(item)
+            print
+    else:
+        print "&"*20
+    return
+
+
 
 if __name__=='__main__':
     @log_io(signator='=')

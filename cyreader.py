@@ -16,14 +16,17 @@ parser = argparse.ArgumentParser(description="reads cycles data stored in cycles
 parser.add_argument("-p","--pplot",action="store_true",help="make a site vs property plot of the data")
 parser.add_argument("-s","--splot",action="store_true",help="make a plot of sitevalues of cycle0 vs cycle-1")
 parser.add_argument("-c","--cplot",action="store_true",help="make a plot of cyclevalues of cycle0 vs cycle-1")
+parser.add_argument("-H","--homo",action="store_true",help="get the HOMO levels from the databc directory")
 parser.add_argument("-t","--tplot",action="store_true",help="make a tablebin-like plot of cyclevalues of property vs. structure (chronologically)")
 parser.add_argument("-T","--table",action="store_true",help="make a table dictionary with only single occupancy of that site for regression")
 parser.add_argument("-x","--regxy",action="store_true",help="make a plot of two propeties against each other and test linear correlation")
 parser.add_argument("-m","--minmax",nargs=2,help="use global cycles value1 until value2 \nNB: startcount = 0!")
 parser.add_argument("-l","--label",type=str,help="property type label")
+parser.add_argument("-d","--datacolumn",type=int,default=1,help="which data column to choose")
 parser.add_argument('file', nargs='?', default='cyclesinfo',help='filename default is "cyclesinfo"')
 args=parser.parse_args()
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 import pprint
 pp = pprint.PrettyPrinter(indent=4, width=150)
@@ -42,23 +45,44 @@ class Unbuffered(object):
         return getattr(self.stream, attr)
 sys.stdout = Unbuffered(sys.stdout)
 
+matplotlib.use('GTK')
+#matplotlib.rcParams['text.usetex']=True
+#matplotlib.rcParams['text.latex.unicode']=True
+matplotlib.rcParams['mathtext.default']='regular'
+funcs = {'CCFFF': '$C-CF_3$',
+         'CCHHH': '$C-CH_3$',
+         'CCN': '$C-C\\equiv N$',
+         'CCl': '$C-Cl$',
+         'CF': '$C-F$',
+         'CH': '$C-H$',
+         'CNHH': '$C-NH_2$',
+         'CNOO': '$C-NO_2$',
+         'CCOOH': '$C-COOH$',
+         'CO': '$C=O$',
+         'COH': '$C-OH$',
+         'CSH': '$C-SH$',
+         'N': '$N$',
+         'O': '$O$',
+         'S': '$S$'}
+
 def indtocon(index):
     #return [list(item) for item in index.split('_')]
     #return  [ findall('[A-Z][^A-Z]*',item) for item in index.split('_') ]
     return  tuple( findall('[A-Z0-9][^A-Z1-9]*',item) for item in index.split('_') )
 
-if False:
+if args.homo:
     from cclib.parser import ccopen
     import logging
     import fnmatch
     allfiles = os.listdir('databc')
     path = os.getcwd()
 
-def get_homo(conf):
+def get_homo(conf,printi=False):
     for file in allfiles:
-        if fnmatch.fnmatch(file,  '*' + conf + '.log'):  
+        if fnmatch.fnmatch(file,  'diap_' + conf + '.log'):  
             filetje = file
             filetje = path + '/databc/' + filetje
+            if printi: print filetje
     f = ccopen(filetje)
     f.logger.setLevel(logging.ERROR)
     datatje = f.parse()
@@ -67,6 +91,10 @@ def get_homo(conf):
     #Ehomo= datatje.moenergies[0][datatje.homos[0]]
     #print 'conf:', conf, 'Ehomo:', Ehomo, 'Ehomo/27.211:', Ehomo/27.211
     Elumo= datatje.moenergies[0][datatje.homos[0]+1]
+    if printi:
+        print "myhomos:", datatje.myhomos
+        print "moenergies:", datatje.mymos
+        print "mymos[1]['alpha'][0][myhomos[1]]"
     return Ehomo
 
 def make_table(confs,data):
@@ -77,6 +105,35 @@ def make_table(confs,data):
             table[index] = value
     return table
 
+def complexprint(data, func=lambda arg: arg, strfunc= lambda *s: s):
+    ''' this function prints all first level items of a collection(list/tuple/dict) on one line 
+    with the option of applying a function on each first level item.  
+    a strfunc argument is available to be applied on each string encountered.
+    '''
+    def printje(item, level=0):
+        if level>10:
+            print "type was:", type(item)
+            print "max recursion reached"
+            raise SystemExit('stop')
+        if type(item) in [list,tuple,dict]:
+            for it in item:
+                printje(it,level=level+1)
+        else:
+            if type(item)==str:
+                for it in strfunc(item):
+                    print it,
+            else:
+                print item,
+        return
+
+    for totalcycle in data:
+        for siterun in totalcycle:
+            item = func(siterun)
+            printje(item)
+            print
+    else:
+        print "&"*20
+    return
 
 def main():
     with open(args.file,'r') as fid:
@@ -89,10 +146,11 @@ def main():
     print 'len(data)', n
     rows, columns = os.popen('stty size', 'r').read().split()
     print 'console width=', columns
+    homos = []
     for item in data:
         #print "item:",item
         conf = item[0].replace("'","")
-        if 1==1:
+        if not args.homo:
             if len(item)==5:
                 item = [ item[0].replace("'",""), float(item[1]), int(item[2]), int(item[3]), int(item[4]) ]
                 value = (float(item[1]),int(item[2]),int(item[3]),int(item[4]))
@@ -109,23 +167,37 @@ def main():
                 value = rest + indices
                 item = [ item[0].replace("'","") ] + value
         else:
-            if len(item)==5:
+            #if len(item)==5:
+            #    sys.stdout.write('#')
+            #    item = [ item[0].replace("'",""), float(item[1]), int(item[2]), int(item[3]), int(item[4]) ]
+            #    homo = get_homo(conf)
+            #    value = (float(item[1])*27.2113838,-homo,int(item[2]),int(item[3]),int(item[4]))
+            if False:
+                pass
+            else:
                 sys.stdout.write('#')
-                item = [ item[0].replace("'",""), float(item[1]), int(item[2]), int(item[3]), int(item[4]) ]
+                indices = map(int,item[-3:])
+                rest = map(float,item[1:-3])
                 homo = get_homo(conf)
-                value = (float(item[1])*27.2113838,-homo,int(item[2]),int(item[3]),int(item[4]))
-            elif len(item)==7:
-                sys.stdout.write('#')
-                item = [ item[0].replace("'",""), float(item[1]), float(item[2]), float(item[3]),int(item[4]), int(item[5]), int(item[6]) ]
-                homo = get_homo(conf)
-                value = (float(item[1])*27.2113838,-homo,int(item[2]),int(item[3]),int(item[4]))
-                
+                homos.append([conf,homo])
+                IP = rest[0] * 27.2113838
+                value = [ IP] + [-homo] + rest[1:] + indices
+                item = [ item[0].replace("'","") ] + value
+                if -homo> 5.0 and IP<6.6:
+                    print "outlier:", conf, " ", item
+                    get_homo(conf,True)
+                    continue
         item[0]=item[0].split('_')
         if item[1]:
         #if item[1]<1000:
             datar.append(item)
             confs.append(conf)
             values.append(value)
+    print "homos:", homos
+    with open('homofile','w') as fid:
+        for item in homos:
+            line = '%s %s' % ( item[0], str(item[1]) )
+            fid.write(str(item)+'\n')
     for br in datar:
         # each site wordt geformat tot 8 width. die worden samen gejoind en weer geformat samen met de rest
         print '{0} {1:8.5}  {2:3}  {3:3}  {4:3}'.format(' '.join(['{:8}'.format(item) for item in br[0]]),br[prop],br[-3],br[-2],br[-1])
@@ -152,13 +224,16 @@ def main():
     i=0
     maxnsites=0
     totalruns=[]
+    total_conf_data = []
     #run over all macrocycles:
     #for j in range(1,maxmacrocycles+1):
     for j in range(maxmacrocycles+1):
         runsA=[]
+        runsC=[] #for total configurations list
         #run over all sites in a cycles
         for k in range(nsites+1):
             runA=[]
+            runC=[]
             # run over all substituents
             while True:
                 #print "values[i]", values[i]
@@ -166,6 +241,8 @@ def main():
                 #as long as the site index and cycle index do not change:
                 if values[i][-1]==k and values[i][-3]==j:
                     runA.append([sites[i],values[i]])
+                    runC.append([confs[i],values[i]])
+
                     #print "Jos"
                     #print "runA:", runA
                 else:
@@ -191,9 +268,19 @@ def main():
                 #and insert it at the last position of the list
                 sortA.insert(len(subsA)-1, sortA.pop(igroup))
             if not sortA==[]: runsA.append(sortA)
+            if not runC==[]: runsC.append(runC)
         if not runsA==[]: totalruns.append(runsA)
+        if not runsC==[]: total_conf_data.append(runsC)
     #print "runsA"
     #pp.pprint(runsA)
+
+    print "TOTAL CONF DATA:"
+    #print "total_conf_data[0]:", total_conf_data[0]
+    print "args.datacolumn:", args.datacolumn
+    complexprint(total_conf_data,                                                              ##############
+                 func = lambda y: min(y, key= lambda x: x[1][args.datacolumn]),     #########    MIN MAX    !!!!!!!!!!!!!  MIN MAX CHANGE HERE!!!!
+                 strfunc = lambda z: z.split('_') )                                           ##############
+
 
     # NOW FORMED ARE: TOTALRUNS
     #now restrict it to only the cycles we need.
@@ -202,12 +289,13 @@ def main():
         m2 = int( args.minmax[1] ) + 1
         totalruns = totalruns[:][m1:m2]
 
-    print "totalruns:"
-    pp.pprint(totalruns)
+    #print "totalruns:"
+    #pp.pprint(totalruns)
     print "best substituent per site per run:"
-    for run in totalruns:
-        for site in run:
-            print min(site, key= lambda x: x[1][0])
+    complexprint(totalruns, func = lambda y: min(y, key= lambda x: x[1][args.datacolumn] ) )
+    #for run in totalruns:
+    #    for site in run:
+    #        print min(site, key= lambda x: x[1][0])
     print '='*20
 
 
@@ -216,8 +304,8 @@ def main():
     totalsites=deepcopy(totalruns)
     for runs in totalsites:
        runs.sort(key= lambda x: x[0][1][-2]) #runs sorts by number of site. the [0] is just arbitrary here because each elements has same values
-    print "totalsites:"
-    pp.pprint(totalsites)
+    #print "totalsites:"
+    #pp.pprint(totalsites)
     print '='*20
 
     ################## MAKE table with only single attendance:
@@ -234,7 +322,8 @@ def main():
         tags=['-ro','-bs','-g^','-c*','-mp','-y|','-k+','-rd','-bv','-gh']
         tags=['-o','-s','-^','-*','-p','-<','->','-d','-v','-h']
         #colors = sb.color_palette("viridis", n_colors=12)
-        colors = sb.hls_palette(10)
+        #colors = sb.hls_palette(10)
+        colors = sb.hls_palette(nsites+1,l=.4) #l=lightness the smaller the darker. 
         #for multiple sites:
         #for i in range(len(totalruns)-1): #-1 because last runs always same as one but last
         #otherwise:
@@ -246,15 +335,23 @@ def main():
                 run=totalsites[i][j]
                 x = np.array(range(len(run)))
                 if len(run) == maxnsites:
-                    my_xticks = [ item[0] for item in run ] 
+                    my_xticks = [ funcs[item[0]] for item in run ] 
                     plt.xticks(x,my_xticks)
+                    plt.xticks(rotation=45)
                     print "my_xticks", my_xticks
-                y = [ item[1][0] for item in run ]
+                y = [ item[1][args.datacolumn] for item in run ]
                 #print "y=", y
                 #itje = 2*(len(totalruns)-1)*i+j #index that cares for different dots/squares per site per cycle
                 itje = j
-                plt.plot(x,y,tags[itje],label='cycle:'+ str(i+1) + ' site:' + str(j+1), color=colors[itje])
-        legend=plt.legend(loc='best', fancybox=True, framealpha=0.5)
+                #plt.plot(x,y,tags[itje],label='cycle:'+ str(i+1) + ' site:' + str(j+1), color=colors[itje])
+                plt.plot(x,y,tags[itje],label=' site:' + str(j+1), color=colors[itje])
+        if True:
+            ax = plt.gca()
+            fig = plt.gcf()
+            fig.set_dpi(100)
+            box = ax.get_position()
+            ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+            legend=ax.legend(loc='center left', fancybox=True, framealpha=0.5, bbox_to_anchor=(1,.5),fontsize=12)
         #plt.ylabel('ionization potential (a.u.)')
         #plt.ylabel('ionization potential (eV)')
         plt.ylabel(args.label)
@@ -263,15 +360,21 @@ def main():
         plt.show()
 
     if args.tplot: #get a tablebin like plot
+        def get_label():
+            labels = ('1.1','1.2','2.1','2.2','2.3','2.4')
+            for label in labels:
+                yield label
+        labels = get_label() # this is now an iterator !
         import seaborn as sb
-        colors = sb.hls_palette(10,l=.4) #l=lightness the smaller the darker. 
+        colors = sb.hls_palette(nsites+1,l=.4) #l=lightness the smaller the darker. 
         print "tablebin-like plot"
         binlist = []
         start=0
+        propertycount = args.datacolumn #which column to chose the data from. 0 = all 1.0
         for i in range(len(totalruns)):
              binlistje = []
              for j in range(len(totalruns[i])):
-                 l = [ item[1][0] for item in totalruns[i][j] ] 
+                 l = [ item[1][propertycount] for item in totalruns[i][j] ] 
                  #print "i,j:", i,j, "l:", l
                  a = list(enumerate(l,start))
                  start += len(l)
@@ -281,17 +384,22 @@ def main():
         #tags=['ro','bs','g^','c*','mp','yv','k+','r|','bd','gh']
         tags=['o','s','^','*','p','v','<','>','d','h']
         for i in range(len(binlist)):
+            l=0
             for j in range(len(binlist[i])):
                 a = np.array(binlist[i][j]).T
                 site = totalruns[i][j][0][1][-2]
-                a, = plt.plot(a[0],a[1],tags[site]+'-',color=colors[site],
+                b, = plt.plot(a[0],a[1],tags[site]+'-',color=colors[site],
                                                        markersize=5)
-                plt.setp(a, linewidth=1)
+                plt.setp(b, linewidth=1)
+                l += len(a[0])
                 ax=plt.gca()
                 ax.xaxis.grid(False) 
                 if i==0: 
-                    a.set_label('site:'+str(site+1))
-            plt.axvline(x= binlist[i][-1][-1][0]+0.5, linewidth=2, color = 'k')
+                    b.set_label('site:'+str(site+1))
+            x = binlist[i][-1][-1][0] + 0.5
+            plt.axvline(x=x, linewidth=2, color = 'k')
+            y = 2.5
+            ax.text(x-0.5*l,y,next(labels), horizontalalignment='center')
  
         #to reorder the legend 
         ax = plt.gca()
@@ -436,12 +544,15 @@ def main():
         #plt.ylabel('electron affinities last cycle (hartree)')
         f.suptitle('last cycle vs. first cycle')
         plt.show()
-        
     #plt.axis([0,150,0,10])
+
+
     if args.regxy: # plots two properties vs each other. and fits a straight line through it
+        import seaborn as sb
         from scipy import stats
         propx = [ item[0] for item in values ] 
         propy = [ item[1] for item in values ]
+        propx,propy = zip(*list(set(zip(propx,propy))))
         plt.plot(propx,propy,'.r')
         slope, intersept, r_value, p_value, std_err = stats.linregress(propx,propy)
         print "slope:", slope
@@ -452,9 +563,11 @@ def main():
         x = sorted(propx)
         y = [ slope*xje+intersept for xje in x ]
         plt.plot(x, y, '-')
-        plt.xlabel('property1 IP(eV)')
-        plt.ylabel('property2 -Ehomoe(eV)')
-        plt.title('two properties regression')
+        plt.xlabel('IP (eV)')
+        plt.ylabel('-E(HOMO) (eV)')
+        #plt.xlabel('property1 IP(eV)')
+        #plt.ylabel('property2 -Ehomoe(eV)')
+        #plt.title('two properties regression')
         plt.show()
 
 def set_nxy(n):

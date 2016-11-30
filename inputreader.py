@@ -26,16 +26,20 @@ def readfile(subinp):
            'procedure':'standard',
            'optimum':'minimum',
            'ml':0,
-           'nosub':0, 
+           'nosub':0,
+           'nosub_file:':'',
            'cutoff':0,
            'no1sub':0,
            'try_ready':0,
+           'test_ready':2,
            'regression':0,
+           'tdregression':0,
            'difmodel':0,
            'nprocs':2,
            'debug':False,
            'norandom':0,
            'sequence':[],
+           'symlinks':[],
            'restart':0,
            'semiempirical':0,
            'twojob':0,
@@ -70,7 +74,8 @@ def readfile(subinp):
     while True:
         line = subinp.readline()
         if not line: break
-        if 'bc' in line:
+        if line[0]=='#':continue
+        elif 'bc' in line:
             paras['bcprop'] = line.split()[1]
             paras['bcval'] = line.split()[2] 
             try:
@@ -78,12 +83,20 @@ def readfile(subinp):
             except IndexError:
                 paras['bcoptimum'] = 'min'
             assert paras['bcoptimum'] in ['min','Min','max','Max','MIN','MAX']
-        if 'nosub' in line: 
+        elif 'nosub' in line:
+            splitted = line.split()
             try:
-                paras['nosub'] = int( line.split()[1] )
+                paras['nosub'] = int( splitted[1] )
             except IndexError:
                 paras['nosub'] = 1
-        if 'restart' in line: 
+            if paras['nosub']==3:
+                try:
+                    paras['nosub_file'] = splitted[2]
+                    logging.info( "nosub3. external file is used for data!: " + paras['nosub_file'])
+                except IndexError:
+                    logging.warning( "no file found. nosub downgraded to 1" )
+                    paras['nosub'] = 1
+        elif 'restart' in line:
             paras['restart'] = int(line.split()[1])
             if paras['restart'] > 1:
                 try:
@@ -97,18 +110,18 @@ def readfile(subinp):
         #example:
         # restart 4 CH_COH_CCHHH_N_CCOOH
         # 3 4 5
-        if 'ml'==line[:2]:
-            paras['ml']=1
-
-        if 'semiempirical' in line: paras['semiempirical'] = 1
-        if 'nprocs' in line: paras['nprocs'] = int(line.split()[1])
-        if 'debug' in line: paras['debug'] = True
-        if 'norandom' in line: paras['norandom'] = 1
-        if 'no1sub' in line: paras['no1sub'] = 1
-        if 'regression' in line: paras['regression'] = 1
-        if 'difmodel' in line: paras['difmodel'] = 1
-        if 'optimum' in line: paras['optimum'] = line.split()[1]
-        if 'sequence' in line: 
+        elif 'ml'==line[:2]:
+            paras['ml']= int(line.split()[1])
+        elif 'semiempirical' in line: paras['semiempirical'] = 1
+        elif 'nprocs' in line: paras['nprocs'] = int(line.split()[1])
+        elif 'debug' in line: paras['debug'] = True
+        elif 'norandom' in line: paras['norandom'] = 1
+        elif 'no1sub' in line: paras['no1sub'] = 1
+        elif 'regression' in line: paras['regression'] = 1
+        elif 'twodimreg' in line: paras['tdregression'] = 1
+        elif 'difmodel' in line: paras['difmodel'] = 1
+        elif 'optimum' in line: paras['optimum'] = line.split()[1]
+        elif 'sequence' in line: 
             nsequences = int(line.split()[1])
             sequences = []
             for _ in range(nsequences):
@@ -117,39 +130,65 @@ def readfile(subinp):
                 sequences.append(sequence)
             paras['sequence'] = sequences[0]
             paras['sequences'] = sequences
-        if 'simple' in line: paras['simple'] = 1
-        if 'try_ready' in line: paras['try_ready'] = 1
-        if 'twojob' in line: paras['twojob'] = 1
-        if 'startind' in line: paras['startind'] = line.split()[1]
-        if 'procedure' in line: 
+        elif 'symlinks' in line: #NEW FEATURE! - not yet fully implemented
+            nlinks = int(line.split()[1])
+            links = []
+            for _ in range(nlinks):
+                line = subinp.readline()
+                link = [ int(item) for item in line.split() ]
+                assert len(link)>=2, 'link of len 1 is no link' # links larger than two could be allowed. 1 3 4 = 1-3 3-4 1-4
+                links.append(link)
+            paras['nlinks']   = nlinks
+            paras['symlinks'] = links
+            print "SYMMETRY ACTIVATED!"
+        elif 'simple' in line: paras['simple'] = 1
+        elif 'try_ready' in line: paras['try_ready'] = 1
+        elif 'test_ready' in line: paras['test_ready'] = int(line.split()[1])
+        elif 'twojob' in line: paras['twojob'] = 1
+        elif 'startind' in line: paras['startind'] = line.split()[1]
+        elif 'procedure' in line: 
                 paras['procedure'] = line.split()[1]
                 if paras['procedure'] in ['genrandom', 'getrandom']:
                     try:
                         paras['nrandom'] = int(line.split()[2])
                     except IndexError:
                         raise SystemExit("NO number of random structures specified!")
-        if 'timelimit' in line: paras['timelimit'] = int(line.split()[1])
-        if 'timestep' in line: paras['timestep'] = int(line.split()[1])
-        if 'maxiter' in line: paras['maxiter'] = int(line.split()[1])
-        if 'mult' in line: paras['mult'] = int(line.split()[1])
-        if 'charge' in line: paras['charge'] = int(line.split()[1])
-        if 'basisset' in line: paras['basisset'] = line.split()[1]
-        if 'functional' in line: paras['functional'] = line.split()[1]
-        if 'identify' in line: paras['identify'] = line.split()[1]
-        if any(item in line for item in ('ncore','natomscore')): paras['ncore'] = int(line.split()[1])
-        if 'nch3' in line: paras['nch3'] = int(line.split()[1])
-        if 'montecarlo' in line: 
+        elif 'timelimit' in line: paras['timelimit'] = int(line.split()[1])
+        elif 'timestep' in line: paras['timestep'] = int(line.split()[1])
+        elif 'maxiter' in line: paras['maxiter'] = int(line.split()[1])
+        elif 'mult' in line: paras['mult'] = int(line.split()[1])
+        elif 'charge' in line: paras['charge'] = int(line.split()[1])
+        elif 'basisset' in line: paras['basisset'] = line.split()[1]
+        elif 'functional' in line: paras['functional'] = line.split()[1]
+        elif 'identify' in line: paras['identify'] = line.split()[1]
+        elif any(item in line for item in ('ncore','natomscore')): paras['ncore'] = int(line.split()[1])
+        elif 'nch3' in line: paras['nch3'] = int(line.split()[1])
+        elif 'montecarlo' in line: 
             paras['montecarlo'] = float(line.split()[1])
             try:
                 paras['nrandsites']= int(line.split()[2])
             except IndexError: pass
-        if 'extrawaittime' in line: paras['extrawaittime'] = float(line.split()[1])
-        if 'cutoff' in line: paras['cutoff'] = float(line.split()[1])
-        if 'property' in line: paras['property'] = line.split()[1]
-        if 'sites' in line: paras['line1'] = [ int(item) for item in line.split()[1:] ]       
-        if 'positions' in line: paras['positions'] = [ int(item) for item in line.split()[1:] ]       
-        if any(item in line.split()[0] for item in ('program','AI','Program','prog','Prog','programma')): paras['program']= line.split()[1]
-        if 'END' in line: break
+        elif 'extrawaittime' in line: paras['extrawaittime'] = float(line.split()[1])
+        elif 'cutoff' in line: paras['cutoff'] = float(line.split()[1])
+        elif 'property' in line: paras['property'] = line.split()[1]
+        elif 'sites' in line: paras['line1'] = [ int(item) for item in line.split()[1:] ]
+        elif 'positions' in line: paras['positions'] = [ int(item) for item in line.split()[1:] ]
+
+        elif any(item in line.split()[0] for item in ('program','AI','Program','prog','Prog','programma')):
+            if line.split()[1] in ['gaussian','g09','Gaussian','G09']:
+                paras['program']= 'gaussian'
+            elif line.split()[1] in ['orca','ORCA','Orca']:
+                paras['program'] = 'orca'
+            elif line.split()[1] in ['MOLPRO','Molpro','molpro']:
+                paras['program'] = 'molpro'
+                raise SystemExit('Molpro not yet implemented')
+            else:
+                raise SystemExit('program not recognized')
+        elif 'END' in line: break
+        else:
+            print "line is not interpreted!", line
+
+ 
     # it turns out to be helpful to have a flag to know if the stab or polar property has to be calculated so:
     # NOTE THAT HERE it is not possible to use polar and stab simultaneously
     if 'bcprop' in paras: #test if we use a BC

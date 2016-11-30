@@ -5,6 +5,7 @@ from itertools import izip, islice
 from re import findall
 import re
 import logging
+from writings import log_io
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 #
@@ -36,9 +37,18 @@ def indtocon(index):
     #return [list(item) for item in index.split('_')]
     #return  [ findall('[A-Z][^A-Z]*',item) for item in index.split('_') ]
 
-
 def contoind(conf):
     return '_'.join([''.join(item) for item in conf])
+
+def contoint(conf,array):
+    ''' makes an integer list representation of conf '''
+    inconf = [ site.index(group) for site,group in zip(array,conf) ]
+    return inconf
+
+def intocon(inconf,array):
+    ''' transforms integer list back to normal conf representation '''
+    conf = [ site[index] for site,index in zip(array,inconf) ]
+    return conf
 
 def demethyl(passive):
     """here is now a quite simple operations but i here have
@@ -84,19 +94,28 @@ def matrixmerger2(core,active,passive):
         tmfid.write(pprint.pformat(totalmat))
     return totalmat       
 
-def get_configurations(startconf,array,k):
+def get_configurations(startconf,array,k, run=[]):
     'select on site k all the configurations with the different functionalizations for that site present in array'
     configurations =  [ startconf[0:k] + [array[k][i]] + startconf[k+1:] for i in range(len(array[k]))]
+    if hasattr(run,'nlinks'):
+        print "type(run)", type(run)
+        for link in run.symlinks:
+            (i,j) = (link[0]-1,link[1]-1)
+            print "link is:", i, " ",j
+            for conf in configurations:
+                if not conf[i]==conf[j]:
+                    conf[j]=conf[i]
     logging.debug(pprint.pformat(configurations))
     return configurations
 
+@log_io()
 def indexmaker2(startconf,array,k,table): #for CINDES2.3.py 
     '''checks for confs already calculated'''
     confs = get_configurations(startconf,array,k)
     data=[]
     indices = []
     for i in range(len(confs)):
-	index = contoind(confs[i])
+        index = contoind(confs[i])
 	#pp.pprint(confs[i])
 	indices.append(index)
     indicesfull = indices[:]
@@ -108,7 +127,40 @@ def indexmaker2(startconf,array,k,table): #for CINDES2.3.py
                     indices.remove(index)
                     confs.remove(confje)
                     # add that item from table to data
-                    data.append(item)
+                    if item[1]==1:
+                        data.append(item)
+                    else:
+                        item.insert(1,1)
+                        data.append(item)
+        if not data == []:
+            logging.info('filled data with ones already calced:' + pprint.pformat(data))
+    return indices,data,confs,indicesfull #indicesfull are all the indices. 
+
+
+def indexmaker3(startconf,array,k,table,run=[]): #for CINDES2.3.py for the new symmetry feature
+    '''checks for confs already calculated'''
+    print "IN INDEXMAKER3", type(run)
+    confs = get_configurations(startconf,array,k,run=run)
+    data=[]
+    indices = []
+    for i in range(len(confs)):
+        index = contoind(confs[i])
+        #pp.pprint(confs[i])
+        indices.append(index)
+    indicesfull = indices[:]
+    if not table == []:
+        for item in table:
+            for index,confje in izip(indices[:],confs[:]):
+                if item[0] == index:
+                    # remove that from the configurations
+                    indices.remove(index)
+                    confs.remove(confje)
+                    # add that item from table to data
+                    if item[1]==1:
+                        data.append(item)
+                    else:
+                        item.insert(1,1)
+                        data.append(item)
         if not data == []:
             logging.info('filled data with ones already calced:' + pprint.pformat(data))
     return indices,data,confs,indicesfull #indicesfull are all the indices. 

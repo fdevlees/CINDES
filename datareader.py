@@ -6,7 +6,7 @@ import time
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
-import construction 
+import construction
 
 corresp = {2:46,6:18,7:42,9:34,11:22,12:30}
 
@@ -14,7 +14,7 @@ class prettyfloat(float):
     def __repr__(self):
         return "%-0.4f" % self
 
-class Molecule():
+class Logfile():
 
     def __init__(self,name):
         self.data = []
@@ -34,7 +34,7 @@ class Molecule():
         # THERMAL CORRECTION TO ENTHALPY
         if line[1:32] == "Thermal correction to Enthalpy=":
             self.Hcorr = float(line.split()[4])
-   
+
         # SPIN DENSITIES
         if line[1:32] ==  "Mulliken atomic spin densities:":
             if not hasattr(self, "spindensities"):
@@ -112,7 +112,7 @@ class Molecule():
                 self.atomcoords.append(atomcoords)
                 self.natom=len(atomnos)
                 self.atomnos=atomnos
-             
+
 # Summary of Natural Population Analysis:                  
 #                                                          
 #                                       Natural Population 
@@ -157,7 +157,10 @@ class Molecule():
       self.fid.close()
 
 @log_io(signator='#')
-def datareader(indices,jobids,path,data,fileparameters):
+def datareader(indices,jobids,path,fileparameters):
+    ''' NOTE indices = indices_tocal here! 
+    '''
+    data_calc = []
     files=[]
     print "multiplejobs:", fileparameters['multiplejobs']
     for i in range(len(indices)): #make a list of paths from which the data has to be extracted
@@ -216,29 +219,29 @@ def datareader(indices,jobids,path,data,fileparameters):
             RDV = gausread(file1,'RDV',2)[0]
             #----
             if E_ah[1] in Npos:
-                stabA= BDE_ah - stab_h - bde_a * Domega * Dw_h - chi_term 
+                stabA= BDE_ah - stab_h - bde_a * Domega * Dw_h - chi_term
             else:
-                stabA= BDE_ah - stab_h - bde_a * Domega * Dw_h 
+                stabA= BDE_ah - stab_h - bde_a * Domega * Dw_h
             #----------
             if 'bcprop' in fileparameters:#decide how to put the data in the datalist
                 if fileparameters['property']=='stab': #optimize stab and use another prop as bc
-                     if fileparameters['bcprop'] in ['ip','IP','I']: 
+                     if fileparameters['bcprop'] in ['ip','IP','I']:
                          propy = I
-                     elif fileparameters['bcprop'] in ['ea','EA','A']: 
+                     elif fileparameters['bcprop'] in ['ea','EA','A']:
                          propy = A
                      else:
                          propy = gausread(file1,fileparameters['bcprop'])[0]
-                     data.append([indices[i],stabA,propy,BDE_ah,I,A,RDV,E_ah[1]])
+                     data_calc.append([indices[i],stabA,propy,BDE_ah,I,A,RDV,E_ah[1]])
                 else: #so bcprop is stab so propx is the other property to optimize
-                     if fileparameters['property'] in ['ip','IP','I']: 
+                     if fileparameters['property'] in ['ip','IP','I']:
                          propx = I
-                     elif fileparameters['property'] in ['ea','EA','A']: 
+                     elif fileparameters['property'] in ['ea','EA','A']:
                          propx = A
                      else:
                          propx = gausread(file1,fileparameters['property'])[0]
-                     data.append([indices[i],propx,stabA,BDE_ah,I,A,RDV,E_ah[1]])
+                     data_calc.append([indices[i],propx,stabA,BDE_ah,I,A,RDV,E_ah[1]])
             else: #just simple single stab property optimization
-                data.append([indices[i],stabA,BDE_ah,I,A,RDV,E_ah[1]]) #all extra data now included
+                data_calc.append([indices[i],stabA,BDE_ah,I,A,RDV,E_ah[1]]) #all extra data now included
         #------
         else:
             #propx,extra = gausread(file1,fileparameters['property']) # later this has to change to EHOMO and ELUMO etc
@@ -248,13 +251,14 @@ def datareader(indices,jobids,path,data,fileparameters):
                 #datay = gausread(file1,fileparameters['bcprop']) # later this has to change to EHOMO and ELUMO etc
                 datay = gausread(file1,fileparameters['property'],fileparameters['multiplejobs']) # later this has to change to EHOMO and ELUMO etc
                 (propy,extradata)=(datay[0],datay[1:])
-                data.append([indices[i],propx,propy]+extradata) #extradata may be an empty list
+                data_calc.append([indices[i],propx,propy]+extradata) #extradata may be an empty list
             else:
-                data.append([indices[i],propx]+extradata)
-    return data
+                data_calc.append([indices[i],propx]+extradata)
+    # insert all ones at second position
+    return data_calc
 
 def gausread(filename,prop,multiplejobs=0,rdvindex=1):
-    mymol = Molecule(filename)
+    mymol = Logfile(filename)
     extra = []
     if prop in ['natom','natoms']:
         mymol.extract(coords=1)
@@ -383,7 +387,7 @@ def normaltermination(filepaths,debug=False):
     return 
 
 def errortermination(path,debug=False):
-    mymol=Molecule(path) #read outputfile
+    mymol=Logfile(path) #read outputfile
     mymol.extract(coords=1) #extract file with also the coordinates
     import utils
     t=utils.PeriodicTable()
@@ -446,7 +450,7 @@ if __name__ == "__main__":
         index = sys.argv[2]
     except IndexError:
         index = 1
-    mymol = Molecule(filename)
+    mymol = Logfile(filename)
     print mymol , "mymol"
     print mymol.name , "mymol.name"
     print mymol.fid ,'mymol.fid'
