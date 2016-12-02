@@ -2,8 +2,9 @@
 debug=0
 
 import construction as zcon
-from writings import log_io
-import learning
+from CINDES4.utils.writings import log_io, print_title, sprint
+from CINDES4.predictor import learning
+#import learning
 import random
 #from operator import mul
 

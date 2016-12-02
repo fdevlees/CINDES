@@ -22,8 +22,7 @@ import numpy as np
 from sklearn import linear_model, cross_validation, metrics
 from abc import ABCMeta, abstractmethod
 import pandas as pd
-from writings import sprint
-from writings import log_io
+from CINDES4.utils.writings import log_io, sprint
 
 from itertools import islice
 

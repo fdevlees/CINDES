@@ -23,7 +23,8 @@ import glob
 from pprint import pprint
 import pprint
 import time
-from writings import log_io, sprint
+#from writings import log_io, sprint
+from CINDES4.utils.writings import log_io, print_title, sprint
 import logging
 import construction as zcon
 import datareader

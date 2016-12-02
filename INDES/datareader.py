@@ -1,5 +1,6 @@
 from pprint import pprint
-from writings import log_io
+#from writings import log_io
+from CINDES4.utils.writings import log_io, print_title, sprint
 import re
 import numpy
 import time

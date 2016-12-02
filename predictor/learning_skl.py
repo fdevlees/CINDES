@@ -6,7 +6,6 @@ BoB = False
 #import pyximport; pyximport.install()
 #import cython_sum
 
-from writings import log_io, sprint, print_title
 import logging
 import sys
 import pickle
@@ -22,8 +21,12 @@ bar = progressbar.ProgressBar()
 
 from copy import deepcopy
 from pprint import pprint
-from converter import Converter
-import construction as zcon
+
+from CINDES4.utils.writings import log_io, sprint, print_title
+from CINDES4.utils.converter import Converter
+from CINDES4.INDES import construction as zcon
+#from converter import Converter
+#import construction as zcon
 
 class MachineLearning(object):
     ''' Class for making training set / kernel / coulomb / predictions etc. '''
@@ -103,8 +106,9 @@ class MachineLearning(object):
         try:
             if debug: print "self.converter:", self.converter
             self.xyzs = [ zmatoxyz(self.converter,item) for item in mats ]
-            if True:
-                from molecule import Molecule
+            if False:
+                from CINDES4.utils.molecule import Molecule
+                #from molecule import Molecule
                 for i in range(len(self.xyzs)):
                     mol = Molecule()
                     mol.set_xyz(self.xyzs[i])
@@ -889,7 +893,8 @@ def machinelearning3(*args,**kwargs):
 @log_io()
 def machinelearning2(indices=[],table=[],sigma=1e5, labda= 1e-5, printlevel=1,**kwargs):
     ''' or this function will be called by CINDES'''
-    from converter import Converter
+    #from converter import Converter
+    from CINDES4.utils.converter import Converter
     converter = Converter()
     kwargs['converter'] = converter
 
@@ -918,7 +923,8 @@ def machinelearning2(indices=[],table=[],sigma=1e5, labda= 1e-5, printlevel=1,**
 @log_io()
 def normal_machinelearning(indices=[], table=[], sigma=1e6, labda= 1e-6, printlevel=1, **kwargs):
     ''' function to do ML without sklearn '''
-    from converter import Converter
+    from CINDES4.utils.converter import Converter
+    #from converter import Converter
     converter = Converter()
     kwargs['converter'] = converter
 
@@ -955,7 +961,8 @@ def normal_machinelearning(indices=[], table=[], sigma=1e6, labda= 1e-6, printle
 @log_io()
 def Amachinelearning2(indices=[],table=[],sigma=1e4, labda= 1., printlevel=1,fraction=0.5, kernel='gaussian', descriptor='norm4', **kwargs):
     ''' or this function will be called by CINDES'''
-    from converter import Converter
+    #from converter import Converter
+    from CINDES4.utils.converter import Converter
     converter = Converter()
     kwargs['converter'] = converter
     if descriptor in ['bob','BoB']:

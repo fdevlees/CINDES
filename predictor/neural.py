@@ -1,6 +1,6 @@
 debug=True
 
-from writings import sprint
+from CINDES4.utils.writings import log_io, sprint
 
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout
@@ -112,6 +112,8 @@ def test_model(dropout_rate=0.0, weight_constraint=0):
     model.add(Dense(output_dim=1, input_dim=input_dim, init=init ))
     model.add(Activation(activation))
     model.add(Dropout(dropout_rate))
+
+    model.compile(loss='mean_squared_error', optimizer='adam' )
     return model
 
 
@@ -137,7 +139,8 @@ class neural(object):
         #self.setup_works()
         self.model = get_model(input_dim=self.xdim)
         if False:
-            self.gridsearch(self.X, self.y) # does not work seems to come in infinite loop or so. is not exiting with ^C
+            #self.gridsearch(self.X, self.y) # does not work seems to come in infinite loop or so. is not exiting with ^C
+            self.CV(self.X, self.y)
         if fraction:
             from sklearn.cross_validation import train_test_split
             X_train, X_test, y_train, y_test = train_test_split(self.X,self.y, train_size = fraction)
@@ -157,6 +160,18 @@ class neural(object):
         print scores
         return
 
+    def CV(self, X, y):
+        estimator = KerasRegressor(build_fn=test_model, nb_epoch=100, batch_size=5, verbose=1)
+        kfold = KFold(n_splits=3, random_state=seed)
+        results = cross_val_score( estimator, X,y, cv=kfold)
+        print("Results: %.2f (%.2f) MSE" % (results.mean(), results.std()))
+        print "results:", results
+        return
+
+
+
+
+
     def gridsearch(self, X, y):
         ''' perform a grid search on:
             - dropout_rate
@@ -169,16 +184,17 @@ class neural(object):
                 with: momentum  = [ 0.0, 0.2, 0.4, 0.6, 0.8, 0.9 ]
             '''
         #GS_model = KerasClassifier( build_fn=self.model, nb_epoch=10, dropout_rate=0.1 )
-        # dropout_rate = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7 ]
-        # weight_constraint = [ 1, 2, 3, 4, 5 ]
+        dropout_rate = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7 ]
+        weight_constraint = [ 1, 2, 3, 4, 5 ]
         # init_mode = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform']
         # activation= ['softmax', 'softplus', 'softsign', 'relu', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear']
 
         kfold = KFold(n_splits=3, random_state=seed )
 
-        GS_model = KerasRegressor( build_fn=test_model, nb_epoch=10, batch_size=10, verbose=1)
+        GS_model = KerasClassifier( build_fn=test_model, nb_epoch=10, batch_size=10, verbose=1)
 
-        param_grid = { 'nb_epoch' : [10,20], 'batch_size':[10, 20 ] }
+        #param_grid = { 'nb_epoch' : [10,20], 'batch_size':[10, 20 ] }
+        param_grid = dict(dropout_rate=dropout_rate, weight_constraint=weight_constraint)
 
         grid = GridSearchCV(estimator=GS_model, param_grid=param_grid, n_jobs=2, cv=2)
         print "before fit"

@@ -7,7 +7,8 @@
 #
 debug=1
 # import libraries
-from writings import log_io, print_title, sprint
+from CINDES4.utils.writings import log_io, print_title, sprint
+#from writings import log_io, print_title, sprint
 from inspect import stack
 import shutil #module to copy files
 from platform import node
@@ -31,7 +32,7 @@ import scipy
 import inputreader as inr
 import construction as zcon #all functions needed for constructing new geometries
 import reader as r # this reads the zmatrix in gaussian format
-from molecule import Molecule
+from CINDES4.utils.molecule import Molecule
 from predictions import predictor
 from montecarlo import montecarloprocedure
 from loggings import loggings
@@ -98,7 +99,7 @@ class Run(object):
         self.setup_filesystem()
         #zmatrix reading and splitting needs: self.-ncore / -line1 / -nch3
         #self.TZmat = geometry(param)
-        self.TZmat = geometry('ZMAT',param)
+        self.TZmat = geometry('ZMAT',**entries)
         self.set_calculation_properties()
         return
 
@@ -231,8 +232,9 @@ def get_startconf(param,array):
     return startconf
 
 # 2 geometry 
-def geometry(zmatrixfile,param,ilogging=True):
+def geometry(ilogging=True, **param):
     '''reads the zmat from a file and splits it'''
+    # note that zmatrixfile is now in **param
     framework = Molecule()
     zmat,fileid = r.zmatread(zmatrixfile)
     zmatdic = r.zmatvalues(fileid)

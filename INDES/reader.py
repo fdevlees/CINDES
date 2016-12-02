@@ -21,11 +21,11 @@ def zmatread(filename):
             break
         if not line: break
     return (czmat,fid)
-    
+
 def zmatvalues(fileid):
     """
     This function will make a dictionary of all the zmat values
-    NOTE: this function read until end of file. 
+    NOTE: this function read until end of file.
           A leading empty line is not allowed
     """
     dictio = {} 
@@ -38,7 +38,7 @@ def zmatprinter(czmat,dictio):
     """
     The aim of this function is to make a more compact zmatrix
     printing the values directly by replacing the variable names
-    
+
     I think i just have to print zmat, but checking for each element
     if it is a value from the dictionary. If so print value instead of key
 
@@ -79,21 +79,21 @@ def sitesplitter(zmatrix,natomscore,index,nsites): #here nsites is number of pos
         sitemat.append(zmatrix[natomscore+4*i:natomscore+4*(i+1)])
     logging.debug('sitemat' + pprint.pformat(sitemat))
     # now split in passive and active part
-    activeindex = [ ((x - natomscore + 3) / 4) -1 for x in index ] 
+    activeindex = [ ((x - natomscore + 3) / 4) -1 for x in index ]
     logging.info('activeindex: ' + str(activeindex))
     logging.debug('len(sitemat)' + str(len(sitemat)))
     active = []
     passive = []
     # here mistake!!! and inefficient better to loop over activesites    
     for i in activeindex:
-        active.append(sitemat[i])       
+        active.append(sitemat[i])
     for i in range(len(sitemat)):
         if not i in activeindex:
            passive.append(sitemat[i])
-    return (coremat, active, passive)    
+    return (coremat, active, passive)
 
 
-    
+
 
 if __name__ == "__main__":
     import sys
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     # 16 sites of 4 lines
     # remove the last line
     # hard coding that the core are the first 10 atoms
-    activesites = [ 39, 23, 31, 55, 47 ] 
+    activesites = [ 39, 23, 31, 55, 47 ]
     (coremat, activematrix, passivematrix) = sitesplitter( zmat, 10, activesites)
     # the index of the carbons of the methyl groups for the active sites
     # later on we can try to derive this matrix from the inputfile 

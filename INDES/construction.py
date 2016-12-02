@@ -5,7 +5,7 @@ from itertools import izip, islice
 from re import findall
 import re
 import logging
-from writings import log_io
+from CINDES4.utils.writings import log_io
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 #

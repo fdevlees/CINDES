@@ -1,9 +1,13 @@
-from distutils.core import setup
-from Cython.Build import cythonize
-import numpy as np
+#! /bin/env python
 
-setup(
-  name = 'Cython fast sum test',
-  ext_modules = cythonize("cython_sum.pyx"),
-  include_dirs = [np.get_include()],
-)
+from distutils.core import setup
+
+setup(name='INDES',
+      version='1.0',
+      description='Python Inverse Design Utility',
+      author='Jos Teunissen',
+      author_email='jteuniss@vub.ac.be',
+      packages=['INDES'],
+      #py_modules=['foo'],
+     )
+

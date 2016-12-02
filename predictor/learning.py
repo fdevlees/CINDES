@@ -1,10 +1,11 @@
 #!/bin/env python
 '''module for machine learning for CINDES2.py program'''
-debug=1
+debug=0
+
 #import pyximport; pyximport.install()
 #import cython_sum
 
-from writings import log_io, sprint, print_title
+#from writings import log_io, sprint, print_title
 import logging
 import sys
 import pickle
@@ -19,17 +20,22 @@ bar = progressbar.ProgressBar()
 
 from copy import deepcopy
 from pprint import pprint
-from converter import Converter
-import construction as zcon
+#from converter import Converter
+#import construction as zcon
+
+from CINDES4.utils.writings import log_io, sprint, print_title
+from CINDES4.utils.converter import Converter
+from CINDES4.INDES import construction as zcon
+
+
 
 class MachineLearning(object):
     ''' Class for making training set / kernel / coulomb / predictions etc. '''
-    def __init__(self,type='normal',kerneltype='laplacian'):
+    def __init__(self,name,type='normal',kerneltype='laplacian'):
         self.name = name
         self.type = type
         self.kerneltype = kerneltype
         print_title("As a kernel: "+kerneltype+" is used",outline='l',signator='k',newlines=True)
-
 
     def get_input(self,converter, data=1, inputfile='table.xyz'):
         y = []
@@ -95,7 +101,7 @@ class MachineLearning(object):
                      if i==j:
                          #C[i][i]= 0.5*xyz[i][2]**2 
                          C[i][i]= 0.5*xyz[i][2]**(2.4)
-                         
+
                      else:
                          t = xyz[i][2] * xyz[j][2]
                          xd = xyz[i][1][0] - xyz[j][1][0]
@@ -146,7 +152,7 @@ class MachineLearning(object):
             #        K[i][j] = 1.0
             for j in range(i+1): #for i in range(0) gives []
                 if not i==j:
-                    K[i][j] = np.exp( self.distance(self.coulombs[i], self.coulombs[j]) / ( 2 * sigma**2) )
+                    K[i][j] = np.exp( - self.distance(self.coulombs[i], self.coulombs[j]) / ( 2 * sigma**2) )
                     K[j][i] = K[i][j]
                 else:
                     K[i][j] = 1.0
@@ -263,7 +269,7 @@ class MachineLearning(object):
                 #ans += self.alpha[i] * np.exp( self.distance( self.coulombs_t[j], self.coulombs[i] ) / ( 2 * self.sigma **2) )
                 ans += self.alpha[i] * np.exp( self.distance( coulombje, self.coulombs[i] ) / ( 2 * self.sigma **2) )
             outtest.append(ans)
-            #print "$",
+            print "$",
         return outtest
 
     def predict(self, inputfile='chemspace.xyz'):
@@ -305,7 +311,7 @@ class MachineLearning(object):
         self.get_kernel()
         # calculate alpha coefficients
         self.solver()
-        return 
+        return
 
     def ML0(self,fraction,sigma,labda):
         print "sigma: ", str(sigma), ' ', 'labda: ', str(labda)
@@ -337,9 +343,10 @@ class MachineLearning(object):
             print "=> elapsed make kernel data: %s s" % t.secs
         else:
             self.get_kernel(sigma=sigma)
-        print "kernel is made. first few entries of self.kernel[0] look like:",
-        sprint(20,self.kernel[0])        
-        # solve Ka = y here. get alpha. 
+        if debug:
+            print "kernel is made. first few entries of self.kernel[0] look like:",
+            sprint(20,self.kernel[0])
+            # solve Ka = y here. get alpha. 
         self.solver(labda=labda)
         print "solver done: first elements of alpha:"
         sprint(5,self.alpha)
@@ -429,6 +436,58 @@ class MachineLearning(object):
 
         return rmse, mae
 
+    #def ML2(self,table,core,active,passive,converter, **kwargs):
+    def ML2(self,table,core,active,passive,converter):
+        sigma = 1e2
+        labda = 1e-5
+        tableindex = 2
+        print "sigma: ", str(sigma), ' ', 'labda: ', str(labda)
+        # get input from inputfile table
+        self.y =  np.fromiter((item[tableindex] for item in table ),np.float)
+        mats =  tuple( contozma(zcon.indtocon(item[0]),core,active,passive) for item in table )
+        try:
+            self.xyzs = [ zmatoxyz(converter,item) for item in mats ]
+        except KeyError:
+            print "Error: with:", item
+            i = mats.index(item)
+            print "index:", table[i]
+            raise
+
+        # calculate all coulomb matrices
+        self.coulombs = tuple( self.coulomb(item) for item in self.xyzs)
+        #print "the first entries of the first two Coulomb matrices: "
+        if self.type == 'norm3':
+            for n in [0,1]:
+                l = len( self.coulombs[0] )
+                k = 0
+                i = 0
+                while True:
+                    if i>3: break
+                    for j in range(i+1):
+                        try:
+                            print self.coulombs[n][k],
+                            k+=1
+                        except IndexError:
+                            break
+                    else:
+                        print
+                        i+=1
+                        continue
+                    break
+        else:
+            sprint(1,self.coulombs)
+        print "end"
+        # calculate kernel
+        self.get_kernel(sigma=sigma)
+        # calculate alpha coefficients
+        self.solver(labda=labda)
+        return
+
+
+def symsort(mat):
+    indexlist = np.argsort(np.linalg.norm(mat,axis=1))[::-1]
+    return mat[indexlist][:,indexlist]
+
 def MAE(data1,data2):
     assert len(data1)==len(data2)
     npoints = len(data1)
@@ -445,257 +504,223 @@ def RMSE(data1,data2):
         rmse += ( data1[i] - data2[i] )**2
     return np.sqrt( rmse / float(npoints) )
 
-def indtoint(index, array):
-    import construction as zcon
-    conf = zcon.indtocon(index)
-    intl = zcon.contoint(conf,array)
-    return intl
-
-def get_table(inputfile='table_unbiased'):
-    with open(inputfile,'rb') as f:
-        table = pickle.load(f)
-    return table
-
-def distance_int(x1, x2):
-    l = len(x1)
-    #laplacian
-    d = sum( [ abs(x1[i] - x2[i]) for i in range(l) ] )
-    return d
-
-def get_kernel_int(X, sigma=1):
-    l = len(X)
-    K = np.zeros([l,l])
+def bf(U,y):
+    l = len(U)
+    #FORWARD
+    alpha = np.zeros([l])
     for i in range(l):
-        for j in range(i+1): #for i in range(0) gives []
-            if not i==j:
-                K[i][j] = np.exp( - distance_int(X[i], X[j]) / sigma )
-                K[j][i] = K[i][j]
-            else:
-                K[i][j] = 1.0
-        print "#",
-    return K
-
-def kernel_callable(x1,x2, sigma=1):
-    kij = np.exp( - distance_int( x1, x2 ) / sigma )
-    return kij
-
-def solver_int(K,Y,labda=1):
-    l = len(K)
-    I = np.identity(l)
-    Ka = K + labda * I
-    alg = 7
-    if alg == 1:
-        alpha = np.dot( np.linalg.inv(Ka) , (Y.T) )
-    elif alg == 7:
-        from scipy import linalg
-        lu = linalg.lu_factor(Ka)
-        alpha = linalg.lu_solve(lu, Y)
-    print "alphashape:", alpha.shape
+        v = y[i]
+        if not i==0:
+            for j in range(i-1):
+                v = v - U[j][i]*alpha[j]
+        alpha[i] = v / U[i][i]
+    #BACKWARD
+    for i in range(l,0,-1):
+        v = alpha[i]
+        for j in range(l,1,-1):
+            v = v - u[i][j]*alpha[j]
+        alpha[i] = v / u[i][i] 
     return alpha
 
-def testnew_int(alpha,X,newX,sigma):
-    outtest = []
-    for new in newX:
-        ans = 0
-        for i in xrange(len(X)):
-            ans += alpha[i] * np.exp( - distance_int( X[i], new ) / sigma )
-        outtest.append(ans)
-        #print "$",
-    return outtest
+def cholesky(A):
+    return np.linalg.cholesky(A)
 
-def plot(data1,data2,*args,**kwargs):
+def ML(zmas,y):
+    '''machine learning on molecules represented by the zmas and training data in y vector '''
+    xyzs = tuple( toxyz(item) for item in zmas )
+    coulombs = tuple( coulomb(item) for item in xyzs)
+    K = kernel(coulombs)
+    alpha = solver(K,y)
+    return alpha,coulombs
+
+def plotmat(mat, log=1):
+    if log:
+        mat = np.log(mat)
     import matplotlib.pyplot as plt
-    import seaborn
-    plt.plot(data1,data2,*args,**kwargs)
+    plt.matshow(mat)
     plt.show()
-    return 
+    return   
 
-def new_procedure(sigma=1, labda=1):
-    import INDES
-    table = get_table()[:15]
-    param, array = INDES.read_input('INPUTBC')
-    X = [ indtoint(item[0],array) for item in table ]
-    print "X:",
-    sprint(10,X)
-    Y = np.asarray([ item[2] for item in table ])
-    print "Y:",
-    sprint(10,Y)
-    K = get_kernel_int(X,sigma = sigma )
-    print "K[1]:", K[1]
-    #sprint(10,K[1])
-    alpha = solver_int(K,Y, labda = labda)
-    print "alpha:", alpha
-    newX = X[:]
-    newY  = testnew_int(alpha, X, newX, sigma=sigma)
-    print "newY:",
-    sprint(10,newY)
-    R = RMSE(newY,Y)
-    print "R=", R
-    plot(newY,Y,'or')
+def zmatoxyz(a,mat):
+    zmat = a.read_zmalist(mat)
+    return a.zmatrix_to_cartesian()
+
+def contozma(conf,core,active,passive,**kwargs):
+    c = deepcopy(core)
+    a = deepcopy(active)
+    p = deepcopy(passive)
+    mat = zcon.constructor2(conf,c,a,p)
+    return mat
+
+##################################################################################### function to convert tablebin to table.xyz
+def generate_xyz(indices,converter,outputfile='table.xyz',y=0,*args,**kwargs):
+    ''' this function is used to convert tablebin into table.xyz so don't remove! '''
+    # get a list of configurations:
+    confs = [ zcon.indtocon(item) for item in indices ]
+    printindices = 1
+    try:
+       if type(y[0]) == str:
+           ty = 1
+       elif type(y[0]) in (tuple,list):
+           ty = 2
+    except TypeError:
+       ty=0
+       pass
+    # textfile open
+    with open(outputfile,'w') as fid:
+
+        for i in range(len(confs)):
+            print i, "indices[i]", indices[i]
+            logging.debug("i=" + str(i))
+            mat = contozma(confs[i],**kwargs)
+            xyz = zmatoxyz(converter,mat)
+            optimize=True
+            if optimize==True:
+                from molecule import Molecule
+                mol = Molecule()
+                mol.set_xyz(xyz)
+                mol.set_OBMol()
+                xyz = mol.optimize()
+                print "!",
+            if printindices==1:
+                fid.write('{:04d} {:4d} {:s}\n'.format(i+1,len(xyz), indices[i]))
+            else:
+                fid.write('{:03d} {:4d}\n'.format(i+1,len(xyz)))
+            if ty==1:
+                fid.write('{:12.8f}\n'.format(y[i]))
+            elif ty==2:
+                for item in y[i]:
+                    fid.write( ' {:12.8f} '.format(item) )
+                fid.write('\n')
+            for item in xyz:
+                fid.write('{:3s} {:10.4f} {:10.4f} {:10.4f}\n'.format(item[0],item[1][0],item[1][1],item[1][2]))
+            fid.write('\n')
+            # now for each mat transform to xyz
     return
 
-##### INDES CALL #####
+def generate1(converter,table=[],**kwargs):
+    '''This function is called by INDES during the genconf procedure to transform
+    a tablebin file into a table.xyz file that can than be read by the rest of this module'''
+    if table==[]:
+        with open('tablebin','rb') as f:
+            table = pickle.load(f)
+    # get the property vector Y
+    #Y = [ item[1] for item in table ]
+    Y = [ item[1:] for item in table ]
+    # for each index in tablebin get zmat
+    # get a list of indices
+    indices = [ item[0] for item in table ]
+    #Y, indices = zip( * [ item for item in zip(Y,indices) if not 'turned' in H    
+    generate_xyz(indices=indices,y=Y,converter=converter,**kwargs)
+    return
+
+###################################################################################### functions called by INDES to perform ML predictions
 @log_io()
-def learn_int_procedure(table, indices, array, sigma=1e2, labda=1e-4, **kwargs):
-    X = [ indtoint(item[0],array) for item in table ]
-    print "X:",
-    sprint(10,X)
-    Y = np.asarray([ item[2] for item in table ])
-    print "Y:",
-    sprint(10,Y)
-    K = get_kernel_int(X,sigma = sigma )
-    print "K[1]:", K[1]
-    #sprint(10,K[1])
-    alpha = solver_int(K,Y, labda = labda)
-    print "alpha:", alpha
-    if debug:
-        print "indices:", indices
-    newX = [ indtoint(item, array) for item in indices ]
-    newY  = testnew_int(alpha, X, newX, sigma=sigma)
-    print "newY", newY
-    #raise SystemExit('stop')
-    return newY
+def machinelearning(indices,table=[],**kwargs):
+    '''this function will be called by CINDES2.py'''
+    # 1. The table has to be converged to a table bin. This is in the generator functions in CINDES2.py
+    from converter import Converter
+    converter = Converter()
+    #generate a table.xyz file were all the xyzs of the table are generated. 
+    generate1(converter,table,**kwargs)
+    print "a table.xyz file is generated"
+    #this table.xyz is used to make the alpha vector via machinelearning.
+    my_ML = MachineLearning('name')
+    my_ML.ML()
+    #now there is an alpha argument of my_ML
+    print "alpha coefficients are calculated"
+    # now the indices has to be converted to xyz coordinates to. 
+    conffile='confs.xyz'
+    print "indices:", indices
+    generate_xyz(indices=indices,converter=converter,outputfile=conffile,**kwargs)
+    # there is a confs.xyz.
+    new_y = my_ML.predict(inputfile=conffile)
+    print new_y
+    return
+
+def machinelearning3(*args,**kwargs):
+    import concurrent.futures
+    with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
+        result = executor.submit(machinelearning2, *args, **kwargs).result()
+    return result
 
 @log_io()
-def learn_int_skl_procedure(table, indices, array, sigma=1e4, labda=1e-4, **kwargs):
-    X = [ indtoint(item[0],array) for item in table ]
-    print "X:",
-    sprint(10,X)
-    Y = np.asarray([ item[2] for item in table ])
-    print "Y:",
-    sprint(10,Y)
+def machinelearning2(indices,table,printlevel=1,**kwargs):
+    ''' or this function will be called by CINDES'''
+    from converter import Converter
+    converter = Converter()
+    kwargs['converter'] = converter
 
-    newX = [ indtoint(item, array) for item in indices ]
+    ## NB: the type here:
+    my_ML = MachineLearning('name',type='norm3')
 
-    from sklearn.kernel_ridge import KernelRidge
-    if False:
-        newY = skl_example(X,Y,newX)
-        #print "svY:", svY
-    elif False:
-        gamma = 1. / ( 2 * sigma**2 )
-        clf = KernelRidge(alpha = labda, kernel='rbf', gamma= gamma)
-        clf_out = clf.fit(X,Y)
-        print "clf_out:", clf_out
-        newY = clf.predict(newX)
-    else:
-        clf = KernelRidge(alpha = labda, kernel = kernel_callable, kernel_params = { 'sigma':sigma } )
-        clf_out = clf.fit(X,Y)
-        score   = clf.score(X,Y)
-        print "KRR score:", score
-        newY = clf.predict(newX)
-    if False:
-        from sklearn.svm import SVR
-        from sklearn import svm
-        from sklearn import preprocessing
-        from sklearn.model_selection import GridSearchCV
-        scaler = preprocessing.StandardScaler().fit(X)
-        X_scaled = scaler.transform(X)
-        newX_scaled = scaler.transform(newX)
-        #svr = SVR(        C     = 10   , kernel = kernel_callable, epsilon = 0.01 )
-        svr = svm.SVR(kernel = 'rbf' ,
-                      gamma  =   1e-8,
-                      C      =   1.0 ,
-                      epsilon=   0.1 )
-        svr = GridSearchCV( SVR( kernel='rbf', gamma=0.1, epsilon = 0.1 ), cv=5,
-                            param_grid = { 'C' : np.logspace(-10,10,5),
-                                           'gamma': np.logspace(-20,20,5) ,
-                                           'epsilon': [ 1, 0.1] } )
-        svr_out = svr.fit(X_scaled,Y)
-        print "best SVR params:", svr.best_params_
-        svrY = svr.predict(newX_scaled)
-        print "scores SVM:", svr.score(X_scaled,Y)
-        print "svrY", svrY
-        raise SystemExit('stop')
-    print "newY", newY
-    return newY
+    #now alpha and kernel are constructed
+    my_ML.ML2(table,**kwargs)
+    if printlevel==1:
+        print "alpha coefficients are calculated"
+        sprint(5,my_ML.alpha)
+        print "kernel[0:1]:"
+        sprint(2,my_ML.kernel)
+    # now the indices has to be converted to xyz coordinates to. 
+    new_y = my_ML.predict2(indices,**kwargs)
+    zzz = gc.collect()
+    print "gc.collect():", zzz
+    gc.DEBUG_LEAK
+    return new_y
 
-def skl_example(X,Y,newX):
-    from sklearn.svm import SVR
-    from sklearn.model_selection import GridSearchCV
-    from sklearn.model_selection import learning_curve
-    from sklearn.kernel_ridge import KernelRidge
-    sigma = 1.
-    if True:
-        #svr = GridSearchCV( SVR( kernel= 'rbf', gamma= 0.1) ,
-        #                    cv    = 5,
-        #                    param_grid ={'C'     : np.logspace(-4, 4,10) ,
-        #                                 'gamma' : np.logspace(-2, 2, 5) ,
-        #                                 'epsilon':np.logspace(-2, 2, 5) })
-        # unfortunately GridSearchCV cannot use a custom kernel
-        krr = GridSearchCV( KernelRidge( kernel= kernel_callable  ),
-                            cv    = 5,
-                            param_grid = {'alpha' : [1e4, 1e2, 1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5,1e-6 ],
-                                          'gamma' : np.logspace(-6, 6, 10) } )
-    else:
-        svr = SVR(         kernel = 'poly',degree=3, gamma = 0.01  , C = 10, epsilon = 0.01 )
-        krr = KernelRidge( kernel = 'rbf', gamma = 0.0005, alpha = 1e-2 )
-    #svr.fit(X, Y)
-    krr.fit(X, Y)
-    #svr_ratio = svr.best_estimator_
-    #print "sv_ratio:", svr_ratio
-    #krr_ratio = krr.best_estimator_
-    #print "krr_ratio:", krr_ratio
-    print "krr:", krr
-    #print "svr:", svr
+def MC_init(table=[],**kwargs):
+    from converter import Converter
+    converter = Converter()
+    generate1(converter,table,**kwargs)
+    print "a table.xyz file is generated"
+    my_ML = MachineLearning('name','norm3')
+    my_ML.ML()
+    return my_ML
 
-    #svY = svr.predict(newX)
-    krY = krr.predict(newX)
-    return  krY
+def MC_test_ind(ml, indices,**kwargs):
+    from converter import Converter
+    converter = Converter()
+    conffile='confs.xyz'
+    print "indices:", indices
+    generate_xyz(indices=indices,converter=converter,outputfile=conffile,**kwargs)
+    # there is a confs.xyz.
+    new_y = ml.predict(inputfile=conffile)
+    print new_y
+    return new_y
 
+def machinelearning4():
+    '''old version. try machinelearning5'''
+    from converter import Converter
+    converter = Converter()
+    kwargs=dict()
+    kwargs['converter'] = converter
 
-################# RUN AS __MAIN___ ########################
+    ## NB: the type here:
+    mlin = MachineLearning('name',type='norm2')
+    mlin.get_input(converter=converter)
+    #now we have my mlin.xyzs and mlin.y
+    print "some y values of total set"
+    sprint(5, mlin.y)
+    # now we need to split it in two parts. say 10 % training set and 90 % testset.
+    a = 0.8
+    mlin.ML0(a)   
+    print "DONE ML"
+    return
 
-def learn_int_skl_procedure(table, indices, array, sigma=1e4, labda=1e-4, **kwargs):
-    X = [ indtoint(item[0],array) for item in table ]
-    print "X:",
-    sprint(10,X)
-    Y = np.asarray([ item[2] for item in table ])
-    print "Y:",
-    sprint(10,Y)
-
-    newX = [ indtoint(item, array) for item in indices ]
-
-    from sklearn.kernel_ridge import KernelRidge
-    if False:
-        gamma = 1. / ( 2 * sigma**2 )
-        clf = KernelRidge(alpha = labda, kernel='rbf', gamma= gamma)
-        clf_out = clf.fit(X,Y)
-        print "clf_out:", clf_out
-        newY = clf.predict(newX)
-    else:
-        clf = KernelRidge(alpha = labda, kernel = kernel_callable, kernel_params = { 'sigma':sigma } )
-        clf_out = clf.fit(X,Y)
-        score   = clf.score(X,Y)
-        print "KRR score:", score
-        newY = clf.predict(newX)
-    if False:
-        from sklearn.svm import SVR
-        from sklearn import svm
-        from sklearn import preprocessing
-        from sklearn.model_selection import GridSearchCV
-        scaler = preprocessing.StandardScaler().fit(X)
-        X_scaled = scaler.transform(X)
-        newX_scaled = scaler.transform(newX)
-        #svr = SVR(        C     = 10   , kernel = kernel_callable, epsilon = 0.01 )
-        svr = svm.SVR(kernel = 'rbf' ,
-                      gamma  =   1e-8,
-                      C      =   1.0 ,
-                      epsilon=   0.1 )
-        svr = GridSearchCV( SVR( kernel='rbf', gamma=0.1, epsilon = 0.1 ), cv=5,
-                            param_grid = { 'C' : np.logspace(-10,10,5),
-                                           'gamma': np.logspace(-20,20,5) ,
-                                           'epsilon': [ 1, 0.1] } )
-        svr_out = svr.fit(X_scaled,Y)
-        print "best SVR params:", svr.best_params_
-        svrY = svr.predict(newX_scaled)
-        print "scores SVM:", svr.score(X_scaled,Y)
-        print "svrY", svrY
-        raise SystemExit('stop')
-    print "newY", newY
-    return newY
-
-######################################################################################
-
+def machinelearning5(sigma=1e4,labda=0,fraction=0.2,kerneltype='laplacian'):
+    from converter import Converter
+    converter = Converter()
+    kwargs = dict()
+    kwargs['converter'] = converter
+    print "KERNEL:", kerneltype
+    mlin = MachineLearning('name',type='norm3',kerneltype=kerneltype)
+    mlin.get_input(converter=converter)
+    #now we have my mlin.xyzs and mlin.y
+    print "some y values of total set"
+    sprint(5, mlin.y)
+    rmse, mae = mlin.ML0(fraction = fraction,sigma=sigma,labda=labda)
+    print "DONE ML"
+    return
 
 if __name__=='__main__':
     class Unbuffered(object):
@@ -720,14 +745,25 @@ if __name__=='__main__':
     parser.add_argument("-c","--cutoff",nargs=2, type = float, help="cutoff values min max")
     parser.add_argument("-l","--labda",action="store",nargs='?',type=float,default=1.e-5,const=1e-5,help="do a labda default 1e-5 KRR")
     parser.add_argument("-f","--fraction",action="store",nargs='?',type=float,default=1,const=1,help="between 0-1 use this fraction as training set")
-    parser.add_argument('file',help="a pickled tablebin file")
     args=parser.parse_args()
+    # get a test c,a,p
+    print args.cutoff 
 
-    import pickle
-    with open(args.file, 'rb') as f:
-        table = pickle.load(f)
+    if args.interactive:
+        pass
+    else:
+        if args.timer:
+            from timer import Timer
+            with Timer() as t:
+                machinelearning5(sigma=args.sigma,labda=args.labda, fraction=args.fraction)
+            print "=> elapsed learning5: %s s" % t.secs
+        else:
+            #print "args.kernel",args.kernel2
+            machinelearning5( sigma = args.sigma,
+                              labda = args.labda, 
+                           fraction = args.fraction,
+                         kerneltype = args.kernel )
+    print "DONE LEARNING.PY"
+    # load table.xyz
 
-
-
-    new_procedure(sigma=args.sigma, labda=args.labda)
 

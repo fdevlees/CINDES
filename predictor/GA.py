@@ -5,8 +5,9 @@ import numpy as np
 random = np.random.random
 
 # my own modules
-from writings import log_io, sprint, print_title
-import INDES
+#from writings import log_io, sprint, print_title
+from CINDES4.utils.writings import log_io, sprint, print_title
+from CINDES4 import INDES
 import learning
 import learning_int as ml_i
 

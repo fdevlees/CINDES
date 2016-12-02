@@ -4,10 +4,15 @@ debug = 0
 import pprint
 
 # my own modules
-import learning_skl as learning
-import learning_int as ml_int
-from writings import log_io
-import tfitter
+from CINDES4.predictor import learning_skl as learning
+from CINDES4.predictor import learning_int as ml_int
+from CINDES4.predictor import tfitter
+
+from CINDES4.utils.writings import log_io
+#import learning_skl as learning
+#import learning_int as ml_int
+#from writings import log_io
+#import tfitter
 
 def do_ml(indices, database, **TZmat):
     # via sklearn

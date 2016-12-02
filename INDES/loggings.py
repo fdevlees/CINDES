@@ -1,5 +1,6 @@
 debug=0
-from writings import log_io, sprint
+#from writings import log_io, sprint
+from CINDES4.utils.writings import log_io, print_title, sprint
 from copy import deepcopy
 import pickle
 import pprint
@@ -71,7 +72,8 @@ def log_pred_info(pred_info, count, k, l):
     return
 
 def pstats(pred_info):
-    import statistics
+    from CINDES4.utils import statistics
+    #import statistics
     print "pred_info:"
     transp = zip(*pred_info)
     n = len(transp)-3
