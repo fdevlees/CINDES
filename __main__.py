@@ -1,4 +1,5 @@
 ''' main callable for INDES '''
+# call with python -m CINDES4 -i <inputfile> 
 
 import argparse
 import logging
