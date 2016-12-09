@@ -29,8 +29,6 @@ with open(filename + '.xyz','w') as fid:
     for j in range(len(xyzs)):
         fid.write( ' '.join( [ item for item in xyzs[j] ]) + '\n' )
     fid.write('\n')
-    
-    
 
 
 

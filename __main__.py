@@ -1,5 +1,6 @@
 ''' main callable for INDES '''
 # call with python -m CINDES4 -i <inputfile> 
+# nohup python -m CINDES4 -i INPUTBC > outputfile 2>&1 &
 
 import argparse
 import logging

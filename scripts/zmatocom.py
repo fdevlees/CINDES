@@ -34,8 +34,6 @@ with open(filename + '.com','w') as fid:
     for j in range(3,len(zmat)):
         fid.write( ' '.join( [ zmat[j][i] for i in [0,1,4,2,5,3,6] ] ) + '\n' )
     fid.write('\n')
-    
-    
 
 
 

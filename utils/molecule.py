@@ -28,6 +28,10 @@ class Molecule(object):
         return
 
     def set_xyz(self,xyz):
+        # format example: with numpy arrays
+        # [['C', array([ 0.729536,  1.425402, -0.080846]), 12.011], 
+        # ['H', array([ 0.723016,  1.759466, -1.118944]), 1.00794], ['H', array([ 1.721619, 1.577878,  0.343836]), 1.00794], 
+        # ['H', array([ 0.009375,  2.007087,  0.494851]), 1.00794] ] 
         self.xyz=xyz
         return
 
@@ -88,6 +92,7 @@ class Molecule(object):
         return xyz
 
     def changeformat(self,new):
+        '''change from pure xyz to converter format with numpy arrays'''
         #print repr(new)
         newl = new.split('\n')[2:-1]
         #print "newl", newl

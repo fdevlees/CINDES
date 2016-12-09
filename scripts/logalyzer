@@ -19,7 +19,7 @@ if onefile == 1:
    f.logger.setLevel(logging.ERROR)
    datatje = f.parse()
    data.append(datatje.scfenergies-datatje.scfenergies[-2])
-else:    
+else:
    logfiles = []
    allfiles = os.listdir('data')
    for file in allfiles:
