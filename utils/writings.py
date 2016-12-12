@@ -30,7 +30,8 @@ def printname(name,signator='*',space='\n'*1):
     print side + 2*signator + '  ' + str(name) + '  ' + 2*signator
     print side + rest*signator
     print space,
-    
+
+
 from functools import wraps
 def log_io(pre=pre,post=post,signator='*'):
     assert len(signator)==1
@@ -113,8 +114,8 @@ def sprint(n,*args,**kwargs):
 
 
 def complexprint(data, func=lambda arg: arg, strfunc= lambda *s: s):
-    ''' this function prints all first level items of a collection(list/tuple/dict) on one line 
-    with the option of applying a function on each first level item.  
+    ''' this function prints all first level items of a collection(list/tuple/dict) on one line
+    with the option of applying a function on each first level item.
     a strfunc argument is available to be applied on each string encountered.
 
     example 1.
