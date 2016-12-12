@@ -27,6 +27,8 @@ class TestINDES2(unittest.TestCase):
     def test_genrandom(self):
         self.assertTrue( CINDES3.genrandom(self.param, self.array) )
 
+
+
 if __name__ == "__main__":
     unittest.main()
 

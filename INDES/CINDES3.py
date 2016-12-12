@@ -98,8 +98,8 @@ class Run(object):
         # for self.setup_filesystem one needs to have: self.(-nosub / -program)
         self.setup_filesystem()
         #zmatrix reading and splitting needs: self.-ncore / -line1 / -nch3
-        #self.TZmat = geometry(param)
-        self.TZmat = geometry('ZMAT',**entries)
+        #self.TZmat = r.geometry(param)
+        self.TZmat = r.geometry('ZMAT',**entries)
         self.set_calculation_properties()
         return
 
@@ -230,33 +230,6 @@ def get_startconf(param,array):
             logging.info("constructed random start configuration")
     logging.warning("startconf:"+pprint.pformat(startconf))
     return startconf
-
-# 2 geometry 
-def geometry(ilogging=True, **param):
-    '''reads the zmat from a file and splits it'''
-    # note that zmatrixfile is now in **param
-    framework = Molecule()
-    zmat,fileid = r.zmatread(zmatrixfile)
-    zmatdic = r.zmatvalues(fileid)
-    logging.debug(pprint.pformat(zmatdic))
-    fileid.close()
-    # FORMATTING AND SPLITTING OF ZMATRIX
-    zmat = r.zmatprinter(zmat,zmatdic)
-    logging.debug("zmat:\n" + pprint.pformat(zmat))
-    (coremat, activemat, passivemat) = r.sitesplitter(zmat, param['ncore'], param['line1'], param['nch3'])
-    # now i save here the matrices for later use, and then the others are allowed to change for each molecule
-    if ilogging:
-        logging.info('coremat:' + pprint.pformat(coremat))
-        logging.info('activemat:' + pprint.pformat(activemat))
-        logging.info('passivemat:' + pprint.pformat(passivemat))
-        logging.info("----- END FORMATTING & SPLITTING -----")
-    Total_Zmat = { 'core':coremat, 'active':activemat, 'passive':passivemat }
-    try:
-        framework.set_framework(**Total_Zmat)
-    except IndexError as e:
-        print "IndexError:", str(e)
-        print "no smiles ;("
-    return Total_Zmat
 
 # 3 site order (sequence)
 def get_sequence(count, myrun):
@@ -571,7 +544,7 @@ def genconf(param):
     #elif param['program'] in ['ORCA','orca','Orca']:
     #    runspecs_orca(param)
     param = myrun.__dict__
-    TZmat = geometry('ZMAT',param)
+    TZmat = r.geometry('ZMAT',param)
     conf = zcon.indtocon(param['startind'])
     print "in GENCONF: conf is:", conf
     param['workdir'] = os.getcwd()
@@ -591,7 +564,7 @@ def generate_procedure(param,array):
     from converter import Converter
     converter = Converter()
     #get structure
-    TZmat = geometry(zmatrixfile,param)
+    TZmat = r.geometry(zmatrixfile,param)
     #to get an xyz file with the data from tablebin do generate1()
     import learning
     with open('tablebin','rb') as f:

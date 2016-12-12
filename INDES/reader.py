@@ -5,6 +5,33 @@ import logging
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 # compu chem. library
 
+def geometry(ilogging=True,zmatrixfile='ZMAT', **param):
+    '''reads the zmat from a file and splits it'''
+    # note that zmatrixfile is now in **param
+    zmat,fileid = zmatread(zmatrixfile)
+    zmatdic = zmatvalues(fileid)
+    logging.debug(pprint.pformat(zmatdic))
+    fileid.close()
+    # FORMATTING AND SPLITTING OF ZMATRIX
+    zmat = zmatprinter(zmat,zmatdic)
+    logging.debug("zmat:\n" + pprint.pformat(zmat))
+    (coremat, activemat, passivemat) = sitesplitter(zmat, param['ncore'], param['line1'], param['nch3'])
+    # now i save here the matrices for later use, and then the others are allowed to change for each molecule
+    if ilogging:
+        logging.info('coremat:' + pprint.pformat(coremat))
+        logging.info('activemat:' + pprint.pformat(activemat))
+        logging.info('passivemat:' + pprint.pformat(passivemat))
+        logging.info("----- END FORMATTING & SPLITTING -----")
+    Total_Zmat = { 'core':coremat, 'active':activemat, 'passive':passivemat }
+    try:
+        from CINDES4.utils.molecule import Molecule
+        framework = Molecule()
+        framework.set_framework(**Total_Zmat)
+    except IndexError as e:
+        print "IndexError:", str(e)
+        print "no smiles ;("
+    return Total_Zmat
+
 def zmatread(filename):
     """
     This function reads the Z matrix
@@ -28,7 +55,7 @@ def zmatvalues(fileid):
     NOTE: this function read until end of file.
           A leading empty line is not allowed
     """
-    dictio = {} 
+    dictio = {}
     for line in fileid:
         lijntje = line.split()
         dictio[lijntje[0]] = lijntje[1]
