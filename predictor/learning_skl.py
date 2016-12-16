@@ -1042,5 +1042,10 @@ if __name__=='__main__':
     #                           kernel = args.kernel )
     print "DONE LEARNING.PY"
     # load table.xyz
+else:
+    class Defaults():
+        cutoff=False
+    args=Defaults()
+    args=Defaults()
 
 
