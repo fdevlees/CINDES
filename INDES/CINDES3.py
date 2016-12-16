@@ -57,34 +57,6 @@ class Unbuffered(object):
         return getattr(self.stream, attr)
 sys.stdout = Unbuffered(sys.stdout)
 
-# read the input
-@log_io()
-def read_input(siteinput):
-    subinp = inr.openfile(siteinput) #this is the fileID
-    param = inr.readfile(subinp) #inputline is a tuple with all kind of input variables
-    #print "PARAMETERS:", pp.pprint(param)
-    #there are defaults given in the inputreader module
-    #here for a new link feature. nsites is len(line1) - nlinks
-    if 'nlinks' in param:
-        param['nsites'] = len(param['line1']) - param['nlinks']
-    else:
-        param['nsites'] = len(param['line1'])
-    #####################
-    if param['procedure'] in [ 'genconf' ]:
-        print "Generate Configuration Procedure Active"
-        array = []
-    else:
-        array = inr.substireader(param['nsites'],subinp)
-        if not param['procedure'] in ['getrandom', 'genrandom']:
-            print "ARRAY:", 
-            pp.pprint(array)
-    if not param['procedure'] in ['getrandom', 'genrandom']:
-        logging.info("INPUT PARAMETERS:")
-        for key,value in param.iteritems():
-            logging.info(key + ' : ' + str(value))
-        logging.info("-----END INPUT READING-----")
-    return param, array
-
 class Run(object):
     "This is the main object for all the parameters used during the process"
     def __init__(self,**entries):
@@ -637,7 +609,7 @@ if __name__ == "__main__":
     logging.info("name of zmatfile:  " + args.zmatrixfile)
     logging.info("name of input-file:" + args.inputfile)
     # INPUT READING
-    param, array = read_input(args.inputfile)
+    param, array = inr.read_input(args.inputfile)
     param['zmatrixfile']=args.zmatrixfile
     # END INPUT READING
 

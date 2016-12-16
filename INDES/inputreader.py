@@ -3,6 +3,7 @@
 import logging
 from pprint import pprint
 import re
+
 inrlog = logging.getLogger('substireader')
 inrlog.setLevel(logging.INFO)
 # set handler
@@ -11,12 +12,38 @@ ch.setLevel(logging.INFO)
 # set formatter
 formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
-
 inrlog.addHandler(ch)
+
+from CINDES4.utils.writings import log_io
+
+# MAIN FUNCTION
+@log_io()
+def read_input(siteinput):
+    subinp = openfile(siteinput) #this is the fileID
+    param = readfile(subinp) #inputline is a tuple with all kind of input variables
+    #here for a new link feature. nsites is len(line1) - nlinks
+    if 'nlinks' in param:
+        param['nsites'] = len(param['line1']) - param['nlinks']
+    else:
+        param['nsites'] = len(param['line1'])
+    #####################
+    if param['procedure'] in [ 'genconf' ]:
+        print "Generate Configuration Procedure Active"
+        array = []
+    else:
+        array = substireader(param['nsites'],subinp)
+        if not param['procedure'] in ['getrandom', 'genrandom']:
+            print "ARRAY:",
+            pprint(array)
+    if not param['procedure'] in ['getrandom', 'genrandom']:
+        logging.info("INPUT PARAMETERS:")
+        for key,value in param.iteritems():
+            logging.info(key + ' : ' + str(value))
+    return param, array
 
 def openfile(filename):
     '''opens file in reading mode and returns fileid'''
-    subinp = open(filename,'r')   
+    subinp = open(filename,'r')
     return subinp
 
 def readfile(subinp):
@@ -77,7 +104,7 @@ def readfile(subinp):
         if line[0]=='#':continue
         elif 'bc' in line:
             paras['bcprop'] = line.split()[1]
-            paras['bcval'] = line.split()[2] 
+            paras['bcval'] = line.split()[2]
             try:
                 paras['bcoptimum'] = line.split()[3]
             except IndexError:
@@ -188,11 +215,10 @@ def readfile(subinp):
         else:
             print "line is not interpreted!", line
 
- 
     # it turns out to be helpful to have a flag to know if the stab or polar property has to be calculated so:
     # NOTE THAT HERE it is not possible to use polar and stab simultaneously
     if 'bcprop' in paras: #test if we use a BC
-        if paras['bcprop']=='stab': 
+        if paras['bcprop']=='stab':
             paras['stab']=1 #test if maybe that one is stab. if such stab=1
         elif paras['property']=='stab':
             paras['stab']=1

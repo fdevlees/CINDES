@@ -58,7 +58,7 @@ class Test_reader(unittest.TestCase):
         import os
         pwd = os.getcwd()
         if debug: print "pwd:", pwd
-        self.zmatfile = path + '/' + 'ZMAT'
+        self.zmatfile = path + '/testfiles/' + 'ZMAT'
         (zmat, fileid) = reader.zmatread(self.zmatfile)
         self.zmat      = zmat
         self.zdic      = reader.zmatvalues(fileid)
@@ -88,7 +88,7 @@ class Test_reader(unittest.TestCase):
 
 class Test_reader_geometry(unittest.TestCase):
     def setUp(self):
-        self.zmatfile = path + '/' + 'ZMAT'
+        self.zmatfile = path + '/testfiles/' + 'ZMAT'
         self.param = { 'ncore': 4, 'nch3':4, 'line1':(5,19) }
 
     def test_geometry(self):

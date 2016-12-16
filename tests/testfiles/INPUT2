@@ -1,0 +1,39 @@
+property stab
+optimum max
+bc polar 60 min
+program orca
+try_ready 1
+test_ready 1
+regression 3
+startind N_CF_CNHCHHH
+functional b3pw91
+mult 2
+nprocs 5
+debug 1
+sequences 3
+0 1
+1 0
+1 0
+timelimit 25000000
+timestep 300
+nosub 2
+maxiter 10
+sites 5 9 17
+basisset 6-31G
+identify neop_
+natomscore 4
+nch3 4
+END
+nsubsit1 3
+N
+C F
+C Cl
+nsubsit1 3
+C Ph
+C F
+C Cl
+nsubsit1 4
+C C F H F
+C N O O 
+C N H C H H H
+C C N

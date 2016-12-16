@@ -62,7 +62,7 @@ def get_database():
     return table
 
 def get_input():
-    options, subs_array = INDES.read_input('INPUTBC')
+    options, subs_array = INDES.inr.read_input('INPUTBC')
     if debug: print "len(subs_array)", len(subs_array)
     return options, subs_array
 

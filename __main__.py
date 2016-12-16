@@ -6,7 +6,7 @@ import argparse
 import logging
 
 from utils.writings import print_title
-from INDES.CINDES3 import read_input, main, testrun, generate_procedure, genconf, genrandom
+from INDES.inputreader import read_input
 
 if True:
     print_title("C I N D E S\nAn Inverse Molecular Design Program\nwritten by Jos L. Teunissen", newlines=True)
@@ -27,15 +27,26 @@ if True:
 
     #START PROGRAM PROCEDURE
     if param['procedure'] == 'standard':
+        from INDES.CINDES3 import main
         main(param,array)
+
     elif param['procedure'] == 'test':
+        from INDES.CINDES3 import testrun
         testrun(param,array)
+
     elif param['procedure'] == 'generate':
+        from INDES.CINDES3 import generate_procedure
         generate_procedure(param,array)
+
     elif param['procedure'] == 'genconf':
+        from INDES.CINDES3 import genconf
         genconf(param)
+
     elif param['procedure'] in [ 'getrandom' ,'genrandom']:
+        from INDES.CINDES3 import genrandom
         genrandom(param,array)
+
     else:
         logging.warning('proceduretype not recognized')
+
     print "bla"

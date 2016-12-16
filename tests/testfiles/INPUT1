@@ -1,0 +1,21 @@
+property energy
+bc homo -3
+program gaussian
+timelimit 25000000
+timestep 300
+nosub 2
+maxiter 10
+sites 5 9
+basisset 6-31G
+identify neop_
+natomscore 4
+nch3 4
+END
+nsubsit1 3
+C H
+C F
+C Cl
+nsubsit1 3
+C H
+C F
+C Cl
