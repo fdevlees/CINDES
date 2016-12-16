@@ -46,6 +46,30 @@ def openfile(filename):
     subinp = open(filename,'r')
     return subinp
 
+def get_preds(subinp, line):
+    ''' for future development a more extensible format for giving which predictions are tried
+    it returns a list of dictionaries with each dictionary having one obligatory type key '''
+    # default predicition types: 
+    defaults = { 'ML' : { 'type': 'ML', 'descriptor':'coulomb'},
+                 'iML': { 'type':'iML' },
+                 'NN' : { 'type': 'NN', 'descriptor':'BoB'},
+                 '1D' : { 'type': '1D' },
+                 '2D' : { 'type': '2D' }
+               }
+
+    npredictions = int(line.split()[1])
+    preds = []
+    for _ in range(npredictions):
+        line = subinp.readline()
+        ptype= line.split()[0]
+        pred = defaults[ptype]
+        try:
+            pred['descriptor']=line.split()[1]
+        except IndexError:
+            pass
+        preds.append(pred)
+    return subinp, preds
+
 def readfile(subinp):
     '''this method reads all the inputkeywords'''
     #default values
@@ -80,6 +104,7 @@ def readfile(subinp):
            'extrawaittime': 2,
            'timelimit':250000,
            'timestep':300,
+           'predictions':[],
            'maxiter':10,
            'basisset':'6-31G',
            'functional':'b3lyp',
@@ -148,7 +173,11 @@ def readfile(subinp):
         elif 'twodimreg' in line: paras['tdregression'] = 1
         elif 'difmodel' in line: paras['difmodel'] = 1
         elif 'optimum' in line: paras['optimum'] = line.split()[1]
-        elif 'sequence' in line: 
+        elif 'predictions' in line:
+            subinp, paras['predictions'] = get_preds( subinp, line)
+            #paras['predictions'] = get_preds(subinp, line)
+
+        elif 'sequence' in line:
             nsequences = int(line.split()[1])
             sequences = []
             for _ in range(nsequences):
