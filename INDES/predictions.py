@@ -51,7 +51,7 @@ def predictor(run_object,table,indices_todo,data_nodo,count, array=[]):
         elif ptype=='iML':
             preds = ml_int.learn_int_skl_procedure(table,indices_todo, array, **TZmat)
         elif ptype=='NN':
-            pass
+            preds = learning.ANN(indices_todo, table, **TZmat)
         pred['results'] = dict( zip( indices_todo, preds ) )
         predict.append(pred)
 
