@@ -38,29 +38,38 @@ def log_table( data, table):
 
 def log_screen( data, predict):
     datadict = dict( ( (item[0], item[1:]) for item in data) )
+    #HEADER
+    print "index, value", ' '.join( item['type'] for item in predict )
     for key, values in datadict.iteritems():
         print key, values[1],
-        for predict_type in ['1D','2D','ML','iML','MC']:
+        for prediction in predict:
             try:
-                print predict[predict_type][key],
+                print prediction['results'][key],
             except KeyError:
                 pass
-            except TypeError:
-                print "predict:", predict
-                raise
         print
     return datadict
 
-def get_pred_info( data_dict, predict ):
-    # from the predict types that are present 
+#def get_pred_info( data_dict, predict ):
+#    # from the predict types that are present 
+#    pred_info = []
+#    pred_types = sorted( predict.keys() )
+#    for index in sorted( predict[pred_types[0]].keys() ) : # getting the indices of the first prediction values in keys # for index in ['1D','2D','Dif','ML']
+#        index_info = []
+#        # add first the real data item. so it is the first item. 
+#        index_info.extend( [ index, data_dict[index][1] ] )  #index 1 is normally the optimization property. 
+#        for pred_type in pred_types:
+#            index_info.append( predict[ pred_type ] [index])
+#        pred_info.append(index_info)
+#    return pred_info
+
+def get_pred_info( data_dict, predictions ):
     pred_info = []
-    pred_types = sorted( predict.keys() )
-    for index in sorted( predict[pred_types[0]].keys() ) : # getting the indices of the first prediction values in keys # for index in ['1D','2D','Dif','ML']
+    for index in predictions[0]['results'].keys() :
         index_info = []
-        # add first the real data item. so it is the first item. 
-        index_info.extend( [ index, data_dict[index][1] ] )  #index 1 is normally the optimization property. 
-        for pred_type in pred_types:
-            index_info.append( predict[ pred_type ] [index])
+        index_info.extend( [ index, data_dict[index][1] ])
+        for prediction in predictions:
+            index_info.append( prediction['results'][index])
         pred_info.append(index_info)
     return pred_info
 
@@ -100,7 +109,7 @@ def pstats(pred_info):
 
 
 @log_io()
-def loggings(data,table,count,k,l,predict={}):
+def loggings(data,table,count,k,l,predict=[]):
 
     #--- LOGGINGS: CYCLESINFO
     log_cyclesinfo(data, count,k,l)
@@ -115,11 +124,19 @@ def loggings(data,table,count,k,l,predict={}):
     data_dict = log_screen( data, predict )
 
     #---- LOGGINGS: PREDICTIONS
-    if not predict=={}:
+    #if not predict=={}:
+    #    pred_info = get_pred_info( data_dict, predict )
+    #    log_pred_info( pred_info, count, k, l )
+    #    if True:
+    #        pstats(pred_info)
+
+    #---- NEW LOGGINGS: PREDICTIONS
+    if not predict == []:
         pred_info = get_pred_info( data_dict, predict )
         log_pred_info( pred_info, count, k, l )
         if True:
             pstats(pred_info)
+
     #-----
     print "TIME:", time.strftime("%d %B %Y %H:%M:%S")
     return table

@@ -959,6 +959,28 @@ def normal_machinelearning(indices=[], table=[], sigma=1e6, labda= 1e-6, printle
 ############### COPY of for call as __main__ ######
 
 @log_io()
+def ANN(indices=[],table=[],sigma=1e4, labda= 1., printlevel=1,fraction=0.5, kernel='gaussian', descriptor='norm4', **kwargs):
+    ''' or this function will be called by CINDES'''
+    #from converter import Converter
+    from CINDES4.utils.converter import Converter
+    converter = Converter()
+    kwargs['converter'] = converter
+    my_ML = MachineLearning(type=descriptor,table=table,kerneltype= kernel, **kwargs)
+    print "X shape:", my_ML.coulombs.shape
+    print "Y shape:", my_ML.y.shape
+    print "X[0] shape:", my_ML.coulombs[0].shape
+    import neural
+    new_y = neural.main(X=my_ML.coulombs, y = my_ML.y , fraction = fraction)
+    #raise SystemExit('stop')
+    return new_y
+
+
+
+
+
+
+
+@log_io()
 def Amachinelearning2(indices=[],table=[],sigma=1e4, labda= 1., printlevel=1,fraction=0.5, kernel='gaussian', descriptor='norm4', **kwargs):
     ''' or this function will be called by CINDES'''
     #from converter import Converter
@@ -975,7 +997,7 @@ def Amachinelearning2(indices=[],table=[],sigma=1e4, labda= 1., printlevel=1,fra
         print "Y shape:", my_ML.y.shape
         print "X[0] shape:", my_ML.coulombs[0].shape
         import neural
-        new_y = neural.main(X=my_ML.coulombs, y = my_ML.y , fraction = fraction)
+        new_y = neural.main(X=my_ML.coulombs, y = my_ML.y , fraction = 0.5)
         raise SystemExit('stop')
 
 
@@ -1026,7 +1048,7 @@ if __name__=='__main__':
     #if args.timer:
     if True:
         print "use sklearn:", args.use_sklearn
-        from timer import Timer
+        from CINDES4.utils.timer import Timer
         with Timer() as t:
             Amachinelearning2( sigma = args.sigma,
                                labda = args.labda,
@@ -1042,5 +1064,11 @@ if __name__=='__main__':
     #                           kernel = args.kernel )
     print "DONE LEARNING.PY"
     # load table.xyz
+else:
+    class Defaults():
+        cutoff=False
+        neural=True
+        fraction=0.0
+    args=Defaults()
 
 

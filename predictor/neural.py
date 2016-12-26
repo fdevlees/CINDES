@@ -59,12 +59,20 @@ def RMSE(data1,data2):
         rmse += ( data1[i] - data2[i] )**2
     return np.sqrt( rmse / float(npoints) )
 
-def get_model(input_dim, dropout_rate=0.0, weight_constraint=0):
+def get_model(input_dim=3136, 
+              dropout_rate=0.3, 
+              weight_constraint=3, 
+              optimizer='rmsprop', 
+              activation='relu',
+              init = 'normal',
+              nn_lay1 = 128,
+              nn_lay2 =  64
+              ):
     # 1. input layer
     model = Sequential()
-    init_mode = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform']
-    init = 'normal'
-    activation = 'relu' # also try relu / sigmoid
+    #init_mode = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform']
+    # init = 'normal'
+    #activation = 'relu' # also try relu / sigmoid
     activation_final = 'relu' # relu / sigmoid / softmax #softmax performs badly
     #dropout_final=0.02
     w_l2 = 1e-20
@@ -73,13 +81,13 @@ def get_model(input_dim, dropout_rate=0.0, weight_constraint=0):
     #a_l2 = 0.
     if True: #regularization
         # option 2 # init normal / uniform
-        model.add(Dense(output_dim=128, input_dim=input_dim, init=init,
+        model.add(Dense(output_dim=nn_lay1, input_dim=input_dim, init=init,
                              W_regularizer=l2(w_l2),
                              activity_regularizer=activity_l2(a_l2))) #100 works. 150 not
         model.add(Activation(activation))
         model.add(Dropout(dropout_rate))
         # 2. Hidden layers with weights. 
-        model.add(Dense(output_dim=64, input_dim=input_dim, init=init,
+        model.add(Dense(output_dim=nn_lay2, input_dim=input_dim, init=init,
                              W_regularizer=l2(w_l2),
                              W_constraint=maxnorm(weight_constraint),
                              activity_regularizer=activity_l2(a_l2))) #100 works. 150 not
@@ -91,6 +99,7 @@ def get_model(input_dim, dropout_rate=0.0, weight_constraint=0):
                              activity_regularizer=activity_l2(a_l2))) #100 works. 150 not
         model.add(Activation(activation_final))
         model.add(Dropout(dropout_rate))
+    model.compile(loss='mean_squared_error', optimizer=optimizer )
     return model
 
 
@@ -118,16 +127,12 @@ def test_model(dropout_rate=0.0, weight_constraint=0):
 
 
 
-
 class neural(object):
 
-    def __init__(self, X, y, fraction):
-        self.scaling=True
+    def __init__(self, X, y, fraction=False, scaling=True, grid_search=True, *kwargs):
+        self.scaling = scaling
         if self.scaling:
-            from sklearn import preprocessing
-            scaler = preprocessing.StandardScaler().fit(X)
-            X_scaled = scaler.transform(X)
-            self.X = X_scaled
+            self.X = self.scaler(X)
             #newX_scaled = scaler.transform(newX)
         else:
             self.X = X
@@ -136,8 +141,16 @@ class neural(object):
         self.ndim = len(self.X)
         self.xdim = len(self.X[0])
         print "ndim,xdim", self.ndim, self.xdim
+        return
+
+    def scaler(self,X):
+        from sklearn import preprocessing
+        self.scaler = preprocessing.StandardScaler().fit(X)
+        X_scaled = self.scaler.transform(X)
+        return X_scaled
+
+    def run_procedure_testing(self):
         #self.setup_works()
-        self.model = get_model(input_dim=self.xdim)
         if False:
             #self.gridsearch(self.X, self.y) # does not work seems to come in infinite loop or so. is not exiting with ^C
             self.CV(self.X, self.y)
@@ -158,7 +171,34 @@ class neural(object):
             plot_error( pred_test,  y_test, 'bo', alpha=0.5)
             plt.show()
         print scores
+        self.scores = scores
         return
+
+    def run_procedure_INDES(self, X_new):
+
+        # optimize parameters
+        if self.grid_search:
+            hyperparameters = self.grid_search(self.X, self.y)
+            print "hyperparameters:", hyperparameters
+        else:
+            self.model = get_model(input_dim        = self.xdim,
+                                   dropout_rate     = 0.3,
+                                   weight_constraint= 3,
+                                   optimizer        = 'adam',
+                                   activation       = 'relu',
+                                   init             = 'normal',
+                                   nn_lay1          = 128,
+                                   nn_lay2          =  64)
+            self.CV(self.X, self.y)
+
+        # train on whole set
+        self.fit(self.X, self.y)
+
+        # predict:
+        if self.scaling:
+            X_new = self.scaler(X_new)
+        y_new  = self.test_new( X_new )
+        return y_new
 
     def CV(self, X, y):
         estimator = KerasRegressor(build_fn=test_model, nb_epoch=100, batch_size=5, verbose=1)
@@ -168,11 +208,7 @@ class neural(object):
         print "results:", results
         return
 
-
-
-
-
-    def gridsearch(self, X, y):
+    def grid_search(self, X, y):
         ''' perform a grid search on:
             - dropout_rate
             - weight_constraint
@@ -184,19 +220,31 @@ class neural(object):
                 with: momentum  = [ 0.0, 0.2, 0.4, 0.6, 0.8, 0.9 ]
             '''
         #GS_model = KerasClassifier( build_fn=self.model, nb_epoch=10, dropout_rate=0.1 )
-        dropout_rate = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7 ]
+        dropout_rate_grand = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7 ]
+        dropout_rate_small = [0.0, 0.15, 0.3 ]
         weight_constraint = [ 1, 2, 3, 4, 5 ]
-        # init_mode = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform']
-        # activation= ['softmax', 'softplus', 'softsign', 'relu', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear']
+        init_mode = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform']
+        activation= ['softmax', 'softplus', 'softsign', 'relu', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear']
+        optimizers= ['rmsprop', 'adam' ]
 
         kfold = KFold(n_splits=3, random_state=seed )
 
-        GS_model = KerasClassifier( build_fn=test_model, nb_epoch=10, batch_size=10, verbose=1)
+        estimator = KerasRegressor( build_fn=get_model, nb_epoch=10, batch_size=30, verbose=1)
 
         #param_grid = { 'nb_epoch' : [10,20], 'batch_size':[10, 20 ] }
-        param_grid = dict(dropout_rate=dropout_rate, weight_constraint=weight_constraint)
+        #param_grid = dict(dropout_rate=dropout_rate, weight_constraint=weight_constraint, optimizer=optimizers)
+        #param_grid = dict(optimizer=optimizers)
 
-        grid = GridSearchCV(estimator=GS_model, param_grid=param_grid, n_jobs=2, cv=2)
+        param_grid = dict(
+                         #  nb_epoch         = [10, 20 ],
+                         #  batch_size       = [10, 20 ],
+                         #  dropout_rate     = dropout_rate_small,
+                         #  weight_constraint= weight_constraint  )
+                            activation       = activation   )
+                         #  optimizer        = optimizers   )
+                         #  init_mode        = init_mode   )
+
+        grid = GridSearchCV(estimator=estimator, param_grid=param_grid, cv=kfold)
         print "before fit"
         grid_result = grid.fit(X,y)
 
@@ -207,6 +255,8 @@ class neural(object):
         params = grid_result.cv_results_['params']
         for mean, stdev, param in zip(means, stds, params):
             print("%f (%f) with: %r" % (mean, stdev, param))
+
+        print "grid_result:", grid_result
         return grid_result
 
     def setup_works(self):
@@ -248,7 +298,6 @@ class neural(object):
             self.model.add(Dropout(self.dropout))
         return
 
-
     def compile(self):
         # different optimizers:
         # SGD = stochastic gradient descent 
@@ -281,7 +330,13 @@ class neural(object):
         #if debug: print " in test_new; pred_y:", pred_y
         return pred_y
 
-def main(X,y, fraction):
+#### Call CINDES for predictions: ####
+def main(X,y, X_new=[], fraction=0.0):
     #run_example(X,y)
     NN = neural(X,y, fraction)
-    return
+    NN.run_procedure_INDES(X_new)
+    return NN.scores
+
+
+
+
