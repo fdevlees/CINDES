@@ -533,15 +533,15 @@ def genconf(param):
 # 3: generate
 def generate_procedure(param,array):
     '''generate all structures and print in format'''
-    from converter import Converter
+    from CINDES4.utils.converter import Converter
+    from CINDES4.utils import writings
+    from CINDES4.predictor import learning
     converter = Converter()
     #get structure
-    TZmat = r.geometry(zmatrixfile,param)
+    TZmat = r.geometry(**param)
     #to get an xyz file with the data from tablebin do generate1()
-    import learning
     with open('tablebin','rb') as f:
         table = pickle.load(f)
-    import writings
     #print table[508:510]
     learning.generate1(converter=converter,table=table,**TZmat)
     #to get an xyz file with all the possible structures possible:
@@ -586,7 +586,11 @@ def genrandom(param,array):
     for _ in xrange(param['nrandom']):
             conf = []
             for i in range(len(array)):
-                conf.append( random.choice(array[i]))
+                if True:
+                    while True:
+                        group = random.choice(array[i])
+                        if not ''.join(group) in ['CCOOH','CO','CNOO']: break
+                conf.append( group )
             print zcon.contoind(conf)
     print
     return True

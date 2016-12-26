@@ -563,6 +563,7 @@ def generate_xyz(indices,converter,outputfile='table.xyz',y=0,*args,**kwargs):
            ty = 1
        elif type(y[0]) in (tuple,list):
            ty = 2
+           print "ty=2"
     except TypeError:
        ty=0
        pass
@@ -576,7 +577,7 @@ def generate_xyz(indices,converter,outputfile='table.xyz',y=0,*args,**kwargs):
             xyz = zmatoxyz(converter,mat)
             optimize=True
             if optimize==True:
-                from molecule import Molecule
+                from CINDES4.utils.molecule import Molecule
                 mol = Molecule()
                 mol.set_xyz(xyz)
                 mol.set_OBMol()
@@ -590,6 +591,7 @@ def generate_xyz(indices,converter,outputfile='table.xyz',y=0,*args,**kwargs):
                 fid.write('{:12.8f}\n'.format(y[i]))
             elif ty==2:
                 for item in y[i]:
+                    #print "y[i]:", y[i]
                     fid.write( ' {:12.8f} '.format(item) )
                 fid.write('\n')
             for item in xyz:
@@ -708,13 +710,13 @@ def machinelearning4():
     return
 
 def machinelearning5(sigma=1e4,labda=0,fraction=0.2,kerneltype='laplacian'):
-    from converter import Converter
+    from CINDES4.utils.converter import Converter
     converter = Converter()
     kwargs = dict()
     kwargs['converter'] = converter
     print "KERNEL:", kerneltype
     mlin = MachineLearning('name',type='norm3',kerneltype=kerneltype)
-    mlin.get_input(converter=converter)
+    mlin.get_input(converter=converter, inputfile= args.file)
     #now we have my mlin.xyzs and mlin.y
     print "some y values of total set"
     sprint(5, mlin.y)
@@ -734,6 +736,7 @@ if __name__=='__main__':
     sys.stdout = Unbuffered(sys.stdout)
     import argparse
     parser = argparse.ArgumentParser(description="reads cycles data stored in cyclesinfo")
+    parser.add_argument('file', help="a pickled tablebin file")
     parser.add_argument("-i","--interactive",action="store_true",help="to be implemented")
     parser.add_argument("-p","--plot",action="store_true",help="make a property vs property plot of the data")
     parser.add_argument("-a","--anatrain",action="store_true",help="analyze and make a property vs property plot of the training data")

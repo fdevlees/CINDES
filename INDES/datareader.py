@@ -306,13 +306,12 @@ def gausread(filename,prop,multiplejobs=0,rdvindex=1):
         from cclib.parser import ccopen
         myfile=ccopen(filename).parse()
 
-        HOMO = myfile.myhomos[1]
-        Ehomo= myfile.mymos[1]['alpha'][0][HOMO]
-        Elumo= myfile.mymos[1]['alpha'][0][HOMO+1]
+        #HOMO = myfile.myhomos[1]
+        #Ehomo= myfile.mymos[1]['alpha'][0][HOMO]
+        #Elumo= myfile.mymos[1]['alpha'][0][HOMO+1]
 
-        #Ehomo= myfile.moenergies[0][myfile.homos[0]]
-        #Elumo= myfile.moenergies[0][myfile.homos[0]+1] 
-            
+        Ehomo= myfile.moenergies[0][myfile.homos[0]]
+        Elumo= myfile.moenergies[0][myfile.homos[0]+1]
         Egap = Elumo - Ehomo
         #return Egap, (Ehomo,Elumo)
         data = Egap
@@ -390,7 +389,7 @@ def normaltermination(filepaths,debug=False):
 def errortermination(path,debug=False):
     mymol=Logfile(path) #read outputfile
     mymol.extract(coords=1) #extract file with also the coordinates
-    import utils
+    from CINDES4.utils import utils
     t=utils.PeriodicTable()
     if hasattr(mymol,'atomcoords'): 
         for sym,xyz in zip(mymol.atomnos,mymol.atomcoords[-1]):

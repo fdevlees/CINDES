@@ -1,11 +1,12 @@
 """ reader of zmat """
+debug = False
 
 import pprint
 import logging
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 # compu chem. library
 
-def geometry(ilogging=True,zmatrixfile='ZMAT', **param):
+def geometry(zmatrixfile='ZMAT', **param):
     '''reads the zmat from a file and splits it'''
     # note that zmatrixfile is now in **param
     zmat,fileid = zmatread(zmatrixfile)
@@ -17,11 +18,9 @@ def geometry(ilogging=True,zmatrixfile='ZMAT', **param):
     logging.debug("zmat:\n" + pprint.pformat(zmat))
     (coremat, activemat, passivemat) = sitesplitter(zmat, param['ncore'], param['line1'], param['nch3'])
     # now i save here the matrices for later use, and then the others are allowed to change for each molecule
-    if ilogging:
-        logging.info('coremat:' + pprint.pformat(coremat))
-        logging.info('activemat:' + pprint.pformat(activemat))
-        logging.info('passivemat:' + pprint.pformat(passivemat))
-        logging.info("----- END FORMATTING & SPLITTING -----")
+    logging.info('activemat:' + pprint.pformat(activemat))
+    logging.info('passivemat:' + pprint.pformat(passivemat))
+    logging.info("----- END FORMATTING & SPLITTING -----")
     Total_Zmat = { 'core':coremat, 'active':activemat, 'passive':passivemat }
     try:
         from CINDES4.utils.molecule import Molecule
