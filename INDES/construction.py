@@ -157,10 +157,12 @@ def indexmaker3(startconf,array,k,table,run=[]): #for CINDES2.3.py for the new s
                     confs.remove(confje)
                     # add that item from table to data
                     if item[1]==1:
+                        raise SystemExit('elements in tablebin shouldnt be one')
                         data.append(item)
                     else:
-                        item.insert(1,1)
-                        data.append(item)
+                        new_item = item[:]
+                        new_item.insert(1,1)
+                        data.append(new_item)
         if not data == []:
             logging.info('filled data with ones already calced:' + pprint.pformat(data))
     return indices,data,confs,indicesfull #indicesfull are all the indices. 

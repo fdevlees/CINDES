@@ -25,7 +25,6 @@ import pickle # for saving and getting the tablebin
 import logging # instead of the large amount of print statements not using it at the moment
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 from itertools import izip
-from math import exp #exp(x) returns e^x
 from copy import deepcopy # for keeping matrices while changing others
 import scipy
 # import my own modules
@@ -71,7 +70,7 @@ class Run(object):
         self.setup_filesystem()
         #zmatrix reading and splitting needs: self.-ncore / -line1 / -nch3
         #self.TZmat = r.geometry(param)
-        self.TZmat = r.geometry('ZMAT',**entries)
+        self.TZmat = r.geometry(**entries)
         self.set_calculation_properties()
         return
 
@@ -237,6 +236,7 @@ def set_table(myrun):
     else:
         table = []
         open('tablebin','wb').close()
+    print table
     return table
 
 # 5 optimum at the start of the run
@@ -294,7 +294,7 @@ def testmax(myrun, data, bcok):
     return maxsite,bcok
 
 # 7 set global optimum and define convergence and redirect to Monte Carlo component
-def runtest(run, maximum, maxsite, count, bcok,mctable=[]):
+def runtest(run, maximum, maxsite, count, bcok,mctable=[], array=[]):
     param = run.__dict__
     TZmat= run.TZmat
     converged=0
@@ -494,7 +494,7 @@ def main(param,array):
         # END LOOP OVER SITES
 
         #get maximum and test convergence
-        maximum, maxsite,converged = runtest(myrun, maximum, maxsite, count, bcok, mctable=table)
+        maximum, maxsite,converged = runtest(myrun, maximum, maxsite, count, bcok, mctable=table, array = array)
         if converged==1: break
         count +=1
         if count > param['maxiter']:

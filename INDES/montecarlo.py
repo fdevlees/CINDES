@@ -6,6 +6,7 @@ from CINDES4.utils.writings import log_io, print_title, sprint
 from CINDES4.predictor import learning
 #import learning
 import random
+from math import exp #exp(x) returns e^x
 #from operator import mul
 
 def randomconf(subarray, maxconf=[], nrandsites=0):
@@ -13,11 +14,14 @@ def randomconf(subarray, maxconf=[], nrandsites=0):
     # version 20/01/2016
 
     arlen = len(subarray) #is length of subarray
+    if debug:
+        sprint(10, subarray)
+        print "number of changed sites:", nrandsites
     while True:
         if nrandsites == 0: #then choose a whole new configuration
             conf = []
             for i in range(arlen):
-                conf.append(random.choice(array[i]))
+                conf.append(random.choice(subarray[i]))
         else: #only change nrandsites
             conf = maxconf[:] #start from same conf
             #this gives an error because range(arlen) seems to an integer.
@@ -25,8 +29,10 @@ def randomconf(subarray, maxconf=[], nrandsites=0):
             rands = random.sample(sitenumbers,nrandsites) #choose nrandsites
             for i in rands:
                 newgroup=random.choice(subarray[i])
-                if True: # if we want to test if the group is really changed:
-                    pass
+                #if True: # if we want to test if the group is really changed:
+                #    pass
+                conf[i] = newgroup
+
         if not conf==maxconf: break
         # note that here it is only tested that the configuration is not same as maxconf. not if really enough 
         # sites were changed
@@ -43,6 +49,7 @@ def montecarloprocedure(fileparameters, subarray, maxi, table,**kwargs):
                #maxsite = montecarloprocedure(beta, array, maximum, table)
     # INPUT: beta - maximum - table - array
     # OUTPUT: maxsite
+
     print "Monte Carlo switched on!"
 
     # 1. set Metropolis criterium parameters
@@ -53,11 +60,16 @@ def montecarloprocedure(fileparameters, subarray, maxi, table,**kwargs):
 
     # 2. set additional initial parameters
     cmaximum = zcon.indtocon(maxi[0]) # maximum is in index format. change to confformat
-    if debug: print "maxi:", maxi
-    Dtable = dict([ (item[0],item[2]) for item in table] )
+    if debug:
+        print "maxi:", maxi
+        print "len(table):", len(table)
+        for item in table: print item
+
+    Dtable = dict([ (item[0],item[1]) for item in table] )
     Tcount = 0 #temperature counter. to zero after increased.
     Rcount = 0 #number of random confs tested
     Tcountmax = int ( 10** ( float( 1 + fileparameters['nrandsites'] )/ 2 ) )
+    if debug: Tcountmax = 5
     print "Number of tested configurations per temperature:", Tcountmax
 
     # 3. FOR ML
@@ -66,6 +78,7 @@ def montecarloprocedure(fileparameters, subarray, maxi, table,**kwargs):
         ml_instance = learning.MC_init(table, **kwargs)
 
     # 4. select random configurations until one is accepted. 
+    print "Temperatures:",
     while True:
         # 4.1 select a random conf
         rconf = randomconf(subarray,cmaximum,fileparameters['nrandsites']) # make a total random configuration
@@ -79,13 +92,21 @@ def montecarloprocedure(fileparameters, subarray, maxi, table,**kwargs):
                 indje= zcon.contoind(confje)
                 #print "Dtable[indje]:", Dtable[indje]
                 try:
-                    deltaetje += Dtable[indje] - maxi[1]
+                    deltaetje += Dtable[indje] - maxi[2]
                 except KeyError as e:
                     print "indje:", indje
                     print "error:", e
                     raise
                 #print "deltaetje:", deltaetje
-        erandom = float (maxi[1] + deltaetje)
+        erandom = float (maxi[2] + deltaetje)
+
+        if debug:
+            print "random conf:", rconf
+            print "random ind:",  rind
+            print "indje    :",   indje
+            print "Dtable[indje]",Dtable[indje]
+            print "deltaetje:", deltaetje
+            print "erandom:", erandom
 
         # 4.2b predict property via MACHINE LEARNING
         if fileparameters['ml']==1:

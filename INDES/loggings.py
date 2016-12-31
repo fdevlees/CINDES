@@ -1,4 +1,4 @@
-debug=0
+debug=False
 #from writings import log_io, sprint
 from CINDES4.utils.writings import log_io, print_title, sprint
 from copy import deepcopy
@@ -26,14 +26,21 @@ def log_cyclesinfo(data, count, k, l):
     return
 
 def log_table( data, table):
+    if debug: 
+        print "in log_table: data:", data
+        print "table:", table
     # here move the new data to table except duplicates
     for item in data:
         if item[1]==1:
-            if not item[0] in [tja[0] for tja in table]: table.append(item)
+            if not item[0] in [tja[0] for tja in table]:
+                tableitem = item[0] + item[2:]
+                table.append(tableitem)
+                if debug: print "tableitem:", tableitem
         else:
             assert item[1]==0, "item[1] has to be 1 or 0 but is %s" % str(item[1])
     with open('tablebin','wb') as tfid: # write the table to a file
         pickle.dump(table,tfid)
+        print "dumped tablebin"
     return table
 
 def log_screen( data, predict):
@@ -118,8 +125,6 @@ def loggings(data,table,count,k,l,predict=[]):
     table = log_table( data, table )
 
     #---- LOGGINGS: to screen
-    if debug:
-        print "predictions:",predictions
 
     data_dict = log_screen( data, predict )
 
