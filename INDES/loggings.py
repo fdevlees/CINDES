@@ -33,7 +33,7 @@ def log_table( data, table):
     for item in data:
         if item[1]==1:
             if not item[0] in [tja[0] for tja in table]:
-                tableitem = item[0] + item[2:]
+                tableitem = [item[0]] + item[2:]
                 table.append(tableitem)
                 if debug: print "tableitem:", tableitem
         else:

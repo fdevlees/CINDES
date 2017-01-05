@@ -27,23 +27,23 @@ if True:
 
     #START PROGRAM PROCEDURE
     if param['procedure'] == 'standard':
-        from INDES.CINDES3 import main
-        main(param,array)
+        from INDES.procedures import BFS
+        BFS(param,array)
 
     elif param['procedure'] == 'test':
-        from INDES.CINDES3 import testrun
+        from INDES.procedures import testrun
         testrun(param,array)
 
     elif param['procedure'] == 'generate':
-        from INDES.CINDES3 import generate_procedure
+        from INDES.procedures import generate_procedure
         generate_procedure(param,array)
 
     elif param['procedure'] == 'genconf':
-        from INDES.CINDES3 import genconf
+        from INDES.procedures import genconf
         genconf(param)
 
     elif param['procedure'] in [ 'getrandom' ,'genrandom']:
-        from INDES.CINDES3 import genrandom
+        from INDES.procedures import genrandom
         genrandom(param,array)
 
     else:

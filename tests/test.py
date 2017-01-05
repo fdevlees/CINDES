@@ -1,7 +1,7 @@
 
 import unittest
 #from .context import INDES
-from CINDES4.INDES import CINDES3
+from CINDES4.INDES import procedures
 
 class TestINDES1(unittest.TestCase):
 
@@ -12,7 +12,7 @@ class TestINDES1(unittest.TestCase):
         self.indices = None
 
     def test_skipper(self):
-        out = CINDES3.skipper(self.indices,[])
+        out = procedures.skipper(self.indices,[])
         expected_outcome = [['CNOO_CNHH', 1, 72], ['CNOO_CNOO_CNOO', 1, 129]]
         self.assertEqual( out, expected_outcome )
 
@@ -25,7 +25,7 @@ class TestINDES2(unittest.TestCase):
         pass
 
     def test_genrandom(self):
-        self.assertTrue( CINDES3.genrandom(self.param, self.array) )
+        self.assertTrue( procedures.genrandom(self.param, self.array) )
 
 
 
