@@ -30,6 +30,10 @@ if True:
         from INDES.procedures import BFS
         BFS(param,array)
 
+    elif param['procedure'] in [ 'GA' , 'Genetic Algorithm', 'genalg' ]:
+        from INDES import GA
+        GA.main(param,array)
+
     elif param['procedure'] == 'test':
         from INDES.procedures import testrun
         testrun(param,array)
@@ -49,4 +53,4 @@ if True:
     else:
         logging.warning('proceduretype not recognized')
 
-    print "bla"
+    print "EOF __main__.py"

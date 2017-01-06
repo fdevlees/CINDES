@@ -360,6 +360,8 @@ def main():
         plt.show()
 
     if args.tplot: #get a tablebin like plot
+        fontsize = 18
+
         def get_label():
             labels = ('1.1','1.2','2.1','2.2','2.3','2.4')
             for label in labels:
@@ -393,26 +395,33 @@ def main():
                 plt.setp(b, linewidth=1)
                 l += len(a[0])
                 ax=plt.gca()
-                ax.xaxis.grid(False) 
-                if i==0: 
+                ax.xaxis.grid(False)
+                if i==0:
                     b.set_label('site:'+str(site+1))
             x = binlist[i][-1][-1][0] + 0.5
             plt.axvline(x=x, linewidth=2, color = 'k')
-            y = 2.5
-            ax.text(x-0.5*l,y,next(labels), horizontalalignment='center')
- 
+            y = 2.4
+            ax.text(x-0.5*l,y,next(labels), horizontalalignment='center',fontsize=fontsize)
+
         #to reorder the legend 
         ax = plt.gca()
         handles, labels = ax.get_legend_handles_labels()
         # sort both labels and handles by labels
         labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: int(t[0][5:])))
-        ax.legend(handles, labels)        
+        if True: #place legend outside plot
+            box = ax.get_position()
+            ax.set_position([box.x0, box.y0, box.width*0.8, box.height])
+            ax.legend(handles,labels,loc='center left', bbox_to_anchor=(1,0.5), prop={'size':fontsize})
+        else:
+            ax.legend(handles, labels)
         leg = plt.gca().get_legend()
         ltext  = leg.get_texts()
-        plt.setp(ltext, fontsize=14) 
+        plt.setp(ltext, fontsize=14)
         #plt.ylabel('property value')
-        plt.ylabel(args.label)
-        plt.title('chronological order of property vs molecular structures')
+        plt.ylabel(args.label,fontsize = fontsize)
+        #plt.tick_params(axis='x', labelsize=fontsize)
+        plt.tick_params(axis='both', labelsize=fontsize)
+        #plt.title('chronological order of property vs molecular structures')
         plt.show()
 
     #plot property values of first cycle versus property values of last cycle
