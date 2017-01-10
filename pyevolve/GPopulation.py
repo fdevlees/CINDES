@@ -30,6 +30,7 @@ Class
 
 
 """
+debug=False
 
 import Consts, Util
 from FunctionSlot import FunctionSlot
@@ -372,7 +373,7 @@ class GPopulation:
             results = proc_pool.map(multiprocessing_eval, self.internalPop)
             for individual, score in zip(self.internalPop, results):
                individual.score = score
-      elif True:
+      elif False:
           print "Jos here:"
           print "dir population instance:", dir(self)
           #print "population:", list(self.internalPop)

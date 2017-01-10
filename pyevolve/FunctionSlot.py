@@ -10,6 +10,7 @@ two or more evaluation functions, etc. In this :mod:`FunctionSlot` module,
 you'll find the class :class:`FunctionSlot.FunctionSlot`, which is the slot class.
 
 """
+debug = False
 
 from random import uniform as rand_uniform
 import inspect
@@ -180,8 +181,6 @@ class FunctionSlot:
       
       if not self.rand_apply:
          for f in self.funcList:
-            print "Jos in Function Slot:"
-            print "obj:", obj
             yield f(obj, **args)
       else:
          v = rand_uniform(0, 1)

@@ -8,6 +8,8 @@ if you are planning to create a new representation, you must
 take a inside look into this module.
 
 """
+debug=False
+
 from random import choice as rand_choice
 import inspect
 
@@ -134,15 +136,17 @@ class GenomeBase:
       :param args: this parameters will be passes to the evaluator
 
       """
-      print "Jos in GenomeBase.py"
-      print "args:", args
-      print "dir self:", dir(self)
-      #print "list self.evaluator.applyFunctions(self, **args)", list(self.evaluator.applyFunctions(self, **args))
-      print "---"
+      if debug:
+          print "Jos in GenomeBase.py"
+          print "args:", args
+          print "dir self:", dir(self)
+          #print "list self.evaluator.applyFunctions(self, **args)", list(self.evaluator.applyFunctions(self, **args))
+          print "---"
       self.resetStats()
       for it in self.evaluator.applyFunctions(self, **args):
-         print "it:", it
-         print "self.score:", self.score
+         if debug:
+             print "it:", it
+             print "self.score:", self.score
          self.score += it
 
    def initialize(self, **args):

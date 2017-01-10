@@ -58,6 +58,7 @@ Class
 -------------------------------------------------------------
 
 """
+debug=False
 
 from CINDES4.pyevolve.GPopulation  import GPopulation
 from FunctionSlot import FunctionSlot
@@ -752,11 +753,11 @@ class GSimpleGA:
             self.__gp_catch_functions(gp_function_prefix)
 
       self.initialize()
-      print "Jos in evolve"
-      print "self.internalPop:", self.internalPop
-      print "self.internalPop.internalPop[0]", self.internalPop.internalPop
-      print "self.internalPop.internalPop.genomeList", self.internalPop.internalPop[0].genomeList
-      raise SystemExit('stop')
+      if debug:
+          print "Jos in evolve"
+          print "self.internalPop:", self.internalPop
+          print "self.internalPop.internalPop[0]", self.internalPop.internalPop
+          print "self.internalPop.internalPop.genomeList", self.internalPop.internalPop[0].genomeList
 
       self.internalPop.evaluate()
       self.internalPop.sort()
