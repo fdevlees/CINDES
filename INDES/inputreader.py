@@ -70,6 +70,10 @@ def get_preds(subinp, line):
         preds.append(pred)
     return subinp, preds
 
+def get_genalg_params(subinp, line):
+    pass
+    return subinp, genalg_params
+
 def readfile(subinp):
     '''this method reads all the inputkeywords'''
     #default values
@@ -174,8 +178,6 @@ def readfile(subinp):
         elif 'optimum' in line: paras['optimum'] = line.split()[1]
         elif 'predictions' in line:
             subinp, paras['predictions'] = get_preds( subinp, line)
-            #paras['predictions'] = get_preds(subinp, line)
-
         elif 'sequence' in line:
             nsequences = int(line.split()[1])
             sequences = []
@@ -208,6 +210,9 @@ def readfile(subinp):
                         paras['nrandom'] = int(line.split()[2])
                     except IndexError:
                         raise SystemExit("NO number of random structures specified!")
+                elif paras['procedure'] in [ 'GA', 'genalg' ]:
+                    #subinp, paras['genalg_params'] = get_genalg_params( subinp, line)
+                    pass
         elif 'timelimit' in line: paras['timelimit'] = int(line.split()[1])
         elif 'timestep' in line: paras['timestep'] = int(line.split()[1])
         elif 'maxiter' in line: paras['maxiter'] = int(line.split()[1])
@@ -218,7 +223,7 @@ def readfile(subinp):
         elif 'identify' in line: paras['identify'] = line.split()[1]
         elif any(item in line for item in ('ncore','natomscore')): paras['ncore'] = int(line.split()[1])
         elif 'nch3' in line: paras['nch3'] = int(line.split()[1])
-        elif 'montecarlo' in line: 
+        elif 'montecarlo' in line:
             paras['montecarlo'] = float(line.split()[1])
             try:
                 paras['nrandsites']= int(line.split()[2])
