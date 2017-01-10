@@ -46,15 +46,6 @@ pp = pprint.PrettyPrinter(indent=4, width=100)
 kb = 8.6e-5 #boltzmann constant # FOR MC
 
 # set continuous printing to logfile (no use of buffer)
-class Unbuffered(object):
-    def __init__(self,stream):
-        self.stream = stream
-    def write(self,data):
-        self.stream.write(data)
-        self.stream.flush()
-    def __getattr__(self,attr):
-        return getattr(self.stream, attr)
-sys.stdout = Unbuffered(sys.stdout)
 
 class Run(object):
     "This is the main object for all the parameters used during the process"
@@ -157,7 +148,10 @@ class Run(object):
                 logging.warning('NO Geometry optimization will be performed!!!')
                 self.gaussianline = '# ' + param['functional'] +'/'+ param['basisset'] +'\n'
             else:
-                self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
+                if param['basisset'] in [ None, 0, '0', 'None', 'False', False, 'off' , 'n', 'NA' ]:
+                    self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'\n'
+                else:
+                    self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
             if param['twojob'] == 1: 
                 self.gaussianline2 = '# geom=check guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
         for key in ['ip','ea','polar']:

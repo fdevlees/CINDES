@@ -4,30 +4,20 @@ debug=1
 import numpy as np
 random = np.random.random
 
-#needed by evolve
-from time  import time
-import logging
-from sys   import platform as sys_platform
-from sys   import stdout as sys_stdout
-from CINDES4.pyevolve.GPopulation  import GPopulation
-from CINDES4.pyevolve.GPopulation  import Util
-import random as rrandom
-
 # my own modules
 #from writings import log_io, sprint, print_title
 from CINDES4.utils.writings import log_io, sprint, print_title
 from CINDES4 import INDES
-from CINDES4.predictor import learning
-from CINDES4.predictor import learning_int as ml_i
+import learning
+import learning_int as ml_i
 
-
-from CINDES4.pyevolve import G1DList , GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters
-from CINDES4.pyevolve import Scaling
-import CINDES4.pyevolve as pyevolve
-
+class Genetic_Algorithm(object):
+    def __init__(self, evaluator):
+        self.f_cross = 0.0
+        self.evaluator = evaluator # = fitness function
 
 def skipper(conf):
-    indje = INDES.procedures.zcon.contoind(conf)
+    indje = INDES.zcon.contoind(conf)
     replaced = indje.replace('_','')
     if False:
         output= len(replaced)
@@ -40,7 +30,6 @@ def skipper(conf):
             except ValueError:
                 output += string.lowercase.index(i)
     return output
-
 
 def my_mutator(conf):
     pos_to_mutate = np.random.randint(0, len(individual)-1)
@@ -73,13 +62,13 @@ def get_database():
     return table
 
 def get_input():
-    options, subs_array = INDES.inputreader.read_input('INPUTBC')
+    options, subs_array = INDES.inr.read_input('INPUTBC')
     if debug: print "len(subs_array)", len(subs_array)
     return options, subs_array
 
 @log_io()
 def get_geometry(options):
-    zmatrix = INDES.reader.geometry(zmatrixfile='ZMAT', **options)
+    zmatrix = INDES.geometry('ZMAT',options,ilogging=False)
     return zmatrix
 
 #class Fitness_Function(learning.ML):
@@ -92,46 +81,22 @@ class Fitness_Function():
     and subsequently in each iteration
         evaluator.evaluate(population)
     '''
-    def __init__(self, run, array=None):
+    def __init__(self, array=None, **options):
         '''for evaluation i need at least to have the database and the core / active / passive (all in zmatrix)
         i probably should also already get a self.kernel here such that the evaluatefunction only should call predict
         '''
-        #self.zmatrix    = get_geometry(options)
-        self.run = run
-        options = run.__dict__
+        self.zmatrix    = get_geometry(options)
+        self.table      = get_database()
+        self.array      = array
         if options['ml']==1:  # depending on a not yet implemented option... 
-            self.table      = get_database()
-            from CINDES4.utils.converter import Converter
+            from converter import Converter
             self.converter = Converter()
             #kwargs['converter'] = self.converter
             self.initiate_machine_learning() #sets self.my_ML
         elif options['ml']==2:
-            self.array      = array
             assert array!=None, "Give Array!"
             self.initiate_ml_int(**options)
         return
-
-    def predict_via_submit_mono(self,conf):
-        index = INDES.procedures.zcon.contoind(conf)
-        print "index:", index
-        confs = [conf]
-        indices_tocal = [index]
-        data_nocal = []
-        myrun = self.run
-        newy = INDES.procedures.submittingprocedure(confs,indices_tocal,data_nocal,myrun,**myrun.TZmat)
-        print "newy:", newy[0]
-        return newy[0][2]
-
-    def predict_via_submit_multi(self,confs):
-        indices = []
-        for i in range(len(confs)):
-            index = INDES.procedures.zcon.contoind(confs[i])
-            indices.append(index)
-        data_nocal = []
-        myrun = self.run
-        newy = INDES.procedures.submittingprocedure(confs,indices,data_nocal,myrun,**myrun.TZmat)
-        if debug: print "newy:", newy
-        return newy
 
     def initiate_ml_int(self, sigma=1e2, labda=1e-7, **options):
         self.sigma = sigma
@@ -150,7 +115,7 @@ class Fitness_Function():
 
     def initiate_machine_learning(self,printlevel=1,**kwargs):
         ''' or this function will be called by CINDES'''
-        from CINDES4.utils.converter import Converter
+        from converter import Converter
         converter = Converter()
         kwargs['converter'] = converter
 
@@ -177,7 +142,7 @@ class Fitness_Function():
         return fitnesses
 
     def predict_ml_mono(self, conf):
-        index = INDES.procedures.zcon.contoind(conf)
+        index = INDES.zcon.contoind(conf)
         print "index:", index
         newy  = self.my_ML.predict2([index],self.converter,**self.zmatrix)[0]
         print "newy:", newy
@@ -187,26 +152,12 @@ class Fitness_Function():
     def evaluate_skip_multi(self,confs):
         indices = []
         for conf in confs:
-            indices.append(INDES.procedures.zcon.contoind(conf))
+            indices.append(INDES.zcon.contoind(conf))
         fitnesses = [ [index, skipper(index) ] for index in indices ]
         for conf,fitness in zip(confs,fitnesses):
             fitness[0] = conf
         sprint(10,fitnesses)
         return fitnesses
-
-    def predict_via_precalculation(self, confs, new_y=[]):
-        print "confs:", confs
-        index = INDES.procedures.zcon.contoind(confs)
-        for item in new_y:
-            if item[0] == index:
-                y = item[2]
-                if debug: print "y:", y
-                return y
-        else:
-            pass
-            #print "confs:", confs
-            #raise SystemExit('stop for loop completed')
-
 
 def evaluate_skip_mono(conf):
     index = INDES.zcon.contoind(conf)
@@ -341,250 +292,6 @@ def procedure2():
         plt.errorbar(range(len(averages)),averages,stds)
         plt.show()
 
-
-class My_GSimpleGA(GSimpleGA.GSimpleGA):
-
-   def __init__(self,genome,run):
-       GSimpleGA.GSimpleGA.__init__(self,genome)
-       self.FF = Fitness_Function(run)
-
-   def in_evolve(self, step=False, population=None):
-      '''called in self.evolve and self.step to get the population and evaluate them'''
-      populationlist = []
-      if step:
-          pop = population.internalPop
-          #pop = population
-          #print "pop:", pop
-          #raise SystemExit('stop')
-      else:
-          pop = self.internalPop.internalPop
-      for id in pop:
-          populationlist.append( id.genomeList)
-
-      print "populationlist", populationlist
-      if not populationlist:
-          raise SystemExit('stop')
-      # calculate the population 
-      new_y = self.FF.predict_via_submit_multi(populationlist)
-      print "in in_evolve"
-      return new_y
-
-   def step(self):
-      """ Just do one step in evolution, one generation """
-      genomeMom = None
-      genomeDad = None
-
-      newPop = GPopulation(self.internalPop)
-      logging.debug("Population was cloned.")
-
-      size_iterate = len(self.internalPop)
-
-      # Odd population size
-      if size_iterate % 2 != 0: size_iterate -= 1
-
-      crossover_empty = self.select(popID=self.currentGeneration).crossover.isEmpty()
-
-      for i in xrange(0, size_iterate, 2):
-         genomeMom = self.select(popID=self.currentGeneration)
-         genomeDad = self.select(popID=self.currentGeneration)
-
-         if not crossover_empty and self.pCrossover >= 1.0:
-            for it in genomeMom.crossover.applyFunctions(mom=genomeMom, dad=genomeDad, count=2):
-               (sister, brother) = it
-         else:
-            if not crossover_empty and Util.randomFlipCoin(self.pCrossover):
-               for it in genomeMom.crossover.applyFunctions(mom=genomeMom, dad=genomeDad, count=2):
-                  (sister, brother) = it
-            else:
-               sister = genomeMom.clone()
-               brother = genomeDad.clone()
-
-         sister.mutate(pmut=self.pMutation, ga_engine=self)
-         brother.mutate(pmut=self.pMutation, ga_engine=self)
-
-         newPop.internalPop.append(sister)
-         newPop.internalPop.append(brother)
-
-      if len(self.internalPop) % 2 != 0:
-         genomeMom = self.select(popID=self.currentGeneration)
-         genomeDad = self.select(popID=self.currentGeneration)
-
-         if Util.randomFlipCoin(self.pCrossover):
-            for it in genomeMom.crossover.applyFunctions(mom=genomeMom, dad=genomeDad, count=1):
-               (sister, brother) = it
-         else:
-            sister = rrandom.choice([genomeMom, genomeDad])
-            sister = sister.clone()
-            sister.mutate(pmut=self.pMutation, ga_engine=self)
-
-         newPop.internalPop.append(sister)
-
-      ############################################################## EVALUATE
-      logging.info("Evaluating the new created population.")
-      new_y = self.in_evolve(population=newPop, step=True)
-      
-
-      if debug: print "in step; new_y:", new_y
-      newPop.evaluate(new_y=new_y)
-
-      #Niching methods- Petrowski's clearing
-      self.clear()
-
-      if self.elitism:
-         logging.debug("Doing elitism.")
-         if self.getMinimax() == Consts.minimaxType["maximize"]:
-            for i in xrange(self.nElitismReplacement):
-               if self.internalPop.bestRaw(i).score > newPop.bestRaw(i).score:
-                  newPop[len(newPop)-1-i] = self.internalPop.bestRaw(i)
-         elif self.getMinimax() == Consts.minimaxType["minimize"]:
-            for i in xrange(self.nElitismReplacement):
-               if self.internalPop.bestRaw(i).score < newPop.bestRaw(i).score:
-                  newPop[len(newPop)-1-i] = self.internalPop.bestRaw(i)
-
-      self.internalPop = newPop
-      self.internalPop.sort()
-
-      logging.debug("The generation %d was finished.", self.currentGeneration)
-
-      self.currentGeneration += 1
-
-      return (self.currentGeneration == self.nGenerations)
-
-   def evolve(self, freq_stats=0):
-      """ Do all the generations until the termination criteria, accepts
-      the freq_stats (default is 0) to dump statistics at n-generation
-
-      Example:
-         >>> ga_engine.evolve(freq_stats=10)
-         (...)
-
-      :param freq_stats: if greater than 0, the statistics will be
-                         printed every freq_stats generation.
-      :rtype: returns the best individual of the evolution
-
-      .. versionadded:: 0.6
-         the return of the best individual
-
-      """
-
-      stopFlagCallback = False
-      stopFlagTerminationCriteria = False
-
-      self.time_init = time()
-
-      logging.debug("Starting the DB Adapter and the Migration Adapter if any")
-      if self.dbAdapter: self.dbAdapter.open(self)
-      if self.migrationAdapter: self.migrationAdapter.start()
-
-
-      if self.getGPMode():
-         gp_function_prefix = self.getParam("gp_function_prefix")
-         if gp_function_prefix is not None:
-            self.__gp_catch_functions(gp_function_prefix)
-
-      self.initialize()
-      print "Jos in evolve"
-      print "self.internalPop:", self.internalPop
-      print "self.internalPop.internalPop[0]", self.internalPop.internalPop
-      print "self.internalPop.internalPop.genomeList", self.internalPop.internalPop[0].genomeList
-
-      new_y = self.in_evolve()
-      if debug: print "new_y:", new_y
-      self.internalPop.evaluate(new_y=new_y)          ######### EVALUATE statement
-      self.internalPop.sort()
-      logging.debug("Starting loop over evolutionary algorithm.")
-
-      try:
-         while True:                                             ####### GenAlg loop
-
-            if self.migrationAdapter:
-               logging.debug("Migration adapter: exchange")
-               self.migrationAdapter.exchange()
-               self.internalPop.clearFlags()
-               self.internalPop.sort()
-
-            if not self.stepCallback.isEmpty():
-               for it in self.stepCallback.applyFunctions(self):
-                  stopFlagCallback = it
-
-            if not self.terminationCriteria.isEmpty():
-               for it in self.terminationCriteria.applyFunctions(self):
-                  stopFlagTerminationCriteria = it
-
-            if freq_stats:
-               if (self.currentGeneration % freq_stats == 0) or (self.getCurrentGeneration() == 0):
-                  self.printStats()
-
-            if self.dbAdapter:
-               if self.currentGeneration % self.dbAdapter.getStatsGenFreq() == 0:
-                  self.dumpStatsDB()
-
-            if stopFlagTerminationCriteria:
-               logging.debug("Evolution stopped by the Termination Criteria !")
-               if freq_stats:
-                  print "\n\tEvolution stopped by Termination Criteria function !\n"
-               break
-
-            if stopFlagCallback:
-               logging.debug("Evolution stopped by Step Callback function !")
-               if freq_stats:
-                  print "\n\tEvolution stopped by Step Callback function !\n"
-               break
-
-            if self.interactiveMode:
-               if sys_platform[:3] == "win":
-                  if msvcrt.kbhit():
-                     if ord(msvcrt.getch()) == Consts.CDefESCKey:
-                        print "Loading modules for Interactive Mode...",
-                        logging.debug("Windows Interactive Mode key detected ! generation=%d", self.getCurrentGeneration())
-                        from pyevolve import Interaction
-                        print " done !"
-                        interact_banner = "## Pyevolve v.%s - Interactive Mode ##\nPress CTRL-Z to quit interactive mode." % (pyevolve.__version__,)
-                        session_locals = { "ga_engine"  : self,
-                                           "population" : self.getPopulation(),
-                                           "pyevolve"   : pyevolve,
-                                           "it"         : Interaction}
-                        print
-                        code.interact(interact_banner, local=session_locals)
-
-               if (self.getInteractiveGeneration() >= 0) and (self.getInteractiveGeneration() == self.getCurrentGeneration()):
-                        print "Loading modules for Interactive Mode...",
-                        logging.debug("Manual Interactive Mode key detected ! generation=%d", self.getCurrentGeneration())
-                        from pyevolve import Interaction
-                        print " done !"
-                        interact_banner = "## Pyevolve v.%s - Interactive Mode ##" % (pyevolve.__version__,)
-                        session_locals = { "ga_engine"  : self,
-                                           "population" : self.getPopulation(),
-                                           "pyevolve"   : pyevolve,
-                                           "it"         : Interaction}
-                        print
-                        code.interact(interact_banner, local=session_locals)
-
-            b_max_iter = self.step()
-            if b_max_iter: break #exit if the number of generations is equal to the max. number of gens.
-
-      except KeyboardInterrupt:
-         logging.debug("CTRL-C detected, finishing evolution.")
-         if freq_stats: print "\n\tA break was detected, you have interrupted the evolution !\n"
-
-      if freq_stats != 0:
-         self.printStats()
-         self.printTimeElapsed()
-
-      if self.dbAdapter:
-         logging.debug("Closing the DB Adapter")
-         if not (self.currentGeneration % self.dbAdapter.getStatsGenFreq() == 0):
-            self.dumpStatsDB()
-         self.dbAdapter.commitAndClose()
-   
-      if self.migrationAdapter:
-         logging.debug("Closing the Migration Adapter")
-         if freq_stats: print "Stopping the migration adapter... ",
-         self.migrationAdapter.stop()
-         if freq_stats: print "done !"
-
-      return self.bestIndividual()
-
 def test_pyevolve():
     # This function is the evaluation function, we want
     # to give high score to more zero'ed chromosomes
@@ -640,7 +347,7 @@ def test_pyevolve3(*args,**kwargs):
     genome.setParams(allele=setOfAlleles)
 
     # The evaluator function (objective function)
-    if False:
+    if True:
         FF = Fitness_Function(array,**options)
         #genome.evaluator.set(FF.int_predict_mono)
         genome.evaluator.set(FF.predict_ml_mono)
@@ -652,7 +359,6 @@ def test_pyevolve3(*args,**kwargs):
 
     # Genetic Algorithm Instance
     ga = GSimpleGA.GSimpleGA(genome)
-    ga.setMultiProcessing(True)
     ga.selector.set(Selectors.GRouletteWheel)
     ga.setGenerations(100)
     #ga.setMinimax(Consts.minimaxType["minimize"])
@@ -662,7 +368,6 @@ def test_pyevolve3(*args,**kwargs):
     print "GenAlg:", ga
 
     # for negative fitness results:
-    ga.setPopulationSize(5)
     pop = ga.getPopulation()
     pop.scaleMethod.set(Scaling.SigmaTruncScaling)
 
@@ -678,7 +383,7 @@ def test_pyevolve3(*args,**kwargs):
     best =  ga.bestIndividual()
     print "\n Best individual score: %.2f" % best.score
     print best
-    print "index:", INDES.procedures.zcon.contoind(best)
+    print "index:", INDES.zcon.contoind(best)
 
 ###### CALL(s) from __main__.py ###########
 
@@ -686,11 +391,8 @@ def test_pyevolve3(*args,**kwargs):
 from CINDES4.INDES import procedures
 
 def main(param, array):
-    GArun = procedures.Run(**param)
-    table = procedures.set_table(GArun)
-    print "run object:\n", GArun
-    get_genome(array, GArun)
     pass
+
 
 def get_genome(array,options):
     '''options should be a Run instance having at least:
@@ -698,8 +400,9 @@ def get_genome(array,options):
         options.
 
     '''
-    print "options:", options
-
+    from pyevolve import G1DList , GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters
+    from pyevolve import Scaling
+    import pyevolve
     # Enable the logging system:
     pyevolve.logEnable()
 
@@ -717,11 +420,9 @@ def get_genome(array,options):
 
     # The evaluator function (objective function)
     if True:
-        FF = Fitness_Function(array=array,run = options)
+        FF = Fitness_Function(array,**options)
         #genome.evaluator.set(FF.int_predict_mono)
-        #def predict_via_submit_mono(self,conf):
-        #genome.evaluator.set(FF.predict_via_submit_mono)
-        genome.evaluator.set(FF.predict_via_precalculation)
+        genome.evaluator.set(FF.predict_ml_mono)
     else:
         genome.evaluator.set(skipper)
     genome.mutator.set(Mutators.G1DListMutatorAllele)
@@ -729,8 +430,7 @@ def get_genome(array,options):
     print "genome:\n", genome
 
     # Genetic Algorithm Instance
-    ga = My_GSimpleGA(run = options, genome=genome)
-    #ga.setMultiProcessing(True) #gives error thread.error: can't start new thread
+    ga = GSimpleGA.GSimpleGA(genome)
     ga.selector.set(Selectors.GRouletteWheel)
     ga.setGenerations(100)
     #ga.setMinimax(Consts.minimaxType["minimize"])
@@ -740,12 +440,11 @@ def get_genome(array,options):
     print "GenAlg:", ga
 
     # for negative fitness results:
-    ga.setPopulationSize(5)
     pop = ga.getPopulation()
     pop.scaleMethod.set(Scaling.SigmaTruncScaling)
 
     # for plotting?
-    sqlite_adapter = DBAdapters.DBSQLite(identify="ex4")
+    sqlite_adapter = DBAdapters.DBSQLite(identify="ex3")
     ga.setDBAdapter(sqlite_adapter)
 
     # Do the evolution, with stats dump

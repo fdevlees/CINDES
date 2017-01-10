@@ -145,8 +145,8 @@ def indexmaker3(startconf,array,k,table,run=[]): #for CINDES2.3.py for the new s
     indices = []
     for i in range(len(confs)):
         index = contoind(confs[i])
-        #pp.pprint(confs[i])
         indices.append(index)
+        #pp.pprint(confs[i])
     indicesfull = indices[:]
     if not table == []:
         for item in table:

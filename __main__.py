@@ -4,9 +4,21 @@
 
 import argparse
 import logging
+import sys
 
 from utils.writings import print_title
 from INDES.inputreader import read_input
+
+
+class Unbuffered(object):
+    def __init__(self,stream):
+        self.stream = stream
+    def write(self,data):
+        self.stream.write(data)
+        self.stream.flush()
+    def __getattr__(self,attr):
+        return getattr(self.stream, attr)
+sys.stdout = Unbuffered(sys.stdout)
 
 if True:
     print_title("C I N D E S\nAn Inverse Molecular Design Program\nwritten by Jos L. Teunissen", newlines=True)

@@ -96,7 +96,6 @@ def readfile(subinp):
            'twojob':0,
            'multiplejobs':0,
            'stab':0,
-           'semiempirical':0,
            'polar':0,
            'ip':0,
            'ea':0,
