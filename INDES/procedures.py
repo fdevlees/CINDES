@@ -516,7 +516,7 @@ def genconf(param):
     #elif param['program'] in ['ORCA','orca','Orca']:
     #    runspecs_orca(param)
     param = myrun.__dict__
-    TZmat = r.geometry('ZMAT',param)
+    TZmat = r.geometry(**param)
     conf = zcon.indtocon(param['startind'])
     print "in GENCONF: conf is:", conf
     param['workdir'] = os.getcwd()
