@@ -42,7 +42,7 @@ if True:
         from INDES.procedures import BFS
         BFS(param,array)
 
-    elif param['procedure'] in [ 'GA' , 'Genetic Algorithm', 'genalg' ]:
+    elif param['procedure'] in [ 'ga' , 'genetic algorithm', 'genalg' ]:
         from INDES import GA
         GA.main(param,array)
 

@@ -66,7 +66,7 @@ class Run(object):
         return
 
     def __str__(self):
-        sb=[]
+        sb=['Run object with the following attributes:']
         for key,value in sorted(self.__dict__.items()):
             sb.append("{key:20}='{value}'".format(key=key, value=value))
         return '\n'.join(sb)

@@ -23,7 +23,7 @@ from CINDES4 import INDES
 from CINDES4.predictor import learning
 from CINDES4.predictor import learning_int as ml_i
 
-from CINDES4.pyevolve import G1DList , GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters
+from CINDES4.pyevolve import G1DList , GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters, Crossovers
 from CINDES4.pyevolve import Scaling
 import CINDES4.pyevolve as pyevolve
 
@@ -122,57 +122,29 @@ class Fitness_Function():
         print "newy:", newy[0]
         return newy[0][2]
 
-    def indexmaker4(self,indices, confs):
-        '''checks for confs already calculated'''
-        indicesfull = indices[:]
-        data = []
-        if not self.table == []:
-            for item in self.table:
-                for index,confje in izip(indices[:],confs[:]):
-                    if item[0] == index:
-                        # remove that from the configurations
-                        indices.remove(index)
-                        confs.remove(confje)
-                        # add that item from table to data
-                        if item[1]==1:
-                            raise SystemExit('elements in tablebin shouldnt be one')
-                            data.append(item)
-                        else:
-                            new_item = item[:]
-                            new_item.insert(1,1)
-                            data.append(new_item)
-            if not data == []:
-                logging.info('filled data with ones already calced:' + pprint.pformat(data))
-        return indices,data,confs #indicesfull are all the indices. 
-
-    def log_table( self, data):
-        if debug:
-            print "in log_table: data:", data
-            print "table:", self.table
-        # here move the new data to table except duplicates
-        for item in data:
-            if item[1]==1:
-                if not item[0] in [tja[0] for tja in self.table]:
-                    tableitem = [item[0]] + item[2:]
-                    self.table.append(tableitem)
-                    if debug: print "tableitem:", tableitem
-            else:
-                assert item[1]==0, "item[1] has to be 1 or 0 but is %s" % str(item[1])
-        with open('tablebin','wb') as tfid: # write the table to a file
-            pickle.dump(self.table,tfid)
-            print "dumped tablebin"
-        return
-
     def predict_via_submit_multi(self,confs):
+        ''' this function is used by my_GSimpleGA class.my_evaluate '''
+        # 1. convert configuration lists to indices format
         indices = []
         for i in range(len(confs)):
             index = INDES.procedures.zcon.contoind(confs[i])
             indices.append(index)
-        indices, data_nocal, confs = self.indexmaker4(indices, confs)
+
+        # 2. check which indices are already calculated and add them to data_nocal
+        indices_tocal, data_nocal, confs = INDES.construction.indexmaker4(indices=indices, confs=confs, table=self.table)
+
+        # 2b Here I could introduce eventually the predictions with INDES.predictions.predictor
+        # perform prescreaning in a predictions. 
+        # data_nocal,indices_tocal, predict = predictor(myrun, table, indices_todo,data_nodo, count, array=array)
+
+
+        # 3. calculate configurations
         myrun = self.run
-        newy = INDES.procedures.submittingprocedure(confs,indices,data_nocal,myrun,**myrun.TZmat)
+        newy = INDES.procedures.submittingprocedure(confs,indices_tocal,data_nocal,myrun,**myrun.TZmat)
+
+        # 4. log new results
         if debug: print "newy:", newy
-        self.log_table( newy)
+        self.table = INDES.loggings.log_table( data=newy, table=self.table)
         return newy
 
     @log_io()
@@ -186,19 +158,6 @@ class Fitness_Function():
         sprint(10,fitnesses)
         return fitnesses
 
-    def predict_via_precalculation(self, confs, new_y=[]):
-        #print "confs:", confs
-        index = INDES.procedures.zcon.contoind(confs)
-        for item in new_y:
-            if item[0] == index:
-                y = item[2]
-                if debug: print "y:", y
-                return y
-        else:
-            pass
-            #print "confs:", confs
-            #raise SystemExit('stop for loop completed')
-
 class My_GSimpleGA(GSimpleGA.GSimpleGA):
 
    def __init__(self,genome,run, precalculation=True, table=[]):
@@ -207,25 +166,10 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
        self.precalculation = precalculation
        return
 
-   def in_evolve(self, step=False, population=None):
-      '''called in self.evolve and self.step to get the population and evaluate them'''
-      populationlist = []
-      if step:
-          pop = population.internalPop
-      else:
-          pop = self.internalPop.internalPop
-      for id in pop:
-          populationlist.append( id.genomeList)
-
-      print "populationlist", populationlist
-      if not populationlist:
-          raise SystemExit('stop')
-      # calculate the population 
-      new_y = self.FF.predict_via_submit_multi(populationlist)
-      print "in in_evolve"
-      return new_y
-
+   @log_io()
    def my_evaluate(self, step=False, population=None):
+      ''' this is my evaluate function '''
+      # 1. get configurations to calculate:
       populationlist = []
       if step:
           pop = population.internalPop
@@ -233,19 +177,17 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
           pop = self.internalPop.internalPop
       for id in pop:
           populationlist.append( id.genomeList)
-      print "populationlist", populationlist
+      if debug: print "populationlist", populationlist
+
+      # 2. call CINDES via FF to calculate the configurations
       new_y = self.FF.predict_via_submit_multi(populationlist)
+
+      # 3. set the calculations to the correct indivual score
       y_dict = dict( [item[0], item[1:]] for item in new_y )
       for ind in population:
           index = INDES.procedures.zcon.contoind(ind.genomeList)
           print "individual:", ind.genomeList, "y:", y_dict[index], index
           ind.score = y_dict[index][1]
-      #for ind, y in zip(population, new_y):
-      #    print "ind:", ind.genomeList, "y:", y
-      #    ind.score = y[2]
-      #pop_sort = sorted(population)
-      #for ind in population:
-      #    ind.score = pop_sort.index(ind) + 100
       return
 
    def step(self):
@@ -301,10 +243,6 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
       ############################################################## EVALUATE
       logging.info("Evaluating the new created population.")
       if self.precalculation:
-          new_y = self.in_evolve(population=newPop, step=True)
-          if debug: print "in step; new_y:", new_y
-          newPop.evaluate(new_y=new_y)
-      elif True:
           self.my_evaluate(step=True, population = newPop)
       else:
           newPop.evaluate()
@@ -371,10 +309,6 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
       #print "self.internalPop.internalPop.genomeList", self.internalPop.internalPop[0].genomeList
 
       if self.precalculation:
-          new_y = self.in_evolve()
-          if debug: print "new_y:", new_y
-          self.internalPop.evaluate(new_y=new_y)          ######### EVALUATE statement
-      elif True:
           self.my_evaluate(population = self.internalPop)
       else:
           self.internalPop.evaluate()
@@ -481,7 +415,12 @@ def main(param, array):
     GArun = procedures.Run(**param)
     table = procedures.set_table(GArun)
     print "run object:\n", GArun
-    get_genome(array, table, GArun)
+    final_genome = get_genome(array, table, GArun)
+    best = final_genome.bestIndividual()
+    print "final_genome:", final_genome
+    print "best:", best
+    print "best score fitness genome list :", best.score, best.fitness, best.genomeList
+
     return
 
 def get_genome(array,table, options):
@@ -491,59 +430,87 @@ def get_genome(array,table, options):
 
     '''
     print "options:", options
-    precalculation = False
+
+    precalculation = True
 
     # Enable the logging system:
     pyevolve.logEnable()
 
-    # Genome instance
+    # Set Genome instance using as allelles the sites with the different functionalisations.
     setOfAlleles = GAllele.GAlleles()
     for i in xrange(options.nsites):
        a = GAllele.GAlleleList(array[i])
        setOfAlleles.add(a)
-    #for i in xrange(11, 20):
-    #   # You can even add an object to the list
-    #   a = GAllele.GAlleleList(['a','b', 'xxx', 666, 0])
-    #   setOfAlleles.add(a)
     genome = G1DList.G1DList(options.nsites)
     genome.setParams(allele=setOfAlleles)
 
     # The evaluator function (objective function)
-    if precalculation:
-        FF = Fitness_Function(array=array,run = options)
-        genome.evaluator.set(FF.predict_via_precalculation)
-        #genome.evaluator.set(FF.int_predict_mono)
-        #def predict_via_submit_mono(self,conf):
-        #genome.evaluator.set(FF.predict_via_submit_mono)
-    else:
+    if not precalculation:
         genome.evaluator.set(skipper)
+        # if precalculation a self defined evaluator is used that calls CINDES also an FF instance
+        # is made that moment.
     genome.mutator.set(Mutators.G1DListMutatorAllele)
     genome.initializator.set(Initializators.G1DListInitializatorAllele)
+
+    # set Crossover type. G1DListCrossoverUniform, G1DListCrossoverSinglePoint, G1DListCrossoverTwoPoint
+    if not options.genalg['CXP']==0.0:
+        genome.crossover.set( Crossovers.G1DListCrossoverUniform)
     print "genome:\n", genome
 
     # Genetic Algorithm Instance
     ga = My_GSimpleGA(run = options, genome=genome, precalculation=precalculation, table=table)
-    #ga.setMultiProcessing(True) #gives error thread.error: can't start new thread
-    ga.selector.set(Selectors.GRouletteWheel)
-    ga.setGenerations(100)
-    #ga.setMinimax(Consts.minimaxType["minimize"])
-    ga.setMutationRate(0.05) #i added this from another example
+
+    # Selectors
+    if options.genalg['selector'] == 'RouletteWheel':  # Default = GRouletteWheel
+        ga.selector.set(Selectors.GRouletteWheel)
+    elif any( item in options.genalg['selector'] for item in [ 'Rank', 'rank' ] ):
+        ga.selector.set(Selectors.GRankSelector)
+    elif any( item in options.genalg['selector'] for item in [ 'Uni', 'uni' ] ):
+        ga.selector.set(Selectors.GUniformSelector)
+    elif any( item in options.genalg['selector'] for item in [ 'Tour', 'tour' ] ):
+        ga.selector.set(Selectors.GTournamentSelector)
+    else:
+        raise SystemExit('no valid selector is chosen')
+
+    # NGEN
+    ga.setGenerations(options.genalg['ngenerations'])
+
+    # set min / max
+    if options.genalg['optimum'] in ['min', 'minimize']:
+        ga.setMinimax(Consts.minimaxType["minimize"])
+
+    # set MUP
+    ga.setMutationRate(options.genalg['MUP']) #i added this from another example
+
+    # set CXP
+    if not options.genalg['CXP']==0.0:
+        ga.setCrossoverRate(options.genalg['CXP'])
+
     # termination at convergence?:
     ga.terminationCriteria.set(GSimpleGA.ConvergenceCriteria)
-    print "GenAlg:", ga
 
     # for negative fitness results:
-    ga.setPopulationSize(5)
+    ga.setPopulationSize(options.genalg['npopulation'])
+
+    # set elitism
+    if options.genalg['elitism']:
+        ga.setElitism(options.genalg['elitism'])
+        print "n elitism:", options.genalg['nelitism']
+        ga.nElitismReplacement = options.genalg['nelitism']
+
+    # to allow for negative scores we have to use SigmaTruncScaling. otherwise also LinearScaling or PowerLawScaling could be used
     pop = ga.getPopulation()
     pop.scaleMethod.set(Scaling.SigmaTruncScaling)
 
-    # for plotting?
-    sqlite_adapter = DBAdapters.DBSQLite(identify="ex4")
+    # for plotting
+    sqlite_adapter = DBAdapters.DBSQLite(identify=options.genalg['db_identify'], resetDB=True)
     ga.setDBAdapter(sqlite_adapter)
+
+    print "GenAlg:", ga
 
     # Do the evolution, with stats dump
     # frequency of 10 generations
-    ga.evolve(freq_stats=50)
+    ga.evolve(freq_stats=options.genalg['freq_stats'])
     return ga
 
 if __name__ == "__main__":

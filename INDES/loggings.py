@@ -43,6 +43,7 @@ def log_table( data, table):
         print "dumped tablebin"
     return table
 
+
 def log_screen( data, predict):
     datadict = dict( ( (item[0], item[1:]) for item in data) )
     #HEADER

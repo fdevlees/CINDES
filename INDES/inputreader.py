@@ -71,8 +71,42 @@ def get_preds(subinp, line):
     return subinp, preds
 
 def get_genalg_params(subinp, line):
-    pass
-    return subinp, genalg_params
+    defaults = { 'ngenerations' : 20,
+                 'npopulation'  : 20,
+                 'CXP'          : 0.8, #crossover probability
+                 'MUP'          : 0.2, #mutation probability
+                 'elitism'      : True,
+                 'optimum'      : 'maximum',
+                 'nelitism'     : 1,
+                 'scaling'      : 'sigmatrunc',
+                 'db_identify'  : 'ex4',
+                 'freq_stats'   : 10,
+                 'selector'     : 'RouletteWheel'
+                 }
+    try:
+        n_extra_lines = int(line.split()[2])
+    except IndexError:
+        print "all default values for the genetic algorithms will be used:"
+    else: # execute only when no exception is thrown
+        for _ in range(n_extra_lines):
+            line = subinp.readline()
+            key = line.split()[0]
+            value_type = type(defaults[key])
+            if not key in defaults: print "keyword not recognized:", key
+            defaults[key] = value_type( line.split()[1] )
+            #if key in [ 'ngenerations', 'npopulation', 'nelitism', 'freq_stats' ]:
+            #    defaults[key] = int(line.split()[1])
+            #elif key in ['CXP', 'MUP']:
+            #    defaults[key] = float(line.split()[1])
+            #elif key in ['elitism']:
+            #    defaults[key] = bool(line.split()[1])
+            #elif key in [ 'scaling', 'db_identify', 'optimum' ]:
+            #    defaults[key] = line.split()[1]
+            #else:
+            #    print "line not interpreted:", line
+        print " defaults of genetic algorithm are changed. new values:"
+    print defaults
+    return subinp, defaults
 
 def readfile(subinp):
     '''this method reads all the inputkeywords'''
@@ -130,14 +164,19 @@ def readfile(subinp):
         line = subinp.readline()
         if not line: break
         if line[0]=='#':continue
-        elif 'bc' in line:
+        # some capital sensitive keywords:
+        elif 'startind' in line:
+            paras['startind'] = line.split()[1]
+            continue
+        line = line.split('#')[0].lower()
+        if 'bc' in line:
             paras['bcprop'] = line.split()[1]
             paras['bcval'] = line.split()[2]
             try:
                 paras['bcoptimum'] = line.split()[3]
             except IndexError:
                 paras['bcoptimum'] = 'min'
-            assert paras['bcoptimum'] in ['min','Min','max','Max','MIN','MAX']
+            assert paras['bcoptimum'] in ['min','max']
         elif 'nosub' in line:
             splitted = line.split()
             try:
@@ -202,7 +241,6 @@ def readfile(subinp):
         elif 'try_ready' in line: paras['try_ready'] = 1
         elif 'test_ready' in line: paras['test_ready'] = int(line.split()[1])
         elif 'twojob' in line: paras['twojob'] = 1
-        elif 'startind' in line: paras['startind'] = line.split()[1]
         elif 'procedure' in line: 
                 paras['procedure'] = line.split()[1]
                 if paras['procedure'] in ['genrandom', 'getrandom']:
@@ -210,8 +248,8 @@ def readfile(subinp):
                         paras['nrandom'] = int(line.split()[2])
                     except IndexError:
                         raise SystemExit("NO number of random structures specified!")
-                elif paras['procedure'] in [ 'GA', 'genalg' ]:
-                    #subinp, paras['genalg_params'] = get_genalg_params( subinp, line)
+                elif paras['procedure'] in [ 'ga', 'genalg' ]:
+                    subinp, paras['genalg'] = get_genalg_params( subinp, line)
                     pass
         elif 'timelimit' in line: paras['timelimit'] = int(line.split()[1])
         elif 'timestep' in line: paras['timestep'] = int(line.split()[1])
@@ -234,17 +272,17 @@ def readfile(subinp):
         elif 'sites' in line: paras['line1'] = [ int(item) for item in line.split()[1:] ]
         elif 'positions' in line: paras['positions'] = [ int(item) for item in line.split()[1:] ]
 
-        elif any(item in line.split()[0] for item in ('program','AI','Program','prog','Prog','programma')):
-            if line.split()[1] in ['gaussian','g09','Gaussian','G09']:
+        elif any(item in line.split()[0] for item in ('program','ai','program','prog','programma')):
+            if line.split()[1] in ['gaussian','g09']:
                 paras['program']= 'gaussian'
-            elif line.split()[1] in ['orca','ORCA','Orca']:
+            elif line.split()[1] in ['orca']:
                 paras['program'] = 'orca'
-            elif line.split()[1] in ['MOLPRO','Molpro','molpro']:
+            elif line.split()[1] in ['molpro']:
                 paras['program'] = 'molpro'
                 raise SystemExit('Molpro not yet implemented')
             else:
                 raise SystemExit('program not recognized')
-        elif 'END' in line: break
+        elif 'end' in line: break
         else:
             print "line is not interpreted!", line
 

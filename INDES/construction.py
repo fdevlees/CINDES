@@ -108,35 +108,6 @@ def get_configurations(startconf,array,k, run=[]):
     logging.debug(pprint.pformat(configurations))
     return configurations
 
-@log_io()
-def indexmaker2(startconf,array,k,table): #for CINDES2.3.py 
-    '''checks for confs already calculated'''
-    confs = get_configurations(startconf,array,k)
-    data=[]
-    indices = []
-    for i in range(len(confs)):
-        index = contoind(confs[i])
-	#pp.pprint(confs[i])
-	indices.append(index)
-    indicesfull = indices[:]
-    if not table == []:
-        for item in table:
-            for index,confje in izip(indices[:],confs[:]):
-                if item[0] == index:
-                    # remove that from the configurations
-                    indices.remove(index)
-                    confs.remove(confje)
-                    # add that item from table to data
-                    if item[1]==1:
-                        data.append(item)
-                    else:
-                        item.insert(1,1)
-                        data.append(item)
-        if not data == []:
-            logging.info('filled data with ones already calced:' + pprint.pformat(data))
-    return indices,data,confs,indicesfull #indicesfull are all the indices. 
-
-
 def indexmaker3(startconf,array,k,table,run=[]): #for CINDES2.3.py for the new symmetry feature
     '''checks for confs already calculated'''
     print "IN INDEXMAKER3", type(run)
@@ -167,35 +138,33 @@ def indexmaker3(startconf,array,k,table,run=[]): #for CINDES2.3.py for the new s
             logging.info('filled data with ones already calced:' + pprint.pformat(data))
     return indices,data,confs,indicesfull #indicesfull are all the indices. 
 
-def indexmaker(confs,data,table):
-    '''checks for confs already calculated'''
-    data=[]
-    indices = []
-    for i in range(len(confs)):
-	index = contoind(confs[i])
-	#pp.pprint(confs[i])
-	indices.append(index)
+def indexmaker4(table,indices, confs):
+    '''checks for confs already calculated this one is used in GA.py'''
     indicesfull = indices[:]
+    data = []
     if not table == []:
         for item in table:
             for index,confje in izip(indices[:],confs[:]):
-                if item[0] == index and not item[-1]==0: #if 0 then only guessed value.
+                if item[0] == index:
                     # remove that from the configurations
                     indices.remove(index)
                     confs.remove(confje)
                     # add that item from table to data
-                    if item[-1]==1:
+                    if item[1]==1:
+                        raise SystemExit('elements in tablebin shouldnt be one')
                         data.append(item)
                     else:
-                        data.append(item + [1] )
+                        new_item = item[:]
+                        new_item.insert(1,1)
+                        data.append(new_item)
         if not data == []:
             logging.info('filled data with ones already calced:' + pprint.pformat(data))
-    return indices,data,confs,indicesfull #indicesfull are all the indices. 
+    return indices,data,confs #indicesfull are all the indices. 
 
 def constructor2(conf,core,active,passive):
     '''another constructor now with a counter
     I hope it needs less functions but. yes
-        >demethyl 
+        >demethyl
     '''
     #print "CONFIGURATION:",conf
     passive = demethyl(passive)
