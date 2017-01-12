@@ -212,9 +212,6 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
       populationlist = []
       if step:
           pop = population.internalPop
-          #pop = population
-          #print "pop:", pop
-          #raise SystemExit('stop')
       else:
           pop = self.internalPop.internalPop
       for id in pop:
@@ -227,6 +224,29 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
       new_y = self.FF.predict_via_submit_multi(populationlist)
       print "in in_evolve"
       return new_y
+
+   def my_evaluate(self, step=False, population=None):
+      populationlist = []
+      if step:
+          pop = population.internalPop
+      else:
+          pop = self.internalPop.internalPop
+      for id in pop:
+          populationlist.append( id.genomeList)
+      print "populationlist", populationlist
+      new_y = self.FF.predict_via_submit_multi(populationlist)
+      y_dict = dict( [item[0], item[1:]] for item in new_y )
+      for ind in population:
+          index = INDES.procedures.zcon.contoind(ind.genomeList)
+          print "individual:", ind.genomeList, "y:", y_dict[index], index
+          ind.score = y_dict[index][1]
+      #for ind, y in zip(population, new_y):
+      #    print "ind:", ind.genomeList, "y:", y
+      #    ind.score = y[2]
+      #pop_sort = sorted(population)
+      #for ind in population:
+      #    ind.score = pop_sort.index(ind) + 100
+      return
 
    def step(self):
       """ Just do one step in evolution, one generation """
@@ -284,6 +304,8 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
           new_y = self.in_evolve(population=newPop, step=True)
           if debug: print "in step; new_y:", new_y
           newPop.evaluate(new_y=new_y)
+      elif True:
+          self.my_evaluate(step=True, population = newPop)
       else:
           newPop.evaluate()
 
@@ -344,14 +366,16 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
 
       self.initialize()
       print "Jos in evolve"
-      print "self.internalPop:", self.internalPop
-      print "self.internalPop.internalPop[0]", self.internalPop.internalPop
-      print "self.internalPop.internalPop.genomeList", self.internalPop.internalPop[0].genomeList
+      #print "self.internalPop:", self.internalPop
+      #print "self.internalPop.internalPop[0]", self.internalPop.internalPop
+      #print "self.internalPop.internalPop.genomeList", self.internalPop.internalPop[0].genomeList
 
       if self.precalculation:
           new_y = self.in_evolve()
           if debug: print "new_y:", new_y
           self.internalPop.evaluate(new_y=new_y)          ######### EVALUATE statement
+      elif True:
+          self.my_evaluate(population = self.internalPop)
       else:
           self.internalPop.evaluate()
       self.internalPop.sort()
@@ -467,7 +491,7 @@ def get_genome(array,table, options):
 
     '''
     print "options:", options
-    precalculation = True
+    precalculation = False
 
     # Enable the logging system:
     pyevolve.logEnable()

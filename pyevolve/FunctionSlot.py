@@ -173,8 +173,8 @@ class FunctionSlot:
       :param args: this args dictionary is passed to the function
 
       """
-      print "Jos in applyFunctions:"
-      print "self.funcList:", self.funcList
+      #print "Jos in applyFunctions:"
+      #print "self.funcList:", self.funcList
 
       if len(self.funcList) <= 0:
          Util.raiseException("No function defined: " + self.slotName)
