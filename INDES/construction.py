@@ -128,7 +128,7 @@ def indexmaker3(startconf,array,k,table,run=[]): #for CINDES2.3.py for the new s
                     confs.remove(confje)
                     # add that item from table to data
                     if item[1]==1:
-                        raise SystemExit('elements in tablebin shouldnt be one')
+                        #raise SystemExit('elements in tablebin shouldnt be one')
                         data.append(item)
                     else:
                         new_item = item[:]
@@ -305,7 +305,7 @@ def filewriter2(zmat,index,**paras): #paras is short for fileparameters
         fid.write("\n")
         fid.write(str(index) + " 2nd calc\n")
         fid.write("\n")
-    if paras['ip'] == 1 or paras['nosub']==1:
+    if paras['ip'] == 1 or paras['aip']==1:
         fid.write("--link1--\n")
         fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
         fid.write("%mem=1500MB\n")
@@ -318,7 +318,7 @@ def filewriter2(zmat,index,**paras): #paras is short for fileparameters
         fid.write("\n")
         fid.write(str(paras['charge']+1) + " " + str(paras['mult']+1) + "\n")
         fid.write("\n")
-    if paras['ea'] == 1:
+    if paras['ea'] == 1 or paras['aea']==1:
         fid.write("--link1--\n")
         fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
         fid.write("%mem=1500MB\n")

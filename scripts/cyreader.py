@@ -362,6 +362,7 @@ def main():
     if args.tplot: #get a tablebin like plot
         fontsize = 18
 
+        # only for particular case: 
         def get_label():
             labels = ('1.1','1.2','2.1','2.2','2.3','2.4')
             for label in labels:
@@ -400,8 +401,9 @@ def main():
                     b.set_label('site:'+str(site+1))
             x = binlist[i][-1][-1][0] + 0.5
             plt.axvline(x=x, linewidth=2, color = 'k')
-            y = 2.4
-            ax.text(x-0.5*l,y,next(labels), horizontalalignment='center',fontsize=fontsize)
+            if False: #if want to plot labels see function above
+                y = 2.4
+                ax.text(x-0.5*l,y,next(labels), horizontalalignment='center',fontsize=fontsize)
 
         #to reorder the legend 
         ax = plt.gca()

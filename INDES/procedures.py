@@ -138,6 +138,11 @@ class Run(object):
             else:
                 self.gaussianline = '# opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
                 self.gaussianlinepolar = '#p geom=allcheck guess=read polar '+param['functional']+'/'+param['basisset']+'\n'
+        elif param['aip']==1 or param['aea']==1:
+            self.gaussianline = '# opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
+            param['twojob']=1
+            #param['multiplejobs']=1
+            self.gaussianline2 = '# geom=check guess=read opt ' + param['functional'] +'/'+ param['basisset'] +'\n'
         elif param['ip']==1 or param['ea']==1:
             self.gaussianline = '# opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
             param['twojob']=1
@@ -230,7 +235,7 @@ def set_table(myrun):
     else:
         table = []
         open('tablebin','wb').close()
-    print table
+    #print table
     return table
 
 # 5 optimum at the start of the run

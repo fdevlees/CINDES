@@ -137,6 +137,8 @@ def readfile(subinp):
            'polar':0,
            'ip':0,
            'ea':0,
+           'aip':0,
+           'aea':0,
            'startind': '',
            'extrawaittime': 2,
            'timelimit':250000,
@@ -305,7 +307,11 @@ def readfile(subinp):
         elif paras['property']=='polar':
             paras['polar']=1
         elif paras['property'] in ['ip','IP']: paras['ip']=1
+        elif paras['property'] in ['aip','AIP']: paras['aip']=1
         elif paras['property'] in ['ea','EA']: paras['ea']=1
+        elif paras['property'] in ['hardness' ]:
+            paras['ip'] = 1
+            paras['ea'] = 1
     #print "in inputreader paras:", paras
     return paras
 
