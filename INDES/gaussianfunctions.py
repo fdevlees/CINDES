@@ -129,6 +129,16 @@ def filemaker(indices,myrun,passive,active,core): #----- dict with info for file
                 # FOR NOW ONLY DO ONE POSSIBILITY THIS IS EASIER BECAUSE WE KNOW EXACTLY HOW MANY JOBS THERE HAVE TO BE SUBMITTED
                 #if not hornot == 1: #if not there are two ways to place the hydrogen.
                     #maker2(zmat,pos,indices[i],**fileparameters)
+
+        # Try to print SMILES
+        try:
+            from CINDES4.utils.molecule import Molecule
+            mymol = Molecule()
+            mymol.set_zmat(mat)
+            smiles= mymol.get_format()
+            print "index:", indices[i], "smiles:", smiles
+        except IndexError:
+            print "IndexError while trying to make smiles for molecule"
     return
 
 def extract_zmat(filename):

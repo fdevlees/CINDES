@@ -136,6 +136,12 @@ def indexmaker3(startconf,array,k,table,run=[]): #for CINDES2.3.py for the new s
                         data.append(new_item)
         if not data == []:
             logging.info('filled data with ones already calced:' + pprint.pformat(data))
+
+    # get SMILES of all confs using the run instance (i dont' have the zmat yet here)
+    #try:
+    #    from CINDES4.utils.molecule import Molecule
+    #    for conf in confs:
+    #        mol_conf = Molecule()
     return indices,data,confs,indicesfull #indicesfull are all the indices. 
 
 def indexmaker4(table,indices, confs):

@@ -72,9 +72,6 @@ class Molecule(object):
             if not hasattr(self,'xyz'):
                 if not hasattr(self,'zmat'):
                     raise SystemExit('molecule object has no data')
-                if debug: 
-                    print "self.zmat",
-                    for item in self.zmat: print item
                 self.zmatoxyz()
             if debug: print "self.xyz",self.xyz
             self.set_OBMol()
