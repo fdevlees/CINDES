@@ -26,7 +26,7 @@ def log_cyclesinfo(data, count, k, l):
     return
 
 def log_table( data, table):
-    if debug: 
+    if debug:
         print "in log_table: data:", data
         print "table:", table
     # here move the new data to table except duplicates

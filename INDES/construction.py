@@ -167,6 +167,42 @@ def indexmaker4(table,indices, confs):
             logging.info('filled data with ones already calced:' + pprint.pformat(data))
     return indices,data,confs #indicesfull are all the indices. 
 
+def indexmaker_SD(startconf,array,table,run=[]): #for CINDES2.3.py for the new symmetry feature
+    '''checks for confs already calculated'''
+    print "IN INDEXMAKER3", type(run)
+    confs = []
+    for i in run.restingsites:
+        confs.extend( get_configurations(startconf,array,i,run=run) )
+    sortedconfs = sorted(confs)
+    confs = [ sortedconfs[i] for i in xrange(len(sortedconfs)) if i==0 or sortedconfs[i] != sortedconfs[i-1] ]
+    data=[]
+    indices = []
+    for i in range(len(confs)):
+        index = contoind(confs[i])
+        indices.append(index)
+        #pp.pprint(confs[i])
+    indicesfull = indices[:]
+    if not table == []:
+        for item in table:
+            for index,confje in izip(indices[:],confs[:]):
+                if item[0] == index:
+                    # remove that from the configurations
+                    indices.remove(index)
+                    confs.remove(confje)
+                    # add that item from table to data
+                    if item[1]==1:
+                        #raise SystemExit('elements in tablebin shouldnt be one')
+                        data.append(item)
+                    else:
+                        new_item = item[:]
+                        new_item.insert(1,1)
+                        data.append(new_item)
+        if not data == []:
+            logging.info('filled data with ones already calced:' + pprint.pformat(data))
+
+    return indices,data,confs,indicesfull #indicesfull are all the indices. 
+
+
 def constructor2(conf,core,active,passive):
     '''another constructor now with a counter
     I hope it needs less functions but. yes

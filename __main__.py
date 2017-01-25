@@ -42,6 +42,10 @@ if True:
         from INDES.procedures import BFS
         BFS(param,array)
 
+    elif 'steepest' in param['procedure']: # can be steepest1 or steepest2
+        from INDES.procedures import SteepestDescent
+        SteepestDescent(param,array)
+
     elif param['procedure'] in [ 'ga' , 'genetic algorithm', 'genalg' ]:
         from INDES import GA
         GA.main(param,array)

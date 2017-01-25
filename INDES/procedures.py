@@ -598,6 +598,113 @@ def genrandom(param,array):
 def testrun(param,array):
     pass
 
+# 6: steepest descent
+def SteepestDescent(param,array):
+    bcok=0 #TO REMOVE LATER
+    param['bcok']=0
+
+
+    #SET MYRUN CLASS and assign all necessary attributes
+    myrun = Run(**param)
+    print(myrun) #this should print all the class elements via the __str__ function
+    # the table with all the results of all calculated configs
+    table = set_table(myrun)
+    # set maximum
+    maximum = set_maximum(myrun,table)
+    #set calculation properties
+    startconf = get_startconf(param,array)
+    #END MYRUN CLASS assignments. from now myrun should contain all the necessary information to work with during the whole program run.
+
+    myrun.restingsites = range( myrun.nsites ) # defines which sites will be changed. only relevant for steepest2 algorithm
+
+            # ------------------------------------- # 
+            # --- HERE THE MAIN LOOP STARTS --- --- #
+            # ------------------------------------- #
+    count = 1 # so we start counting at 1!
+    while True:
+        print_title("COUNT: " + str(count),outline='l',signator="-")
+
+        if count > 1: #define new startconfiguration if not first cycle
+            # define new starting geometry
+            print "maxsite[0]",maxsite[0]
+            del startconf
+            startconf = zcon.indtocon(maxsite[0])
+            print "newconf: ", startconf
+
+        # STEP 1: INDEXMAKER
+        #get indices_all and the indices that still need to be calculated
+        indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker_SD(startconf, array, table, myrun )
+        print "----- END random start configurations -----"
+        print "indices_todo:",indices_todo, "indices_all:", indices_all
+        print "data_nodo:", data_nodo #all item[1]==1 in data_nodo 
+
+        # STEP 2: PREDICTOR
+        # perform prescreaning in a predictions. 
+        data_nocal,indices_tocal, predict = predictor(myrun, table, indices_todo,data_nodo, count, array=array)
+
+        # STEP 3: SUBMITTING PART
+        if not myrun.nosub==1:
+            data_all = submittingprocedure(configurations,indices_tocal,
+                                       data_nocal,
+                                       myrun,
+                                       **myrun.TZmat) # here call submitting procedure
+        else: data_all = skipper(indices_tocal,data_nocal)
+        print "data_all:",data_all
+
+        # STEP 4: SORT
+        # sort data in same order as allindices:
+        data_all = sorted(data_all, key=lambda x:indices_all.index(x[0]))
+
+        # STEP 5: UPDATE DATABASE and LOG results of microiteration
+        # logs new elements in data to table and tablebin and whole data to cyclesinfo
+        table = loggings(data_all,table,count,1,1, predict)
+
+        # STEP 6: UPDATE OPTIMUM STRUCTURE
+        # decide what the maximum site is and if the bc if fullfilled
+        print "BCOK:", bcok
+        maxsite, bcok = testmax(myrun, data_all, bcok)
+
+        if myrun.procedure=='steepest2':
+            maxconf = zcon.indtocon(maxsite[0])
+            print "maxconf:", maxconf, 'while startconf:', startconf
+            try:
+                changedsite = [ siteM == siteS for siteM,siteS in zip(maxconf,startconf) ].index(False)
+            except ValueError:
+                print "no site changed"
+            else:
+                myrun.restingsites.remove(changedsite)
+            if myrun.restingsites==[]:
+                print "all sites changed once"
+                break
+
+
+        print("--- %s seconds ---" % (time.time() - myrun.starttime))
+        print(myrun.currenttime())
+        # END LOOP OVER SITES
+
+        #get maximum and test convergence
+        maximum, maxsite,converged = runtest(myrun, maximum, maxsite, count, bcok, mctable=table, array = array)
+        if converged==1: break
+        count +=1
+        if count > param['maxiter']:
+            print "maxiterations is reached"
+            print "maximum is: ", maximum
+            break
+    # ---------------------------- #
+    # ------ END OF LOOPING ------ # 
+    # ---------------------------- #
+    print "DONE"
+    return
+
+
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
     print_title("C I N D E S\nAn Inverse Molecular Design Program\nwritten by Jos L. Teunissen", newlines=True)
 
