@@ -347,7 +347,7 @@ def skipper(indices,data=[],iprint=True):
             data.append([item,1,propx])
     return data
 # B: getting the real data by submitting 
-def submittingprocedure(confs,indices_tocal,data_nocal,myrun,**kwargs):
+def submittingprocedure(population,indices_tocal,data_nocal,myrun,**kwargs):
     global once
     # here submitting thing knows at least the path
     fileparameters = myrun.__dict__
@@ -356,7 +356,7 @@ def submittingprocedure(confs,indices_tocal,data_nocal,myrun,**kwargs):
         data = orcafunctions.submittingprocedure(confs,indices_tocal,data_nocal,fileparameters,**self.TZmat)
     elif myrun.program in ['Gaussian','gaussian']:
         import gaussianfunctions as gausf
-        data = gausf.procedure(myrun,confs,indices_tocal,data_nocal,kwargs)
+        data = gausf.procedure(myrun,population,indices_tocal,data_nocal,kwargs)
     elif myrun.program == 'molpro':
         raise SystemExit('molpro not implemented')
     else:
@@ -457,9 +457,9 @@ def BFS(param,array):
             #get indices_all and the indices that still need to be calculated
             # if table is correctly formatted all second element item[1]==1. meaning they are ab-initio calculated
             #indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker2(startconf,array,k,table )
-            indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker3(startconf,array,k,table, myrun )
+            indices_todo, data_nodo, population = zcon.classmaker(startconf,array,k,table, myrun )
             print "----- END random start configurations -----"
-            print "indices_todo:",indices_todo, "indices_all:", indices_all
+            print "indices_todo:",indices_todo, "population:", population
             print "data_nodo:", data_nodo #all item[1]==1 in data_nodo 
 
             # STEP 2: PREDICTOR
@@ -468,16 +468,17 @@ def BFS(param,array):
 
             # STEP 3: SUBMITTING PART
             if not myrun.nosub==1:
-                data_all = submittingprocedure(configurations,indices_tocal,
-                                           data_nocal,
-                                           myrun,
-                                           **myrun.TZmat) # here call submitting procedure
+                data_all = submittingprocedure(population,
+                                               indices_tocal,
+                                               data_nocal,
+                                               myrun,
+                                             **myrun.TZmat     ) # here call submitting procedure
             else: data_all = skipper(indices_tocal,data_nocal)
             print "data_all:",data_all
 
             # STEP 4: SORT
             # sort data in same order as allindices:
-            data_all = sorted(data_all, key=lambda x:indices_all.index(x[0]))
+            data_all = sorted(data_all, key=lambda x:population.index(x[0]))
 
             # STEP 5: UPDATE DATABASE and LOG results of microiteration
             # logs new elements in data to table and tablebin and whole data to cyclesinfo

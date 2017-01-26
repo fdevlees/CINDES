@@ -55,9 +55,9 @@ def get_secret_data(tablefilename,indices):
 
 # PROCEDURE
 #data = gausf.procedure(myrun,confs,indices,data,kwargs)
-def procedure(myrun,confs,indices_tocal,data_nocal,TZmat):
+def procedure(myrun,population,indices_tocal,data_nocal,TZmat):
     global once
-    print "nconfs:", len(confs)
+    print "nconfs:", len(population)
     print "n_indices_tocal:", len(indices_tocal)
     print "n_data_nocal:", len(data_nocal)
     if myrun.no1sub==1 and once==0:
@@ -133,7 +133,7 @@ def filemaker(indices,myrun,passive,active,core): #----- dict with info for file
         # Try to print SMILES
         try:
             from CINDES4.utils.molecule import Molecule
-            mymol = Molecule()
+            mymol = Molecule(conf=conf)
             mymol.set_zmat(mat)
             smiles= mymol.get_format()
             print "index:", indices[i], "smiles:", smiles

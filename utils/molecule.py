@@ -6,14 +6,64 @@ debug=0
 if True:
     import pybel
 
-class Molecule(object):
-    def __init__(self,name='name'):
-        self.converter = Converter()
-        self.name = name
+def contoind(conf):
+    ''' to convert a configuration to an index-string '''
+    return '_'.join([''.join(item) for item in conf])
+
+class Population(object):
+    def __init__(self, population):
+        self.population = population
+        self.indices = [ individual.index for individual in self.population ]
         return
 
+    def index(self, key):
+        return self.indices.index(key)
+
+    def __iter__(self):
+        return iter(self.population)
+
+    def __len__(self):
+        return len(self.population)
+
+    def __repr__(self):
+        ret = ""
+        for individual in self.population:
+            ret += '    '
+            ret += individual.__repr__()
+            ret += '\n'
+        return "Population class with:\n" + ret +  "####### END POPULATION #######"
+
     def __str__(self):
-        return "I am a molecule"
+        return self.__repr__()
+
+    def __getitem(self,value):
+        return self.population[value]
+
+
+class Molecule(object):
+    def __init__(self,conf):
+        self.converter = Converter()
+        self.conf = conf
+        self.index= contoind(self.conf)
+        return
+
+    def __getitem__(self,key):
+        return self.conf[key]
+
+    def __contains__(self,value):
+        return value in self.conf
+
+    def __len__(self):
+        return len(self.conf)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return self.index
+
+    def make_zmat(self, core, active, passive):
+        pass
 
     def set_framework(self,core,active,passive):
         self.core   =core
@@ -57,7 +107,7 @@ class Molecule(object):
             new_format_xyz = self.xyz
         OBxyz = []
         OBxyz.append([str(self.natoms)])
-        OBxyz.append([self.name])
+        OBxyz.append([self.index])
         for item in new_format_xyz:
             OBxyz.append(item)
         if debug: 

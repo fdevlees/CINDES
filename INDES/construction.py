@@ -108,7 +108,36 @@ def get_configurations(startconf,array,k, run=[]):
     logging.debug(pprint.pformat(configurations))
     return configurations
 
-def indexmaker3(startconf,array,k,table,run=[]): #for CINDES2.3.py for the new symmetry feature
+
+def classmaker(startconf,array,k,table,run=[]):
+    '''checks for confs already calculated'''
+    print "IN CLASSMAKER", type(run)
+    confs = get_configurations(startconf,array,k,run=run)
+
+    from CINDES4.utils.molecule import Molecule, Population
+    individuals = [ Molecule(conf=conf) for conf in confs ]
+    population = Population( population = individuals )
+    indices = [ individual.index for individual in population ]
+    data=[]
+    if not table == []:
+        for item in table:
+            for individual in population:
+                if item[0] == individual.conf:
+                    indices.remove(individual.index)
+                    # add that item from table to data
+                    if item[1]==1:
+                        #raise SystemExit('elements in tablebin shouldnt be one')
+                        data.append(item)
+                    else:
+                        new_item = item[:]
+                        new_item.insert(1,1)
+                        data.append(new_item)
+        if not data == []:
+            logging.info('filled data with ones already calced:' + pprint.pformat(data))
+
+    return indices,data,population #indicesfull are all the indices. 
+
+def indexmaker3(startconf,array,k,table,run=[]):
     '''checks for confs already calculated'''
     print "IN INDEXMAKER3", type(run)
     confs = get_configurations(startconf,array,k,run=run)
