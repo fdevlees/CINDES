@@ -11,7 +11,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 #
 simple = 1
 semiempirical = 1
-
+debug=True
 
 
 pp = pprint.PrettyPrinter(indent=4, width=100)
@@ -108,6 +108,40 @@ def get_configurations(startconf,array,k, run=[]):
     logging.debug(pprint.pformat(configurations))
     return configurations
 
+def classmaker2(startconf,array,k,table,run=[]):
+    '''checks for confs already calculated'''
+    print "IN CLASSMAKER", type(run)
+    confs = get_configurations(startconf,array,k,run=run)
+
+    from CINDES4.utils.molecule import Molecule, Population
+    individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
+    #population = Population( population = individuals )
+    mols_todo = individuals[:]
+    mols_nodo = []
+    if not table == []:
+        for item in table:
+            for individual in individuals:
+                if item[0] == individual.conf: # so if item in table
+                    # remove it from the individuals to do list
+                    mols_todo.remove(individual)
+                    # add that item from table to data
+                    mols_nodo.append(individual)
+
+                    # set property value of that individual
+                    if item[1]==1:
+                        new_item = item[:]
+                        #raise SystemExit('elements in tablebin shouldnt be one')
+                    else:
+                        new_item = item[:]
+                        new_item.insert(1,1)
+                    # add that molecule to data
+                    individual.Pvalue = new_item
+                    # log
+                    print "already calculated:", individual.index, "with property:", individual.Pvalue
+
+    if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
+
+    return mols_todo, mols_nodo  #indicesfull are all the indices. 
 
 def classmaker(startconf,array,k,table,run=[]):
     '''checks for confs already calculated'''

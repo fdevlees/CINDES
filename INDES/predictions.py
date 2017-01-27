@@ -22,14 +22,14 @@ def do_ml(indices, database, **TZmat):
     return preds_ml
 
 @log_io()
-def predictor(run_object,table,indices_todo,data_nodo,count, array=[]):
+def predictor(run_object,table,mols_todo,mols_nodo,count, array=[]):
     '''makes the predictions using KRR(ML) / RR(LS) / DIF(MC)
        run_object = myrun with all param elements
     '''
-    print "indices_todo:", indices_todo
+    print "mols_todo:", mols_todo
     TZmat = run_object.TZmat
     predict = []
-    enoughdata = not table==[] and not indices_todo==[] and count > 1
+    enoughdata = not table==[] and not mols_todo==[] and count > 1
 
     if enoughdata:
       for prediction in run_object.predictions:
@@ -37,29 +37,29 @@ def predictor(run_object,table,indices_todo,data_nodo,count, array=[]):
         ptype = prediction['type']
         pred = prediction.copy()
         if ptype in ['ML','ml']:
-            preds = do_ml(indices_todo, table, **TZmat)
+            preds = do_ml(mols_todo, table, **TZmat)
         elif ptype=='1D':
             run_object.printlevel=1
             param = run_object.__dict__
-            preds = tfitter.regression(table,indices_todo,**param)
+            preds = tfitter.regression(table,mols_todo,**param)
         elif ptype=='2D':
             param = run_object.__dict__
-            preds = tfitter.twodim_regression(table,indices_todo,**param)
+            preds = tfitter.twodim_regression(table,mols_todo,**param)
         elif ptype=='MC':
             instance = tfitter.get_instance()
-            preds = tfitter.dif_predict(indices_todo,maximum,instance)
+            preds = tfitter.dif_predict(mols_todo,maximum,instance)
         elif ptype=='iML':
-            preds = ml_int.learn_int_skl_procedure(table,indices_todo, array, **TZmat)
+            preds = ml_int.learn_int_skl_procedure(table,mols_todo, array, **TZmat)
         elif ptype=='NN':
-            preds = learning.ANN(indices_todo, table, **TZmat)
-        pred['results'] = dict( zip( indices_todo, preds ) )
+            preds = learning.ANN(mols_todo, table, **TZmat)
+        pred['results'] = dict( zip( mols_todo, preds ) )
         predict.append(pred)
 
     ##########
 
     # Splitting part
-    #if run_object.ml==2 and not indices_todo==[]: #prescrean calculate only the best 50 %
-    #    preds_data = zip(indices_todo, preds_ml) #get indices and predictions in same list
+    #if run_object.ml==2 and not mols_todo==[]: #prescrean calculate only the best 50 %
+    #    preds_data = zip(mols_todo, preds_ml) #get indices and predictions in same list
     #    preds_data = map(list,preds_data)
     #    preds_ml_sorted = sorted(preds_data,key=lambda x:x[1] ) #sort them based on prediction
     #    if run_object.optimum=='maximum': preds_ml_sorted = preds_ml_sorted[::-1] #when not optimum minimum reverse the list
@@ -78,16 +78,16 @@ def predictor(run_object,table,indices_todo,data_nodo,count, array=[]):
     #    raise SystemExit('prescreaning not implemented')
     #    pass
     #else: #indentate off
-    data_nocal = data_nodo
-    indices_tocal = indices_todo
+    mols_nocal = mols_nodo
+    mols_tocal = mols_todo
     if debug:
-        print "data_nocal",data_nocal
+        print "data_nocal",mols_nocal
         try:
             #print "data_tocal",data_tocal
-            print "indices_tocal",indices_tocal
+            print "indices_tocal",mols_tocal
         except NameError:
             print "NameError!"
-    return data_nocal, indices_tocal, predict
+    return mols_nocal, mols_tocal, predict
 
 
 

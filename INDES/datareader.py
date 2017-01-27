@@ -158,9 +158,10 @@ class Logfile():
       self.fid.close()
 
 @log_io(signator='#')
-def datareader(indices,jobids,path,fileparameters):
+def datareader(mols_tocal,jobids,path,fileparameters):
     ''' NOTE indices = indices_tocal here! 
     '''
+    indices = [ mol.index for mol in mols_tocal ]
     data_calc = []
     files=[]
     print "multiplejobs:", fileparameters['multiplejobs']

@@ -55,11 +55,11 @@ def get_secret_data(tablefilename,indices):
 
 # PROCEDURE
 #data = gausf.procedure(myrun,confs,indices,data,kwargs)
-def procedure(myrun,population,indices_tocal,data_nocal,TZmat):
+def procedure(myrun, mols_tocal, mols_nocal, TZmat):
     global once
-    print "nconfs:", len(population)
-    print "n_indices_tocal:", len(indices_tocal)
-    print "n_data_nocal:", len(data_nocal)
+    #print "nconfs:", len(population)
+    print "n_indices_tocal:", len(mols_tocal)
+    print "n_data_nocal:", len(mols_nocal)
     if myrun.no1sub==1 and once==0:
         once = 1
         print " "
@@ -71,43 +71,42 @@ def procedure(myrun,population,indices_tocal,data_nocal,TZmat):
         return data_all
     else:
         # 1. Make the files
-        filemaker(indices_tocal,myrun,**TZmat) #----------------------------------HERE IS THE FILEWRITER CALL
+        filemaker(mols_tocal,myrun,**TZmat) #----------------------------------HERE IS THE FILEWRITER CALL
 
-    if not indices_tocal==[]:
+    if not mols_tocal==[]:
         # 2. now the jobs have to be submitted 
-        jobids = submission(indices_tocal,myrun)
+        jobids = submission(mols_tocal,myrun)
 
         # 3. test of all jobs are ready
-        jobtester(indices_tocal,myrun,jobids)
+        jobtester(mols_tocal,myrun,jobids)
 
         # 4. test normal termination and read jobs #NOTE data_nocal is passed to this one. results are appended to it
-        data_calc = datareader.datareader(indices_tocal,jobids,myrun.path,myrun.__dict__)
+        mols_calc = datareader.datareader(mols_tocal,jobids,myrun.path,myrun.__dict__)
 
         # 5. add ones to each data_calc element. this means the values are obtained by real calculation
-        for item in data_calc:
+        for item in mols_calc:
+            #item.predicted = False
             item.insert(1,1)
     else: data_calc = []
 
     # 6. merge data_calc and data_nocal to data_all
-    data_all = data_calc + data_nocal
+    mols_all = mols_calc + mols_nocal
 
-    return data_all
+    return mols_all
 
 # 1. file making
 @log_io()
-def filemaker(indices,myrun,passive,active,core): #----- dict with info for filewriter has to pass here)
+def filemaker(mols_tocal,myrun,passive,active,core): #----- dict with info for filewriter has to pass here)
     ''' jkl'''
     path = myrun.path
     fileparameters = myrun.__dict__
-    for i in range(len(indices)):
+    for molecule in mols_tocal:
         c = deepcopy(core)
         a = deepcopy(active)
         p = deepcopy(passive)
-        logging.debug("i=" + str(i))
-        conf = zcon.indtocon(indices[i])
-        mat = zcon.constructor2(conf,c,a,p)
+        molecule.set_zmat( zcon.constructor2(molecule.conf,c,a,p) )
         if not myrun.stab==1:
-            zcon.filewriter2(mat,indices[i],**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
+            zcon.filewriter2(molecule.zmat,molecule.index,**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
         else:
             # 1. WRITE radical input with filewriterA
             zcon.filewriterA(mat,indices[i],**fileparameters) #here we have to use makers to construct the AH files
@@ -132,11 +131,8 @@ def filemaker(indices,myrun,passive,active,core): #----- dict with info for file
 
         # Try to print SMILES
         try:
-            from CINDES4.utils.molecule import Molecule
-            mymol = Molecule(conf=conf)
-            mymol.set_zmat(mat)
-            smiles= mymol.get_format()
-            print "index:", indices[i], "smiles:", smiles
+            smiles= molecule.get_format()
+            print "smiles:", smiles
         except IndexError:
             print "IndexError while trying to make smiles for molecule"
     return
@@ -213,10 +209,10 @@ def maker2(zmat,pos,index,**fileparameters):
 
 # 2. submission
 @log_io()
-def submission(indices,myrun):
+def submission(mol_tocal,myrun):
     global once
     fileparameters = myrun.__dict__
-    indicesall = deepcopy(indices) #here i copy the indices. The indices are submitted. The indicesall are not all submitted but are all read out.
+    #mol_tocal_all = deepcopy(mol_tocal) #here i copy the indices. The indices are submitted. The indicesall are not all submitted but are all read out.
     if myrun.stab==1: #then submit also the jobs in folders
         if fileparameters['try_ready']==1:
             print "try_ready activated"
@@ -228,10 +224,10 @@ def submission(indices,myrun):
         once = 2
     else:
         #MOST IMPORTANT PART
-        if myrun.try_ready==1:
-            print "try_ready activated"
-            indices = try_ready_test(indicesall,myrun.path,fileparameters)
-        jobids = submit_normal(indices,myrun) #In here is decided to run on shell or to really submit!
+        #if myrun.try_ready==1:
+        #    print "try_ready activated"
+        #    indices = try_ready_test(indicesall,myrun.path,fileparameters)
+        jobids = submit_normal(mol_tocal,myrun) #In here is decided to run on shell or to really submit!
     logging.info("----- END all jobs are submitted ----------")
     if safe: time.sleep(15) # wait 15 seconds. to be sure that the jobs appear in the qstat command
     return jobids
@@ -283,14 +279,14 @@ def try_ready_test(indices,path,fileparameters,returnpath=False):
     else:
         return indices
 
-def submit_normal(indices,myrun):
+def submit_normal(mols_tocal,myrun):
     jobids = []
-    for item in indices:
-        name = item + '.com'
+    for molecule in mols_tocal:
+        name = molecule.index + '.com'
         if myrun.nosub ==2:
             time.sleep(1)
-            jobid = subm.nosubmit(myrun.path,item,myrun.identify)
-            print item + 'submitted'
+            jobid = subm.nosubmit(myrun.path,molecule.index ,myrun.identify)
+            print molecule.index + 'submitted'
         else:
             jobid = subm.submit(myrun.path,name,myrun.identify).strip()
         jobids.append(jobid)
@@ -311,8 +307,8 @@ def submit_stab(indices,myrun,jobids=[]):
 
 # 3. testing
 @log_io(signator='=')
-def jobtester(indices,myrun,jobids=[]):
-    """ this tester test if the jobs are ready by looking for a file <name>.com.o<6digits>.
+def jobtester(mols_tocal,myrun,jobids=[]):
+    """ this tester tests if the jobs are ready by looking for a file <name>.com.o<6digits>.
 
         - even if try_ready is activated all indices are used. And the already ready ones are immediately recognized as ready. 
         - they are just not submitted again.
@@ -323,11 +319,11 @@ def jobtester(indices,myrun,jobids=[]):
     path = myrun.path
     fileparameters = myrun.__dict__
     if test_ready==1:
-        test_ready1(indices,myrun)
+        test_ready1(mols_tocal,myrun)
     elif test_ready==2:
-        test_ready2(indices,myrun)
+        test_ready2(mols_tocal,myrun)
     elif test_ready==3:
-        test_ready3(indices,myrun)
+        test_ready3(mols_tocal,myrun)
     else:
         raise SystemExit('no valid test_ready value')
     return
@@ -362,7 +358,8 @@ def test_ready1(indices,myrun):
     time.sleep(fileparameters['extrawaittime']) #just wait for the files to write back before opening them
     return
 
-def test_ready2(indices,myrun):
+def test_ready2(mols_tocal,myrun):
+    indices = [ mol.index for mol in mols_tocal ]
     completedjobs = []
     fileparameters = myrun.__dict__
     tijdje = 0

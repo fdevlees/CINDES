@@ -45,6 +45,9 @@ class Molecule(object):
         self.converter = Converter()
         self.conf = conf
         self.index= contoind(self.conf)
+        self.Pvalue = None
+        self.predicted = None
+        self.mat = None
         return
 
     def __getitem__(self,key):
@@ -60,7 +63,7 @@ class Molecule(object):
         return self.__str__()
 
     def __str__(self):
-        return self.index
+        return "Molecule: " + self.index
 
     def make_zmat(self, core, active, passive):
         pass
