@@ -30,12 +30,21 @@ from CINDES4.INDES import construction as zcon
 
 class MachineLearning(object):
     ''' Class for making training set / kernel / coulomb / predictions etc. '''
-    def __init__(self,converter, type='normal',kerneltype='laplacian',table=[],sigma = 1e8, labda = 1e-5, **kwargs):
+    def __init__(self,
+                 converter, 
+                 type='normal',
+                 kerneltype='laplacian',
+                 table=[],
+                 sigma = 1e8, 
+                 labda = 1e-5, 
+                 inputfile = 'table.xyz',
+                 **kwargs):
         self.type = type
         self.kerneltype = kerneltype
         self.converter  = converter
         self.sigma = sigma
         self.labda = labda
+        self.inputfile = inputfile
         print_title("As a kernel: "+kerneltype+" is used",outline='l',signator='k',newlines=True)
         if table==[]:
             self.get_input(self.converter)
@@ -43,10 +52,10 @@ class MachineLearning(object):
             self.setXY(table, **kwargs)
         return
 
-    def get_input(self,converter, data=1, inputfile='table.xyz'):
+    def get_input(self,converter, data=1):
         y = []
         xyzs = []
-        with open(inputfile) as fid:
+        with open(self.inputfile) as fid:
             while True: #for all xyzs
                 headerline = fid.readline()
                 if not headerline: break
@@ -525,13 +534,15 @@ class MachineLearning(object):
         std_score = np.std(scores)
         return avg_score, std_score
 
-    def GridSearch(self, indices=[],**kwargs):
+    def GridSearch(self, param_grid=None,**kwargs):
         from sklearn.model_selection import GridSearchCV
         from sklearn.kernel_ridge import KernelRidge
-        krr = GridSearchCV( KernelRidge( kernel= 'rbf', gamma=0.1 ),
+        if not param_grid:
+            param_grid = {'alpha' : [1e4, 1e2, 1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5,1e-6 ],
+                          'gamma' : np.logspace(-6, 6, 10) }
+        krr = GridSearchCV( self.clf ,
                             cv    = 5,
-                            param_grid = {'alpha' : [1e4, 1e2, 1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5,1e-6 ],
-                                          'gamma' : np.logspace(-6, 6, 10) } ) 
+                            param_grid = param_grid )
         krr_out = krr.fit(self.coulombs, self.y)
         print "krr_out:", krr_out
         print "krr:", krr
@@ -605,8 +616,8 @@ def KDE(data1,data2):
             xlim = 20*args.bandwidth
         X_plot = np.linspace(-xlim, xlim, 1000)[:, np.newaxis]
         log_dens = kde.score_samples(X_plot)
-        print "logdens:"
-        sprint(10,log_dens)
+        #print "logdens:"
+        #sprint(10,log_dens)
         ax.plot(X_plot, np.exp(log_dens), 'r-')
         #plt.show()
     if True:
@@ -624,7 +635,7 @@ def KDE(data1,data2):
         f_y = mlab.normpdf( bins,f_mu,f_std)
         f_l = ax.plot(bins, f_y, 'b--', linewidth=1)
         plt.show()
-    return
+    return log_dens
 
 
 def my_kernel(X1, X2, sigma=1e2):
@@ -976,14 +987,11 @@ def ANN(indices=[],table=[],sigma=1e4, labda= 1., printlevel=1,fraction=0.5, ker
 
 
 
-
-
-
-
 @log_io()
-def Amachinelearning2(indices=[],table=[],sigma=1e4, labda= 1., printlevel=1,fraction=0.5, kernel='gaussian', descriptor='norm4', **kwargs):
+def Amachinelearning2(indices=[],table=[],sigma=1e4, labda= 1., printlevel=1,fraction=0.5, kernel='gaussian', descriptor='norm4', args = None, **kwargs):
     ''' or this function will be called by CINDES'''
     #from converter import Converter
+    globals()['args'] = args
     from CINDES4.utils.converter import Converter
     converter = Converter()
     kwargs['converter'] = converter
@@ -991,7 +999,9 @@ def Amachinelearning2(indices=[],table=[],sigma=1e4, labda= 1., printlevel=1,fra
         global BoB
         BoB = True
     else: BoB = False
-    my_ML = MachineLearning(type=descriptor,table=table,kerneltype= kernel, **kwargs)
+    my_ML = MachineLearning(type=descriptor,table=table,kerneltype= kernel, inputfile = args.file, **kwargs)
+
+
     if args.neural and args.fraction:
         print "X shape:", my_ML.coulombs.shape
         print "Y shape:", my_ML.y.shape
@@ -1014,61 +1024,5 @@ def Amachinelearning2(indices=[],table=[],sigma=1e4, labda= 1., printlevel=1,fra
             score = my_ML.fraction_learn(fraction=fraction, skl=True)
             print "score:", score
     return
-
-
-if __name__=='__main__':
-    class Unbuffered(object):
-        def __init__(self,stream):
-            self.stream = stream
-        def write(self,data):
-            self.stream.write(data)
-            self.stream.flush()
-        def __getattr__(self,attr):
-            return getattr(self.stream, attr)
-    sys.stdout = Unbuffered(sys.stdout)
-    import argparse
-    parser = argparse.ArgumentParser(description="reads cycles data stored in cyclesinfo")
-    parser.add_argument("-i","--interactive",action="store_true",help="to be implemented")
-    parser.add_argument("-p","--plot",action="store_true",help="make a property vs property plot of the data")
-    parser.add_argument("-a","--anatrain",action="store_true",help="analyze and make a property vs property plot of the training data")
-    parser.add_argument("-N","--neural",action="store_true",help="going to use Neural Networks")
-    parser.add_argument("-S","--use_sklearn",action="store_true",help="analyze and make a property vs property plot of the training data")
-    parser.add_argument("-T","--timer",action="store_true",help="perform some time analyses")
-    parser.add_argument("-k","--kernel",action="store",type = str,default='gaussian',help="which kernel to use: (laplacian, gaussian)")
-    parser.add_argument("-d","--descriptor",action="store",type = str,default='norm4',help="which descriptor to use: (BoB, Coulomb(norm1/norm3/norm4))")
-    parser.add_argument("-r","--random",action="store_true",help="use a randomly selected test set and training set")
-    parser.add_argument("-s","--sigma",action="store",nargs='?',type=float,default=1.e2,const=1e7,help="do a sigma default 1e2 KRR")
-    parser.add_argument("-B","--bandwidth",action="store",nargs='?',type=float,default=0.5,const=1e7,help="do a sigma default 1e2 KRR")
-    parser.add_argument("-c","--cutoff",nargs=2, type = float, help="cutoff values min max")
-    parser.add_argument("-l","--labda",action="store",nargs='?',type=float,default=1.e-5,const=1e-5,help="do a labda default 1e-5 KRR")
-    parser.add_argument("-f","--fraction",action="store",nargs='?',type=float,default=1,const=1,help="between 0-1 use this fraction as training set")
-    args=parser.parse_args()
-    # get a test c,a,p
-
-    #if args.timer:
-    if True:
-        print "use sklearn:", args.use_sklearn
-        from CINDES4.utils.timer import Timer
-        with Timer() as t:
-            Amachinelearning2( sigma = args.sigma,
-                               labda = args.labda,
-                               fraction = args.fraction,
-                               descriptor = args.descriptor,
-                               kernel = args.kernel )
-        print "=> elapsed learning5: %s s" % t.secs
-    #else:
-    #        Amachinelearning2( sigma = args.sigma,
-    #                           labda = args.labda,
-    #                           fraction = args.fraction,
-    #                           descriptor = args.descriptor,
-    #                           kernel = args.kernel )
-    print "DONE LEARNING.PY"
-    # load table.xyz
-else:
-    class Defaults():
-        cutoff=False
-        neural=True
-        fraction=0.0
-    args=Defaults()
 
 

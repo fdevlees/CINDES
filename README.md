@@ -7,3 +7,6 @@ This is the CINDES package containing:
     4. scripts
     
 There is a manual. Please send a mail to johannes.teunissen@vub.ac.be to ask for the manual
+
+to run the test suite:
+in CINDES4/ run >nosetests

@@ -534,7 +534,7 @@ def generate_procedure(param,array):
     '''generate all structures and print in format'''
     from CINDES4.utils.converter import Converter
     from CINDES4.utils import writings
-    from CINDES4.predictor import learning
+    from CINDES4.predictor import learning_skl as learning
     converter = Converter()
     #get structure
     TZmat = r.geometry(**param)

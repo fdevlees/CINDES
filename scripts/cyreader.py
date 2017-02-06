@@ -31,6 +31,7 @@ import numpy as np
 import pprint
 pp = pprint.PrettyPrinter(indent=4, width=150)
 from re import findall
+import re
 from copy import deepcopy
 import sys
 import os
@@ -63,7 +64,9 @@ funcs = {'CCFFF': '$C-CF_3$',
          'CSH': '$C-SH$',
          'N': '$N$',
          'O': '$O$',
-         'S': '$S$'}
+         'S': '$S$',
+         'CNHCHHH' : '$CNHCH_3$',
+         'COCHHH'  : '$COCH_3$' }
 
 def indtocon(index):
     #return [list(item) for item in index.split('_')]
@@ -335,7 +338,8 @@ def main():
                 run=totalsites[i][j]
                 x = np.array(range(len(run)))
                 if len(run) == maxnsites:
-                    my_xticks = [ funcs[item[0]] for item in run ] 
+                    #my_xticks = [ funcs[ item[0] ] for item in run ] 
+                    my_xticks = [ funcs[ re.split('[0-9]',item[0])[0] ] for item in run ] 
                     plt.xticks(x,my_xticks)
                     plt.xticks(rotation=45)
                     print "my_xticks", my_xticks
@@ -391,6 +395,12 @@ def main():
             for j in range(len(binlist[i])):
                 a = np.array(binlist[i][j]).T
                 site = totalruns[i][j][0][1][-2]
+
+                # cutoff 
+                if True:
+                    a[a>1000] = None
+                    if np.isnan(a).any(): print "cutoff is applied and used!"
+
                 b, = plt.plot(a[0],a[1],tags[site]+'-',color=colors[site],
                                                        markersize=5)
                 plt.setp(b, linewidth=1)
