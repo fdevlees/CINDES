@@ -114,6 +114,7 @@ def readfile(subinp):
     paras={'program':'gaussian',
            'procedure':'standard',
            'optimum':'minimum',
+           'bc': False,
            'ml':0,
            'nosub':0,
            'nosub_file:':'',
@@ -172,6 +173,7 @@ def readfile(subinp):
             continue
         line = line.split('#')[0].lower()
         if 'bc' in line:
+            paras['bc'] = True
             paras['bcprop'] = line.split()[1]
             paras['bcval'] = line.split()[2]
             try:

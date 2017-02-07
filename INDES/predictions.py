@@ -87,7 +87,8 @@ def predictor(run_object,table,mols_todo,mols_nodo,count, array=[]):
             print "indices_tocal",mols_tocal
         except NameError:
             print "NameError!"
-    return mols_nocal, mols_tocal, predict
+    #return mols_nocal, mols_tocal, predict
+    return mols_nocal, mols_tocal
 
 
 

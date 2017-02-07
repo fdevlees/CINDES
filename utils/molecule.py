@@ -45,7 +45,10 @@ class Molecule(object):
         self.converter = Converter()
         self.conf = conf
         self.index= contoind(self.conf)
-        self.Pvalue = None
+        self.Pvalue = [] # for storing the principal properties
+        self.boundaries = [] # for storing the boundary condition properties
+        self.infoline = [] # for storing additional properties
+        self.predictions = []
         self.predicted = None
         self.mat = None
         return
@@ -64,6 +67,14 @@ class Molecule(object):
 
     def __str__(self):
         return "Molecule: " + self.index
+
+    def log(self):
+        ret = [ self.index ]
+        ret.append( int( not self.predicted ) )
+        ret.append( self.Pvalue     )
+        ret.extend( self.boundaries )
+        ret.extend( self.infoline   )
+        return ret
 
     def make_zmat(self, core, active, passive):
         pass

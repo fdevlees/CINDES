@@ -257,7 +257,14 @@ def datareader(mols_tocal,jobids,path,fileparameters):
             else:
                 data_calc.append([indices[i],propx]+extradata)
     # insert all ones at second position
-    return data_calc
+
+    # assuming the order is the same:
+    for molecule, data_item in zip(mols_tocal, data_calc):
+        print "molecule:", molecule, "data_item:", data_item
+        molecule.Pvalue = data_item[1]
+        molecule.infoline = data_item[2:]
+        molecule.predicted= False
+    return mols_tocal
 
 def gausread(filename,prop,multiplejobs=0,rdvindex=1):
     mymol = Logfile(filename)

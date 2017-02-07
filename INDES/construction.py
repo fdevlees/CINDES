@@ -121,21 +121,29 @@ def classmaker2(startconf,array,k,table,run=[]):
     if not table == []:
         for item in table:
             for individual in individuals:
-                if item[0] == individual.conf: # so if item in table
+                if item[0] == individual.index: # so if item in table
                     # remove it from the individuals to do list
                     mols_todo.remove(individual)
                     # add that item from table to data
                     mols_nodo.append(individual)
 
                     # set property value of that individual
-                    if item[1]==1:
-                        new_item = item[:]
-                        #raise SystemExit('elements in tablebin shouldnt be one')
+                    individual.Pvalue = item[1]
+                    individual.predicted = False
+                    if run.bc:
+                        individual.boundaries = [ item[2] ]
+                        individual.infoline   = item[3:]
                     else:
-                        new_item = item[:]
-                        new_item.insert(1,1)
+                        individual.infoline  = item[2:]
+
+                    #if item[1]==1:
+                    #    new_item = item[:]
+                    #    #raise SystemExit('elements in tablebin shouldnt be one')
+                    #else:
+                    #    new_item = item[:]
+                    #    new_item.insert(1,1)
                     # add that molecule to data
-                    individual.Pvalue = new_item
+                    #individual.Pvalue = new_item
                     # log
                     print "already calculated:", individual.index, "with property:", individual.Pvalue
 
@@ -230,6 +238,47 @@ def indexmaker4(table,indices, confs):
             logging.info('filled data with ones already calced:' + pprint.pformat(data))
     return indices,data,confs #indicesfull are all the indices. 
 
+
+def classmaker2_SD(startconf,array,table,run=[]):
+    '''checks for confs already calculated'''
+    print "IN CLASSMAKER", type(run)
+    from CINDES4.utils.molecule import Molecule, Population
+
+    # make configurations
+    confs = []
+    for i in run.restingsites:
+        confs.extend( get_configurations(startconf,array,i,run=run) )
+    # remove duplicates by sorting and subsequently only adding when the previous one is not similar
+    sortedconfs = sorted(confs)
+    confs = [ sortedconfs[i] for i in xrange(len(sortedconfs)) if i==0 or sortedconfs[i] != sortedconfs[i-1] ]
+
+    individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
+    #population = Population( population = individuals )
+    mols_todo = individuals[:]
+    mols_nodo = []
+    if not table == []:
+        for item in table:
+            for individual in individuals:
+                if item[0] == individual.index: # so if item in table
+                    # remove it from the individuals to do list
+                    mols_todo.remove(individual)
+                    # add that item from table to data
+                    mols_nodo.append(individual)
+
+                    individual.Pvalue = item[1]
+                    individual.predicted = False
+                    if run.bc:
+                        individual.boundaries = [ item[2] ]
+                        individual.infoline   = item[3:]
+                    else:
+                        individual.infoline  = item[2:]
+                    # log
+                    print "already calculated:", individual.index, "with property:", individual.Pvalue
+
+    if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
+
+    return mols_todo, mols_nodo  #indicesfull are all the indices. 
+
 def indexmaker_SD(startconf,array,table,run=[]): #for CINDES2.3.py for the new symmetry feature
     '''checks for confs already calculated'''
     print "IN INDEXMAKER3", type(run)
@@ -238,6 +287,7 @@ def indexmaker_SD(startconf,array,table,run=[]): #for CINDES2.3.py for the new s
         confs.extend( get_configurations(startconf,array,i,run=run) )
     sortedconfs = sorted(confs)
     confs = [ sortedconfs[i] for i in xrange(len(sortedconfs)) if i==0 or sortedconfs[i] != sortedconfs[i-1] ]
+
     data=[]
     indices = []
     for i in range(len(confs)):

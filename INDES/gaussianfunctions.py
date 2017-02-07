@@ -84,10 +84,10 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
         mols_calc = datareader.datareader(mols_tocal,jobids,myrun.path,myrun.__dict__)
 
         # 5. add ones to each data_calc element. this means the values are obtained by real calculation
-        for item in mols_calc:
-            #item.predicted = False
-            item.insert(1,1)
-    else: data_calc = []
+        #for item in mols_calc:
+        #    #item.predicted = False
+        #    item.insert(1,1)
+    else: mols_calc = []
 
     # 6. merge data_calc and data_nocal to data_all
     mols_all = mols_calc + mols_nocal
@@ -224,35 +224,41 @@ def submission(mol_tocal,myrun):
         once = 2
     else:
         #MOST IMPORTANT PART
-        #if myrun.try_ready==1:
-        #    print "try_ready activated"
-        #    indices = try_ready_test(indicesall,myrun.path,fileparameters)
-        jobids = submit_normal(mol_tocal,myrun) #In here is decided to run on shell or to really submit!
+        if myrun.try_ready==1:
+            print "try_ready activated"
+            mol_submit = try_ready_test(mol_tocal,myrun.path,fileparameters)
+            jobids = submit_normal(mol_submit, myrun)
+        else:
+            jobids = submit_normal(mol_tocal,myrun) #In here is decided to run on shell or to really submit!
     logging.info("----- END all jobs are submitted ----------")
     if safe: time.sleep(15) # wait 15 seconds. to be sure that the jobs appear in the qstat command
     return jobids
 
-def try_ready_test(indices,path,fileparameters,returnpath=False):
+def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
     """ Jobtester 3 looks which files shouldn't be submitted anymore. These are removed from the indices list and this list is returned
 
         - It tested if the .com.o123899 file already exists. Actually it should test if the logfile ends in normal termination.?
         - Note that this function does return new indices and no jobids
     """
+
+    # 1. make a list of paths that need to exist when job is ready
     paths = [] #here we are going to make a list of paths of the jobs
     if 'positions' in fileparameters: positions = fileparameters['positions']
-    for i in range(len(indices)):
-        path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + indices[i] + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+    #for i in range(len(indices)):
+    for mol in mol_tocal:
+        path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
         paths.append(path1)
         if fileparameters['stab']==1: #property is global variable
             for pos in fileparameters['positions']:
-                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+                path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
                 paths.append(path2)
-    indicescopy = deepcopy(indices)
-    #print "paths:", paths
+
     newpaths = paths[:]
+    mol_submit = mol_tocal[:]
     if fileparameters['stab']==1: #test if all necessary A and AH calculations are performed
         k=0
-        for i in range(len(indices)): # all indices
+        #for i in range(len(indices)): # all indices
+        for mol in mol_tocal:
             l=0
             if glob.glob(paths[k]): # test A
                 print "already calculated:", paths[k]
@@ -267,17 +273,18 @@ def try_ready_test(indices,path,fileparameters,returnpath=False):
             print "len(positions):", len(positions)
             print "l:", l
             if l == len(positions) + 1: #if all AH and A then remove from indices
-                indices.remove(indicescopy[i])
+                mol_submit.remove(mol)
             k+=1
     else:
-        for i in range(len(paths)):
-            if glob.glob(paths[i]):
-                print "already calculated:", indicescopy[i]
-                indices.remove(indicescopy[i])
+        #for i in range(len(paths)):
+        for mol, path in zip(mol_tocal, paths):
+            if glob.glob(path):
+                print "already calculated:", mol
+                mol_submit.remove(mol)
     if returnpath:
-        return indices,newpaths
+        return mol_submit,newpaths
     else:
-        return indices
+        return mol_submit
 
 def submit_normal(mols_tocal,myrun):
     jobids = []
@@ -288,6 +295,9 @@ def submit_normal(mols_tocal,myrun):
             jobid = subm.nosubmit(myrun.path,molecule.index ,myrun.identify)
             print molecule.index + 'submitted'
         else:
+            #print "name:", name
+            #print "myrun.path:", myrun.path
+            #print "myrun.identify:", myrun.identify
             jobid = subm.submit(myrun.path,name,myrun.identify).strip()
         jobids.append(jobid)
     return jobids

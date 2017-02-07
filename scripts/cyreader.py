@@ -334,7 +334,8 @@ def main():
             #for run in totalruns[i]:
                 run=totalsites[i][j]
                 x = np.array(range(len(run)))
-                if len(run) == maxnsites:
+                #if len(run) == maxnsites:
+                if True:
                     my_xticks = [ funcs[item[0]] for item in run ] 
                     plt.xticks(x,my_xticks)
                     plt.xticks(rotation=45)
