@@ -11,7 +11,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 #
 simple = 1
 semiempirical = 1
-debug=True
+debug=False
 
 
 pp = pprint.PrettyPrinter(indent=4, width=100)
@@ -141,48 +141,11 @@ def classmaker2(startconf,array,k,table,run=[]):
                     else:
                         individual.infoline  = item[i+1:]
 
-                    #if item[1]==1:
-                    #    new_item = item[:]
-                    #    #raise SystemExit('elements in tablebin shouldnt be one')
-                    #else:
-                    #    new_item = item[:]
-                    #    new_item.insert(1,1)
-                    # add that molecule to data
-                    #individual.Pvalue = new_item
-                    # log
                     print "already calculated:", individual.index, "with property:", individual.Pvalue
 
     if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
 
     return mols_todo, mols_nodo  #indicesfull are all the indices. 
-
-def classmaker(startconf,array,k,table,run=[]):
-    '''checks for confs already calculated'''
-    print "IN CLASSMAKER", type(run)
-    confs = get_configurations(startconf,array,k,run=run)
-
-    from CINDES4.utils.molecule import Molecule, Population
-    individuals = [ Molecule(conf=conf) for conf in confs ]
-    population = Population( population = individuals )
-    indices = [ individual.index for individual in population ]
-    data=[]
-    if not table == []:
-        for item in table:
-            for individual in population:
-                if item[0] == individual.conf:
-                    indices.remove(individual.index)
-                    # add that item from table to data
-                    if item[1]==1:
-                        #raise SystemExit('elements in tablebin shouldnt be one')
-                        data.append(item)
-                    else:
-                        new_item = item[:]
-                        new_item.insert(1,1)
-                        data.append(new_item)
-        if not data == []:
-            logging.info('filled data with ones already calced:' + pprint.pformat(data))
-
-    return indices,data,population #indicesfull are all the indices. 
 
 def indexmaker3(startconf,array,k,table,run=[]):
     '''checks for confs already calculated'''
@@ -278,6 +241,32 @@ def classmaker2_SD(startconf,array,table,run=[]):
                     else:
                         individual.infoline  = item[2:]
                     # log
+                    print "already calculated:", individual.index, "with property:", individual.Pvalue
+
+    if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
+
+    return mols_todo, mols_nodo  #indicesfull are all the indices. 
+
+
+def classmaker_GA(individuals, table):
+    '''checks for confs already calculated'''
+    mols_todo = individuals[:]
+    mols_nodo = []
+    if not table == []:
+        for item in table:
+            for individual in individuals:
+                if item[0] == individual.index: # so if item in table
+                    # remove it from the individuals to do list
+                    mols_todo.remove(individual)
+                    # add that item from table to data
+                    mols_nodo.append(individual)
+                    i=1
+                    if int(item[1]) == 1:
+                        print "WARNING tablebin has old style formatting (column with 1s is present)",
+                        i=2
+                    individual.Pvalue = item[i]
+                    individual.predicted = False
+                    individual.infoline  = item[i+1:]
                     print "already calculated:", individual.index, "with property:", individual.Pvalue
 
     if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo

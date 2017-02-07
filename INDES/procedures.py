@@ -152,7 +152,7 @@ class Run(object):
                 logging.warning('NO Geometry optimization will be performed!!!')
                 self.gaussianline = '# ' + param['functional'] +'/'+ param['basisset'] +'\n'
             else:
-                if param['basisset'] in [ None, 0, '0', 'None', 'False', False, 'off' , 'n', 'NA' ]:
+                if param['basisset'] in [ None, 0, '0', 'none', 'nalse', False, 'off' , 'n', 'na' ]:
                     self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'\n'
                 else:
                     self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'

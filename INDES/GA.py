@@ -19,6 +19,7 @@ import random as rrandom
 # my own modules
 #from writings import log_io, sprint, print_title
 from CINDES4.utils.writings import log_io, sprint, print_title
+from CINDES4.utils.molecule import Molecule
 from CINDES4 import INDES
 from CINDES4.predictor import learning
 from CINDES4.predictor import learning_int as ml_i
@@ -124,27 +125,23 @@ class Fitness_Function():
 
     def predict_via_submit_multi(self,confs):
         ''' this function is used by my_GSimpleGA class.my_evaluate '''
-        # 1. convert configuration lists to indices format
-        indices = []
-        for i in range(len(confs)):
-            index = INDES.procedures.zcon.contoind(confs[i])
-            indices.append(index)
+        # 1. convert configuration lists to molecule instances
+        individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
 
-        # 2. check which indices are already calculated and add them to data_nocal
-        indices_tocal, data_nocal, confs = INDES.construction.indexmaker4(indices=indices, confs=confs, table=self.table)
-
-        # 2b Here I could introduce eventually the predictions with INDES.predictions.predictor
-        # perform prescreaning in a predictions. 
-        # data_nocal,indices_tocal, predict = predictor(myrun, table, indices_todo,data_nodo, count, array=array)
-
+        # 2. check which molecules are already calculated and add them to data_nocal
+        mols_tocal, mols_nocal = INDES.construction.classmaker_GA( individuals, self.table )
 
         # 3. calculate configurations
         myrun = self.run
-        newy = INDES.procedures.submittingprocedure(confs,indices_tocal,data_nocal,myrun,**myrun.TZmat)
+        mols_all = INDES.procedures.submittingprocedure( mols_tocal,
+                                                         mols_nocal,
+                                                         myrun,
+                                                       **myrun.TZmat     ) # here call submitting procedure
+        newy = [ molecule.log() for molecule in mols_all ]
 
         # 4. log new results
         if debug: print "newy:", newy
-        self.table = INDES.loggings.log_table( data=newy, table=self.table)
+        self.table = INDES.loggings.log_table( mols_all , table=self.table)
         return newy
 
     @log_io()
@@ -415,15 +412,15 @@ def main(param, array):
     GArun = procedures.Run(**param)
     table = procedures.set_table(GArun)
     print "run object:\n", GArun
-    final_genome = get_genome(array, table, GArun)
+    final_genome = run_pyevolve(array, table, GArun)
     best = final_genome.bestIndividual()
     print "final_genome:", final_genome
     print "best:", best
-    print "best score fitness genome list :", best.score, best.fitness, best.genomeList
+    print "best.~ score fitness genomelist :", best.score, best.fitness, best.genomeList
 
     return
 
-def get_genome(array,table, options):
+def run_pyevolve(array,table, options):
     '''options should be a Run instance having at least:
         options.nsites
         options.
