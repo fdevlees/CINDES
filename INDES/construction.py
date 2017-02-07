@@ -128,13 +128,18 @@ def classmaker2(startconf,array,k,table,run=[]):
                     mols_nodo.append(individual)
 
                     # set property value of that individual
-                    individual.Pvalue = item[1]
+                    print "item:", item
+                    i=1
+                    if int(item[1]) == 1:
+                        print "WARNING tablebin has old style formatting (column with 1s is present)",
+                        i=2
+                    individual.Pvalue = item[i]
                     individual.predicted = False
                     if run.bc:
-                        individual.boundaries = [ item[2] ]
-                        individual.infoline   = item[3:]
+                        individual.boundaries = [ item[i+1] ]
+                        individual.infoline   = item[i+2:]
                     else:
-                        individual.infoline  = item[2:]
+                        individual.infoline  = item[i+1:]
 
                     #if item[1]==1:
                     #    new_item = item[:]

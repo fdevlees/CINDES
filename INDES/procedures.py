@@ -1,11 +1,6 @@
 #!/bin/env python 
-#
-#
-#   THIS VERSION WAS TAKEN FROM ~/INDES/CINDES2.3.py 
-#   goal of this version is to include computational reduction by prescreaning via ML
-#
-#
 
+# debug flag
 debug=1
 
 # import python libraries
@@ -43,16 +38,15 @@ from CINDES4.utils.writings import log_io, print_title, sprint
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 once = 0
 zmatrixfile = "ZMAT"
-#(rows, columns) = os.popen('stty size', 'r').read().split() # get window width
-pp = pprint.PrettyPrinter(indent=4, width=100)
-kb = 8.6e-5 #boltzmann constant # FOR MC
-
-# set continuous printing to logfile (no use of buffer)
+#pp = pprint.PrettyPrinter(indent=4, width=100)
 
 class Run(object):
-    "This is the main object for all the parameters used during the process"
+    ''' This is the main object for all the parameters used during the process
+    this object is initiated with a dictionary from the inputreader '''
     def __init__(self,**entries):
         self.__dict__.update(entries) #here all the key/value pairs in entries are converted to attributes.
+
+        # set system variables 
         self.script = stack()[0][1]
         self.node = node()
         self.starttime = time.time()
@@ -61,9 +55,12 @@ class Run(object):
         self.ppid = os.getppid()
         # for self.setup_filesystem one needs to have: self.(-nosub / -program)
         self.setup_filesystem()
+
         #zmatrix reading and splitting needs: self.-ncore / -line1 / -nch3
         #self.TZmat = r.geometry(param)
         self.TZmat = r.geometry(**entries)
+
+        #sets Gaussian09 input lines
         self.set_calculation_properties()
         return
 
@@ -181,7 +178,6 @@ class Run(object):
 
 # 1 startconfiguration
 def get_startconf(param,array):
-    #param = myrun.__dict__
     logging.info("random start molecule: ")
     startconf = []
     if param['restart'] >= 2:
@@ -375,13 +371,13 @@ def submittingprocedure(mols_tocal,mols_nocal,myrun,**kwargs):
         raise SystemExit('no program recognized')
     return data
 
-
 # THERE ARE DIFFERENT GLOBAL PROGRAM FLOW PROCEDURES:
 # 1: STANDARD PROCEDURE: Best First Search: BFS()
 # 2: Generate 1 Configuration input file: genconf
 # 3: Generate total chemical space defined by the sites and functionalisations: generate
 # 4: Generate a number of random structures and print them to screen: genrandom
 # 5: A testrun. Not implemented. a helper function for the test functions in ./tests/tests.py: testrun
+# 6: Steepest Descent algorithm. Looks like BFS but there is no loop over sites
 
 # 1: standard BFS
 def BFS(param,array):
@@ -480,11 +476,6 @@ def BFS(param,array):
 # 2: genconf
 def genconf(param):
     myrun = Run(**param)
-    #myrun.set_calculation_properties()
-    #if param['program'] in ['Gaussian','gaussian']:
-    #    runspecs_gaussian(param)
-    #elif param['program'] in ['ORCA','orca','Orca']:
-    #    runspecs_orca(param)
     param = myrun.__dict__
     TZmat = r.geometry(**param)
     conf = zcon.indtocon(param['startind'])
@@ -514,12 +505,10 @@ def generate_procedure(param,array):
         table = pickle.load(f)
     #print table[508:510]
     learning.generate1(converter=converter,table=table,**TZmat)
+
     #to get an xyz file with all the possible structures possible:
     #generate2(core,active,passive,converter)
-    #we have to generate all possible iterations from the array
-    #get table
     return
-
 
 def generate2(core,active,passive,converter):
     confs=[]
@@ -555,12 +544,7 @@ def genrandom(param,array):
     for _ in xrange(param['nrandom']):
             conf = []
             for i in range(len(array)):
-                if True:
-                    while True:
-                        group = random.choice(array[i])
-
-                        # only once used
-                        # if not ''.join(group) in ['CCOOH','CO','CNOO']: break
+                group = random.choice(array[i])
                 conf.append( group )
             print zcon.contoind(conf)
     print
@@ -574,7 +558,6 @@ def testrun(param,array):
 def SteepestDescent(param,array):
     bcok=0 #TO REMOVE LATER
     param['bcok']=0
-
 
     #SET MYRUN CLASS and assign all necessary attributes
     myrun = Run(**param)
@@ -662,44 +645,3 @@ def SteepestDescent(param,array):
     print "DONE"
     return
 
-
-
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    print_title("C I N D E S\nAn Inverse Molecular Design Program\nwritten by Jos L. Teunissen", newlines=True)
-
-    # READ COMMAND LINE ARGUMENTS
-    import argparse
-    parser = argparse.ArgumentParser(description="INverse DESign package")
-    parser.add_argument("-i","--inputfile",type = str,default='INPUTBC',help="name of the input file. default name: INPUTBC")
-    parser.add_argument("-z","--zmatrixfile",type = str,default='ZMAT',help="name of the zmatrix file. default name: ZMAT")
-    parser.add_argument("-v","--verbose", action="count", default=0, help="increase output verbosity")
-    args=parser.parse_args()
-    #zmatrixfile is a global variable
-    logging.info("name of zmatfile:  " + args.zmatrixfile)
-    logging.info("name of input-file:" + args.inputfile)
-    # INPUT READING
-    param, array = inr.read_input(args.inputfile)
-    param['zmatrixfile']=args.zmatrixfile
-    # END INPUT READING
-
-    #START PROGRAM PROCEDURE
-    if param['procedure'] == 'standard':
-        BFS(param,array)
-    elif param['procedure'] == 'test':
-        testrun(param,array)
-    elif param['procedure'] == 'generate':
-        generate_procedure(param,array)
-    elif param['procedure'] == 'genconf':
-        genconf(param)
-    elif param['procedure'] in [ 'getrandom' ,'genrandom']:
-        genrandom(param,array)
-    else:
-        logging.warning('proceduretype not recognized')
-    print "bla"

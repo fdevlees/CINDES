@@ -365,7 +365,7 @@ def main():
 
         # only for particular case: 
         def get_label():
-            labels = ('1.1','1.2','2.1','2.2','2.3','2.4')
+            labels = ('1.1','1.2', '1.3', '1.4','2.1','2.2','2.3','3.1', '3.2', '3.3')
             for label in labels:
                 yield label
         labels = get_label() # this is now an iterator !
@@ -402,8 +402,8 @@ def main():
                     b.set_label('site:'+str(site+1))
             x = binlist[i][-1][-1][0] + 0.5
             plt.axvline(x=x, linewidth=2, color = 'k')
-            if False: #if want to plot labels see function above
-                y = 2.4
+            if True: #if want to plot labels see function above
+                y = 2.2
                 ax.text(x-0.5*l,y,next(labels), horizontalalignment='center',fontsize=fontsize)
 
         #to reorder the legend 

@@ -109,22 +109,22 @@ def filemaker(mols_tocal,myrun,passive,active,core): #----- dict with info for f
             zcon.filewriter2(molecule.zmat,molecule.index,**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
         else:
             # 1. WRITE radical input with filewriterA
-            zcon.filewriterA(mat,indices[i],**fileparameters) #here we have to use makers to construct the AH files
+            zcon.filewriterA(molecule.zmat,molecule.index,**fileparameters) #here we have to use makers to construct the AH files
 
             # 2. make a folder with the indexname in /data/indices[i]
-            if not os.path.exists(path + '/' + indices[i]): #path is $WORKDIR/data
-                os.makedirs(path + '/' + indices[i])
+            if not os.path.exists(path + '/' + molecule.index): #path is $WORKDIR/data
+                os.makedirs(path + '/' + molecule.index)
                 # and make sure ID_gauss is in the folder!
-                shutil.copy(path +'/ID_gauss',path+'/'+indices[i])
+                shutil.copy(path +'/ID_gauss',path+'/'+molecule.index)
 
             # 3. reopen written A-file to extract Z-matrix to make the AH files
-            filename = fileparameters['path'] + '/' + fileparameters['identify'] + str(indices[i]) + ".com" #same line as in filewriter. open it again.
+            filename = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + ".com" #same line as in filewriter. open it again.
             zmat = extract_zmat(filename)
 
             # 4. use zmat to make the AH files with the positions stored in fileparameters['positions']
             for pos in fileparameters['positions']:
                 zmat2 = deepcopy(zmat)
-                hornot = maker1(zmat2,pos,indices[i],**fileparameters) #returns a value indicating if there is already a hydrogen (or a nitrogen)
+                hornot = maker1(zmat2,pos,molecule.index,**fileparameters) #returns a value indicating if there is already a hydrogen (or a nitrogen)
                 # FOR NOW ONLY DO ONE POSSIBILITY THIS IS EASIER BECAUSE WE KNOW EXACTLY HOW MANY JOBS THERE HAVE TO BE SUBMITTED
                 #if not hornot == 1: #if not there are two ways to place the hydrogen.
                     #maker2(zmat,pos,indices[i],**fileparameters)
@@ -216,9 +216,11 @@ def submission(mol_tocal,myrun):
     if myrun.stab==1: #then submit also the jobs in folders
         if fileparameters['try_ready']==1:
             print "try_ready activated"
-            indices,paths = try_ready_test(indices,myrun.path,fileparameters,returnpath=True)
-            print "indices:", indices
-        jobids = submit_stab(indices,myrun)
+            mol_submit = try_ready_test(mol_tocal,myrun.path,fileparameters,returnpath=False)
+            print "mol_submit:", mol_submit
+            jobids = submit_stab(mol_submit,myrun)
+        else:
+            jobids = submit_stab(mol_tocal,myrun)
     elif once==1 and fileparameters['no1sub']==1:
         print "submit skipped"
         once = 2
@@ -302,15 +304,15 @@ def submit_normal(mols_tocal,myrun):
         jobids.append(jobid)
     return jobids
 
-def submit_stab(indices,myrun,jobids=[]):
+def submit_stab(mol_submit,myrun,jobids=[]):
     path = myrun.path
-    for item in indices:
-        name1 = item + '.com'
+    for molecule in mol_submit:
+        name1 = molecule.index + '.com'
         jobid = subm.submit(path,name1,myrun.identify).strip()
         jobids.append(jobid)
         for pos in myrun.positions:
-            path2 = path + '/' + item
-            name2 = item + '_' + str(pos) + '.com'
+            path2 = path + '/' + molecule.index
+            name2 = molecule.index + '_' + str(pos) + '.com'
             jobid = subm.submit(path2,name2,myrun.identify).strip()
             jobids.append(jobid)
     return jobids
@@ -330,7 +332,7 @@ def jobtester(mols_tocal,myrun,jobids=[]):
     fileparameters = myrun.__dict__
     if test_ready==1:
         test_ready1(mols_tocal,myrun)
-    elif test_ready==2:
+    elif test_ready==2: # default
         test_ready2(mols_tocal,myrun)
     elif test_ready==3:
         test_ready3(mols_tocal,myrun)
