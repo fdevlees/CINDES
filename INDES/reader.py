@@ -22,13 +22,6 @@ def geometry(zmatrixfile='ZMAT', **param):
     logging.info('passivemat:' + pprint.pformat(passivemat))
     logging.info("----- END FORMATTING & SPLITTING -----")
     Total_Zmat = { 'core':coremat, 'active':activemat, 'passive':passivemat }
-    try:
-        from CINDES4.utils.molecule import Molecule
-        framework = Molecule()
-        framework.set_framework(**Total_Zmat)
-    except IndexError as e:
-        print "IndexError:", str(e)
-        print "no smiles ;("
     return Total_Zmat
 
 def zmatread(filename):

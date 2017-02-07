@@ -158,9 +158,10 @@ class Logfile():
       self.fid.close()
 
 @log_io(signator='#')
-def datareader(indices,jobids,path,fileparameters):
+def datareader(mols_tocal,jobids,path,fileparameters):
     ''' NOTE indices = indices_tocal here! 
     '''
+    indices = [ mol.index for mol in mols_tocal ]
     data_calc = []
     files=[]
     print "multiplejobs:", fileparameters['multiplejobs']
@@ -226,37 +227,52 @@ def datareader(indices,jobids,path,fileparameters):
             #----------
             if 'bcprop' in fileparameters:#decide how to put the data in the datalist
                 if fileparameters['property']=='stab': #optimize stab and use another prop as bc
-                     if fileparameters['bcprop'] in ['ip','IP','I']:
-                         propy = I
-                     elif fileparameters['bcprop'] in ['ea','EA','A']:
-                         propy = A
-                     else:
-                         propy = gausread(file1,fileparameters['bcprop'])[0]
-                     data_calc.append([indices[i],stabA,propy,BDE_ah,I,A,RDV,E_ah[1]])
+                    if fileparameters['bcprop'] in ['ip','IP','I']:
+                        propy = I
+                    elif fileparameters['bcprop'] in ['ea','EA','A']:
+                        propy = A
+                    else:
+                        propy = gausread(file1,fileparameters['bcprop'])[0]
+                    mols_tocal[i].Pvalue = stabA
+                    mols_tocal[i].boudaries = [ propy ]
+                    #data_calc.append([indices[i],stabA,propy,BDE_ah,I,A,RDV,E_ah[1]])
                 else: #so bcprop is stab so propx is the other property to optimize
-                     if fileparameters['property'] in ['ip','IP','I']:
-                         propx = I
-                     elif fileparameters['property'] in ['ea','EA','A']:
-                         propx = A
-                     else:
-                         propx = gausread(file1,fileparameters['property'])[0]
-                     data_calc.append([indices[i],propx,stabA,BDE_ah,I,A,RDV,E_ah[1]])
+                    if fileparameters['property'] in ['ip','IP','I']:
+                        propx = I
+                    elif fileparameters['property'] in ['ea','EA','A']:
+                        propx = A
+                    else:
+                        propx = gausread(file1,fileparameters['property'])[0]
+                    mols_tocal[i].Pvalue = propx
+                    mols_tocal[i].boudaries = [ stabA ]
+                    #data_calc.append([indices[i],propx,stabA,BDE_ah,I,A,RDV,E_ah[1]])
             else: #just simple single stab property optimization
-                data_calc.append([indices[i],stabA,BDE_ah,I,A,RDV,E_ah[1]]) #all extra data now included
+                mols_tocal[i].Pvalue = stabA
+                #data_calc.append([indices[i],stabA,BDE_ah,I,A,RDV,E_ah[1]]) #all extra data now included
+            mols_tocal[i].infoline = [ BDE_ah, I, A, omega, RDV, E_ah[1] ]
         #------
         else:
             #propx,extra = gausread(file1,fileparameters['property']) # later this has to change to EHOMO and ELUMO etc
             datax = gausread(file1,fileparameters['property'],fileparameters['multiplejobs']) # later this has to change to EHOMO and ELUMO etc
             (propx,extradata) = (datax[0],datax[1:]) #if no extradata = []
+            mols_tocal[i].Pvalue = propx
+            mols_tocal[i].infoline = extradata
             if 'bcprop' in fileparameters:
                 #datay = gausread(file1,fileparameters['bcprop']) # later this has to change to EHOMO and ELUMO etc
-                datay = gausread(file1,fileparameters['property'],fileparameters['multiplejobs']) # later this has to change to EHOMO and ELUMO etc
+                datay = gausread(file1,fileparameters['bcprop'],fileparameters['multiplejobs']) # later this has to change to EHOMO and ELUMO etc
                 (propy,extradata)=(datay[0],datay[1:])
-                data_calc.append([indices[i],propx,propy]+extradata) #extradata may be an empty list
-            else:
-                data_calc.append([indices[i],propx]+extradata)
+                #data_calc.append([indices[i],propx,propy]+extradata) #extradata may be an empty list
+                mols_tocal[i].boundaries = [propy]
+        mols_tocal[i].predicted = False
     # insert all ones at second position
-    return data_calc
+
+    # assuming the order is the same:
+    #for molecule, data_item in zip(mols_tocal, data_calc):
+    #    print "molecule:", molecule, "data_item:", data_item
+    #    molecule.Pvalue = data_item[1]
+    #    molecule.infoline = data_item[2:]
+    #    molecule.predicted= False
+    return mols_tocal
 
 def gausread(filename,prop,multiplejobs=0,rdvindex=1):
     mymol = Logfile(filename)

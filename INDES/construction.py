@@ -11,7 +11,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 #
 simple = 1
 semiempirical = 1
-
+debug=True
 
 
 pp = pprint.PrettyPrinter(indent=4, width=100)
@@ -108,7 +108,83 @@ def get_configurations(startconf,array,k, run=[]):
     logging.debug(pprint.pformat(configurations))
     return configurations
 
-def indexmaker3(startconf,array,k,table,run=[]): #for CINDES2.3.py for the new symmetry feature
+def classmaker2(startconf,array,k,table,run=[]):
+    '''checks for confs already calculated'''
+    print "IN CLASSMAKER", type(run)
+    confs = get_configurations(startconf,array,k,run=run)
+
+    from CINDES4.utils.molecule import Molecule, Population
+    individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
+    #population = Population( population = individuals )
+    mols_todo = individuals[:]
+    mols_nodo = []
+    if not table == []:
+        for item in table:
+            for individual in individuals:
+                if item[0] == individual.index: # so if item in table
+                    # remove it from the individuals to do list
+                    mols_todo.remove(individual)
+                    # add that item from table to data
+                    mols_nodo.append(individual)
+
+                    # set property value of that individual
+                    print "item:", item
+                    i=1
+                    if int(item[1]) == 1:
+                        print "WARNING tablebin has old style formatting (column with 1s is present)",
+                        i=2
+                    individual.Pvalue = item[i]
+                    individual.predicted = False
+                    if run.bc:
+                        individual.boundaries = [ item[i+1] ]
+                        individual.infoline   = item[i+2:]
+                    else:
+                        individual.infoline  = item[i+1:]
+
+                    #if item[1]==1:
+                    #    new_item = item[:]
+                    #    #raise SystemExit('elements in tablebin shouldnt be one')
+                    #else:
+                    #    new_item = item[:]
+                    #    new_item.insert(1,1)
+                    # add that molecule to data
+                    #individual.Pvalue = new_item
+                    # log
+                    print "already calculated:", individual.index, "with property:", individual.Pvalue
+
+    if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
+
+    return mols_todo, mols_nodo  #indicesfull are all the indices. 
+
+def classmaker(startconf,array,k,table,run=[]):
+    '''checks for confs already calculated'''
+    print "IN CLASSMAKER", type(run)
+    confs = get_configurations(startconf,array,k,run=run)
+
+    from CINDES4.utils.molecule import Molecule, Population
+    individuals = [ Molecule(conf=conf) for conf in confs ]
+    population = Population( population = individuals )
+    indices = [ individual.index for individual in population ]
+    data=[]
+    if not table == []:
+        for item in table:
+            for individual in population:
+                if item[0] == individual.conf:
+                    indices.remove(individual.index)
+                    # add that item from table to data
+                    if item[1]==1:
+                        #raise SystemExit('elements in tablebin shouldnt be one')
+                        data.append(item)
+                    else:
+                        new_item = item[:]
+                        new_item.insert(1,1)
+                        data.append(new_item)
+        if not data == []:
+            logging.info('filled data with ones already calced:' + pprint.pformat(data))
+
+    return indices,data,population #indicesfull are all the indices. 
+
+def indexmaker3(startconf,array,k,table,run=[]):
     '''checks for confs already calculated'''
     print "IN INDEXMAKER3", type(run)
     confs = get_configurations(startconf,array,k,run=run)
@@ -167,6 +243,47 @@ def indexmaker4(table,indices, confs):
             logging.info('filled data with ones already calced:' + pprint.pformat(data))
     return indices,data,confs #indicesfull are all the indices. 
 
+
+def classmaker2_SD(startconf,array,table,run=[]):
+    '''checks for confs already calculated'''
+    print "IN CLASSMAKER", type(run)
+    from CINDES4.utils.molecule import Molecule, Population
+
+    # make configurations
+    confs = []
+    for i in run.restingsites:
+        confs.extend( get_configurations(startconf,array,i,run=run) )
+    # remove duplicates by sorting and subsequently only adding when the previous one is not similar
+    sortedconfs = sorted(confs)
+    confs = [ sortedconfs[i] for i in xrange(len(sortedconfs)) if i==0 or sortedconfs[i] != sortedconfs[i-1] ]
+
+    individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
+    #population = Population( population = individuals )
+    mols_todo = individuals[:]
+    mols_nodo = []
+    if not table == []:
+        for item in table:
+            for individual in individuals:
+                if item[0] == individual.index: # so if item in table
+                    # remove it from the individuals to do list
+                    mols_todo.remove(individual)
+                    # add that item from table to data
+                    mols_nodo.append(individual)
+
+                    individual.Pvalue = item[1]
+                    individual.predicted = False
+                    if run.bc:
+                        individual.boundaries = [ item[2] ]
+                        individual.infoline   = item[3:]
+                    else:
+                        individual.infoline  = item[2:]
+                    # log
+                    print "already calculated:", individual.index, "with property:", individual.Pvalue
+
+    if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
+
+    return mols_todo, mols_nodo  #indicesfull are all the indices. 
+
 def indexmaker_SD(startconf,array,table,run=[]): #for CINDES2.3.py for the new symmetry feature
     '''checks for confs already calculated'''
     print "IN INDEXMAKER3", type(run)
@@ -175,6 +292,7 @@ def indexmaker_SD(startconf,array,table,run=[]): #for CINDES2.3.py for the new s
         confs.extend( get_configurations(startconf,array,i,run=run) )
     sortedconfs = sorted(confs)
     confs = [ sortedconfs[i] for i in xrange(len(sortedconfs)) if i==0 or sortedconfs[i] != sortedconfs[i-1] ]
+
     data=[]
     indices = []
     for i in range(len(confs)):

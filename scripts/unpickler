@@ -34,12 +34,11 @@ sortconf=sorted(confs,key=lambda entry: entry[1]) #sort based on second column
 sortev = [ item[:1] + [item[1]*1.0] + item[2:] for item in sortconf ]
 #pprint(sortev[::-1]) # reverse order
 
-
 if args.formatted:
     for i,item in enumerate(sortev):
-        conf = ' '.join( [ '{:7s}'.format(group) for group in item[0].split('_') ] )
+        conf = ' '.join( [ '{:9s}'.format(group) for group in item[0].split('_') ] )
         #print item
-        data = '{:15.8f}'.format(item[1])
+	data = ' '.join( [ '{:15.8f}'.format(i) for i in item[1:] ] )
         print '{:4} {} {}'.format(i,conf,data)
 
 

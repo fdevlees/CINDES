@@ -1,14 +1,9 @@
 #!/bin/env python 
-#
-#
-#   THIS VERSION WAS TAKEN FROM ~/INDES/CINDES2.3.py 
-#   goal of this version is to include computational reduction by prescreaning via ML
-#
-#
+
+# debug flag
 debug=1
-# import libraries
-from CINDES4.utils.writings import log_io, print_title, sprint
-#from writings import log_io, print_title, sprint
+
+# import python libraries
 from inspect import stack
 import shutil #module to copy files
 from platform import node
@@ -19,38 +14,39 @@ from re import findall # now only needed in construction.py
 import sys # for getting command line input
 import glob # for testing existence of files matching a pattern
 import random # for obtaining random geometry
-#import numpy as np # for using np.array although not used yet
 import time # for getting time/date and time delays
 import pickle # for saving and getting the tablebin
 import logging # instead of the large amount of print statements not using it at the moment
-logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
-from itertools import izip
+from itertools import product
 from copy import deepcopy # for keeping matrices while changing others
-import scipy
+
 # import my own modules
 import inputreader as inr
 import construction as zcon #all functions needed for constructing new geometries
 import reader as r # this reads the zmatrix in gaussian format
-from CINDES4.utils.molecule import Molecule
 from predictions import predictor
 from montecarlo import montecarloprocedure
 from loggings import loggings
 import submitter as subm
 import datareader
 
+# import utils 
+from CINDES4.utils.molecule import Molecule
+from CINDES4.utils.writings import log_io, print_title, sprint
+
 # initial global variables
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 once = 0
 zmatrixfile = "ZMAT"
-#(rows, columns) = os.popen('stty size', 'r').read().split() # get window width
-pp = pprint.PrettyPrinter(indent=4, width=100)
-kb = 8.6e-5 #boltzmann constant # FOR MC
-
-# set continuous printing to logfile (no use of buffer)
+#pp = pprint.PrettyPrinter(indent=4, width=100)
 
 class Run(object):
-    "This is the main object for all the parameters used during the process"
+    ''' This is the main object for all the parameters used during the process
+    this object is initiated with a dictionary from the inputreader '''
     def __init__(self,**entries):
         self.__dict__.update(entries) #here all the key/value pairs in entries are converted to attributes.
+
+        # set system variables 
         self.script = stack()[0][1]
         self.node = node()
         self.starttime = time.time()
@@ -59,9 +55,12 @@ class Run(object):
         self.ppid = os.getppid()
         # for self.setup_filesystem one needs to have: self.(-nosub / -program)
         self.setup_filesystem()
+
         #zmatrix reading and splitting needs: self.-ncore / -line1 / -nch3
         #self.TZmat = r.geometry(param)
         self.TZmat = r.geometry(**entries)
+
+        #sets Gaussian09 input lines
         self.set_calculation_properties()
         return
 
@@ -179,7 +178,6 @@ class Run(object):
 
 # 1 startconfiguration
 def get_startconf(param,array):
-    #param = myrun.__dict__
     logging.info("random start molecule: ")
     startconf = []
     if param['restart'] >= 2:
@@ -194,7 +192,7 @@ def get_startconf(param,array):
         if not param['startind'] == '':
             startconf = zcon.indtocon(param['startind'])
             logging.info("read startconf from input")
-        else:  
+        else:
             for i in range(len(array)):
                 startconf.append(random.choice(array[i]))
             logging.info("constructed random start configuration")
@@ -235,7 +233,6 @@ def set_table(myrun):
     else:
         table = []
         open('tablebin','wb').close()
-    #print table
     return table
 
 # 5 optimum at the start of the run
@@ -249,8 +246,13 @@ def set_maximum(myrun,table):
     return maximum
 
 # 6 optimum within the global iterations
-def testmax(myrun, data, bcok):
+def testmax(myrun, mols, bcok):
     param = myrun.__dict__
+
+    data = [ molecule.log() for molecule in mols ]
+    for item in data:
+        print item
+
     if 'bcprop' in param:
         if param['bcoptimum'] in ['min','Min','MIN']:
         #test if BC fullfilled. 
@@ -298,7 +300,7 @@ def runtest(run, maximum, maxsite, count, bcok,mctable=[], array=[]):
     TZmat= run.TZmat
     converged=0
     # test if this is same as previous maximum. if so then converged and break
-    print 
+    print
     if (count > 1 and bcok) or param['restart']>=3: #BCOK is a test of the boundary condition is already fullfilled
         if maximum[2] == maxsite[2]:  #test the property value! not 1 anymore!
             print "maximum is the same!"
@@ -323,11 +325,12 @@ def runtest(run, maximum, maxsite, count, bcok,mctable=[], array=[]):
 
 # DATA GETTING:
 # A: fake data for testing (skipper)
-def skipper(indices,data=[],iprint=True):
+def skipper(mols_tocal,mols_nocal,iprint=True):
     ''' generate random data '''
     if iprint: print "submit is skipped! random data is generated"
     import string
-    for item in indices:
+    for molecule in mols_tocal:
+        item = molecule.index
         #propx= sum([ string.uppercase.index(itempje)+1 for itempje in list(item.replace('_',''))]) 
         output = 0
         replaced = item.replace('_','')
@@ -340,23 +343,27 @@ def skipper(indices,data=[],iprint=True):
         try:
             if 'bcprop' in param:
                 propy= len(item.replace('_',''))
-                data.append([item,1,propx,propy])
-            else:
-                data.append([item,1,propx])
+                molecule.boundaries = [ propy ]
         except NameError:
-            data.append([item,1,propx])
-    return data
+            pass
+
+        molecule.Pvalue = propx
+        molecule.predicted = False
+
+    mols_all = mols_tocal + mols_nocal
+    return mols_all
+
 # B: getting the real data by submitting 
-def submittingprocedure(confs,indices_tocal,data_nocal,myrun,**kwargs):
+def submittingprocedure(mols_tocal,mols_nocal,myrun,**kwargs):
     global once
     # here submitting thing knows at least the path
     fileparameters = myrun.__dict__
     if myrun.program in ['ORCA','orca','Orca']:
         import orcafunctions
-        data = orcafunctions.submittingprocedure(confs,indices_tocal,data_nocal,fileparameters,**self.TZmat)
+        data = orcafunctions.submittingprocedure(confs,mols_tocal,mols_nocal,fileparameters,**self.TZmat)
     elif myrun.program in ['Gaussian','gaussian']:
         import gaussianfunctions as gausf
-        data = gausf.procedure(myrun,confs,indices_tocal,data_nocal,kwargs)
+        data = gausf.procedure(myrun,mols_tocal,mols_nocal,kwargs)
     elif myrun.program == 'molpro':
         raise SystemExit('molpro not implemented')
     else:
@@ -364,54 +371,13 @@ def submittingprocedure(confs,indices_tocal,data_nocal,myrun,**kwargs):
         raise SystemExit('no program recognized')
     return data
 
-# MONTE CARLO PROCEDURE
-# 1 main function
-# 2 get a random configuration
-# 3 acceptance or not function
-# 2
-
-
-# An old ORCA function does not function at the moment!
-def runspecs_orca(param):
-    if param['stab']==1:
-        # extra parameters needed:
-        #param['positions'] = (2,6,7,9,11,12) # HARD CODING positions to add a Hydrogen
-        gasconstant = 8.3144621
-        bde_a = -12.68 #kJ/mol/eV^2
-        bde_b = -218.1 #kJ/mol
-        stab_h = 235.8 #kJ/mol
-        Dw_h = 0.063 #eV
-        chi_h = 2.20 
-        chi_c = 2.60
-        chi_n = 3.05
-        H_h = -0.516817233 #a.u.
-        avtc = -28.1290706 #kJ/mol #average thermal correction for 5 random structures kJ/mol
-        if param['semiempirical'] == 1:
-            pass
-        else:
-            param['orcaline1'] = '! opt'
-            param['orcaline2'] = '! dft'
-            param['functional1'] = 'B3LYP'
-            param['functional2'] = 'B3P86'
-            param['basisset1'] = '6-31g(d)'
-            param['basisset2'] = '6-311+G(d,p)'
-    else:
-        if param['ip']==1 or param['ea']==1:
-            param['orcaline'] = '! opt\n'
-        else: #band gap optimization
-            param['orcaline'] = '! opt\n'
-        # here sum up how many extra jobs there are for dataanalysis. 
-        for key in ['ip','ea','polar','IP','EA']:
-            if param[key]==1:
-                param['multiplejobs']+=1
-    return
-
 # THERE ARE DIFFERENT GLOBAL PROGRAM FLOW PROCEDURES:
 # 1: STANDARD PROCEDURE: Best First Search: BFS()
 # 2: Generate 1 Configuration input file: genconf
 # 3: Generate total chemical space defined by the sites and functionalisations: generate
 # 4: Generate a number of random structures and print them to screen: genrandom
 # 5: A testrun. Not implemented. a helper function for the test functions in ./tests/tests.py: testrun
+# 6: Steepest Descent algorithm. Looks like BFS but there is no loop over sites
 
 # 1: standard BFS
 def BFS(param,array):
@@ -457,36 +423,37 @@ def BFS(param,array):
             #get indices_all and the indices that still need to be calculated
             # if table is correctly formatted all second element item[1]==1. meaning they are ab-initio calculated
             #indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker2(startconf,array,k,table )
-            indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker3(startconf,array,k,table, myrun )
+            mols_todo, mols_nodo = zcon.classmaker2(startconf,array,k,table, myrun )
             print "----- END random start configurations -----"
-            print "indices_todo:",indices_todo, "indices_all:", indices_all
-            print "data_nodo:", data_nodo #all item[1]==1 in data_nodo 
+            print "indices_todo:",mols_todo
+            print "data_nodo:", mols_nodo #all item[1]==1 in data_nodo 
 
             # STEP 2: PREDICTOR
             # perform prescreaning in a predictions. 
-            data_nocal,indices_tocal, predict = predictor(myrun, table, indices_todo,data_nodo, count, array=array)
+            mols_nocal,mols_tocal = predictor(myrun, table, mols_todo,mols_nodo, count, array=array)
 
             # STEP 3: SUBMITTING PART
             if not myrun.nosub==1:
-                data_all = submittingprocedure(configurations,indices_tocal,
-                                           data_nocal,
-                                           myrun,
-                                           **myrun.TZmat) # here call submitting procedure
-            else: data_all = skipper(indices_tocal,data_nocal)
-            print "data_all:",data_all
+                mols_all = submittingprocedure(mols_tocal,
+                                               mols_nocal,
+                                               myrun,
+                                             **myrun.TZmat     ) # here call submitting procedure
+            else: mols_all = skipper(mols_tocal,mols_nocal)
+            print "mols_all:",mols_all
 
             # STEP 4: SORT
             # sort data in same order as allindices:
-            data_all = sorted(data_all, key=lambda x:indices_all.index(x[0]))
+            # not necessary anymore in molsclass
+            #mols_all = sorted(mols_all, key=lambda x:x.Pvalue)
 
             # STEP 5: UPDATE DATABASE and LOG results of microiteration
             # logs new elements in data to table and tablebin and whole data to cyclesinfo
-            table = loggings(data_all,table,count,k,l, predict)
+            table = loggings(mols_all,table,count,k,l )
 
             # STEP 6: UPDATE OPTIMUM STRUCTURE
             # decide what the maximum site is and if the bc if fullfilled
             print "BCOK:", bcok
-            maxsite, bcok = testmax(myrun, data_all, bcok)
+            maxsite, bcok = testmax(myrun, mols_all, bcok)
 
             print("--- %s seconds ---" % (time.time() - myrun.starttime))
             print(myrun.currenttime())
@@ -509,11 +476,6 @@ def BFS(param,array):
 # 2: genconf
 def genconf(param):
     myrun = Run(**param)
-    #myrun.set_calculation_properties()
-    #if param['program'] in ['Gaussian','gaussian']:
-    #    runspecs_gaussian(param)
-    #elif param['program'] in ['ORCA','orca','Orca']:
-    #    runspecs_orca(param)
     param = myrun.__dict__
     TZmat = r.geometry(**param)
     conf = zcon.indtocon(param['startind'])
@@ -543,15 +505,12 @@ def generate_procedure(param,array):
         table = pickle.load(f)
     #print table[508:510]
     learning.generate1(converter=converter,table=table,**TZmat)
+
     #to get an xyz file with all the possible structures possible:
     #generate2(core,active,passive,converter)
-    #we have to generate all possible iterations from the array
-    #get table
     return
 
-
 def generate2(core,active,passive,converter):
-    from itertools import product
     confs=[]
     for item in product(*array):
         confs.append(item)
@@ -585,10 +544,7 @@ def genrandom(param,array):
     for _ in xrange(param['nrandom']):
             conf = []
             for i in range(len(array)):
-                if True:
-                    while True:
-                        group = random.choice(array[i])
-                        if not ''.join(group) in ['CCOOH','CO','CNOO']: break
+                group = random.choice(array[i])
                 conf.append( group )
             print zcon.contoind(conf)
     print
@@ -602,7 +558,6 @@ def testrun(param,array):
 def SteepestDescent(param,array):
     bcok=0 #TO REMOVE LATER
     param['bcok']=0
-
 
     #SET MYRUN CLASS and assign all necessary attributes
     myrun = Run(**param)
@@ -633,36 +588,30 @@ def SteepestDescent(param,array):
 
         # STEP 1: INDEXMAKER
         #get indices_all and the indices that still need to be calculated
-        indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker_SD(startconf, array, table, myrun )
-        print "----- END random start configurations -----"
-        print "indices_todo:",indices_todo, "indices_all:", indices_all
-        print "data_nodo:", data_nodo #all item[1]==1 in data_nodo 
+        #indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker_SD(startconf, array, table, myrun )
+        mols_todo, mols_nodo = zcon.classmaker2_SD(startconf,array,table, myrun )
 
         # STEP 2: PREDICTOR
         # perform prescreaning in a predictions. 
-        data_nocal,indices_tocal, predict = predictor(myrun, table, indices_todo,data_nodo, count, array=array)
+        mols_nocal,mols_tocal = predictor(myrun, table, mols_todo,mols_nodo, count, array=array)
+        #data_nocal,indices_tocal, predict = predictor(myrun, table, indices_todo,data_nodo, count, array=array)
 
         # STEP 3: SUBMITTING PART
         if not myrun.nosub==1:
-            data_all = submittingprocedure(configurations,indices_tocal,
-                                       data_nocal,
-                                       myrun,
-                                       **myrun.TZmat) # here call submitting procedure
-        else: data_all = skipper(indices_tocal,data_nocal)
-        print "data_all:",data_all
-
-        # STEP 4: SORT
-        # sort data in same order as allindices:
-        data_all = sorted(data_all, key=lambda x:indices_all.index(x[0]))
+            mols_all = submittingprocedure(mols_tocal,
+                                           mols_nocal,
+                                           myrun,
+                                         **myrun.TZmat     ) # here call submitting procedure
+        else: mols_all = skipper(mols_tocal,mols_nocal)
 
         # STEP 5: UPDATE DATABASE and LOG results of microiteration
         # logs new elements in data to table and tablebin and whole data to cyclesinfo
-        table = loggings(data_all,table,count,1,1, predict)
+        table = loggings(mols_all,table,count,1,1 )
 
         # STEP 6: UPDATE OPTIMUM STRUCTURE
         # decide what the maximum site is and if the bc if fullfilled
         print "BCOK:", bcok
-        maxsite, bcok = testmax(myrun, data_all, bcok)
+        maxsite, bcok = testmax(myrun, mols_all, bcok)
 
         if myrun.procedure=='steepest2':
             maxconf = zcon.indtocon(maxsite[0])
@@ -696,44 +645,3 @@ def SteepestDescent(param,array):
     print "DONE"
     return
 
-
-
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    print_title("C I N D E S\nAn Inverse Molecular Design Program\nwritten by Jos L. Teunissen", newlines=True)
-
-    # READ COMMAND LINE ARGUMENTS
-    import argparse
-    parser = argparse.ArgumentParser(description="INverse DESign package")
-    parser.add_argument("-i","--inputfile",type = str,default='INPUTBC',help="name of the input file. default name: INPUTBC")
-    parser.add_argument("-z","--zmatrixfile",type = str,default='ZMAT',help="name of the zmatrix file. default name: ZMAT")
-    parser.add_argument("-v","--verbose", action="count", default=0, help="increase output verbosity")
-    args=parser.parse_args()
-    #zmatrixfile is a global variable
-    logging.info("name of zmatfile:  " + args.zmatrixfile)
-    logging.info("name of input-file:" + args.inputfile)
-    # INPUT READING
-    param, array = inr.read_input(args.inputfile)
-    param['zmatrixfile']=args.zmatrixfile
-    # END INPUT READING
-
-    #START PROGRAM PROCEDURE
-    if param['procedure'] == 'standard':
-        BFS(param,array)
-    elif param['procedure'] == 'test':
-        testrun(param,array)
-    elif param['procedure'] == 'generate':
-        generate_procedure(param,array)
-    elif param['procedure'] == 'genconf':
-        genconf(param)
-    elif param['procedure'] in [ 'getrandom' ,'genrandom']:
-        genrandom(param,array)
-    else:
-        logging.warning('proceduretype not recognized')
-    print "bla"

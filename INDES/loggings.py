@@ -16,47 +16,70 @@ def formatitem(item):
     itemstring = index + abin + datas
     return itemstring
 
-def log_cyclesinfo(data, count, k, l):
+def log_cyclesinfo(mols, count, k, l):
     with open('cyclesinfo','a') as cfid:
-        filedata=deepcopy(data[:])
-        for item in filedata:
+        #filedata=deepcopy(data[:])
+        for molecule in mols:
+            item = [ molecule.index ]
+            item.append( int(not molecule.predicted) ) # 1 if really calculated 0 if only predicted 
+            item.append( molecule.Pvalue)
+            item.extend( molecule.boundaries )
+            item.extend( molecule.infoline )
             item.extend([count,k,l])
             cfid.write(' '.join(pprint.pformat(i) for i in item)+'\n')
-    del filedata
+    #del filedata
     return
 
-def log_table( data, table):
+def log_table( mols, table):
     if debug:
-        print "in log_table: data:", data
+        print "in log_table: mols:", mols
         print "table:", table
     # here move the new data to table except duplicates
-    for item in data:
-        if item[1]==1:
-            if not item[0] in [tja[0] for tja in table]:
-                tableitem = [item[0]] + item[2:]
-                table.append(tableitem)
+    for molecule in mols:
+        if molecule.predicted == False:
+            if not molecule.index in [ item[0] for item in table ]:
+                tableitem = [ molecule.index ]
+                tableitem.append( molecule.Pvalue     )
+                tableitem.extend( molecule.boundaries )
+                tableitem.extend( molecule.infoline   )
                 if debug: print "tableitem:", tableitem
-        else:
-            assert item[1]==0, "item[1] has to be 1 or 0 but is %s" % str(item[1])
+                table.append(tableitem)
+    # OLD:
+    #for item in data:
+    #    if item[1]==1:
+    #        if not item[0] in [tja[0] for tja in table]:
+    #            tableitem = [item[0]] + item[2:]
+    #            table.append(tableitem)
+    #            if debug: print "tableitem:", tableitem
+    #    else:
+    #        assert item[1]==0, "item[1] has to be 1 or 0 but is %s" % str(item[1])
+
     with open('tablebin','wb') as tfid: # write the table to a file
         pickle.dump(table,tfid)
         print "dumped tablebin"
     return table
 
 
-def log_screen( data, predict):
-    datadict = dict( ( (item[0], item[1:]) for item in data) )
+def log_screen( mols ):
+    for molecule in mols:
+        item = [ molecule.index, molecule.Pvalue ]
+        item.extend( molecule.boundaries )
+        item.extend( molecule.infoline   )
+        print formatitem(item)
+    return
+
+    #datadict = dict( ( (item[0], item[1:]) for item in data) )
     #HEADER
-    print "index, value", ' '.join( item['type'] for item in predict )
-    for key, values in datadict.iteritems():
-        print key, values[1],
-        for prediction in predict:
-            try:
-                print prediction['results'][key],
-            except KeyError:
-                pass
-        print
-    return datadict
+    #print "index, value", ' '.join( item['type'] for item in predict )
+    #for key, values in datadict.iteritems():
+    #    print key, values[1],
+    #    for prediction in predict:
+    #        try:
+    #            print prediction['results'][key],
+    #        except KeyError:
+    #            pass
+    #    print
+    return
 
 #def get_pred_info( data_dict, predict ):
 #    # from the predict types that are present 
@@ -71,14 +94,21 @@ def log_screen( data, predict):
 #        pred_info.append(index_info)
 #    return pred_info
 
-def get_pred_info( data_dict, predictions ):
+def get_pred_info( mols ):
     pred_info = []
-    for index in predictions[0]['results'].keys() :
-        index_info = []
-        index_info.extend( [ index, data_dict[index][1] ])
-        for prediction in predictions:
-            index_info.append( prediction['results'][index])
-        pred_info.append(index_info)
+    for molecule in mols:
+        mol_info=[]
+        for prediction in molecule.predictions:
+            mol_info.append( prediction )
+        pred_info.append(mol_info)
+
+    #for index in predictions[0]['results'].keys() :
+    #    index_info = []
+    #    index_info.extend( [ index, data_dict[index][1] ])
+    #    for prediction in predictions:
+    #        index_info.append( prediction['results'][index])
+    #    pred_info.append(index_info)
+
     return pred_info
 
 def log_pred_info(pred_info, count, k, l):
@@ -117,28 +147,26 @@ def pstats(pred_info):
 
 
 @log_io()
-def loggings(data,table,count,k,l,predict=[]):
+def loggings(mols,table,count,k,l,predict=[]):
 
     #--- LOGGINGS: CYCLESINFO
-    log_cyclesinfo(data, count,k,l)
+    log_cyclesinfo(mols, count,k,l)
 
     #---- LOGGINGS: TABLEBIN
-    table = log_table( data, table )
+    table = log_table( mols, table )
+
+    if debug:
+        print "mols.Pvalue:", mols[0].Pvalue
+        print "mols.index:", mols[0].index
+        print "mols.infoline:", mols[0].infoline
 
     #---- LOGGINGS: to screen
 
-    data_dict = log_screen( data, predict )
-
-    #---- LOGGINGS: PREDICTIONS
-    #if not predict=={}:
-    #    pred_info = get_pred_info( data_dict, predict )
-    #    log_pred_info( pred_info, count, k, l )
-    #    if True:
-    #        pstats(pred_info)
+    log_screen( mols )
 
     #---- NEW LOGGINGS: PREDICTIONS
     if not predict == []:
-        pred_info = get_pred_info( data_dict, predict )
+        pred_info = get_pred_info( mols )
         log_pred_info( pred_info, count, k, l )
         if True:
             pstats(pred_info)

@@ -55,11 +55,11 @@ def get_secret_data(tablefilename,indices):
 
 # PROCEDURE
 #data = gausf.procedure(myrun,confs,indices,data,kwargs)
-def procedure(myrun,confs,indices_tocal,data_nocal,TZmat):
+def procedure(myrun, mols_tocal, mols_nocal, TZmat):
     global once
-    print "nconfs:", len(confs)
-    print "n_indices_tocal:", len(indices_tocal)
-    print "n_data_nocal:", len(data_nocal)
+    #print "nconfs:", len(population)
+    print "n_indices_tocal:", len(mols_tocal)
+    print "n_data_nocal:", len(mols_nocal)
     if myrun.no1sub==1 and once==0:
         once = 1
         print " "
@@ -71,72 +71,68 @@ def procedure(myrun,confs,indices_tocal,data_nocal,TZmat):
         return data_all
     else:
         # 1. Make the files
-        filemaker(indices_tocal,myrun,**TZmat) #----------------------------------HERE IS THE FILEWRITER CALL
+        filemaker(mols_tocal,myrun,**TZmat) #----------------------------------HERE IS THE FILEWRITER CALL
 
-    if not indices_tocal==[]:
+    if not mols_tocal==[]:
         # 2. now the jobs have to be submitted 
-        jobids = submission(indices_tocal,myrun)
+        jobids = submission(mols_tocal,myrun)
 
         # 3. test of all jobs are ready
-        jobtester(indices_tocal,myrun,jobids)
+        jobtester(mols_tocal,myrun,jobids)
 
         # 4. test normal termination and read jobs #NOTE data_nocal is passed to this one. results are appended to it
-        data_calc = datareader.datareader(indices_tocal,jobids,myrun.path,myrun.__dict__)
+        mols_calc = datareader.datareader(mols_tocal,jobids,myrun.path,myrun.__dict__)
 
         # 5. add ones to each data_calc element. this means the values are obtained by real calculation
-        for item in data_calc:
-            item.insert(1,1)
-    else: data_calc = []
+        #for item in mols_calc:
+        #    #item.predicted = False
+        #    item.insert(1,1)
+    else: mols_calc = []
 
     # 6. merge data_calc and data_nocal to data_all
-    data_all = data_calc + data_nocal
+    mols_all = mols_calc + mols_nocal
 
-    return data_all
+    return mols_all
 
 # 1. file making
 @log_io()
-def filemaker(indices,myrun,passive,active,core): #----- dict with info for filewriter has to pass here)
+def filemaker(mols_tocal,myrun,passive,active,core): #----- dict with info for filewriter has to pass here)
     ''' jkl'''
     path = myrun.path
     fileparameters = myrun.__dict__
-    for i in range(len(indices)):
+    for molecule in mols_tocal:
         c = deepcopy(core)
         a = deepcopy(active)
         p = deepcopy(passive)
-        logging.debug("i=" + str(i))
-        conf = zcon.indtocon(indices[i])
-        mat = zcon.constructor2(conf,c,a,p)
+        molecule.set_zmat( zcon.constructor2(molecule.conf,c,a,p) )
         if not myrun.stab==1:
-            zcon.filewriter2(mat,indices[i],**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
+            zcon.filewriter2(molecule.zmat,molecule.index,**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
         else:
             # 1. WRITE radical input with filewriterA
-            zcon.filewriterA(mat,indices[i],**fileparameters) #here we have to use makers to construct the AH files
+            zcon.filewriterA(molecule.zmat,molecule.index,**fileparameters) #here we have to use makers to construct the AH files
 
             # 2. make a folder with the indexname in /data/indices[i]
-            if not os.path.exists(path + '/' + indices[i]): #path is $WORKDIR/data
-                os.makedirs(path + '/' + indices[i])
+            if not os.path.exists(path + '/' + molecule.index): #path is $WORKDIR/data
+                os.makedirs(path + '/' + molecule.index)
                 # and make sure ID_gauss is in the folder!
-                shutil.copy(path +'/ID_gauss',path+'/'+indices[i])
+                shutil.copy(path +'/ID_gauss',path+'/'+molecule.index)
 
             # 3. reopen written A-file to extract Z-matrix to make the AH files
-            filename = fileparameters['path'] + '/' + fileparameters['identify'] + str(indices[i]) + ".com" #same line as in filewriter. open it again.
+            filename = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + ".com" #same line as in filewriter. open it again.
             zmat = extract_zmat(filename)
 
             # 4. use zmat to make the AH files with the positions stored in fileparameters['positions']
             for pos in fileparameters['positions']:
                 zmat2 = deepcopy(zmat)
-                hornot = maker1(zmat2,pos,indices[i],**fileparameters) #returns a value indicating if there is already a hydrogen (or a nitrogen)
+                hornot = maker1(zmat2,pos,molecule.index,**fileparameters) #returns a value indicating if there is already a hydrogen (or a nitrogen)
                 # FOR NOW ONLY DO ONE POSSIBILITY THIS IS EASIER BECAUSE WE KNOW EXACTLY HOW MANY JOBS THERE HAVE TO BE SUBMITTED
                 #if not hornot == 1: #if not there are two ways to place the hydrogen.
                     #maker2(zmat,pos,indices[i],**fileparameters)
 
         # Try to print SMILES
         try:
-            from CINDES4.utils.molecule import Molecule
-            mymol = Molecule()
-            mymol.set_zmat(mat)
-            smiles= mymol.get_format()
-            print "index:", indices[i], "smiles:", smiles
+            smiles= molecule.get_format()
+            print "smiles:", smiles
         except IndexError:
             print "IndexError while trying to make smiles for molecule"
     return
@@ -213,16 +209,18 @@ def maker2(zmat,pos,index,**fileparameters):
 
 # 2. submission
 @log_io()
-def submission(indices,myrun):
+def submission(mol_tocal,myrun):
     global once
     fileparameters = myrun.__dict__
-    indicesall = deepcopy(indices) #here i copy the indices. The indices are submitted. The indicesall are not all submitted but are all read out.
+    #mol_tocal_all = deepcopy(mol_tocal) #here i copy the indices. The indices are submitted. The indicesall are not all submitted but are all read out.
     if myrun.stab==1: #then submit also the jobs in folders
         if fileparameters['try_ready']==1:
             print "try_ready activated"
-            indices,paths = try_ready_test(indices,myrun.path,fileparameters,returnpath=True)
-            print "indices:", indices
-        jobids = submit_stab(indices,myrun)
+            mol_submit = try_ready_test(mol_tocal,myrun.path,fileparameters,returnpath=False)
+            print "mol_submit:", mol_submit
+            jobids = submit_stab(mol_submit,myrun)
+        else:
+            jobids = submit_stab(mol_tocal,myrun)
     elif once==1 and fileparameters['no1sub']==1:
         print "submit skipped"
         once = 2
@@ -230,33 +228,39 @@ def submission(indices,myrun):
         #MOST IMPORTANT PART
         if myrun.try_ready==1:
             print "try_ready activated"
-            indices = try_ready_test(indicesall,myrun.path,fileparameters)
-        jobids = submit_normal(indices,myrun) #In here is decided to run on shell or to really submit!
+            mol_submit = try_ready_test(mol_tocal,myrun.path,fileparameters)
+            jobids = submit_normal(mol_submit, myrun)
+        else:
+            jobids = submit_normal(mol_tocal,myrun) #In here is decided to run on shell or to really submit!
     logging.info("----- END all jobs are submitted ----------")
     if safe: time.sleep(15) # wait 15 seconds. to be sure that the jobs appear in the qstat command
     return jobids
 
-def try_ready_test(indices,path,fileparameters,returnpath=False):
+def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
     """ Jobtester 3 looks which files shouldn't be submitted anymore. These are removed from the indices list and this list is returned
 
         - It tested if the .com.o123899 file already exists. Actually it should test if the logfile ends in normal termination.?
         - Note that this function does return new indices and no jobids
     """
+
+    # 1. make a list of paths that need to exist when job is ready
     paths = [] #here we are going to make a list of paths of the jobs
     if 'positions' in fileparameters: positions = fileparameters['positions']
-    for i in range(len(indices)):
-        path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + indices[i] + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+    #for i in range(len(indices)):
+    for mol in mol_tocal:
+        path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
         paths.append(path1)
         if fileparameters['stab']==1: #property is global variable
             for pos in fileparameters['positions']:
-                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+                path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
                 paths.append(path2)
-    indicescopy = deepcopy(indices)
-    #print "paths:", paths
+
     newpaths = paths[:]
+    mol_submit = mol_tocal[:]
     if fileparameters['stab']==1: #test if all necessary A and AH calculations are performed
         k=0
-        for i in range(len(indices)): # all indices
+        #for i in range(len(indices)): # all indices
+        for mol in mol_tocal:
             l=0
             if glob.glob(paths[k]): # test A
                 print "already calculated:", paths[k]
@@ -271,48 +275,52 @@ def try_ready_test(indices,path,fileparameters,returnpath=False):
             print "len(positions):", len(positions)
             print "l:", l
             if l == len(positions) + 1: #if all AH and A then remove from indices
-                indices.remove(indicescopy[i])
+                mol_submit.remove(mol)
             k+=1
     else:
-        for i in range(len(paths)):
-            if glob.glob(paths[i]):
-                print "already calculated:", indicescopy[i]
-                indices.remove(indicescopy[i])
+        #for i in range(len(paths)):
+        for mol, path in zip(mol_tocal, paths):
+            if glob.glob(path):
+                print "already calculated:", mol
+                mol_submit.remove(mol)
     if returnpath:
-        return indices,newpaths
+        return mol_submit,newpaths
     else:
-        return indices
+        return mol_submit
 
-def submit_normal(indices,myrun):
+def submit_normal(mols_tocal,myrun):
     jobids = []
-    for item in indices:
-        name = item + '.com'
+    for molecule in mols_tocal:
+        name = molecule.index + '.com'
         if myrun.nosub ==2:
             time.sleep(1)
-            jobid = subm.nosubmit(myrun.path,item,myrun.identify)
-            print item + 'submitted'
+            jobid = subm.nosubmit(myrun.path,molecule.index ,myrun.identify)
+            print molecule.index + 'submitted'
         else:
+            #print "name:", name
+            #print "myrun.path:", myrun.path
+            #print "myrun.identify:", myrun.identify
             jobid = subm.submit(myrun.path,name,myrun.identify).strip()
         jobids.append(jobid)
     return jobids
 
-def submit_stab(indices,myrun,jobids=[]):
+def submit_stab(mol_submit,myrun,jobids=[]):
     path = myrun.path
-    for item in indices:
-        name1 = item + '.com'
+    for molecule in mol_submit:
+        name1 = molecule.index + '.com'
         jobid = subm.submit(path,name1,myrun.identify).strip()
         jobids.append(jobid)
         for pos in myrun.positions:
-            path2 = path + '/' + item
-            name2 = item + '_' + str(pos) + '.com'
+            path2 = path + '/' + molecule.index
+            name2 = molecule.index + '_' + str(pos) + '.com'
             jobid = subm.submit(path2,name2,myrun.identify).strip()
             jobids.append(jobid)
     return jobids
 
 # 3. testing
 @log_io(signator='=')
-def jobtester(indices,myrun,jobids=[]):
-    """ this tester test if the jobs are ready by looking for a file <name>.com.o<6digits>.
+def jobtester(mols_tocal,myrun,jobids=[]):
+    """ this tester tests if the jobs are ready by looking for a file <name>.com.o<6digits>.
 
         - even if try_ready is activated all indices are used. And the already ready ones are immediately recognized as ready. 
         - they are just not submitted again.
@@ -323,11 +331,11 @@ def jobtester(indices,myrun,jobids=[]):
     path = myrun.path
     fileparameters = myrun.__dict__
     if test_ready==1:
-        test_ready1(indices,myrun)
-    elif test_ready==2:
-        test_ready2(indices,myrun)
+        test_ready1(mols_tocal,myrun)
+    elif test_ready==2: # default
+        test_ready2(mols_tocal,myrun)
     elif test_ready==3:
-        test_ready3(indices,myrun)
+        test_ready3(mols_tocal,myrun)
     else:
         raise SystemExit('no valid test_ready value')
     return
@@ -362,7 +370,8 @@ def test_ready1(indices,myrun):
     time.sleep(fileparameters['extrawaittime']) #just wait for the files to write back before opening them
     return
 
-def test_ready2(indices,myrun):
+def test_ready2(mols_tocal,myrun):
+    indices = [ mol.index for mol in mols_tocal ]
     completedjobs = []
     fileparameters = myrun.__dict__
     tijdje = 0
