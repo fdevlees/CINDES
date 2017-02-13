@@ -480,7 +480,7 @@ def filewriter2(zmat,index,**paras): #paras is short for fileparameters
         fid.write("\n")
         fid.write(str(paras['charge']-1) + " " + str(paras['mult']+1) + "\n")
         fid.write("\n")
-    print "---- FILE PRINTED SUCCESFULLY -----"
+    #print "---- FILE PRINTED SUCCESFULLY -----"
     return
 #----- END FILEWRITER ----#
 #----- BEGIN FILEWRITER JOB TYPE A BDE-MODEL ----#

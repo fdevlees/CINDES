@@ -157,73 +157,155 @@ class Logfile():
             self.dipole = float(line.split()[7])
       self.fid.close()
 
+
+def extract_stab(file, index, fileparameters):
+    #---- some parameters needed
+    bde_a = -12.68 #kJ/mol/eV^2
+    bde_b = -218.1 #kJ/mol
+    stab_h = 235.8 #kJ/mol
+    Dw_h = 0.063 #eV
+    chi_h = 2.20
+    chi_c = 2.60
+    chi_n = 3.05
+    H_h = -0.516817233 #a.u.
+    kJmol = 2625.5
+    eV = 27.2113838
+    avtc = -28.1290706 #kJ/mol #average thermal correction for 5 random structures kJ/mol
+    chi_term = bde_b*(chi_h-3)*(chi_n-3) #term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
+
+    (Eopt,E0,I,A)=gausread(file1,'stabA')[0]
+    EAHs=[] #all EAHs from all different positions in here
+    Npos=[] #positions with a nitrogen in here
+    for pos in fileparameters['positions']: #extract al AH energies and take the lowest
+        file2= path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + '.log'
+        EAH= gausread(file2,'energy')[0]
+        #---- HERE THE electronegativity part of the stab a bit tricky
+        confje = construction.indtocon(indices[i]) # change index to conf list using the construction module
+        corresp = {2:46,6:18,7:42,9:34,11:22,12:30} # map the alpha positions to methyl indices 
+        siteindex = corresp[pos] #find for each position the methyl index
+        if siteindex in fileparameters['line1']:# look if that index is used as a site
+            # fileparameters['line1'].index(siteindex) is the place. this is the same as in confje
+            if confje[fileparameters['line1'].index(siteindex)]==['N']:
+                print "electronegativity correction for nitrogen: ", chi_term
+                Npos.append(pos)
+                #EAH -= chi_term
+        #-----
+        EAHs.append([EAH,pos])
+    print "EAHs:"
+    pprint(EAHs)
+    print "min EAHs:", min(EAHs)
+    print "Npos:",Npos
+    #gasconstant = 8.3144621
+    E_ah=min(EAHs)
+    omega= ( ((I+A)**2 )/(8*(I-A)) )*eV #in eV
+    Domega = omega - 2
+    BDE_ah = (Eopt + H_h - E_ah[0])*kJmol + avtc #avtc is AVerage Thermal Correction. 
+    #----
+    RDV = gausread(file1,'RDV',2)[0]
+    #----
+    if E_ah[1] in Npos:
+        stabA= BDE_ah - stab_h - bde_a * Domega * Dw_h - chi_term
+    else:
+       stabA= BDE_ah - stab_h - bde_a * Domega * Dw_h
+    return stab, BDE_ah, I, A, omega, RDV, E_ah[1]
+
+def get_paths( mols, fileparameters):
+    ''' get all paths that need to be examined later '''
+    files=[]
+    path = fileparameters['path']
+    for molecule in mols:
+        files.append(path + '/' + fileparameters['identify'] + molecule.index + '.log')
+
+        if fileparameters['stab']==1:
+            for pos in fileparameters['positions']: #extract al AH energies and take the lowest
+                files.append(path + '/' + molecule.index + '/' + fileparameters['identify'] + molecule.index + '_' + str(pos) + '.log')
+
+    return files
+
+
+@log_io()
+def datareader( mols_tocal, fileparameters):
+
+    # 1. get all paths
+    paths = get_paths( mols_tocal, fileparameters)
+
+    # 2. test normal termination
+    normaltermination( paths, fileparameters['debug'] )
+
+    # 3. get a list of properties that need to be extracted for each molecule
+    if fileparameters['property']=='func':
+        props = [ fileparameters['bcprop'] ]
+        props.extend( fileparameters['func_args'] )
+    else:
+        props = [ fileparameters['property'] , fileparameters['bcprop'] ]
+    props.extend( fileparameters['extra_props'] )
+    uni_props_dict = { item:None for item in props }
+
+
+    # 4. obtain data for each molecule
+    for molecule in mols_tocal:
+        print "><"*10, molecule, "><"*10
+        # make a copy of props_dict
+        props_dict = uni_props_dict.copy()
+
+        # start by looking if stab is one of the crucial properties because it contains many others
+        if 'stab' in props_dict:
+            X_stab_props = extract_stab( molecule, fileparameters )
+            # expect to get something like: { 'stab': value, 'I':..., 'A':...,'omega':...,'RDV'....}
+
+            # fill props_dict
+            props_dict.update(X_stab_props)
+
+        # check which properties are still necessary to obtain:
+        to_read_props = [ key for key, value in props_dict.iteritems() if value==None ]
+        print "to read props:", to_read_props
+
+        # extract them
+        # assume all properties can be easily obtained by gausread
+        file1 = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + '.log'
+        readings = gausread( file1, to_read_props)
+        #print 'readings:', readings
+        props_dict.update( gausread( file1, to_read_props ) )
+
+        # set molecule attributes
+        print "props_dict:", props_dict
+        if fileparameters['property']=='func':
+            #kwargs = {}
+            #for prop in fileparameters['func_args']:
+            #    kwargs[prop] = props_dict[prop]
+            kwargs = { prop:props_dict[prop] for prop in fileparameters['func_args'] }
+            #print "kwargs:", kwargs
+            molecule.Pvalue = fileparameters['function'](**kwargs)
+            print "function value:", molecule.Pvalue
+        else:
+            molecule.Pvalue = props_dict.pop( fileparameters['property'] )
+        molecule.boundaries = [ props_dict.pop( fileparameters[ 'bcprop' ] ) ]
+        molecule.infoline = props_dict.values()
+        molecule.predicted = False
+
+    return mols_tocal
+
 @log_io(signator='#')
-def datareader(mols_tocal,jobids,path,fileparameters):
+def datareader_old(mols_tocal,jobids,path,fileparameters):
     ''' NOTE indices = indices_tocal here! 
     '''
     indices = [ mol.index for mol in mols_tocal ]
     data_calc = []
     files=[]
     print "multiplejobs:", fileparameters['multiplejobs']
-    for i in range(len(indices)): #make a list of paths from which the data has to be extracted
-        files.append(path + '/' + fileparameters['identify'] + indices[i] + '.log')
-        if fileparameters['stab']==1:
-            for pos in fileparameters['positions']: #extract al AH energies and take the lowest
-                files.append(path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + '.log')
+
+    # get paths off all
+    # check normal termination
     normaltermination(files,fileparameters['debug']) #test normal termination of all the files
+
+    # extract data
     for i in range(len(indices)):
         print "><"*10, indices[i], "><"*10
         file1 = path + '/' + fileparameters['identify'] + indices[i] + '.log'
         #------
         if fileparameters['stab']:#if so we are sure we have to do the following
-            #---- some parameters needed
-            bde_a = -12.68 #kJ/mol/eV^2
-            bde_b = -218.1 #kJ/mol
-            stab_h = 235.8 #kJ/mol
-            Dw_h = 0.063 #eV
-            chi_h = 2.20 
-            chi_c = 2.60
-            chi_n = 3.05
-            H_h = -0.516817233 #a.u.
-            kJmol = 2625.5
-            eV = 27.2113838
-            avtc = -28.1290706 #kJ/mol #average thermal correction for 5 random structures kJ/mol
-            chi_term = bde_b*(chi_h-3)*(chi_n-3) #term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
-            #---- 
-            (Eopt,E0,I,A)=gausread(file1,'stabA')[0]
-            EAHs=[] #all EAHs from all different positions in here
-            Npos=[] #positions with a nitrogen in here
-            for pos in fileparameters['positions']: #extract al AH energies and take the lowest
-                file2= path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + '.log'
-                EAH= gausread(file2,'energy')[0]
-                #---- HERE THE electronegativity part of the stab a bit tricky
-                confje = construction.indtocon(indices[i]) # change index to conf list using the construction module
-                corresp = {2:46,6:18,7:42,9:34,11:22,12:30} # map the alpha positions to methyl indices 
-                siteindex = corresp[pos] #find for each position the methyl index
-                if siteindex in fileparameters['line1']:# look if that index is used as a site
-                    # fileparameters['line1'].index(siteindex) is the place. this is the same as in confje
-                    if confje[fileparameters['line1'].index(siteindex)]==['N']:
-                        print "electronegativity correction for nitrogen: ", chi_term
-                        Npos.append(pos)
-                        #EAH -= chi_term
-                #-----
-                EAHs.append([EAH,pos])
-            print "EAHs:"
-            pprint(EAHs)
-            print "min EAHs:", min(EAHs)
-            print "Npos:",Npos
-            #gasconstant = 8.3144621
-            E_ah=min(EAHs)
-            omega= ( ((I+A)**2 )/(8*(I-A)) )*eV #in eV
-            Domega = omega - 2
-            BDE_ah = (Eopt + H_h - E_ah[0])*kJmol + avtc #avtc is AVerage Thermal Correction. 
-            #----
-            RDV = gausread(file1,'RDV',2)[0]
-            #----
-            if E_ah[1] in Npos:
-                stabA= BDE_ah - stab_h - bde_a * Domega * Dw_h - chi_term
-            else:
-                stabA= BDE_ah - stab_h - bde_a * Domega * Dw_h
+            stab, BDE_ah, I, A, omega, RDV, E_AH = extract_stab( file1, indices[i], fileparameters )
+
             #----------
             if 'bcprop' in fileparameters:#decide how to put the data in the datalist
                 if fileparameters['property']=='stab': #optimize stab and use another prop as bc
@@ -251,6 +333,8 @@ def datareader(mols_tocal,jobids,path,fileparameters):
                 #data_calc.append([indices[i],stabA,BDE_ah,I,A,RDV,E_ah[1]]) #all extra data now included
             mols_tocal[i].infoline = [ BDE_ah, I, A, omega, RDV, E_ah[1] ]
         #------
+        elif fileparameters['property'] == 'func':
+            pass
         else:
             #propx,extra = gausread(file1,fileparameters['property']) # later this has to change to EHOMO and ELUMO etc
             datax = gausread(file1,fileparameters['property'],fileparameters['multiplejobs']) # later this has to change to EHOMO and ELUMO etc
@@ -266,24 +350,25 @@ def datareader(mols_tocal,jobids,path,fileparameters):
         mols_tocal[i].predicted = False
     # insert all ones at second position
 
-    # assuming the order is the same:
-    #for molecule, data_item in zip(mols_tocal, data_calc):
-    #    print "molecule:", molecule, "data_item:", data_item
-    #    molecule.Pvalue = data_item[1]
-    #    molecule.infoline = data_item[2:]
-    #    molecule.predicted= False
     return mols_tocal
 
-def gausread(filename,prop,multiplejobs=0,rdvindex=1):
+def gausread(filename,props,multiplejobs=0,rdvindex=1):
+    ''' props is a list of props to extract '''
     mymol = Logfile(filename)
-    extra = []
-    if prop in ['natom','natoms']:
+    results = {}
+
+    # extract
+    if any( prop in ['natom','natoms'] for prop in props ):
         mymol.extract(coords=1)
     else:
         mymol.extract()
+
+    # check opt 
     if not hasattr(mymol,'optdone'):
         print "program did not do optimization or crashed"
-    if prop=='polar':
+
+    # set props
+    if 'polar' in props:
         if hasattr(mymol,'polex'):
             print "polar exact densities:"
             pprint(mymol.polex)
@@ -291,86 +376,60 @@ def gausread(filename,prop,multiplejobs=0,rdvindex=1):
             # next line calculates in one line the Radical delocalisation value
             # RDV = sum([ float(item[2])**2 for item in spiden if abs(item[2])>0.05 ])
             print "polarisability value is: ", pola
-            data = pola,[]
+            results['polar']=pola
         else:
             print "NO POLAR DATA FOUND IN FILE!"
-    elif prop=='stabA':
+    if 'stabA' in props:
         pprint(mymol.scfenergies[-5:])
-        Eopt= mymol.scfenergies[-4]
-        E0= mymol.scfenergies[-3]
-        IP= mymol.scfenergies[-2] - E0
-        EA= E0 - mymol.scfenergies[-1]
-        data = (Eopt,E0,IP,EA) #returns in EV?
-    elif prop=='energy':
+        results['Eopt'] = mymol.scfenergies[-4]
+        results['E0']   = mymol.scfenergies[-3]
+        results['IP']   = mymol.scfenergies[-2] - results['E0']
+        results['EA']   = results['E0'] - mymol.scfenergies[-1]
+    if 'energy' in props:
         ESCFs = mymol.scfenergies
-        data = ESCFs[-1]
-    elif prop in ['homo','HOMO']:
+        results['energy'] = ESCFs[-(multiplejobs+1)]
+    if any( prop in ['homo','lumo'] for prop in props):
         from cclib.parser import ccopen
         myfile=ccopen(filename).parse()
-        Ehomo= myfile.moenergies[0][myfile.homos[0]] #NOT IMPLEMENTED NEED CCLIB
-        Elumo= myfile.moenergies[0][myfile.homos[0]+1] #NOT IMPLEMENTED NEED CCLIB
-        data = Ehomo
-        extra.extend([Elumo])
-    elif prop in ['lumo','LUMO']:
+        results['homo'] = myfile.moenergies[0][myfile.homos[0]] #NOT IMPLEMENTED NEED CCLIB
+        results['lumo'] = myfile.moenergies[0][myfile.homos[0]+1] #NOT IMPLEMENTED NEED CCLIB
+    if 'gap' in props:
         from cclib.parser import ccopen
         myfile=ccopen(filename).parse()
-        Ehomo= myfile.moenergies[0][myfile.homos[0]] #NOT IMPLEMENTED NEED CCLIB
-        Elumo= myfile.moenergies[0][myfile.homos[0]+1] #NOT IMPLEMENTED NEED CCLIB
-        data = Elumo
-        extra.extend([Ehomo])
-    elif prop=='gap':
-        from cclib.parser import ccopen
-        myfile=ccopen(filename).parse()
-
-        #HOMO = myfile.myhomos[1]
-        #Ehomo= myfile.mymos[1]['alpha'][0][HOMO]
-        #Elumo= myfile.mymos[1]['alpha'][0][HOMO+1]
-
-        Ehomo= myfile.moenergies[0][myfile.homos[0]]
-        Elumo= myfile.moenergies[0][myfile.homos[0]+1]
-        Egap = Elumo - Ehomo
-        #return Egap, (Ehomo,Elumo)
-        data = Egap
-        extra.extend([Ehomo,Elumo])
-    elif prop in ['IP','ip']:
+        results['homo'] = myfile.moenergies[0][myfile.homos[0]]
+        results['lumo'] = myfile.moenergies[0][myfile.homos[0]+1]
+        results['gap']  = results['lumo'] - results['homo']
+    if 'ip' in props:
         ESCFs = mymol.scfenergies
-        E0 = ESCFs[-(multiplejobs+1)]
-        EIP = ESCFs[-multiplejobs]
-        I = EIP - E0
-        print "I:",I
-        data = I
-        #logging.info((E0,EIP,multiplejobs))
-        #raise SystemExit('test')
-        extra.extend([E0,EIP])
-    elif prop in ['EA','ea']:
+        results['energy']  = ESCFs[-(multiplejobs+1)]
+        results['ecation'] = ESCFs[-multiplejobs]
+        results['ip']      = results['ecation'] - results['energy']
+    if 'ea' in props:
         ESCFs = mymol.scfenergies
-        E0 = ESCFs[-(1+multiplejobs)]
-        EA = ESCFs[-1]
-        A = E0-EA
-        print A, "= A"
-        data = A
-        extra.extend([E0,EA])
-    elif prop in ['natoms','natom']:
-        data = len(mymol.atomnos)
-    elif prop=='volume':
-        data = mymol.volume
-    elif prop=='poldens':
+        results['energy'] = ESCFs[-(1+multiplejobs)]
+        results['eanion'] = ESCFs[-1]
+        results['ea']     = results['energy'] - results['eanion']
+    if 'natoms' in props:
+        results['natoms'] = len(mymol.atomnos)
+    if 'volume' in props:
+        results['volume'] = mymol.volume
+    if 'poldens' in props:
         pola = sum([ mymol.polex[i]/3 for i in [0,2,5]]) # = 1/3*(axx+ayy+azz)
-        print "polarisability value is: ", pola
-        data = pola/mymol.volume
-    elif prop in ['rdv','RDV']:
+        results['polar']   = pola
+        results['poldens'] = pola/mymol.volume
+    if 'rdv' in props:
         print "Mulliken spin densities:"
         pprint(mymol.spindensities[rdvindex])
         spiden= mymol.spindensities[rdvindex]
         # next line calculates in one line the Radical delocalisation value
-        RDV = sum([ float(item[2])**2 for item in spiden if abs(item[2])>0.05 ])
-        print "RDV value is: ", RDV
-        data =  RDV
-    elif prop in ['dipole','Dipole']:
-        data= mymol.dipole
-    else:
-        print "property not recognised!"
-    return [data]+extra
+        results['rdv'] = sum([ float(item[2])**2 for item in spiden if abs(item[2])>0.05 ])
+    if 'dipole' in props:
+        results['dipole'] = mymol.dipole
+
+    # assert that all props are filled
+    assert all( prop in results for prop in props), 'not all properties calculated '
+
+    return results
 
 def normaltermination(filepaths,debug=False):
     #-----

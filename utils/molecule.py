@@ -76,6 +76,9 @@ class Molecule(object):
         ret.extend( self.infoline   )
         return ret
 
+    def set_path(self, path, extension='.com'):
+        pass
+
     def make_zmat(self, core, active, passive):
         pass
 

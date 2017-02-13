@@ -81,7 +81,7 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
         jobtester(mols_tocal,myrun,jobids)
 
         # 4. test normal termination and read jobs #NOTE data_nocal is passed to this one. results are appended to it
-        mols_calc = datareader.datareader(mols_tocal,jobids,myrun.path,myrun.__dict__)
+        mols_calc = datareader.datareader(mols_tocal,myrun.__dict__)
 
         # 5. add ones to each data_calc element. this means the values are obtained by real calculation
         #for item in mols_calc:
@@ -132,7 +132,7 @@ def filemaker(mols_tocal,myrun,passive,active,core): #----- dict with info for f
         # Try to print SMILES
         try:
             smiles= molecule.get_format()
-            print "smiles:", smiles
+            print "smiles:", smiles,
         except IndexError:
             print "IndexError while trying to make smiles for molecule"
     return

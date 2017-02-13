@@ -68,8 +68,7 @@ def montecarloprocedure(fileparameters, subarray, maxi, table,**kwargs):
     Dtable = dict([ (item[0],item[1]) for item in table] )
     Tcount = 0 #temperature counter. to zero after increased.
     Rcount = 0 #number of random confs tested
-    Tcountmax = int ( 10** ( float( 1 + fileparameters['nrandsites'] )/ 2 ) )
-    if debug: Tcountmax = 5
+    Tcountmax = int ( 10** ( float( 1 + fileparameters['nrandsites'] ) ) )
     print "Number of tested configurations per temperature:", Tcountmax
 
     # 3. FOR ML

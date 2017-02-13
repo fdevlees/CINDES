@@ -28,21 +28,6 @@ from CINDES4.pyevolve import G1DList , GSimpleGA, GAllele, Mutators, Initializat
 from CINDES4.pyevolve import Scaling
 import CINDES4.pyevolve as pyevolve
 
-def skipper(conf):
-    indje = INDES.procedures.zcon.contoind(conf)
-    replaced = indje.replace('_','')
-    if False:
-        output= len(replaced)
-    else:
-        import string
-        output = 0
-        for i in replaced:
-            try:
-                output += string.uppercase.index(i)
-            except ValueError:
-                output += string.lowercase.index(i)
-    return output
-
 def my_mutator(conf):
     pos_to_mutate = np.random.randint(0, len(individual)-1)
     conf[pos_to_mutate] = np.random.choice( array[ pos_to_mutate ] )
@@ -112,17 +97,6 @@ class Fitness_Function():
             self.initiate_ml_int(**options)
         return
 
-    def predict_via_submit_mono(self,conf):
-        index = INDES.procedures.zcon.contoind(conf)
-        print "index:", index
-        confs = [conf]
-        indices_tocal = [index]
-        data_nocal = []
-        myrun = self.run
-        newy = INDES.procedures.submittingprocedure(confs,indices_tocal,data_nocal,myrun,**myrun.TZmat)
-        print "newy:", newy[0]
-        return newy[0][2]
-
     def predict_via_submit_multi(self,confs):
         ''' this function is used by my_GSimpleGA class.my_evaluate '''
         # 1. convert configuration lists to molecule instances
@@ -157,8 +131,8 @@ class Fitness_Function():
 
 class My_GSimpleGA(GSimpleGA.GSimpleGA):
 
-   def __init__(self,genome,run, precalculation=True, table=[]):
-       GSimpleGA.GSimpleGA.__init__(self,genome)
+   def __init__(self,genome,run, precalculation=True, table=[], **kwargs):
+       GSimpleGA.GSimpleGA.__init__(self,genome, **kwargs)
        self.FF = Fitness_Function(run, table=table)
        self.precalculation = precalculation
        return
@@ -264,10 +238,11 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
       logging.debug("The generation %d was finished.", self.currentGeneration)
 
       self.currentGeneration += 1
+      print_title( 'Generation: %d' % self.currentGeneration , outline='l', signator='=')
 
       return (self.currentGeneration == self.nGenerations)
 
-   def evolve(self, freq_stats=0):
+   def evolve(self, freq_stats=10):
       """ Do all the generations until the termination criteria, accepts
       the freq_stats (default is 0) to dump statistics at n-generation
 
@@ -292,7 +267,6 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
       logging.debug("Starting the DB Adapter and the Migration Adapter if any")
       if self.dbAdapter: self.dbAdapter.open(self)
       if self.migrationAdapter: self.migrationAdapter.start()
-
 
       if self.getGPMode():
          gp_function_prefix = self.getParam("gp_function_prefix")
@@ -331,6 +305,7 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
 
             if freq_stats:
                if (self.currentGeneration % freq_stats == 0) or (self.getCurrentGeneration() == 0):
+                  print "freq_stats:",
                   self.printStats()
 
             if self.dbAdapter:
@@ -411,7 +386,7 @@ from CINDES4.INDES import procedures
 def main(param, array):
     GArun = procedures.Run(**param)
     table = procedures.set_table(GArun)
-    print "run object:\n", GArun
+    #print "run object:\n", GArun
     final_genome = run_pyevolve(array, table, GArun)
     best = final_genome.bestIndividual()
     print "final_genome:", final_genome
@@ -426,14 +401,13 @@ def run_pyevolve(array,table, options):
         options.
 
     '''
+    # 0. 
     print "options:", options
 
-    precalculation = True
-
-    # Enable the logging system:
+    # 1. Enable the logging system:
     pyevolve.logEnable()
 
-    # Set Genome instance using as allelles the sites with the different functionalisations.
+    # 2. Set Genome instance using as allelles the sites with the different functionalisations.
     setOfAlleles = GAllele.GAlleles()
     for i in xrange(options.nsites):
        a = GAllele.GAlleleList(array[i])
@@ -441,23 +415,33 @@ def run_pyevolve(array,table, options):
     genome = G1DList.G1DList(options.nsites)
     genome.setParams(allele=setOfAlleles)
 
-    # The evaluator function (objective function)
+    # 3. Set evaluator function (objective function) or set precalculation is True! this circumvents serial evaluation
+    precalculation = True
     if not precalculation:
         genome.evaluator.set(skipper)
         # if precalculation a self defined evaluator is used that calls CINDES also an FF instance
         # is made that moment.
+
+    # 4. Set mutator function
     genome.mutator.set(Mutators.G1DListMutatorAllele)
+    #one could also add another mutator for exapmple to swap sites
+    #genome.mutator.add(Mutators.G1DListMutatorSwap)
+
+    # 5. Set initalizator function
     genome.initializator.set(Initializators.G1DListInitializatorAllele)
 
-    # set Crossover type. G1DListCrossoverUniform, G1DListCrossoverSinglePoint, G1DListCrossoverTwoPoint
+    # 6. set Crossover function: types: G1DListCrossoverUniform, G1DListCrossoverSinglePoint, G1DListCrossoverTwoPoint
     if not options.genalg['CXP']==0.0:
         genome.crossover.set( Crossovers.G1DListCrossoverUniform)
     print "genome:\n", genome
 
-    # Genetic Algorithm Instance
-    ga = My_GSimpleGA(run = options, genome=genome, precalculation=precalculation, table=table)
+    # 7. set Genetic Algorithm Instance using a defined random.seed()
+    if not options.genalg['seed']:
+        options.genalg['seed'] = np.random.randint(1,9999)
+    print "seed to generate randomness:", options.genalg['seed']
+    ga = My_GSimpleGA(run = options, genome=genome, precalculation=precalculation, table=table, seed=options.genalg['seed'])
 
-    # Selectors
+    # 8. set Selector
     if options.genalg['selector'] == 'RouletteWheel':  # Default = GRouletteWheel
         ga.selector.set(Selectors.GRouletteWheel)
     elif any( item in options.genalg['selector'] for item in [ 'Rank', 'rank' ] ):
@@ -469,45 +453,44 @@ def run_pyevolve(array,table, options):
     else:
         raise SystemExit('no valid selector is chosen')
 
-    # NGEN
+    # 9. set NGEN (number of generations)
     ga.setGenerations(options.genalg['ngenerations'])
 
-    # set min / max
+    # 10. set min / max (optimize to a maximum or to a minimum)
     if options.genalg['optimum'] in ['min', 'minimize']:
         ga.setMinimax(Consts.minimaxType["minimize"])
 
-    # set MUP
+    # 11. set MUP (mutation probability)
     ga.setMutationRate(options.genalg['MUP']) #i added this from another example
 
-    # set CXP
+    # 12. set CXP (crossover probability)
     if not options.genalg['CXP']==0.0:
         ga.setCrossoverRate(options.genalg['CXP'])
 
-    # termination at convergence?:
+    # 13. set termination at convergence?:
     ga.terminationCriteria.set(GSimpleGA.ConvergenceCriteria)
 
-    # for negative fitness results:
+    # 14. set population size
     ga.setPopulationSize(options.genalg['npopulation'])
 
-    # set elitism
+    # 15. set elitism
     if options.genalg['elitism']:
         ga.setElitism(options.genalg['elitism'])
         print "n elitism:", options.genalg['nelitism']
         ga.nElitismReplacement = options.genalg['nelitism']
 
-    # to allow for negative scores we have to use SigmaTruncScaling. otherwise also LinearScaling or PowerLawScaling could be used
+    # 16. set scaling: to allow for negative scores we have to use SigmaTruncScaling. otherwise also LinearScaling or PowerLawScaling could be used
     pop = ga.getPopulation()
     pop.scaleMethod.set(Scaling.SigmaTruncScaling)
 
-    # for plotting
-    sqlite_adapter = DBAdapters.DBSQLite(identify=options.genalg['db_identify'], resetDB=True)
+    # 17. for plotting / logging
+    sqlite_adapter = DBAdapters.DBSQLite(identify=options.genalg['db_identify'], resetDB=False, resetIdentify=True )
     ga.setDBAdapter(sqlite_adapter)
 
     print "GenAlg:", ga
 
     # Do the evolution, with stats dump
-    # frequency of 10 generations
-    ga.evolve(freq_stats=options.genalg['freq_stats'])
+    ga.evolve(freq_stats=2)
     return ga
 
 if __name__ == "__main__":

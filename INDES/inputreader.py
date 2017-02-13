@@ -70,6 +70,26 @@ def get_preds(subinp, line):
         preds.append(pred)
     return subinp, preds
 
+def get_prop_function(subinp, line):
+    line = subinp.readline()
+    splitted = line.split()
+    print "functional property:", line
+    import re
+
+    # we need to find the properties going into the function. properties only contain [a-zA-Z]
+    word = re.compile('(^[a-zA-Z]*$)')
+
+    # the properties in that line are: #set because one property can occur multiple times in function
+    props = { item for item in splitted if word.match(item) and not item in ['if', 'else' ] }
+    print "properties:", props
+
+    # props need to be separated by a comma
+    arguments = ','.join(props)
+    print "arguments:", arguments
+    func = eval('lambda {}:{}'.format(arguments, line))
+
+    return subinp, func, props
+
 def get_genalg_params(subinp, line):
     defaults = { 'ngenerations' : 20,
                  'npopulation'  : 20,
@@ -81,6 +101,7 @@ def get_genalg_params(subinp, line):
                  'scaling'      : 'sigmatrunc',
                  'db_identify'  : 'ex4',
                  'freq_stats'   : 10,
+                 'seed'         : 0,
                  'selector'     : 'RouletteWheel'
                  }
     try:
@@ -113,7 +134,9 @@ def readfile(subinp):
     #default values
     paras={'program':'gaussian',
            'procedure':'standard',
+           'property':'gap',
            'optimum':'minimum',
+           'extra_props': [],
            'bc': False,
            'ml':0,
            'nosub':0,
@@ -127,6 +150,7 @@ def readfile(subinp):
            'difmodel':0,
            'nprocs':2,
            'debug':False,
+           'function': lambda x:x,
            'norandom':0,
            'sequence':[],
            'symlinks':[],
@@ -151,7 +175,6 @@ def readfile(subinp):
            'ncore':10,
            'nch3':16,
            'identify':'unspecified_',
-           'property':'gap',
            'charge':0,
            'mult':1,
            'montecarlo':0,   #Temperature at start
@@ -272,7 +295,13 @@ def readfile(subinp):
             except IndexError: pass
         elif 'extrawaittime' in line: paras['extrawaittime'] = float(line.split()[1])
         elif 'cutoff' in line: paras['cutoff'] = float(line.split()[1])
-        elif 'property' in line: paras['property'] = line.split()[1]
+        elif 'property' in line:
+            prop = line.split()[1]
+            if 'func' in prop:
+                paras['property']='func'
+                subinp, paras['function'], paras['func_args'] = get_prop_function( subinp, line )
+            else:
+                paras['property'] = prop
         elif 'sites' in line: paras['line1'] = [ int(item) for item in line.split()[1:] ]
         elif 'positions' in line: paras['positions'] = [ int(item) for item in line.split()[1:] ]
 

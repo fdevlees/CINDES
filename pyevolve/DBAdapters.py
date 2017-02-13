@@ -48,7 +48,7 @@ class DBBaseAdapter:
 
    def setIdentify(self, identify):
       """ Sets the identify of the statistics
-      
+
       :param identify: the id string
       """
       if identify is None:
@@ -58,21 +58,21 @@ class DBBaseAdapter:
 
    def getIdentify(self):
       """ Return the statistics identify
-      
+
       :rtype: identify string
       """
       return self.identify
 
    def getStatsGenFreq(self):
       """ Returns the frequency of statistical dump
-      
+
       :rtype: the generation interval of statistical dump
       """
       return self.statsGenFreq
 
    def setStatsGenFreq(self, statsGenFreq):
       """ Set the frequency of statistical dump
-      
+
       :param statsGenFreq: the generation interval of statistical dump
       """
       self.statsGenFreq = statsGenFreq
