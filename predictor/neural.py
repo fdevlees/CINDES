@@ -155,7 +155,7 @@ class neural(object):
             #self.gridsearch(self.X, self.y) # does not work seems to come in infinite loop or so. is not exiting with ^C
             self.CV(self.X, self.y)
         if fraction:
-            from sklearn.cross_validation import train_test_split
+            from sklearn.model_selection import train_test_split
             X_train, X_test, y_train, y_test = train_test_split(self.X,self.y, train_size = fraction)
         self.compile()
         self.fit(X_train, y_train, X_test, y_test)

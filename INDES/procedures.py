@@ -203,11 +203,12 @@ def get_startconf(param,array):
 def get_sequence(count, myrun):
     # START set sequence INPUT: param
     param = myrun.__dict__
+    nsites = param['nsites']
     if 'sequences' in param:
         try:
             sequence = param['sequences'][count-1] #accounting for the fact count starts counting at 1
         except IndexError:
-            sequence=random.sample(range(param['nsites']),param['nsites'])
+            sequence=random.sample(range(nsites), nsites)
 	finally:
             print "SEQUENCE: " , str(sequence)
             return sequence
@@ -215,9 +216,9 @@ def get_sequence(count, myrun):
         sequence=param['sequence']
     else:
         if param['norandom']==1:
-            sequence=range(param['nsites'])
+            sequence=range(nsites)
         elif param['sequence'] == []:
-            sequence=random.sample(range(param['nsites']),param['nsites'])
+            sequence=random.sample(range(nsites),nsites)
         else:
             print "sequence read from file"
             sequence=param['sequence']

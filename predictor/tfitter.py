@@ -19,7 +19,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 from re import findall, split
 import numpy as np
-from sklearn import linear_model, cross_validation, metrics
+from sklearn import linear_model, metrics
+from sklearn.model_selection import train_test_split
 from abc import ABCMeta, abstractmethod
 import pandas as pd
 from CINDES4.utils.writings import log_io, sprint
@@ -691,12 +692,12 @@ class Dataset(): #abstract data class
             sprint(5,self.Y)
         if args.fraction:
           if twosite:
-            self.X_train, self.X_test, self.Y_train, self.Y_test = cross_validation.train_test_split(self.X2,self.Y, train_size = args.fraction)
+            self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(self.X2,self.Y, train_size = args.fraction)
             print "size training set:", np.shape(self.Y_train)
             print "size test set:", np.shape(self.Y_test)
             clf.fit(self.X_train, self.Y_train)
           else:
-            self.X_train, self.X_test, self.Y_train, self.Y_test = cross_validation.train_test_split(self.X,self.Y, train_size = args.fraction)
+            self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(self.X,self.Y, train_size = args.fraction)
             print "size training set:", np.shape(self.Y_train)
             print "size test set:", np.shape(self.Y_test)
             clf.fit(self.X_train, self.Y_train)

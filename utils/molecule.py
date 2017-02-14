@@ -1,6 +1,8 @@
 """ a conveniece Molecule Class """
 import numpy as np
 from converter import Converter
+from collections import MutableSequence
+
 debug=0
 
 if True:
@@ -10,7 +12,7 @@ def contoind(conf):
     ''' to convert a configuration to an index-string '''
     return '_'.join([''.join(item) for item in conf])
 
-class Population(object):
+class Population(MutableSequence):
     def __init__(self, population):
         self.population = population
         self.indices = [ individual.index for individual in self.population ]
@@ -36,8 +38,31 @@ class Population(object):
     def __str__(self):
         return self.__repr__()
 
-    def __getitem(self,value):
-        return self.population[value]
+    def __getitem__(self,value):
+        '''this gives the class dict and list behavior calling it like:
+            Population['index'] or Population[i] both will work '''
+        if type(value)==str:
+            ii = self.get_indices().index(value)
+            return self.population[ii]
+        else:
+            return self.population[value]
+
+    def get_indices(self):
+        return [ individual.index for individual in self.population ]
+
+    def log(self):
+        return dict( [ [ I.index, I.Pvalue ] for I in self.population ] )
+
+    def __delitem__(self,i):
+        del self.population[i]
+
+    def insert(self,ii, val):
+        self.population.insert(ii, val)
+
+    def __add__(self, Pop):
+        for ind in Pop:
+            self.population.append(ind)
+        return self
 
 
 class Molecule(object):

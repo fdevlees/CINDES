@@ -558,7 +558,7 @@ class MachineLearning(object):
     def fraction_learn(self,fraction=0.8, skl=False):
         labda = self.labda
         sigma = self.sigma
-        from sklearn.cross_validation import train_test_split
+        from sklearn.model_selection import train_test_split
         X_train, X_test, y_train, y_test = train_test_split(self.coulombs,self.y, train_size = fraction)
         print "using a training set of", len(X_train), "molecules"
         print "using a test set of", len(X_test), "molecules"

@@ -158,7 +158,8 @@ class Logfile():
       self.fid.close()
 
 
-def extract_stab(file, index, fileparameters):
+def extract_stab(file1 , molecule, fileparameters):
+    index = molecule.index
     #---- some parameters needed
     bde_a = -12.68 #kJ/mol/eV^2
     bde_b = -218.1 #kJ/mol
@@ -173,14 +174,18 @@ def extract_stab(file, index, fileparameters):
     avtc = -28.1290706 #kJ/mol #average thermal correction for 5 random structures kJ/mol
     chi_term = bde_b*(chi_h-3)*(chi_n-3) #term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
 
-    (Eopt,E0,I,A)=gausread(file1,'stabA')[0]
+    propsA =gausread(file1,'stabA')
+    # propsA = { Eopt:..., E0:..., IP:..., EA:... }
+
     EAHs=[] #all EAHs from all different positions in here
     Npos=[] #positions with a nitrogen in here
     for pos in fileparameters['positions']: #extract al AH energies and take the lowest
-        file2= path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + '.log'
-        EAH= gausread(file2,'energy')[0]
+        file2= fileparameters['path'] + '/' + index + '/' + fileparameters['identify'] + index + '_' + str(pos) + '.log'
+
+        EAH= gausread(file2,'energy')['energy']
+
         #---- HERE THE electronegativity part of the stab a bit tricky
-        confje = construction.indtocon(indices[i]) # change index to conf list using the construction module
+        confje = construction.indtocon(index) # change index to conf list using the construction module
         corresp = {2:46,6:18,7:42,9:34,11:22,12:30} # map the alpha positions to methyl indices 
         siteindex = corresp[pos] #find for each position the methyl index
         if siteindex in fileparameters['line1']:# look if that index is used as a site
@@ -196,18 +201,22 @@ def extract_stab(file, index, fileparameters):
     print "min EAHs:", min(EAHs)
     print "Npos:",Npos
     #gasconstant = 8.3144621
-    E_ah=min(EAHs)
-    omega= ( ((I+A)**2 )/(8*(I-A)) )*eV #in eV
-    Domega = omega - 2
-    BDE_ah = (Eopt + H_h - E_ah[0])*kJmol + avtc #avtc is AVerage Thermal Correction. 
+    E_ah =min(EAHs)
+
+    I = propsA['IP']
+    A = propsA['EA']
+    propsA['omega'] = ( ((I+A)**2 )/(8*(I-A)) )*eV #in eV
+    Domega = propsA['omega'] - 2
+    propsA['BDE_ah']  = ( propsA['Eopt'] + H_h - E_ah[0])*kJmol + avtc #avtc is AVerage Thermal Correction. 
     #----
-    RDV = gausread(file1,'RDV',2)[0]
+    propsA.update(gausread(file1,'rdv',2) )
     #----
     if E_ah[1] in Npos:
-        stabA= BDE_ah - stab_h - bde_a * Domega * Dw_h - chi_term
+        propsA['stab'] = propsA['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
     else:
-       stabA= BDE_ah - stab_h - bde_a * Domega * Dw_h
-    return stab, BDE_ah, I, A, omega, RDV, E_ah[1]
+        propsA['stab'] = propsA['BDE_ah'] - stab_h - bde_a * Domega * Dw_h
+    propsA['H_pos'] = E_ah[1]
+    return propsA
 
 def get_paths( mols, fileparameters):
     ''' get all paths that need to be examined later '''
@@ -233,14 +242,22 @@ def datareader( mols_tocal, fileparameters):
     normaltermination( paths, fileparameters['debug'] )
 
     # 3. get a list of properties that need to be extracted for each molecule
+
+    # 3.1. the function properties or the standard property
     if fileparameters['property']=='func':
-        props = [ fileparameters['bcprop'] ]
+        props = []
         props.extend( fileparameters['func_args'] )
     else:
-        props = [ fileparameters['property'] , fileparameters['bcprop'] ]
+        props = [ fileparameters['property'] ]
+    # 3.2. the boundary conditional properties
+    try:
+        props.append(fileparameters['bcprop'])
+    except KeyError:
+        pass
+    # 3.3. the extra properties
     props.extend( fileparameters['extra_props'] )
+    # 3.4. make an empty dictionary
     uni_props_dict = { item:None for item in props }
-
 
     # 4. obtain data for each molecule
     for molecule in mols_tocal:
@@ -248,9 +265,11 @@ def datareader( mols_tocal, fileparameters):
         # make a copy of props_dict
         props_dict = uni_props_dict.copy()
 
+        file1 = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + '.log'
+
         # start by looking if stab is one of the crucial properties because it contains many others
         if 'stab' in props_dict:
-            X_stab_props = extract_stab( molecule, fileparameters )
+            X_stab_props = extract_stab( file1, molecule, fileparameters )
             # expect to get something like: { 'stab': value, 'I':..., 'A':...,'omega':...,'RDV'....}
 
             # fill props_dict
@@ -262,10 +281,10 @@ def datareader( mols_tocal, fileparameters):
 
         # extract them
         # assume all properties can be easily obtained by gausread
-        file1 = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + '.log'
-        readings = gausread( file1, to_read_props)
-        #print 'readings:', readings
-        props_dict.update( gausread( file1, to_read_props ) )
+        if to_read_props:
+            readings = gausread( file1, to_read_props)
+            #print 'readings:', readings
+            props_dict.update( gausread( file1, to_read_props ) )
 
         # set molecule attributes
         print "props_dict:", props_dict
@@ -279,7 +298,10 @@ def datareader( mols_tocal, fileparameters):
             print "function value:", molecule.Pvalue
         else:
             molecule.Pvalue = props_dict.pop( fileparameters['property'] )
-        molecule.boundaries = [ props_dict.pop( fileparameters[ 'bcprop' ] ) ]
+        try:
+            molecule.boundaries = [ props_dict.pop( fileparameters[ 'bcprop' ] ) ]
+        except KeyError:
+            pass
         molecule.infoline = props_dict.values()
         molecule.predicted = False
 
@@ -427,7 +449,10 @@ def gausread(filename,props,multiplejobs=0,rdvindex=1):
         results['dipole'] = mymol.dipole
 
     # assert that all props are filled
-    assert all( prop in results for prop in props), 'not all properties calculated '
+    print 'results:', results
+    print "props:", props
+    #if not 'stabA' in props:
+    #    assert all( prop in results for prop in props), 'not all properties calculated '
 
     return results
 

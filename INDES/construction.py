@@ -92,17 +92,20 @@ def matrixmerger2(core,active,passive):
     #print "************************************************************************************"
     with open('TOTALMAT','w') as tmfid:
         tmfid.write(pprint.pformat(totalmat))
-    return totalmat       
+    return totalmat
 
 def get_configurations(startconf,array,k, run=[]):
     'select on site k all the configurations with the different functionalizations for that site present in array'
     configurations =  [ startconf[0:k] + [array[k][i]] + startconf[k+1:] for i in range(len(array[k]))]
+
+    print "configurations:", configurations
     if hasattr(run,'nlinks'):
-        print "type(run)", type(run)
+        print "links:", run.symlinks
         for link in run.symlinks:
             (i,j) = (link[0]-1,link[1]-1)
             print "link is:", i, " ",j
             for conf in configurations:
+                print "conf:", conf
                 if not conf[i]==conf[j]:
                     conf[j]=conf[i]
     logging.debug(pprint.pformat(configurations))
@@ -509,7 +512,8 @@ def filewriterA(zmat,index,**paras): #paras is short for fileparameters
     fid.write("--link1--\n")
     fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
     fid.write("%mem=1500MB\n")
-    fid.write("%nproc=2\n")
+    #fid.write("%nproc={:d}\n".format(paras['nprocs'])
+    fid.write("%nprocshared={:d}\n".format(paras['nprocs']) )
     #gausline3 is:
     # '# geom=check guess=read b3p86/6-311+G(d,p)'
     fid.write(paras['gaussianline3'])
@@ -522,7 +526,7 @@ def filewriterA(zmat,index,**paras): #paras is short for fileparameters
     fid.write("--link1--\n")
     fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
     fid.write("%mem=1500MB\n")
-    fid.write("%nprocshared=2\n")
+    fid.write("%nprocshared={:d}\n".format(paras['nprocs']) )
     #gausline2 is:
     # '# geom=check guess=read b3lyp/6-311+G(d,p)'
     fid.write(paras['gaussianline2'])
@@ -535,7 +539,7 @@ def filewriterA(zmat,index,**paras): #paras is short for fileparameters
     fid.write("--link1--\n")
     fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
     fid.write("%mem=1500MB\n")
-    fid.write("%nprocshared=2\n")
+    fid.write("%nprocshared={:d}\n".format(paras['nprocs']) )
     #gausline4 is same as gausline2:
     # '# geom=check guess=read b3lyp/6-311+G(d,p)'
     fid.write(paras['gaussianline2'])
@@ -548,7 +552,7 @@ def filewriterA(zmat,index,**paras): #paras is short for fileparameters
     fid.write("--link1--\n")
     fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
     fid.write("%mem=1500MB\n")
-    fid.write("%nprocshared=2\n")
+    fid.write("%nprocshared={:d}\n".format(paras['nprocs']) )
     #gausline5 is same as gausline2
     # '# geom=check guess=read b3lyp/6-311+G(d,p)'
     fid.write(paras['gaussianline2'])
@@ -569,7 +573,8 @@ def filewriterAH(zmat,pos,index,**paras): #paras is short for fileparameters
     fid=open(paras['path'] + '/' + index + '/' + filename,'w')
     fid.write("%chk=" + paras['identify'] + str(index) + "_" + pos + ".chk\n")
     fid.write("%mem=1500MB\n")
-    fid.write("%nprocshared=2\n")
+    #fid.write("%nprocshared=2\n")
+    fid.write("%nprocshared={:d}\n".format(paras['nprocs']) )
     fid.write(paras['gaussianline1'])
     fid.write("\n")
     fid.write(paras['identify'] + str(index) + "\n")

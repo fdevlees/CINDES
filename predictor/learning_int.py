@@ -320,7 +320,7 @@ class MachineLearning(object):
         #select data sets
         n = int(fraction*size)
         if args.random:
-            from sklearn.cross_validation import train_test_split
+            from sklearn.model_selection import train_test_split
             self.training_xyzs, self.test_xyzs, self.training_y, self.test_y = train_test_split(self.xyzs,self.y, train_size = fraction)
         else:
             #training set:

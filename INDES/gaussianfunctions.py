@@ -213,7 +213,11 @@ def submission(mol_tocal,myrun):
     global once
     fileparameters = myrun.__dict__
     #mol_tocal_all = deepcopy(mol_tocal) #here i copy the indices. The indices are submitted. The indicesall are not all submitted but are all read out.
-    if myrun.stab==1: #then submit also the jobs in folders
+    if once==1 and fileparameters['no1sub']==1:
+        print "submit skipped"
+        once = 2
+        jobids = None
+    elif myrun.stab==1: #then submit also the jobs in folders
         if fileparameters['try_ready']==1:
             print "try_ready activated"
             mol_submit = try_ready_test(mol_tocal,myrun.path,fileparameters,returnpath=False)
@@ -221,9 +225,6 @@ def submission(mol_tocal,myrun):
             jobids = submit_stab(mol_submit,myrun)
         else:
             jobids = submit_stab(mol_tocal,myrun)
-    elif once==1 and fileparameters['no1sub']==1:
-        print "submit skipped"
-        once = 2
     else:
         #MOST IMPORTANT PART
         if myrun.try_ready==1:
