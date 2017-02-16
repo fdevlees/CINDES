@@ -1,0 +1,36 @@
+property function
+ gap + ( 0.5 * lumo )**2
+bc lumo 15.0 max
+procedure standard
+timelimit 25000000
+#nosub 2
+timestep 10
+extrawaittime 10
+maxiter 10
+restart 1
+#ml 1
+try_ready
+debug
+startind CCHHH_CH_CCHHH
+norandom
+optimum minimum
+sites 9 5 17
+#basisset 6-31G
+basisset sto-3g
+functional rhf
+identify prog3_
+natomscore 4
+nch3 4
+END
+nsubsit1 3
+C C H H H
+C N H H
+C O H
+nsubsit2 3
+C H
+N
+O
+nsubsit3 3
+C C H H H
+C N H H
+C O H
