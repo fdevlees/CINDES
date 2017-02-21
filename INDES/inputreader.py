@@ -50,23 +50,41 @@ def get_preds(subinp, line):
     ''' for future development a more extensible format for giving which predictions are tried
     it returns a list of dictionaries with each dictionary having one obligatory type key '''
     # default predicition types: 
-    defaults = { 'ML' : { 'type': 'ML', 'descriptor':'coulomb'},
-                 'iML': { 'type':'iML' },
-                 'NN' : { 'type': 'NN', 'descriptor':'BoB'},
-                 '1D' : { 'type': '1D' },
-                 '2D' : { 'type': '2D' }
+    defaults = { 'ml' : { 'type': 'ml', 'descriptor':'coulomb'},
+                 'iml': { 'type':'iml' },
+                 'nn' : { 'type': 'nn', 'descriptor':'bob'},
+                 '1d' : { 'type': '1d' },
+                 '2d' : { 'type': '2d' },
+                 'knn': { 'type': 'knn'},
+                 'gp' : { 'type': 'gp' },
+                 'svr': { 'type': 'svr'}
                }
 
     npredictions = int(line.split()[1])
-    preds = []
+    preds = [] # this becomes a list of predictions to make
+
     for _ in range(npredictions):
-        line = subinp.readline()
-        ptype= line.split()[0]
-        pred = defaults[ptype]
+        line = subinp.readline() # on each line one prediction is specified
+        ptype= line.split()[0]   # the first word indicates the prediction type
+        pred = defaults[ptype]   # the defaults for that prediction type are then loaded in pred
+
+        # the rest of the line is than interpreted: add new arguments or change default arguments
         try:
-            pred['descriptor']=line.split()[1]
+            # these lines:
+            #    - splits the rest of the line in keyword
+            #    - adds apostrophs around the keys
+            #    - join the key:value pairs with comma's
+            splitted = [ item for item in line.split(' ')[1:] ]
+            formatted= [ '\'{}\':{}'.format(*item.split(':')) for item in splitted ]
+            options = ','.join(formatted)
         except IndexError:
             pass
+        if options:
+            print "options:", options
+            pred.update( eval( '{{{}}}'.format(options) ) )
+            print "prediction keywords are changed:", pred
+
+        # the fully declared prediction type is than saved to the prediction list
         preds.append(pred)
     return subinp, preds
 
@@ -244,6 +262,10 @@ def readfile(subinp):
         elif 'optimum' in line: paras['optimum'] = line.split()[1]
         elif 'predictions' in line:
             subinp, paras['predictions'] = get_preds( subinp, line)
+        elif 'seed' in line:
+            paras['seed'] = int( line.split()[1])
+            import random
+            random.seed(paras['seed'])
         elif 'sequence' in line:
             nsequences = int(line.split()[1])
             sequences = []

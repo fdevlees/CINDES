@@ -2,28 +2,39 @@ import pickle
 import time
 
 import numpy as np
+import pandas as pd
+pd.set_option('display.width',150)
+
 from sklearn.model_selection import KFold
 
-from util.io import read_BoB_data, print_stats
+from io import get_XY, get_X
 
 class Experiment(object):
-    
-    def __init__(self, setting, n_folds):
+
+    def __init__(self, run, table=[], n_folds=5, retrain=True, descriptor='BoB', **kwargs):
         """
-        Initialize experiment by reading BoB data.
-        
+        Initialize experiment by reading/constructing data.
+
         params:
             - setting: 'IP' or 'HLG'
             - n_folds: number of folds for splitting training and test data
         """
-        self.setting = setting
-        self.X, self.y = read_BoB_data(setting, '../data')
-        self.n_folds = n_folds
+        np.random.seed(run.seed)
+        self.reoptimize = False
+        self.getR = True
+        self.retrain = retrain
+        self.run = run
+        self.descriptor = descriptor
 
-    def train(self, X, y):
+        if self.retrain:
+            #self.X, self.y = read_BoB_data(setting, '../data')
+            self.X, self.y = get_XY(table, descriptor=descriptor, identify = self.run.identify, **run.TZmat)
+            self.n_folds = n_folds
+
+    def train(self, X, y, **kwargs):
         """
         Interface for training.
-        
+
         Params:
             - X: training inputs [(n, D) array]
             - y: training outputs [(n,) array]
@@ -31,11 +42,11 @@ class Experiment(object):
             - model, log
         """
         pass
-    
-    def test(self, X, y, model):
+
+    def test(self, X, y, model, **kwargs):
         """
         Interface for training.
-        
+
         Params:
             - X: py inputs [(n, D) array]
             - y: py outputs [(n,) array]
@@ -44,42 +55,127 @@ class Experiment(object):
             - predicted outputs
         """
         pass
-    
-    def run(self, seed, write_log=False):
-        np.random.seed(seed)
+
+    def load_model(self):
+        """
+        Interface for loading the model
+
+        Returns: 
+            - model
+        """
+        pass
+
+    def save_model(self, model):
+        """
+        Interface for saving the model
         
+        Params:
+            - model
+        """
+        pass
+
+    def get_model(self, *args, **kwargs):
+        """
+        Interface to get the model to use for prediction.
+        either:
+            - load old model
+            - fit new model
+        """
+        if self.retrain:
+            if self.reoptimize:
+                pass # future call to a best hyperparameter search
+            elif self.getR:
+                self.cross_val()
+            
+            # and always do a refit on total database:
+            print "Training for final model..."
+            stime = time.time()
+            self.model  = self.train(verbose=True, **kwargs)
+            time_to_fit = time.time() - stime
+            print "\tTime to fit: ", time_to_fit, ' s'
+
+            # save model:
+            self.save_model()
+        else:
+            self.model = self.load_model()
+
+        return
+
+    def predict(self, molecules):
+        ''' get molecules list 
+
+        NB: for the LinRegOneExperiment this function is overwritten because it uses get_X_1D
+        '''
+        indices = [ mol.index for mol in molecules ]
+        X_pred = get_X(indices, **self.run.TZmat )
+        y_pred = self.test( X_pred)
+        print "y_pred:", y_pred
+        return y_pred
+
+    def cross_val(self, write_log=False):
+        
+        # save R**2, MAE and percentiles of each fold to a row in a dataframe.
+        stats_df_train = pd.DataFrame(columns=('r','p-value','mae','perc_25', 'perc_50', 'perc_75' ))
+        stats_df_test =  pd.DataFrame(columns=('r','p-value','mae','perc_25', 'perc_50', 'perc_75' ))
+
         # Randomly split training and py data
         for fold, (X_train, y_train, X_test, y_test) in enumerate(self.get_fold()):
             print "FOLD ", fold
-        
-            print "Training ..."
+            
+            # this 5 lines are also in get_model without crosval
+            print "Training ...",
             stime = time.time()
-            model, log_model = self.train(X_train, y_train)
+            model = self.train(X_train, y_train)
             time_to_fit = time.time() - stime
             print "\tTime to fit: ", time_to_fit, ' s'
             
-            print "Testing ..."
+            print "Testing ...",
             stime = time.time()
             y_train_pred = self.test(X_train, model)
             y_test_pred = self.test(X_test, model)
             time_to_fit = time.time() - stime
             print "\tTime to predict: ", time_to_fit, ' s'
             
-            print "Training accuracy:"
-            print_stats(y_train, y_train_pred)
-            print "Testing accuracy:"
-            print_stats(y_test, y_test_pred)
+            #print "Training accuracy:"
+            #print "Testing accuracy:"
+            stats_df_train.loc[fold] = print_stats(y_train, y_train_pred)
+            stats_df_test.loc[fold] = print_stats(y_test, y_test_pred)
 
-            if write_log:
-                log = {"seed": seed, "fold": fold, "model": log_model, "x_train": X_train, "y_train": y_train, "x_test": X_test, "y_test": y_test, "y_pred": y_test_pred}
-                with open(''.join(["log_", self.setting, "_", str(seed) , "_", str(fold), ".pic"]), 'wb') as f:
-                    pickle.dump(log, f)
+            #if write_log:
+            #    log = {"seed": seed, "fold": fold, "model": log_model, "x_train": X_train, "y_train": y_train, "x_test": X_test, "y_test": y_test, "y_pred": y_test_pred}
+            #    with open(''.join(["log_", self.setting, "_", str(seed) , "_", str(fold), ".pic"]), 'wb') as f:
+            #        pickleA.dump(log, f)
 
+        stats_df_train.loc['means']= stats_df_train.mean()
+        stats_df_test.loc['means'] = stats_df_test.mean()
+        print "train statistics:\n", stats_df_train
+        print " test statistics:\n", stats_df_test
+        return
 
-    
     def get_fold(self):
         for train_ind, test_ind in KFold(n_splits=self.n_folds, shuffle=True).split(self.X):
-            print self.X.shape
-            print self.y.shape
+            print "shape self.X:", self.X.shape, "     shape self.y:", self.y.shape,
             yield (self.X[train_ind,:], self.y[train_ind], self.X[test_ind,:], self.y[test_ind])
+
+
+
+# move later to a util module:
+
+def print_stats(y, pred):
+    from scipy.stats import pearsonr
+    sq_err = (y - pred)**2
+
+    r = pearsonr(y, pred)
+    mean_err = (np.mean(sq_err), np.var(sq_err))
+    perc = tuple(np.percentile(sq_err, quantile) for quantile in [25, 50, 75])
+
+    #print "\tPearson's R: ", r
+    #print "\tMean error: ", mean_err
+    #print "\tPercentiles: ", perc
+
+    ret = [ r[0], r[1], mean_err[0] ]
+    ret.extend(perc)
+    return ret
+
+
 

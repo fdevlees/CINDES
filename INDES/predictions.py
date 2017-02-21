@@ -21,39 +21,94 @@ def do_ml(indices, database, **TZmat):
     #preds_ml = learning.normal_machinelearning(indices=indices, table=database, **TZmat)
     return preds_ml
 
+
+def get_experiment(prediction, table, run, retrain=True):
+    # each prediction element is a dictionary with a 'type' key. 
+    ptype = prediction['type']
+    kwargs = prediction # prediction is a dictonary with options specific for that experiment type
+    if ptype == 'ml':
+        #preds = do_ml(mols_todo, table, **TZmat)
+        pass
+    elif ptype=='1d':
+        from CINDES4.predictor.linreg import LinRegOneExperiment
+        regressor = LinRegOneExperiment(    table=table,
+                                            n_folds=5,
+                                            retrain=retrain,
+                                            run=run,
+                                            **kwargs
+                                            )
+    elif ptype=='2d':
+        #param = run_object.__dict__
+        #preds = tfitter.twodim_regression(table,mols_todo,**param)
+        pass
+    elif ptype=='mc':
+        #instance = tfitter.get_instance()
+        #preds = tfitter.dif_predict(mols_todo,maximum,instance)
+        pass
+    elif ptype=='iml':
+        #preds = ml_int.learn_int_skl_procedure(table,mols_todo, array, **TZmat)
+        pass
+    elif ptype=='nn':
+        #preds = learning.ANN(mols_todo, table, **TZmat)
+        pass
+    elif ptype=='gp':
+        from CINDES4.predictor.gp import GaussianProcessExperiment, GaussianProcessWithPCAExperiment
+
+        regressor = GaussianProcessExperiment(     table=table,
+                                                   n_folds= 5,
+                                                   retrain = retrain,
+                                                   run = run,
+                                                   **kwargs )
+    elif ptype=='knn':
+        #from CINDES4.predictor.knn import NearestNeighborWithPCAExperiment
+        from CINDES4.predictor.knn import NearestNeighborExperiment
+        #regressor = NearestNeighborWithPCAExperiment( 
+        regressor = NearestNeighborExperiment(        table = table,
+                                                      n_folds=5,
+                                                      n_principal_components=100,
+                                                      retrain=retrain,
+                                                      run = run,
+                                                      **kwargs   #run=run
+                                                      )
+    elif ptype=='svr':
+        from CINDES4.predictor.svr import SupportVectorExperiment
+        regressor = SupportVectorExperiment(          table=table,
+                                                      n_folds=5,
+                                                      n_principal_components=100,
+                                                      retrain=retrain,
+                                                      run = run,
+                                                      **kwargs   #run=run
+                                                      )
+    return regressor
+
+
 @log_io()
-def predictor(run_object,table,mols_todo,mols_nodo,count, array=[]):
+def predictor(run,table,mols_todo,mols_nodo,count, array=[]):
     '''makes the predictions using KRR(ML) / RR(LS) / DIF(MC)
        run_object = myrun with all param elements
     '''
     print "mols_todo:", mols_todo
-    TZmat = run_object.TZmat
-    predict = []
+    TZmat = run.TZmat
+    retrain = True
     enoughdata = not table==[] and not mols_todo==[] and count > 1
 
     if enoughdata:
-      for prediction in run_object.predictions:
-        # each prediction element is a dictionary with a 'type' key. 
-        ptype = prediction['type']
-        pred = prediction.copy()
-        if ptype in ['ML','ml']:
-            preds = do_ml(mols_todo, table, **TZmat)
-        elif ptype=='1D':
-            run_object.printlevel=1
-            param = run_object.__dict__
-            preds = tfitter.regression(table,mols_todo,**param)
-        elif ptype=='2D':
-            param = run_object.__dict__
-            preds = tfitter.twodim_regression(table,mols_todo,**param)
-        elif ptype=='MC':
-            instance = tfitter.get_instance()
-            preds = tfitter.dif_predict(mols_todo,maximum,instance)
-        elif ptype=='iML':
-            preds = ml_int.learn_int_skl_procedure(table,mols_todo, array, **TZmat)
-        elif ptype=='NN':
-            preds = learning.ANN(mols_todo, table, **TZmat)
-        pred['results'] = dict( zip( mols_todo, preds ) )
-        predict.append(pred)
+      for prediction in run.predictions:
+
+          # 1. initiate prediction experiment
+          regressor = get_experiment(prediction = prediction,
+                                     table= table,
+                                     retrain= retrain,
+                                     run=run)
+
+          # 2. train or reload the model
+          regressor.get_model(0, write_log=True,
+                              reopt_hyps=False )
+
+          # 3. use model to predict
+          regressor.predict(mols_todo)
+
+
 
     ##########
 
