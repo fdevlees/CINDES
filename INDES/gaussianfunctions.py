@@ -135,6 +135,9 @@ def filemaker(mols_tocal,myrun,passive,active,core): #----- dict with info for f
             print "smiles:", smiles,
         except IndexError:
             print "IndexError while trying to make smiles for molecule"
+        except NameError:
+            print "openbabel not implemented"
+ 
     return
 
 def extract_zmat(filename):

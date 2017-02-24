@@ -5,8 +5,10 @@ from collections import MutableSequence
 
 debug=0
 
-if True:
+try:
     import pybel
+except:
+    print "pybel not installed"
 
 def contoind(conf):
     ''' to convert a configuration to an index-string '''
