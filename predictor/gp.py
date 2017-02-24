@@ -46,7 +46,7 @@ class GaussianProcessExperiment(Experiment):
         if model is None: model = self.model
         return model.predict(X)[0].flatten()
 
-    def save_model(self, model=None):
+    def save_model(self, count, model=None):
         if model is None: model = self.model
 
         # other option:
@@ -54,20 +54,23 @@ class GaussianProcessExperiment(Experiment):
         # model = gpr = GPy.models.GPRegression
         #np.save(modelname, model.param_array)
 
-        modelname = 'gp_{}.npz'.format(1)
+        modelname = '{}_{}.npz'.format(self.name, count)
         np.savez(modelname, X=self.X, y=self.y, param_array=model.param_array )
         return
 
-    def load_model(self):
-        modelname = 'gp_{}.npy'.format(1)
+    def load_model(self, count):
+        modelname = '{}_{}.npz'.format(self.name,count)
 
         # other option
         # m = GPy.models(GPRegression(X,Y, initialize=False)
         #model = GPRegression(self.X, self.y, initialize=False)
         #model[:] = np.load(modelname)
 
+        import os.path
+        print "exist:", os.path.exists(modelname)
+
         npzfile = np.load(modelname)
-        model = GPRegression( npzfile('X'), npzfile('y'), initialize=False)
+        model = GPRegression( npzfile['X'], npzfile['y'], initialize=False)
         model[:] = npzfile('param_array')
         print "loaded model:", model
         return model

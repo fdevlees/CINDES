@@ -43,15 +43,15 @@ class SupportVectorExperiment(Experiment):
         if model is None: model=self.model
         return model.predict(X).flatten()
 
-    def save_model(self, model=None):
+    def save_model(self, count, model=None):
         if model is None: model=self.model
 
-        modelname = 'svr_{}.pkl'.format(1)
+        modelname = '{}_{}.pkl'.format(self.name, count)
         joblib.dump(model,modelname)
         return
 
-    def load_model(self):
-        modelname = 'svr_{}.pkl'.format(1)
+    def load_model(self,count):
+        modelname = '{}_{}.pkl'.format(self.name, count)
         model = joblib.load(modelname)
         return model
 

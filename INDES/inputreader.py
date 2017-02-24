@@ -1,6 +1,7 @@
 # inputreader module
 
 import logging
+import numpy as np
 from pprint import pprint
 import re
 
@@ -53,20 +54,24 @@ def get_preds(subinp, line):
     defaults = { 'ml' : { 'type': 'ml', 'descriptor':'coulomb'},
                  'iml': { 'type':'iml' },
                  'nn' : { 'type': 'nn', 'descriptor':'bob'},
-                 '1d' : { 'type': '1d' },
+                 '1d' : { 'type': '1d', 'descriptor':'1DL', 'subtype':'ridge', 'intercept':False },
                  '2d' : { 'type': '2d' },
                  'knn': { 'type': 'knn'},
                  'gp' : { 'type': 'gp' },
                  'svr': { 'type': 'svr'}
                }
+    # set n_folds default for each experiment:
+    for experiment in defaults.values(): experiment.update( {'n_folds':5 } )
 
     npredictions = int(line.split()[1])
     preds = [] # this becomes a list of predictions to make
 
     for _ in range(npredictions):
         line = subinp.readline() # on each line one prediction is specified
-        ptype= line.split()[0]   # the first word indicates the prediction type
+        pname= line.split()[0]   # the first word is a unique prediction identifier (just a name which has to be unique)
+        ptype= line.split()[1]   # the second word indicates the prediction type
         pred = defaults[ptype]   # the defaults for that prediction type are then loaded in pred
+        pred['name'] = pname     # set the name 
 
         # the rest of the line is than interpreted: add new arguments or change default arguments
         try:
@@ -74,15 +79,15 @@ def get_preds(subinp, line):
             #    - splits the rest of the line in keyword
             #    - adds apostrophs around the keys
             #    - join the key:value pairs with comma's
-            splitted = [ item for item in line.split(' ')[1:] ]
+            splitted = [ item for item in line.split()[2:] ]
             formatted= [ '\'{}\':{}'.format(*item.split(':')) for item in splitted ]
             options = ','.join(formatted)
         except IndexError:
             pass
         if options:
-            print "options:", options
+            #print "options:", options
             pred.update( eval( '{{{}}}'.format(options) ) )
-            print "prediction keywords are changed:", pred
+            #print "prediction keywords are changed:", pred
 
         # the fully declared prediction type is than saved to the prediction list
         preds.append(pred)
@@ -91,7 +96,7 @@ def get_preds(subinp, line):
 def get_prop_function(subinp, line):
     line = subinp.readline()
     splitted = line.split()
-    print "functional property:", line
+    #print "functional property:", line
     import re
 
     # we need to find the properties going into the function. properties only contain [a-zA-Z]
@@ -99,11 +104,11 @@ def get_prop_function(subinp, line):
 
     # the properties in that line are: #set because one property can occur multiple times in function
     props = { item for item in splitted if word.match(item) and not item in ['if', 'else' ] }
-    print "properties:", props
+    #print "properties:", props
 
     # props need to be separated by a comma
     arguments = ','.join(props)
-    print "arguments:", arguments
+    #print "arguments:", arguments
     func = eval('lambda {}:{}'.format(arguments, line))
 
     return subinp, func, props
@@ -150,6 +155,7 @@ def get_genalg_params(subinp, line):
 def readfile(subinp):
     '''this method reads all the inputkeywords'''
     #default values
+    randomseed = np.random.randint(0,100)
     paras={'program':'gaussian',
            'procedure':'standard',
            'property':'gap',
@@ -195,6 +201,7 @@ def readfile(subinp):
            'identify':'unspecified_',
            'charge':0,
            'mult':1,
+           'seed':randomseed,
            'montecarlo':0,   #Temperature at start
            'nrandsites':2}   #n random sites changed. for all choose 0
     #scans all the lines until if will find the END keyword

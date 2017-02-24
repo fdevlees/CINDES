@@ -9,9 +9,12 @@ from sklearn.model_selection import KFold
 
 from io import get_XY, get_X
 
+debug=True
+
+
 class Experiment(object):
 
-    def __init__(self, run, table=[], n_folds=5, retrain=True, descriptor='BoB', **kwargs):
+    def __init__(self, run, name, table=[], n_folds=5, retrain=True, descriptor='BoB', **kwargs):
         """
         Initialize experiment by reading/constructing data.
 
@@ -25,11 +28,13 @@ class Experiment(object):
         self.retrain = retrain
         self.run = run
         self.descriptor = descriptor
+        self.name = name
+        self.n_folds = n_folds
+        self.table = table
 
         if self.retrain:
             #self.X, self.y = read_BoB_data(setting, '../data')
-            self.X, self.y = get_XY(table, descriptor=descriptor, identify = self.run.identify, **run.TZmat)
-            self.n_folds = n_folds
+            self.X, self.y = get_XY(table=self.table, descriptor=self.descriptor, identify = self.run.identify, TZmat=run.TZmat, **kwargs)
 
     def train(self, X, y, **kwargs):
         """
@@ -56,7 +61,7 @@ class Experiment(object):
         """
         pass
 
-    def load_model(self):
+    def load_model(self, count):
         """
         Interface for loading the model
 
@@ -74,31 +79,36 @@ class Experiment(object):
         """
         pass
 
-    def get_model(self, *args, **kwargs):
+    def get_model(self, count=0, nsite=0, *args, **kwargs):
         """
         Interface to get the model to use for prediction.
         either:
             - load old model
             - fit new model
         """
-        if self.retrain:
-            if self.reoptimize:
-                pass # future call to a best hyperparameter search
-            elif self.getR:
-                self.cross_val()
-            
-            # and always do a refit on total database:
-            print "Training for final model..."
-            stime = time.time()
-            self.model  = self.train(verbose=True, **kwargs)
-            time_to_fit = time.time() - stime
-            print "\tTime to fit: ", time_to_fit, ' s'
+        if not self.retrain:
+            try:
+                self.model = self.load_model(count)
+                return
+            except IOError as e:
+                print "tried to load model but not found:", e
+                print "going to train model:"
+                self.X, self.y = get_XY(table=self.table, descriptor=self.descriptor, identify = self.run.identify, TZmat=self.run.TZmat, **kwargs)
 
-            # save model:
-            self.save_model()
-        else:
-            self.model = self.load_model()
+        if self.reoptimize:
+            pass # future call to a best hyperparameter search
+        elif self.getR:
+            self.cross_val()
+        
+        # and always do a refit on total database:
+        print "Training for final model..."
+        stime = time.time()
+        self.model  = self.train(verbose=True, **kwargs)
+        time_to_fit = time.time() - stime
+        print "\tTime to fit: ", time_to_fit, ' s'
 
+        # save model:
+        self.save_model(count)
         return
 
     def predict(self, molecules):
@@ -110,6 +120,9 @@ class Experiment(object):
         X_pred = get_X(indices, **self.run.TZmat )
         y_pred = self.test( X_pred)
         print "y_pred:", y_pred
+        for molecule, y in zip(molecules, y_pred):
+            molecule.predictions[self.name] = y
+            print molecule, y
         return y_pred
 
     def cross_val(self, write_log=False):
@@ -135,7 +148,14 @@ class Experiment(object):
             y_test_pred = self.test(X_test, model)
             time_to_fit = time.time() - stime
             print "\tTime to predict: ", time_to_fit, ' s'
-            
+     
+            if debug:
+                print "y_train:", y_train
+                print "y_train_pred:", y_train_pred
+                print "y_test:", y_test
+                print "y_test_pred:", y_test_pred
+
+
             #print "Training accuracy:"
             #print "Testing accuracy:"
             stats_df_train.loc[fold] = print_stats(y_train, y_train_pred)

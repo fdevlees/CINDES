@@ -8,7 +8,7 @@ from CINDES4.predictor import learning_skl as learning
 from CINDES4.predictor import learning_int as ml_int
 from CINDES4.predictor import tfitter
 
-from CINDES4.utils.writings import log_io
+from CINDES4.utils.writings import log_io, print_title, dump
 #import learning_skl as learning
 #import learning_int as ml_int
 #from writings import log_io
@@ -25,22 +25,30 @@ def do_ml(indices, database, **TZmat):
 def get_experiment(prediction, table, run, retrain=True):
     # each prediction element is a dictionary with a 'type' key. 
     ptype = prediction['type']
+
+
+
     kwargs = prediction # prediction is a dictonary with options specific for that experiment type
+    kwargs['tableindex']=1
+    
     if ptype == 'ml':
         #preds = do_ml(mols_todo, table, **TZmat)
         pass
     elif ptype=='1d':
+        print "kwargs:", kwargs
+
         from CINDES4.predictor.linreg import LinRegOneExperiment
         regressor = LinRegOneExperiment(    table=table,
-                                            n_folds=5,
                                             retrain=retrain,
                                             run=run,
                                             **kwargs
                                             )
     elif ptype=='2d':
-        #param = run_object.__dict__
-        #preds = tfitter.twodim_regression(table,mols_todo,**param)
-        pass
+        regressor = LinRegOneExperiment(    table=table,
+                                            retrain=retrain,
+                                            run=run,
+                                            **kwargs
+                                            )
     elif ptype=='mc':
         #instance = tfitter.get_instance()
         #preds = tfitter.dif_predict(mols_todo,maximum,instance)
@@ -55,7 +63,6 @@ def get_experiment(prediction, table, run, retrain=True):
         from CINDES4.predictor.gp import GaussianProcessExperiment, GaussianProcessWithPCAExperiment
 
         regressor = GaussianProcessExperiment(     table=table,
-                                                   n_folds= 5,
                                                    retrain = retrain,
                                                    run = run,
                                                    **kwargs )
@@ -64,7 +71,6 @@ def get_experiment(prediction, table, run, retrain=True):
         from CINDES4.predictor.knn import NearestNeighborExperiment
         #regressor = NearestNeighborWithPCAExperiment( 
         regressor = NearestNeighborExperiment(        table = table,
-                                                      n_folds=5,
                                                       n_principal_components=100,
                                                       retrain=retrain,
                                                       run = run,
@@ -73,7 +79,6 @@ def get_experiment(prediction, table, run, retrain=True):
     elif ptype=='svr':
         from CINDES4.predictor.svr import SupportVectorExperiment
         regressor = SupportVectorExperiment(          table=table,
-                                                      n_folds=5,
                                                       n_principal_components=100,
                                                       retrain=retrain,
                                                       run = run,
@@ -83,17 +88,23 @@ def get_experiment(prediction, table, run, retrain=True):
 
 
 @log_io()
-def predictor(run,table,mols_todo,mols_nodo,count, array=[]):
+def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
     '''makes the predictions using KRR(ML) / RR(LS) / DIF(MC)
        run_object = myrun with all param elements
     '''
+    made_pred=False
     print "mols_todo:", mols_todo
     TZmat = run.TZmat
-    retrain = True
+    retrain = False
     enoughdata = not table==[] and not mols_todo==[] and count > 1
 
     if enoughdata:
       for prediction in run.predictions:
+          # 0. log prediction:
+          made_pred=True
+          print_title(prediction['type'], outline='l')
+          dump(prediction)
+
 
           # 1. initiate prediction experiment
           regressor = get_experiment(prediction = prediction,
@@ -102,13 +113,18 @@ def predictor(run,table,mols_todo,mols_nodo,count, array=[]):
                                      run=run)
 
           # 2. train or reload the model
-          regressor.get_model(0, write_log=True,
-                              reopt_hyps=False )
+          regressor.get_model(
+                              write_log=True,
+                              reopt_hyps=False,
+                              count = count,
+                              nsite = nsite,
+                              )
 
           # 3. use model to predict
           regressor.predict(mols_todo)
 
-
+      for molecule in mols_todo:
+        print molecule.predictions
 
     ##########
 
@@ -143,7 +159,7 @@ def predictor(run,table,mols_todo,mols_nodo,count, array=[]):
         except NameError:
             print "NameError!"
     #return mols_nocal, mols_tocal, predict
-    return mols_nocal, mols_tocal
+    return mols_nocal, mols_tocal, made_pred
 
 
 

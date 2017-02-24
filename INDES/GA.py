@@ -21,7 +21,7 @@ import random as rrandom
 from CINDES4.utils.writings import log_io, sprint, print_title
 from CINDES4.utils.molecule import Molecule
 from CINDES4 import INDES
-from CINDES4.predictor import learning
+from CINDES4.predictor import learning_skl
 from CINDES4.predictor import learning_int as ml_i
 
 from CINDES4.pyevolve import G1DList , GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters, Crossovers
@@ -457,7 +457,7 @@ def run_pyevolve(array,table, options):
     ga.setGenerations(options.genalg['ngenerations'])
 
     # 10. set min / max (optimize to a maximum or to a minimum)
-    if options.genalg['optimum'] in ['min', 'minimize']:
+    if options.genalg['optimum'] in ['min', 'minimize', 'minimum']:
         ga.setMinimax(Consts.minimaxType["minimize"])
 
     # 11. set MUP (mutation probability)

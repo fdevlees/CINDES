@@ -374,7 +374,7 @@ def datareader_old(mols_tocal,jobids,path,fileparameters):
 
     return mols_tocal
 
-def gausread(filename,props,multiplejobs=0,rdvindex=1):
+def gausread(filename,props,multiplejobs=1,rdvindex=1):
     ''' props is a list of props to extract '''
     mymol = Logfile(filename)
     results = {}

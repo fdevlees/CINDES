@@ -113,7 +113,7 @@ def get_configurations(startconf,array,k, run=[]):
 
 def classmaker2(startconf,array,k,table,run=[]):
     '''checks for confs already calculated'''
-    print "IN CLASSMAKER", type(run)
+    #print "IN CLASSMAKER", type(run)
     confs = get_configurations(startconf,array,k,run=run)
 
     from CINDES4.utils.molecule import Molecule, Population
@@ -152,7 +152,7 @@ def classmaker2(startconf,array,k,table,run=[]):
 
 def indexmaker3(startconf,array,k,table,run=[]):
     '''checks for confs already calculated'''
-    print "IN INDEXMAKER3", type(run)
+    #print "IN INDEXMAKER3", type(run)
     confs = get_configurations(startconf,array,k,run=run)
     data=[]
     indices = []

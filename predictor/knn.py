@@ -38,15 +38,15 @@ class NearestNeighborExperiment(Experiment):
         _, ind = NN.kneighbors(X)
         return y_train[ind[:,0]]
 
-    def save_model(self, model=None):
+    def save_model(self, count, model=None):
         if model is None: model=self.model
 
-        modelname = 'knn_{}.pkl'.format(1)
+        modelname = '{}_{}.pkl'.format(self.name,count)
         joblib.dump(model,modelname)
         return
 
-    def load_model(self):
-        modelname = 'knn_{}.pkl'.format(1)
+    def load_model(self,count):
+        modelname = '{}_{}.pkl'.format(self.name, count)
         model = joblib.load(modelname)
         return model
 

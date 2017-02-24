@@ -73,7 +73,7 @@ class Molecule(object):
         self.Pvalue = [] # for storing the principal properties
         self.boundaries = [] # for storing the boundary condition properties
         self.infoline = [] # for storing additional properties
-        self.predictions = []
+        self.predictions = {}
         self.predicted = None
         self.mat = None
         return

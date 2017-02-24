@@ -490,6 +490,37 @@ class Phenalene(Dataset):
         print "X2 constructed; shape X2:", np.shape(X)
         return X
 
+class Propane(Dataset):
+    def __init__(self, ngps=(3,3,3), seq=['CCHHH','CNHH','COH'] ):
+        self.seq=seq
+        self.ngps=ngps
+        return
+    
+    def extractX(self, confs):
+        nC = len(confs)
+        LoS = [] # list of sites
+        nsites = len(self.ngps)
+        for i in range(nsites):
+            LoS.append( np.zeros( [nC, self.ngps[i] ] ) )
+        for k in range(len(confs)): # for all the configurations:
+            for i in range(len(confs[k])): #for all the groups in the configuration
+                group = confs[k][i]
+
+                # mv CH N O to CCHHH, CNHH, COH
+                t = { 'CH': 'CCHHH', 'N':'CNHH', 'O':'COH' }
+                if group in t:
+                    cleangroup = t[group]
+                else:
+                    cleangroup = group
+                j = self.seq.index(cleangroup) #find the index of the group of that sequence
+                LoS[i][k,j] = 1
+        X = np.concatenate(LoS,axis=1)
+
+        print "X:", X
+        print "X.shape:", X.shape
+        return X
+        
+
 class Thiadiazinyl(Dataset):
     def __init__(self,*args,**kwargs):
         #self.seq = [ 'N', 'CH', 'CF', 'CCFFF', 'CCHHH', 'COH', 'CNOO', 'CNHH', 'CCOOH', 'COCHHH', 'CNHCHHH' ]
@@ -514,7 +545,6 @@ class Thiadiazinyl(Dataset):
             LoS.append( np.zeros( [nC, self.ngps[i] ] ) )
         if args.verbose>1: print "dim site0", LoS[0].shape
         for k in range(len(confs)): # for all the configurations:
-            #if k<30: print confs[k]
             for i in range(len(confs[k])): #for all the groups in the configuration
                 group = confs[k][i]
                 #cleangroup = split('(\d+)',group)[0]
@@ -592,7 +622,7 @@ class defaults(object):
 args = defaults()
 
 
-def get_X_1D(indices, identify, descriptor='1d',column=2, **kwargs):
+def get_X_1D(indices, identify, descriptor='1DL',column=2, **kwargs):
     global args
     args.column=column
 
@@ -601,14 +631,15 @@ def get_X_1D(indices, identify, descriptor='1d',column=2, **kwargs):
     elif any(item in identify for item in ['dia','dilu','diho','dimi','dima','dilumi']):
         myrun = Diamantane('dia')
     elif 'pro' in identify:
-        myrun = Propane(name='pro',nsites=3)
+        myrun = Propane(ngps=(3,3,3))
     else:
+        print "identify:", identify
         raise SystemExit('No identify_ identified')
 
     confs = [ indtocon(index) for index in indices ]
-    if descriptor=='1d':
+    if descriptor=='1DL':
         return myrun.extractX(confs=confs)
-    elif descriptor=='2d':
+    elif descriptor=='2DL':
         return myrun.extract2DX(confs=confs)
     else:
         raise SystemExit('no valid descriptor given')

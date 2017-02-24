@@ -7,7 +7,7 @@ import numpy as np
 from copy import deepcopy
 from descriptor import get_X_1D
 
-def get_XY(table, core,active,passive, tableindex=2, descriptor='BoB', identify=''):
+def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='', **kwargs):
     ''' calculte X and y '''
     def get_y(table, tableindex):
         y =  np.fromiter((item[tableindex] for item in table ),np.float)
@@ -21,9 +21,9 @@ def get_XY(table, core,active,passive, tableindex=2, descriptor='BoB', identify=
     ## X.1: get indices from table
     indices = (item[0] for item in table)
     if '1D' in descriptor:
-        X = get_X_1D(indices, descriptor, identify)
+        X = get_X_1D(indices=indices, descriptor=descriptor, identify=identify, **kwargs)
     else:
-        X = get_X( indices, core=core, active=active, passive=passive)
+        X = get_X( indices, descriptor=descriptor, **TZmat)
     return X,y
 
 def get_X(indices, descriptor='BoB', **TZmat):

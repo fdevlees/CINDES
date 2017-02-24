@@ -1,6 +1,7 @@
 debug=False
 #from writings import log_io, sprint
 from CINDES4.utils.writings import log_io, print_title, sprint
+from CINDES4.utils.utils import run_once
 from copy import deepcopy
 import pickle
 import pprint
@@ -8,6 +9,7 @@ import time
 
 import numpy as np
 from scipy import stats
+import pandas as pd
 
 def formatitem(item):
     index = '{:50s}'.format(item[0])
@@ -68,86 +70,55 @@ def log_screen( mols ):
         print formatitem(item)
     return
 
-    #datadict = dict( ( (item[0], item[1:]) for item in data) )
-    #HEADER
-    #print "index, value", ' '.join( item['type'] for item in predict )
-    #for key, values in datadict.iteritems():
-    #    print key, values[1],
-    #    for prediction in predict:
-    #        try:
-    #            print prediction['results'][key],
-    #        except KeyError:
-    #            pass
-    #    print
-    return
-
-#def get_pred_info( data_dict, predict ):
-#    # from the predict types that are present 
-#    pred_info = []
-#    pred_types = sorted( predict.keys() )
-#    for index in sorted( predict[pred_types[0]].keys() ) : # getting the indices of the first prediction values in keys # for index in ['1D','2D','Dif','ML']
-#        index_info = []
-#        # add first the real data item. so it is the first item. 
-#        index_info.extend( [ index, data_dict[index][1] ] )  #index 1 is normally the optimization property. 
-#        for pred_type in pred_types:
-#            index_info.append( predict[ pred_type ] [index])
-#        pred_info.append(index_info)
-#    return pred_info
-
-def get_pred_info( mols ):
-    pred_info = []
-    for molecule in mols:
-        mol_info=[]
-        for prediction in molecule.predictions:
-            mol_info.append( prediction )
-        pred_info.append(mol_info)
-
-    #for index in predictions[0]['results'].keys() :
-    #    index_info = []
-    #    index_info.extend( [ index, data_dict[index][1] ])
-    #    for prediction in predictions:
-    #        index_info.append( prediction['results'][index])
-    #    pred_info.append(index_info)
-
-    return pred_info
+def log_screen_pred( mols ):
+    preds = [ mol.predictions for mol in mols ]
+    indices = [ mol.index for mol in mols ]
+    pvalues = [ mol.Pvalue for mol in mols ]
+    df = pd.DataFrame( preds, index = indices )
+    df.insert(0,'pvalues', pvalues)
+    print df
+    return df
+    #for molecule in mols:
+    #    #pd.DataFrame( [ a.p, b.p, c.p ], index = [ a.name, b.name, c.name ] )
 
 def log_pred_info(pred_info, count, k, l):
+    @run_once
+    def print_header(pfid, header):
+        pfid.write( header )
+        pfid.write( '\n' )
+        return
+    # add columns count, k, l 
+    pred_info['count'], pred_info['site'], pred_info['nsite'] = ( count, k, l)
+
+    # save dataframe
     with open('predinfo','a') as pfid:
-        for item in pred_info:
-            item.extend([count,k,l])
-            pfid.write(' '.join(pprint.pformat(i) for i in item) + '\n')
+            # do only once: print header
+            print_header( pfid, ' '.join(pred_info.columns.values) )
+            # print predictions
+            pfid.write( pred_info.to_csv( sep=' ', header=None, mode='a'))
     return
 
-def pstats(pred_info):
+def pstats(predinfo):
     from CINDES4.utils import statistics
+    import pprint
     #import statistics
-    print "pred_info:"
-    transp = zip(*pred_info)
-    n = len(transp)-3
-    print "n6?:", n
-    ps = [ stats.pearsonr(transp[1],transp[i]) for i in range(2,n) ]
-    # calculate sorting scores by sum(abs( x(i) - y(i) ) )
-    order_scores = []
-    real_order = np.argsort( np.asarray( transp[1] ) )
-    for i in range(2,n):
-        score = statistics.order_score2(transp[i], transp[1] )
-        score2 = statistics.order_score3(transp[i], transp[1] )
-        score3 = statistics.order_score4(transp[i], transp[1] )
-        score4 = statistics.order_score5(transp[1], transp[i] ) # here the order is important!
-        order_scores.append(score)
-        order_scores.append(score2)
-        order_scores.append(score3)
-        order_scores.append(score4)
-    ps.append( order_scores )
+    print "predinfo:", pprint.pformat(predinfo)
+
+    #print predinfo['pvalues'].corr( predinfo['knn'])
+    #print predinfo['pvalues'].corr( predinfo['knn'], method='spearman')
+
+    # get all the pearson coefficients:
+    pearsonr = [ predinfo['pvalues'].corr(predinfo[str(ml)]) for ml in map(str,predinfo.columns[1:-3]) ]
+    print "pearsonr:", pearsonr
 
     with open('PRs','a') as p:
-        p.write( ' '.join( [ ' '.join( [ str(i) for i in item ] ) for item in ps ] ) )
-        p.write( '\n')
+        p.write( ' '.join( map(str,pearsonr) + map(str, predinfo.iloc[0,-3:]) ) )
+        p.write( '\n' )
     return
 
 
 @log_io()
-def loggings(mols,table,count,k,l,predict=[]):
+def loggings(mols,table,count,k,l, made_pred=False):
 
     #--- LOGGINGS: CYCLESINFO
     log_cyclesinfo(mols, count,k,l)
@@ -165,11 +136,11 @@ def loggings(mols,table,count,k,l,predict=[]):
     log_screen( mols )
 
     #---- NEW LOGGINGS: PREDICTIONS
-    if not predict == []:
-        pred_info = get_pred_info( mols )
-        log_pred_info( pred_info, count, k, l )
+    if made_pred:
+        pred_frame = log_screen_pred( mols )
+        log_pred_info( pred_frame, count, k, l )
         if True:
-            pstats(pred_info)
+            pstats(pred_frame)
 
     #-----
     print "TIME:", time.strftime("%d %B %Y %H:%M:%S")
