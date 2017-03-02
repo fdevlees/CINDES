@@ -61,17 +61,29 @@ def get_experiment(prediction, table, run, retrain=True):
         pass
     elif ptype=='gp':
         from CINDES4.predictor.gp import GaussianProcessExperiment, GaussianProcessWithPCAExperiment
-
-        regressor = GaussianProcessExperiment(     table=table,
-                                                   retrain = retrain,
-                                                   run = run,
-                                                   **kwargs )
+        if prediction['pca']:
+            regressor = GaussianProcessWithPCAExperiment(table=table,
+                                                         retrain = retrain,
+                                                         run = run,
+                                                         **kwargs )
+        else:
+            regressor = GaussianProcessExperiment(     table=table,
+                                                       retrain = retrain,
+                                                       run = run,
+                                                       **kwargs )
     elif ptype=='knn':
         #from CINDES4.predictor.knn import NearestNeighborWithPCAExperiment
-        from CINDES4.predictor.knn import NearestNeighborExperiment
-        #regressor = NearestNeighborWithPCAExperiment( 
-        regressor = NearestNeighborExperiment(        table = table,
-                                                      n_principal_components=100,
+        from CINDES4.predictor.knn import NearestNeighborExperiment, NearestNeighborWithPCAExperiment
+        if prediction['pca']:
+            print "PCA!"
+            regressor = NearestNeighborWithPCAExperiment( table = table,
+                                                          n_principal_components=100,
+                                                          retrain=retrain,
+                                                          run = run,
+                                                          **kwargs   #run=run
+                                                        )
+        else:
+            regressor = NearestNeighborExperiment(    table = table,
                                                       retrain=retrain,
                                                       run = run,
                                                       **kwargs   #run=run

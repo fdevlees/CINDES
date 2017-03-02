@@ -102,7 +102,7 @@ def pstats(predinfo):
     from CINDES4.utils import statistics
     import pprint
     #import statistics
-    print "predinfo:", pprint.pformat(predinfo)
+    print "predinfo:\n", pprint.pformat(predinfo)
 
     #print predinfo['pvalues'].corr( predinfo['knn'])
     #print predinfo['pvalues'].corr( predinfo['knn'], method='spearman')

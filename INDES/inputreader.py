@@ -61,7 +61,7 @@ def get_preds(subinp, line):
                  'svr': { 'type': 'svr'}
                }
     # set n_folds default for each experiment:
-    for experiment in defaults.values(): experiment.update( {'n_folds':5 } )
+    for experiment in defaults.values(): experiment.update( {'n_folds':5 , 'pca':False} )
 
     npredictions = int(line.split()[1])
     preds = [] # this becomes a list of predictions to make
@@ -70,7 +70,7 @@ def get_preds(subinp, line):
         line = subinp.readline() # on each line one prediction is specified
         pname= line.split()[0]   # the first word is a unique prediction identifier (just a name which has to be unique)
         ptype= line.split()[1]   # the second word indicates the prediction type
-        pred = defaults[ptype]   # the defaults for that prediction type are then loaded in pred
+        pred = defaults[ptype].copy()   # the defaults for that prediction type are then loaded in pred
         pred['name'] = pname     # set the name 
 
         # the rest of the line is than interpreted: add new arguments or change default arguments

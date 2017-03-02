@@ -53,11 +53,13 @@ class NearestNeighborExperiment(Experiment):
 
 class NearestNeighborWithPCAExperiment(NearestNeighborExperiment):
 
-    def __init__(self, setting, n_folds, n_principal_components):
-        super(NearestNeighborWithPCAExperiment, self).__init__(setting, n_folds)
+    def __init__(self, n_principal_components, **kwargs):
+        super(NearestNeighborWithPCAExperiment, self).__init__(**kwargs)
         self.n_principal_components = n_principal_components
 
-    def train(self, X, y):
+    def train(self, X=None, y=None, **kwargs):
+        if X is None: X=self.X
+        if y is None: y=self.y
         # Dimensionality reduction
         F = PCA(self.n_principal_components)
         F.fit(X)
@@ -67,12 +69,25 @@ class NearestNeighborWithPCAExperiment(NearestNeighborExperiment):
         print "\tDimensionality reduction: ", X_F.shape
 
         # Nearest neighbor
-        (NN, _), log = super(NearestNeighborWithPCAExperiment, self).train(X_F, y)
-        log["pca"] = F
+        (NN, _) = super(NearestNeighborWithPCAExperiment, self).train(X_F, y, **kwargs)
+        self.F = F
 
-        return (F, NN, y), log
+        return (NN, y)
 
-    def test(self, X, model):
-        F, NN, y_train = model
-        X_F = F.transform(X)
+    def test(self, X, model=None):
+        if model is None: model=self.model
+        NN, y_train = model
+        X_F = self.F.transform(X)
         return super(NearestNeighborWithPCAExperiment, self).test(X_F, (NN, y_train))
+
+    def save_model(self, count, model=None):
+        if model is None: model=self.model
+
+        modelname = '{}_pca_{}.pkl'.format(self.name,count)
+        joblib.dump( (model, self.F) ,modelname)
+        return
+
+    def load_model(self,count):
+        modelname = '{}_pca_{}.pkl'.format(self.name, count)
+        (model, self.F) = joblib.load(modelname)
+        return model

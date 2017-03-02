@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 
 from GPy.kern.src.rbf import RBF
 from GPy.models.gp_regression import GPRegression
@@ -53,50 +54,80 @@ class GaussianProcessExperiment(Experiment):
         #modelname = 'gp_{}.npy'.format(1)
         # model = gpr = GPy.models.GPRegression
         #np.save(modelname, model.param_array)
+        modelname2 = '{}_2_{}.npz'.format(self.name, count)
+        with open(modelname2,'wb') as f:
+            pickle.dump(model,f)
 
-        modelname = '{}_{}.npz'.format(self.name, count)
-        np.savez(modelname, X=self.X, y=self.y, param_array=model.param_array )
+        #modelname = '{}_{}.npz'.format(self.name, count)
+        #np.savez(modelname, X=self.X, y=self.y, param_array=model.param_array )
         return
 
     def load_model(self, count):
-        modelname = '{}_{}.npz'.format(self.name,count)
+        #modelname = '{}_{}.npz'.format(self.name,count)
+        modelname2 = '{}_2_{}.npz'.format(self.name,count)
 
         # other option
         # m = GPy.models(GPRegression(X,Y, initialize=False)
         #model = GPRegression(self.X, self.y, initialize=False)
         #model[:] = np.load(modelname)
 
-        import os.path
-        print "exist:", os.path.exists(modelname)
+        #import os.path
+        #print "exist:", os.path.exists(modelname)
 
-        npzfile = np.load(modelname)
-        model = GPRegression( npzfile['X'], npzfile['y'], initialize=False)
-        model[:] = npzfile('param_array')
+        #npzfile = np.load(modelname)
+        #y = npzfile['y'][:,None]
+        #model = GPRegression( npzfile['X'], y, initialize=False)
+        #model.update_model(False)
+        #model.initialize_parameter()
+        #array = tuple(npzfile['param_array'])
+        #print "array:", array
+        #model[:] = array
+        #model.update_model(True)
+
+        model = pickle.load(open(modelname2,'rb'))
         print "loaded model:", model
         return model
 
 
 class GaussianProcessWithPCAExperiment(GaussianProcessExperiment):
 
-    def __init__(self, setting, n_folds, white_noise, n_principal_components):
-        super(GaussianProcessWithPCAExperiment, self).__init__(setting, n_folds, white_noise)
+    def __init__(self, white_noise=1e-1, n_principal_components=50, **kwargs):
+        super(GaussianProcessWithPCAExperiment, self).__init__(white_noise, **kwargs)
         self.n_principal_components = n_principal_components
 
-    def train(self, X, y):
+    def train(self, X=None, y=None, **kwargs):
+        if X is None: X=self.X
+        if y is None: y=self.y
         # Dimensionality reduction
         F = PCA(self.n_principal_components)
         F.fit(X)
         X_F = F.transform(X)
+        self.F = F
 
         print "\tLeast explained variance:", F.explained_variance_[-1]
         print "\tDimensionality reduction: ", X_F.shape
 
-        gp, log = super(GaussianProcessWithPCAExperiment, self).train(X_F, y)
-        log["pca"] = F
+        gp = super(GaussianProcessWithPCAExperiment, self).train(X_F, y)
 
-        return (F, gp), log
+        return gp
 
-    def test(self, X, model):
-        F, gp = model
-        X_F = F.transform(X)
+    def test(self, X, model=None):
+        if model is None: model = self.model
+        gp = model
+        X_F = self.F.transform(X)
         return super(GaussianProcessWithPCAExperiment, self).test(X_F, gp)
+
+    def save_model(self, count, model=None):
+        if model is None: model = self.model
+
+        modelname2 = '{}_2_pca_{}.npz'.format(self.name, count)
+        with open(modelname2,'wb') as f:
+            pickle.dump((model,self.F),f)
+        return
+
+    def load_model(self, count):
+        modelname2 = '{}_2_pca_{}.npz'.format(self.name,count)
+
+        model, self.F  = pickle.load(open(modelname2,'rb'))
+        print "loaded model:", model
+        return model
