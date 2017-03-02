@@ -69,8 +69,8 @@ def hydrogenizer(totalmat):
     Each -N bond except for the core, is decreased
     Each -O bond except for the core, is decreased
     '''
-    for i in range(len(totalmat)): 
-        if totalmat[i][0] == 'H' and float(totalmat[i][2]) > 1.2:
+    for i in range(len(totalmat)):
+        if totalmat[i][0] == 'H' and 1.6 > float(totalmat[i][2]) > 1.2:
             totalmat[i][2] = '1.1'
         elif totalmat[i][0] == 'O' and i>9 and ( float(totalmat[i][2]) > 1.5 or float(totalmat[i][2]) < 1.0): 
             totalmat[i][2] = '1.35'
@@ -357,6 +357,7 @@ def doper2(group, geom, core, passive):
 
 
 def geomfiller(zma,geom,count):
+    ''' this function fills the zma of a functionalisation into the -methyl geometry of that site '''
     logging.debug( "geomfiller")
     nagroup = len(zma)
     nageom = len(geom)
@@ -708,13 +709,31 @@ def substituter2(group,geom0,count):
     elif len(group) == 4:
         # need to remove one of the hydrogens
         del geom[3]
-        # CNHH or CNOO
         geom[0][0] = group[1]
         geom[1][0] = group[2]
         geom[2][0] = group[3]
         
         geom[1][1] = str(count+1)
         geom[2][1] = str(count+1) #if also attached to that one
+
+
+        if group == [ 'C', 'C', 'C', 'H' ]:
+            #zma = [['C',1, '1.4554490', 0, '111.0852500', -1, '121.9277283'],
+            #       ['C',1, '2.6636450', 0, '111.0852500', -1, '121.9277283'],
+            #       ['H',1, '3.7296390', 0, '111.0852500', -1, '121.9277283']]
+            
+            # geom of second ethyn carbon is same as first:
+            geom[1] = geom[0][:]
+            # also the H atom is same as first
+            geom[2] = geom[0][:]
+            # r of C
+            geom[1][2] = '2.6636'
+            # r of H
+            geom[2][2] = '3.7296'
+
+            #geom[0][0] = group[1] # change C to O or also C
+            #geom[1][0] = group[2] # change H to N or also H
+            geom[2][0] = group[3] # change H to N or also H
         if group == ['C','N','O','O']:
             #geom[0][2] = '1.5'
             #geom[1][2] = '1.227'
@@ -791,6 +810,21 @@ def substituter2(group,geom0,count):
             if dihedral: zma[1][6]=dihedral
             geom=geomfiller(zma,geom,count)
             count += len(zma)
+
+        elif group==['C','Th']:
+            print "thiophene group"
+            zma = [['C', 1, '1.4952220'],
+                   ['C', 2, '1.3695029', 1, '128.4633279', 0, '0.0023405'],
+                   ['S', 2, '1.7399783', 3, '110.1483490', 1, '179.9964292'],
+                   ['C', 3, '1.4258839', 2, '113.6486669', 4, '-0.0147807'],
+                   ['H', 3, '1.0851597', 2, '122.4471034', 4, '179.9989798'],
+                   ['C', 5, '1.3649242', 3, '112.6274587', 2, '0.0275216'],
+                   ['H', 5, '1.0843806', 3, '124.0375540', 2, '-179.9905779'],
+                   ['H', 7, '1.0814341', 5, '128.6304156', 3, '179.9872962']]
+            if dihedral: zma[1][6]=dihedral
+            geom=geomfiller(zma,geom,count)
+            count += len(zma)
+             
         else:
             # all the three hydrogens need to be removed
             del geom[3]
