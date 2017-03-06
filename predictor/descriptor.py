@@ -36,6 +36,22 @@ def indtocon(index):
 def contoind(conf):
     return '_'.join([''.join(item) for item in conf])
 
+def indtoint(index, array):
+    import CINDES4.INDES.construction as zcon
+    conf = zcon.indtocon(index)
+    intl = contoint(conf,array)
+    return intl
+
+def contoint(conf,array):
+    ''' makes an integer list representation of conf '''
+    inconf = [ site.index(group) for site,group in zip(array,conf) ]
+    return inconf
+
+def get_X_int(indices, array):
+    X = [ indtoint(index, array) for index in indices ]
+    print "in get_X_int:", X
+    return np.asarray(X)
+
 #++++++++++++++++++++++++++
 #++++     GLOBALS    ++++++
 #++++++++++++++++++++++++++

@@ -22,7 +22,7 @@ def do_ml(indices, database, **TZmat):
     return preds_ml
 
 
-def get_experiment(prediction, table, run, retrain=True):
+def get_experiment(prediction, table, run, retrain=True, array=[]):
     # each prediction element is a dictionary with a 'type' key. 
     ptype = prediction['type']
 
@@ -40,12 +40,14 @@ def get_experiment(prediction, table, run, retrain=True):
         from CINDES4.predictor.linreg import LinRegOneExperiment
         regressor = LinRegOneExperiment(    table=table,
                                             retrain=retrain,
+                                            array=array,
                                             run=run,
                                             **kwargs
                                             )
     elif ptype=='2d':
         regressor = LinRegOneExperiment(    table=table,
                                             retrain=retrain,
+                                            array=array,
                                             run=run,
                                             **kwargs
                                             )
@@ -57,18 +59,26 @@ def get_experiment(prediction, table, run, retrain=True):
         #preds = ml_int.learn_int_skl_procedure(table,mols_todo, array, **TZmat)
         pass
     elif ptype=='nn':
-        #preds = learning.ANN(mols_todo, table, **TZmat)
-        pass
+        from CINDES4.predictor.nn import NeuralNetworkExperiment
+
+        regressor = NeuralNetworkExperiment(   table=table,
+                                               retrain=retrain,
+                                               array=array,
+                                               run=run,
+                                               **kwargs
+                                               )
     elif ptype=='gp':
         from CINDES4.predictor.gp import GaussianProcessExperiment, GaussianProcessWithPCAExperiment
         if prediction['pca']:
             regressor = GaussianProcessWithPCAExperiment(table=table,
                                                          retrain = retrain,
+                                                         array=array,
                                                          run = run,
                                                          **kwargs )
         else:
             regressor = GaussianProcessExperiment(     table=table,
                                                        retrain = retrain,
+                                                       array=array,
                                                        run = run,
                                                        **kwargs )
     elif ptype=='knn':
@@ -79,6 +89,7 @@ def get_experiment(prediction, table, run, retrain=True):
             regressor = NearestNeighborWithPCAExperiment( table = table,
                                                           n_principal_components=100,
                                                           retrain=retrain,
+                                                          array=array,
                                                           run = run,
                                                           **kwargs   #run=run
                                                         )
@@ -86,13 +97,15 @@ def get_experiment(prediction, table, run, retrain=True):
             regressor = NearestNeighborExperiment(    table = table,
                                                       retrain=retrain,
                                                       run = run,
+                                                      array=array,
                                                       **kwargs   #run=run
                                                       )
     elif ptype=='svr':
-        from CINDES4.predictor.svr import SupportVectorExperiment
+        from CINDES4.predictor.svr import SupportVectorExperiment, SupportVectorWithPCAExperiment
         regressor = SupportVectorExperiment(          table=table,
                                                       n_principal_components=100,
                                                       retrain=retrain,
+                                                      array=array,
                                                       run = run,
                                                       **kwargs   #run=run
                                                       )
@@ -122,6 +135,7 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
           regressor = get_experiment(prediction = prediction,
                                      table= table,
                                      retrain= retrain,
+                                     array=array,
                                      run=run)
 
           # 2. train or reload the model

@@ -5,9 +5,9 @@ from CINDES4.INDES import construction as zcon
 
 import numpy as np
 from copy import deepcopy
-from descriptor import get_X_1D
+from descriptor import get_X_1D, get_X_int
 
-def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='', **kwargs):
+def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='', array=[], **kwargs):
     ''' calculte X and y '''
     def get_y(table, tableindex):
         y =  np.fromiter((item[tableindex] for item in table ),np.float)
@@ -22,11 +22,13 @@ def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='', **kwarg
     indices = (item[0] for item in table)
     if '1D' in descriptor:
         X = get_X_1D(indices=indices, descriptor=descriptor, identify=identify, **kwargs)
+    elif 'int' in descriptor:
+        X = get_X_int(indices=indices, array=array)
     else:
         X = get_X( indices, descriptor=descriptor, **TZmat)
     return X,y
 
-def get_X(indices, descriptor='BoB', **TZmat):
+def get_X(indices, descriptor='BoB',array=[], identify='x_', **TZmat):
 
     # 1. convert new indices to confs to ZMAT
     converter = Converter()
@@ -45,6 +47,10 @@ def get_X(indices, descriptor='BoB', **TZmat):
     ## X.3: convert cartesian coordinates to descriptor
     if descriptor=='BoB':
         X = np.asarray( tuple( BoB(item) for item in xyzs) )
+    elif 'int' in descriptor:
+        X = get_X_int( indices=indices, array=array)
+    elif descriptor=='1DL':
+        X = get_X_1D(indices=indices, descriptor=descriptor, identify = identify)
     else:
         X = np.asarray( tuple( coulomb(item) for item in xyzs) )
     return X

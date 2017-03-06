@@ -44,7 +44,7 @@ def get_secret_data(tablefilename,mols_tocal):
     if debug:
         print "secret_table:"
         sprint(10,secret_table)
-    column = 1 ################################################################################## COLUMN CHANGE HERE
+    column = 2 ################################################################################## COLUMN CHANGE HERE
     tabledict = dict( ( [ item[0], item[column] ] for item in secret_table ) )
     data = []
     for mol in mols_tocal:

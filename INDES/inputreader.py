@@ -213,7 +213,7 @@ def readfile(subinp):
     # if 'mystr' in line.split()[0]:
     while True:
         line = subinp.readline()
-        if not line: break
+        if line == '\n':continue
         if line[0]=='#':continue
         # some capital sensitive keywords:
         elif 'startind' in line:
