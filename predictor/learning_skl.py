@@ -148,7 +148,6 @@ class MachineLearning(object):
 
         return
 
-
     def coulomb(self, xyz):
         #print "xyz:", xyz
         l = len(xyz)
@@ -736,16 +735,6 @@ def my_kernel3(C1,C2, factor, kerneltype='gaussian'):
             #print "d:", d
             #time.sleep(1)
     return kij
-
-def symsort(mat):
-    indexlist = np.argsort(np.linalg.norm(mat,axis=1))[::-1]
-    return mat[indexlist][:,indexlist]
-
-def padzeros(M, maxn=76 ):
-    ''' pads the matrix M until size is size*size '''
-    npad = maxn - M.shape[0]
-    padM = np.pad(M, (0, npad), 'constant', constant_values=0.0)
-    return padM
 
 def MAE(data1,data2):
     assert len(data1)==len(data2)

@@ -115,6 +115,15 @@ class PeriodicTable(object):
         for i in range(1, len(self.element)):
             self.number[self.element[i]] = i
 
+def run_once(f):
+    def wrapper(*args, **kwargs):
+        if not wrapper.has_run:
+            wrapper.has_run = True
+            return f(*args, **kwargs)
+    wrapper.has_run = False
+    return wrapper
+
+
 
 if __name__ == "__main__":
     import doctest, utils
