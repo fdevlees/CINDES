@@ -60,6 +60,8 @@ class Run(object):
         #self.TZmat = r.geometry(param)
         self.TZmat = r.geometry(**entries)
 
+        self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
+
         #sets Gaussian09 input lines
         self.set_calculation_properties()
         return
@@ -106,6 +108,30 @@ class Run(object):
         else:
             raise SystemExit('PROGRAM NOT RECOGNIZED')
         return
+
+    def set_adj(self, core, active):
+        from CINDES4.utils.converter import Converter
+        import numpy as np
+        conv = Converter()
+        conv.read_zmalist(core)
+        xyz = np.asarray( [ atom[1] for atom in conv.zmatrix_to_cartesian() ] )
+        #print xyz
+        ncore = len(xyz)
+        adj = np.zeros([ ncore, ncore ])
+        for i in range(ncore):
+            for j in range(i,ncore):
+                adj[i][j]= 0.1 < np.linalg.norm( xyz[i] - xyz[j] ) < 2.0
+                adj[j][i]= adj[i][j]
+        print "adjacency matrix of core:", adj
+
+        print "self.sites:", self.line1
+        print "active: ", active
+        sites = [ int(methyl[0][1])-1 for methyl in active ]
+        print "sites: ", sites
+        sites_adj = adj[sites][:,sites]
+        print "sites_adj:", sites_adj
+
+        return sites_adj
 
     def runspecs_gaussian(self):
         param=self.__dict__
@@ -354,6 +380,34 @@ def skipper(mols_tocal,mols_nocal,iprint=True):
     mols_all = mols_tocal + mols_nocal
     return mols_all
 
+def restriction1(mols_todo, mols_nodo, run):
+    ''' test if not B-B A or N-N bond present in molecules '''
+    def has_forbidden_combination(conf, adj):
+        for i in range(len(conf)):
+            for j in range(i,len(conf)):
+                if conf[i]==conf[j] and adj[i][j]==1.0 and conf[i] in [ ['N'], ['B'] ]:
+                    print "forbidden combination: ", i, conf[i], j, conf[j], adj[i]
+                    return True
+        return False
+
+    from itertools import combinations, ifilterfalse
+
+    print "nmol:", len(mols_todo)
+
+    for molecule in mols_todo:
+        print "mol.conf:", molecule.conf
+        if has_forbidden_combination(molecule.conf, run.adj):
+            mols_todo.remove(molecule)
+
+
+    print "nmol:", len(mols_todo)
+
+    return mols_todo, mols_nodo
+
+
+
+
+
 # B: getting the real data by submitting 
 def submittingprocedure(mols_tocal,mols_nocal,myrun,**kwargs):
     global once
@@ -425,6 +479,8 @@ def BFS(param,array):
             # if table is correctly formatted all second element item[1]==1. meaning they are ab-initio calculated
             #indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker2(startconf,array,k,table )
             mols_todo, mols_nodo = zcon.classmaker2(startconf,array,k,table, myrun )
+            if 1 in myrun.restrictions:
+                mols_todo, mols_nodo = restriction1(mols_todo, mols_nodo, myrun )
             print "----- END random start configurations -----"
             print "indices_todo:",mols_todo
             print "data_nodo:", mols_nodo #all item[1]==1 in data_nodo 
@@ -432,6 +488,8 @@ def BFS(param,array):
             # STEP 2: PREDICTOR
             # perform prescreaning in a predictions. 
             mols_nocal,mols_tocal = predictor(myrun, table, mols_todo,mols_nodo, count, array=array)
+
+
 
             # STEP 3: SUBMITTING PART
             if not myrun.nosub==1:

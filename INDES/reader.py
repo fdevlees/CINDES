@@ -6,6 +6,28 @@ import logging
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 # compu chem. library
 
+
+## NEW IDEA:
+class ZMatrix(object):
+    def __init__(self, zmatrixfile='ZMAT', **kwargs):
+        self.zmatrixfile = zmatrixfile
+        self.read()
+        return
+
+    def read(self):
+        self.zmat, fileid = self.zmatread()
+        self.zmatdic = self.zmatvalues(fileid)
+        fileid.close()
+        return
+
+    def split(self):
+        # FORMATTING AND SPLITTING OF ZMATRIX
+        self.zmat = zmatprinter(self.zmat,self.zmatdic)
+        logging.debug("zmat:\n" + pprint.pformat(zmat))
+        (coremat, activemat, passivemat) = sitesplitter(zmat, param['ncore'], param['line1'], param['nch3'])
+        return
+
+
 def geometry(zmatrixfile='ZMAT', **param):
     '''reads the zmat from a file and splits it'''
     # note that zmatrixfile is now in **param
