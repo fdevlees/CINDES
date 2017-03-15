@@ -296,8 +296,12 @@ def readfile(subinp):
         elif 'simple' in line: paras['simple'] = 1
         elif 'try_ready' in line: paras['try_ready'] = 1
         elif 'test_ready' in line: paras['test_ready'] = int(line.split()[1])
-        elif 'twojob' in line: paras['twojob'] = 1
-        elif 'procedure' in line: 
+        elif 'twojob' in line:
+            try:
+                paras['twojob'] = int(line.split()[1])
+            except IndexError:
+                paras['twojob'] = 1
+        elif 'procedure' in line:
                 paras['procedure'] = line.split()[1]
                 if paras['procedure'] in ['genrandom', 'getrandom']:
                     try:

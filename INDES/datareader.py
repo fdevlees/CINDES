@@ -411,12 +411,12 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1):
         ESCFs = mymol.scfenergies
         results['energy'] = ESCFs[-(multiplejobs+1)]
     if any( prop in ['homo','lumo'] for prop in props):
-        from cclib.parser import ccopen
+        from CINDES4.cclib.parser import ccopen
         myfile=ccopen(filename).parse()
         results['homo'] = myfile.moenergies[0][myfile.homos[0]] #NOT IMPLEMENTED NEED CCLIB
         results['lumo'] = myfile.moenergies[0][myfile.homos[0]+1] #NOT IMPLEMENTED NEED CCLIB
     if 'gap' in props:
-        from cclib.parser import ccopen
+        from CINDES4.cclib.parser import ccopen
         myfile=ccopen(filename).parse()
         results['homo'] = myfile.moenergies[0][myfile.homos[0]]
         results['lumo'] = myfile.moenergies[0][myfile.homos[0]+1]
@@ -589,7 +589,7 @@ if __name__ == "__main__":
         if not mymol.hypolvibr==[]: print "Diagonal vibrational hyperpolarisability:", mymol.hypolvibr
      
     if True:
-        from cclib.parser import ccopen
+        from CINDES4.cclib.parser import ccopen
         myfile=ccopen(filename).parse()
         HOMO = myfile.myhomos[index]
         Ehomo= myfile.mymos[index]['alpha'][0][HOMO]

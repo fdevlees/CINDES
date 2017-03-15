@@ -140,10 +140,10 @@ class Run(object):
         elif param['polar']==1:
             if param['volume']==1:
                 self.gaussianline = '# opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                self.gaussianlinepolar = '#p geom=allcheck guess=read polar volume=tight '+param['functional']+'/'+param['basisset']+'\n'
+                self.gaussianline2 = '#p geom=allcheck guess=read polar volume=tight '+param['functional']+'/'+param['basisset']+'\n'
             else:
                 self.gaussianline = '# opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                self.gaussianlinepolar = '#p geom=allcheck guess=read polar '+param['functional']+'/'+param['basisset']+'\n'
+                self.gaussianline2 = '#p geom=allcheck guess=read polar '+param['functional']+'/'+param['basisset']+'\n'
         elif param['aip']==1 or param['aea']==1:
             self.gaussianline = '# opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
             param['twojob']=1
@@ -163,8 +163,15 @@ class Run(object):
                     self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'\n'
                 else:
                     self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-            if param['twojob'] == 1: 
+            if param['twojob'] == 1:
                 self.gaussianline2 = '# geom=check guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
+            elif param['twojob'] == 2:
+                self.multiplejobs = 2
+                if param['semiempirical'] == 1:
+                    self.gaussianline  = '# opt=(maxcycle=100) ' + 'pm6' +'\n'
+                else:
+                    self.gaussianline  = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'\n'
+                self.gaussianline2 = '# geom=allcheck guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
         for key in ['ip','ea','polar']:
             if param[key]==1:
                 self.multiplejobs +=1
