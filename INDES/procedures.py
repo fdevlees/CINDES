@@ -196,7 +196,7 @@ class Run(object):
                 if param['semiempirical'] == 1:
                     self.gaussianline  = '# opt=(maxcycle=100) ' + 'pm6' +'\n'
                 else:
-                    self.gaussianline  = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'\n'
+                    self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
                 self.gaussianline2 = '# geom=allcheck guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
         for key in ['ip','ea','polar']:
             if param[key]==1:
