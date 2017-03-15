@@ -3,6 +3,7 @@
 # inputreader module
 
 import logging
+import numpy as np
 from pprint import pprint
 import re
 
@@ -52,30 +53,52 @@ def get_preds(subinp, line):
     ''' for future development a more extensible format for giving which predictions are tried
     it returns a list of dictionaries with each dictionary having one obligatory type key '''
     # default predicition types: 
-    defaults = { 'ML' : { 'type': 'ML', 'descriptor':'coulomb'},
-                 'iML': { 'type':'iML' },
-                 'NN' : { 'type': 'NN', 'descriptor':'BoB'},
-                 '1D' : { 'type': '1D' },
-                 '2D' : { 'type': '2D' }
+    defaults = { 'ml' : { 'type': 'ml', 'descriptor':'coulomb'},
+                 'iml': { 'type':'iml' },
+                 'nn' : { 'type': 'nn', 'descriptor':'bob'},
+                 '1d' : { 'type': '1d', 'descriptor':'1DL', 'subtype':'ridge', 'intercept':False },
+                 '2d' : { 'type': '2d' },
+                 'knn': { 'type': 'knn'},
+                 'gp' : { 'type': 'gp' },
+                 'svr': { 'type': 'svr'}
                }
+    # set n_folds default for each experiment:
+    for experiment in defaults.values(): experiment.update( {'n_folds':5 , 'pca':False} )
 
     npredictions = int(line.split()[1])
-    preds = []
+    preds = [] # this becomes a list of predictions to make
+
     for _ in range(npredictions):
-        line = subinp.readline()
-        ptype= line.split()[0]
-        pred = defaults[ptype]
+        line = subinp.readline() # on each line one prediction is specified
+        pname= line.split()[0]   # the first word is a unique prediction identifier (just a name which has to be unique)
+        ptype= line.split()[1]   # the second word indicates the prediction type
+        pred = defaults[ptype].copy()   # the defaults for that prediction type are then loaded in pred
+        pred['name'] = pname     # set the name 
+
+        # the rest of the line is than interpreted: add new arguments or change default arguments
         try:
-            pred['descriptor']=line.split()[1]
+            # these lines:
+            #    - splits the rest of the line in keyword
+            #    - adds apostrophs around the keys
+            #    - join the key:value pairs with comma's
+            splitted = [ item for item in line.split()[2:] ]
+            formatted= [ '\'{}\':{}'.format(*item.split(':')) for item in splitted ]
+            options = ','.join(formatted)
         except IndexError:
             pass
+        if options:
+            #print "options:", options
+            pred.update( eval( '{{{}}}'.format(options) ) )
+            #print "prediction keywords are changed:", pred
+
+        # the fully declared prediction type is than saved to the prediction list
         preds.append(pred)
     return subinp, preds
 
 def get_prop_function(subinp, line):
     line = subinp.readline()
     splitted = line.split()
-    print "functional property:", line
+    #print "functional property:", line
     import re
 
     # we need to find the properties going into the function. properties only contain [a-zA-Z]
@@ -83,11 +106,11 @@ def get_prop_function(subinp, line):
 
     # the properties in that line are: #set because one property can occur multiple times in function
     props = { item for item in splitted if word.match(item) and not item in ['if', 'else' ] }
-    print "properties:", props
+    #print "properties:", props
 
     # props need to be separated by a comma
     arguments = ','.join(props)
-    print "arguments:", arguments
+    #print "arguments:", arguments
     func = eval('lambda {}:{}'.format(arguments, line))
 
     return subinp, func, props
@@ -134,6 +157,7 @@ def get_genalg_params(subinp, line):
 def readfile(subinp):
     '''this method reads all the inputkeywords'''
     #default values
+    randomseed = np.random.randint(0,100)
     paras={'program':'gaussian',
            'procedure':'standard',
            'property':'gap',
@@ -168,6 +192,7 @@ def readfile(subinp):
            'aea':0,
            'startind': '',
            'extrawaittime': 2,
+           'restrictions': [],
            'timelimit':250000,
            'timestep':300,
            'predictions':[],
@@ -179,6 +204,7 @@ def readfile(subinp):
            'identify':'unspecified_',
            'charge':0,
            'mult':1,
+           'seed':randomseed,
            'montecarlo':0,   #Temperature at start
            'nrandsites':2}   #n random sites changed. for all choose 0
     #scans all the lines until if will find the END keyword
@@ -190,7 +216,7 @@ def readfile(subinp):
     # if 'mystr' in line.split()[0]:
     while True:
         line = subinp.readline()
-        if not line: break
+        if line == '\n':continue
         if line[0]=='#':continue
         # 1. some capital sensitive keywords:
         elif 'startind' in line:
@@ -265,7 +291,7 @@ def readfile(subinp):
                 subinp, paras['function'], paras['func_args'] = get_prop_function( subinp, line )
             else:
                 paras['property'] = prop
-        elif 'procedure' in line: 
+        elif 'procedure' in line:
                 paras['procedure'] = line.split()[1]
                 if paras['procedure'] in ['genrandom', 'getrandom']:
                     try:
@@ -317,7 +343,21 @@ def readfile(subinp):
         elif 'twodimreg' in line: paras['tdregression'] = 1
         elif 'try_ready' in line: paras['try_ready'] = 1
         elif 'test_ready' in line: paras['test_ready'] = int(line.split()[1])
-        elif 'twojob' in line: paras['twojob'] = 1
+        elif 'twojob' in line:
+            try:
+                paras['twojob'] = int(line.split()[1])
+            except IndexError:
+                paras['twojob'] = 1
+        elif 'procedure' in line:
+                paras['procedure'] = line.split()[1]
+                if paras['procedure'] in ['genrandom', 'getrandom']:
+                    try:
+                        paras['nrandom'] = int(line.split()[2])
+                    except IndexError:
+                        raise SystemExit("NO number of random structures specified!")
+                elif paras['procedure'] in [ 'ga', 'genalg' ]:
+                    subinp, paras['genalg'] = get_genalg_params( subinp, line)
+                    pass
         elif 'timelimit' in line: paras['timelimit'] = int(line.split()[1])
         elif 'timestep' in line: paras['timestep'] = int(line.split()[1])
         else:

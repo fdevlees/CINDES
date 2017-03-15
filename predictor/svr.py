@@ -1,11 +1,16 @@
 from sklearn.decomposition.pca import PCA
-from sklearn.neighbors import NearestNeighbors
 from sklearn.externals import joblib
+from sklearn.svm import SVR
 
 from experiment_interface import Experiment
 
+# svr with rbf kernel. C controls simplisity or decision surface. High C will
+# try to fit all data and select more support vector. Low C will give a more
+# smooth surface. gamma parameter defines how far the influence of a single
+# training example reaches, with low values meaning far and high values
+# meaning close. low gamma value high bias, high values high variance.
 
-class NearestNeighborExperiment(Experiment):
+class SupportVectorExperiment(Experiment):
 
     def __init__(self, **kwargs):
         """
@@ -17,31 +22,39 @@ class NearestNeighborExperiment(Experiment):
         optional also:
             - n_principal_components
         """
-        super(NearestNeighborExperiment, self).__init__(**kwargs)
+        super(SupportVectorExperiment, self).__init__(**kwargs)
 
-    def train(self, X=None, y=None, verbose=False, **kwargs):
+    def train(self, X=None, y=None, verbose=True,
+              C = 1e4,
+              gamma=1e-6,
+              **kwargs):
         """ train the KNN with parameters:
             - n_neighbors: 1
         """
         if X is None: X=self.X
         if y is None: y=self.y
 
-        NN = NearestNeighbors(n_neighbors=1).fit(X)
+        svr_rbf = SVR(kernel='rbf',
+                      C=C,
+                      gamma=gamma,
+                      cache_size=200, # number of megabytes
+                      tol = 0.001
+                      )
+        print "Fitting...",
+        svr_rbf.fit(X, y)
 
-        if verbose: print "\tLearned model: ", NN
+        if verbose: print "\tLearned model: ", svr_rbf
 
-        return (NN,y)
+        return svr_rbf
 
     def test(self, X, model=None ):
         if model is None: model=self.model
-        NN, y_train = model
-        _, ind = NN.kneighbors(X)
-        return y_train[ind[:,0]]
+        return model.predict(X).flatten()
 
     def save_model(self, count, model=None):
         if model is None: model=self.model
 
-        modelname = '{}_{}.pkl'.format(self.name,count)
+        modelname = '{}_{}.pkl'.format(self.name, count)
         joblib.dump(model,modelname)
         return
 
@@ -51,10 +64,10 @@ class NearestNeighborExperiment(Experiment):
         return model
 
 
-class NearestNeighborWithPCAExperiment(NearestNeighborExperiment):
+class SupportVectorWithPCAExperiment(SupportVectorExperiment):
 
     def __init__(self, n_principal_components, **kwargs):
-        super(NearestNeighborWithPCAExperiment, self).__init__(**kwargs)
+        super(SupportVectorWithPCAExperiment, self).__init__(**kwargs)
         self.n_principal_components = n_principal_components
 
     def train(self, X=None, y=None, **kwargs):
@@ -69,16 +82,16 @@ class NearestNeighborWithPCAExperiment(NearestNeighborExperiment):
         print "\tDimensionality reduction: ", X_F.shape
 
         # Nearest neighbor
-        (NN, _) = super(NearestNeighborWithPCAExperiment, self).train(X_F, y, **kwargs)
+        svr = super(SupportVectorWithPCAExperiment, self).train(X_F, y, **kwargs)
         self.F = F
 
-        return (NN, y)
+        return svr
 
     def test(self, X, model=None):
         if model is None: model=self.model
-        NN, y_train = model
+        svr = model
         X_F = self.F.transform(X)
-        return super(NearestNeighborWithPCAExperiment, self).test(X_F, (NN, y_train))
+        return super(SupportVectorWithPCAExperiment, self).test(X_F, svr)
 
     def save_model(self, count, model=None):
         if model is None: model=self.model
@@ -91,3 +104,23 @@ class NearestNeighborWithPCAExperiment(NearestNeighborExperiment):
         modelname = '{}_pca_{}.pkl'.format(self.name, count)
         (model, self.F) = joblib.load(modelname)
         return model
+
+
+
+if __name__=="__main__":
+    import pickle
+    print "SVR:"
+    class Run:
+        pass
+    retrain = True
+    n_folds = 3
+    run = Run()
+    run.identify = 'ada_'
+    table = pickle.load(open('tablebin','rb'))
+    regressor = SupportVectorExperiment(table=table, retrain=True, n_folds=n_folds, run=run, identify='ada_',
+                                        descriptor= '1DL' )
+
+    print "regressor:", regressor
+
+
+

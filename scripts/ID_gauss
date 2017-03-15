@@ -1,15 +1,13 @@
 #!/bin/bash -l
 
 
-for i in $@
-do
-if [ -e $i ]; then
-NPS=`grep -m1 -i %nprocshared $i`
+if [ -e $1 ]; then
+NPS=`grep -m1 -i %nprocshared $1`
 NP=${NPS##*=}
 if [ "$NP" = "" ]; then
 NP=1
 fi
-MEMS=`grep -m1 -i %mem $i`
+MEMS=`grep -m1 -i %mem $1`
 MEM=${MEMS##*=}
 if [ "$MEM" = "" ]; then
 MEM=32000000
@@ -17,23 +15,23 @@ fi
 mem_inw=`echo $MEM |sed -e 's/mw/*1048576/i' -e 's/gw/*1073741824/i' -e 's/mb/*131072/i' -e 's/gb/*134217728/i'`
 memory_s_inw=$(( $mem_inw + 67108864 ))   
 memory_s=$(( $memory_s_inw / 131072 +1 ))
-echo Submitting $i on $NP processors, requested memory is $memory_s Mb. 
+echo Submitting $1 on $NP processors, requested memory is $memory_s Mb. 
 
 qsub << END_END
 #!/bin/bash -l
 #PBS -j oe
-#PBS -N $i
-#PBS -l walltime=100:00:00
+#PBS -N $1
+#PBS -l walltime=${2:-100}:00:00
 #PBS -l mem=${memory_s}Mb
 #PBS -l nodes=1:ppn=$NP:intel
-module load gaussian/g09
+module load Gaussian/G09.D01
 cd \$WORKDIR/
 export GAUSS_SCRDIR=\$TMPDIR/\$PBS_JOBID
 if [ ! -d \$GAUSS_SCRDIR ] ; then mkdir \$GAUSS_SCRDIR; fi
 ( for i in {1..60}; do sleep 24h; touch \$GAUSS_SCRDIR/*; done )&
 cd \$GAUSS_SCRDIR
-time g09 <\$PBS_O_WORKDIR/$i>\$PBS_O_WORKDIR/${i%.*}.log
-cp ${i%.*}.chk \$PBS_O_WORKDIR
+time g09 <\$PBS_O_WORKDIR/$1>\$PBS_O_WORKDIR/${1%.*}.log
+cp ${1%.*}.chk \$PBS_O_WORKDIR
 cd ..
 rmdir \$GAUSS_SCRDIR
 kill \$!
@@ -44,8 +42,7 @@ unset NP
 unset MEMS
 unset MEM
 else
-echo File $i does not exist!
+echo File $1 does not exist!
 fi
-done
 
 
