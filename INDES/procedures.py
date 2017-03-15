@@ -32,7 +32,7 @@ import datareader
 
 # import utils 
 from CINDES4.utils.molecule import Molecule
-from CINDES4.utils.writings import log_io, print_title, sprint
+from CINDES4.utils.writings import log_io, print_title, sprint, dump
 
 # initial global variables
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
@@ -69,7 +69,14 @@ class Run(object):
     def __str__(self):
         sb=['Run object with the following attributes:']
         for key,value in sorted(self.__dict__.items()):
-            sb.append("{key:20}='{value}'".format(key=key, value=value))
+            if key in ['predictions']:
+                sb.append("{key:20}=".format(key=key))
+                sb.append( dump( value ) )
+            elif key in ['TZmat']:
+                sb.append("{key:20}=".format(key=key))
+                sb.append( pprint.pformat(value, width=150) )
+            else:
+                sb.append("{key:20}='{value}'".format(key=key, value=value))
         return '\n'.join(sb)
 
     def __repr__(self):
@@ -159,10 +166,10 @@ class Run(object):
         elif param['polar']==1:
             if param['volume']==1:
                 self.gaussianline = '# opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                self.gaussianlinepolar = '#p geom=allcheck guess=read polar volume=tight '+param['functional']+'/'+param['basisset']+'\n'
+                self.gaussianline2 = '#p geom=allcheck guess=read polar volume=tight '+param['functional']+'/'+param['basisset']+'\n'
             else:
                 self.gaussianline = '# opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                self.gaussianlinepolar = '#p geom=allcheck guess=read polar '+param['functional']+'/'+param['basisset']+'\n'
+                self.gaussianline2 = '#p geom=allcheck guess=read polar '+param['functional']+'/'+param['basisset']+'\n'
         elif param['aip']==1 or param['aea']==1:
             self.gaussianline = '# opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
             param['twojob']=1
@@ -182,8 +189,15 @@ class Run(object):
                     self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'\n'
                 else:
                     self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-            if param['twojob'] == 1: 
+            if param['twojob'] == 1:
                 self.gaussianline2 = '# geom=check guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
+            elif param['twojob'] == 2:
+                self.multiplejobs = 2
+                if param['semiempirical'] == 1:
+                    self.gaussianline  = '# opt=(maxcycle=100) ' + 'pm6' +'\n'
+                else:
+                    self.gaussianline  = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'\n'
+                self.gaussianline2 = '# geom=allcheck guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
         for key in ['ip','ea','polar']:
             if param[key]==1:
                 self.multiplejobs +=1
@@ -292,7 +306,7 @@ def testmax(myrun, mols, bcok):
                 voldoende = [ it for it in data if float(it[3]) > float(param['bcval']) ]
             except TypeError: pass
 
-        print "voldoende:\n", pprint.pprint(voldoende)
+        print "voldoende:\n", pprint.pformat(voldoende, width=100)
         print "the BC condition is bc<:", param['bcval']
         if voldoende==[]: #so if there is at least one fullfilling BC
             bcok=0
@@ -301,7 +315,7 @@ def testmax(myrun, mols, bcok):
             maxsite = min(data,key = lambda x:abs( float(x[3]) - float(param['bcval']) ) )
         else: #BC nog niet
             bcok=1
-            print "BC fullfilled; voldoende is not empty:", pprint.pprint(voldoende)
+            print "BC fullfilled; voldoende is not empty:", pprint.pformat(voldoende, width=100)
             #maxsite = max(voldoende,key = lambda x:x[1])
             if param['optimum']== 'minimum':
                 maxsite = min(voldoende,key = lambda x:x[2])
@@ -318,7 +332,7 @@ def testmax(myrun, mols, bcok):
                 maxsite = min(testdata,key = lambda x:x[2])
         else:
             maxsite = max(data,key = lambda x:x[2])
-    logging.warning('maxisite:' + pprint.pformat(maxsite))
+    logging.warning('maxisite:' + pprint.pformat(maxsite, width=100))
     return maxsite,bcok
 
 # 7 set global optimum and define convergence and redirect to Monte Carlo component
@@ -339,7 +353,7 @@ def runtest(run, maximum, maxsite, count, bcok,mctable=[], array=[]):
                    maxsite = montecarloprocedure(param, array, maximum, mctable)
                else:
                    maxsite = montecarloprocedure(param, array, maximum, mctable, **TZmat)
-               print "maxsite:",maxsite
+               print "maxsite:", pprint.pfomat( maxsite, width=100 )
         else:
             print "maximum and maxsite are not the same yet"
             print "maximum:" ,maximum
@@ -487,7 +501,7 @@ def BFS(param,array):
 
             # STEP 2: PREDICTOR
             # perform prescreaning in a predictions. 
-            mols_nocal,mols_tocal = predictor(myrun, table, mols_todo,mols_nodo, count, array=array)
+            mols_nocal, mols_tocal, made_pred = predictor(myrun, table, mols_todo,mols_nodo, count, array=array, nsite=l)
 
 
 
@@ -507,7 +521,7 @@ def BFS(param,array):
 
             # STEP 5: UPDATE DATABASE and LOG results of microiteration
             # logs new elements in data to table and tablebin and whole data to cyclesinfo
-            table = loggings(mols_all,table,count,k,l )
+            table = loggings(mols_all,table,count,k,l, made_pred )
 
             # STEP 6: UPDATE OPTIMUM STRUCTURE
             # decide what the maximum site is and if the bc if fullfilled
@@ -652,7 +666,7 @@ def SteepestDescent(param,array):
 
         # STEP 2: PREDICTOR
         # perform prescreaning in a predictions. 
-        mols_nocal,mols_tocal = predictor(myrun, table, mols_todo,mols_nodo, count, array=array)
+        mols_nocal, mols_tocal, made_pred = predictor(myrun, table, mols_todo,mols_nodo, count, array=array)
         #data_nocal,indices_tocal, predict = predictor(myrun, table, indices_todo,data_nodo, count, array=array)
 
         # STEP 3: SUBMITTING PART
@@ -665,7 +679,7 @@ def SteepestDescent(param,array):
 
         # STEP 5: UPDATE DATABASE and LOG results of microiteration
         # logs new elements in data to table and tablebin and whole data to cyclesinfo
-        table = loggings(mols_all,table,count,1,1 )
+        table = loggings(mols_all,table,count,1,1, made_pred=made_pred )
 
         # STEP 6: UPDATE OPTIMUM STRUCTURE
         # decide what the maximum site is and if the bc if fullfilled

@@ -36,7 +36,7 @@ import shutil
 once=0
 
 
-def get_secret_data(tablefilename,indices):
+def get_secret_data(tablefilename,mols_tocal):
     '''checks for confs already calculated'''
     import pickle
     with open(tablefilename,'rb') as f:
@@ -44,13 +44,15 @@ def get_secret_data(tablefilename,indices):
     if debug:
         print "secret_table:"
         sprint(10,secret_table)
-    column = 1 ################################################################################## COLUMN CHANGE HERE
+    column = 2 ################################################################################## COLUMN CHANGE HERE
     tabledict = dict( ( [ item[0], item[column] ] for item in secret_table ) )
     data = []
-    for index in indices:
-        data.append( [ index, 1.0, tabledict[index]] )
-        if debug: print "table_dict[index:]", tabledict[index], index
-    return data
+    for mol in mols_tocal:
+        mol.predicted = False
+        mol.Pvalue = tabledict[ mol.index ]
+        #data.append( [ index, 1.0, tabledict[index]] )
+        #if debug: print "table_dict[index:]", tabledict[index], index
+    return mols_tocal
 
 
 # PROCEDURE
@@ -66,9 +68,9 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
     elif myrun.nosub==3:
         print "SECRET DATA activated"
         tablefilename = myrun.nosub_file
-        data_calc = get_secret_data(tablefilename, indices_tocal)
-        data_all  = data_calc + data_nocal
-        return data_all
+        mols_calc = get_secret_data(tablefilename, mols_tocal)
+        mols_all  = mols_calc + mols_nocal
+        return mols_all
     else:
         # 1. Make the files
         filemaker(mols_tocal,myrun,**TZmat) #----------------------------------HERE IS THE FILEWRITER CALL

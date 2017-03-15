@@ -113,7 +113,7 @@ def get_configurations(startconf,array,k, run=[]):
 
 def classmaker2(startconf,array,k,table,run=[]):
     '''checks for confs already calculated'''
-    print "IN CLASSMAKER", type(run)
+    #print "IN CLASSMAKER", type(run)
     confs = get_configurations(startconf,array,k,run=run)
 
     from CINDES4.utils.molecule import Molecule, Population
@@ -152,7 +152,7 @@ def classmaker2(startconf,array,k,table,run=[]):
 
 def indexmaker3(startconf,array,k,table,run=[]):
     '''checks for confs already calculated'''
-    print "IN INDEXMAKER3", type(run)
+    #print "IN INDEXMAKER3", type(run)
     confs = get_configurations(startconf,array,k,run=run)
     data=[]
     indices = []
@@ -447,14 +447,14 @@ def filewriter2(zmat,index,**paras): #paras is short for fileparameters
             fid.writelines("%s " % item)
         fid.write("\n")
     fid.write("\n")
-    if paras['polar'] == 1:
+    if paras['polar'] == 1 or paras['multiplejobs']>=1:
         fid.write("--link1--\n")
         fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
         fid.write("%mem=1500MB\n")
         if not paras['nprocs']==1:
             fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
         #fid.write("%nprocshared=2\n")
-        fid.write(paras['gaussianlinepolar'])
+        fid.write(paras['gaussianline2'])
         fid.write("\n")
         fid.write(str(index) + " 2nd calc\n")
         fid.write("\n")
