@@ -243,7 +243,7 @@ def get_startconf(param,array):
 def get_sequence(count, myrun):
     # START set sequence INPUT: param
     param = myrun.__dict__
-    nsites = param['nsites']
+    nsites = param['nsites'] - param['nlinks']
     if 'sequences' in param:
         try:
             sequence = param['sequences'][count-1] #accounting for the fact count starts counting at 1
