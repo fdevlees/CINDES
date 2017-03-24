@@ -66,6 +66,10 @@ if True:
         from INDES.procedures import genrandom
         genrandom(param,array)
 
+    elif param['procedure'] == "testpred":
+        from INDES.procedures import testpred
+        testpred(param, array)
+
     else:
         logging.warning('proceduretype not recognized')
 

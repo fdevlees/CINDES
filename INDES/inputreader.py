@@ -35,7 +35,7 @@ def read_input(siteinput):
         array = []
     else:
         array = substireader(param['nsites'],subinp)
-        if not param['procedure'] in ['getrandom', 'genrandom']:
+        if not param['procedure'] in ['getrandom', 'genrandom','testpred']:
             print "ARRAY:",
             pprint(array)
     if not param['procedure'] in ['getrandom', 'genrandom']:
@@ -60,7 +60,8 @@ def get_preds(subinp, line):
                  '2d' : { 'type': '2d' },
                  'knn': { 'type': 'knn'},
                  'gp' : { 'type': 'gp' },
-                 'svr': { 'type': 'svr'}
+                 'svr': { 'type': 'svr'},
+                 'krr': { 'type': 'krr', 'kernel':'rbf'}
                }
     # set n_folds default for each experiment:
     for experiment in defaults.values(): experiment.update( {'n_folds':5 , 'pca':False} )
@@ -195,6 +196,7 @@ def readfile(subinp):
            'restrictions': [],
            'timelimit':250000,
            'timestep':300,
+           'tablename':'tablebin',
            'predictions':[],
            'maxiter':10,
            'basisset':'6-31G',
@@ -317,6 +319,7 @@ def readfile(subinp):
         # restart 4 CH_COH_CCHHH_N_CCOOH
         # 3 4 5
         elif 'restrictions'  in line: paras['restrictions'] = [ int(item) for item in line.split()[1:] ]
+        elif 'seed' in line: paras['seed'] = int(line.split()[1])
         elif 'semiempirical' in line: paras['semiempirical'] = 1
         elif 'sequence' in line:
             nsequences = int(line.split()[1])
@@ -340,6 +343,7 @@ def readfile(subinp):
             print "SYMMETRY ACTIVATED!"
         elif 'simple' in line: paras['simple'] = 1
         elif 'sites' in line: paras['line1'] = [ int(item) for item in line.split()[1:] ]
+        elif 'tablename' in line: paras['tablename'] = line.split()[1]
         elif 'twodimreg' in line: paras['tdregression'] = 1
         elif 'try_ready' in line: paras['try_ready'] = 1
         elif 'test_ready' in line: paras['test_ready'] = int(line.split()[1])

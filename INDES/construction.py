@@ -827,6 +827,8 @@ def substituter2(group,geom0,count):
              
         else:
             # all the three hydrogens need to be removed
+
+            #print "len 2!"
             del geom[3]
             del geom[2]
             del geom[1]

@@ -49,7 +49,7 @@ def contoint(conf,array):
 
 def get_X_int(indices, array):
     X = [ indtoint(index, array) for index in indices ]
-    print "in get_X_int:", X
+    #print "in get_X_int:", X
     return np.asarray(X)
 
 #++++++++++++++++++++++++++

@@ -1,19 +1,19 @@
 from sklearn.decomposition.pca import PCA
 from sklearn.externals import joblib
-from sklearn.svm import SVR
+from sklearn.kernel_ridge import KernelRidge
 from sklearn.utils import resample
 import pandas as pd
 import numpy as np
 
 from experiment_interface import Experiment
 
-# svr with rbf kernel. C controls simplisity or decision surface. High C will
+# krr with rbf kernel. C controls simplisity or decision surface. High C will
 # try to fit all data and select more support vector. Low C will give a more
 # smooth surface. gamma parameter defines how far the influence of a single
 # training example reaches, with low values meaning far and high values
 # meaning close. low gamma value high bias, high values high variance.
 
-class SupportVectorExperiment(Experiment):
+class KernelRidgeExperiment(Experiment):
 
     def __init__(self, **kwargs):
         """
@@ -25,19 +25,17 @@ class SupportVectorExperiment(Experiment):
         optional also:
             - n_principal_components
         """
-        super(SupportVectorExperiment, self).__init__(**kwargs)
+        super(KernelRidgeExperiment, self).__init__(**kwargs)
 
         # set default hyperparam ( super sets self.hparams to dict() ) so beware of order.
-        self.hparam = { 'C':1.e4,
-                        'gamma':1.e-6,
-                        'tol':0.001  }
+        self.hparam = { 'kernel':'rbf',
+                        'alpha': 1.e-3,
+                        'gamma':1.e-6 }  # gamma parameter is specific for rbf/laplacian kernel
 
-        self.hparam_grid = {'C': np.logspace(-5,5,3),
-                            'gamma': np.logspace(-2,2,3) }
+        self.hparam_grid = {'alpha': np.logspace(-5,5,3),
+                            'gamma': np.logspace(-5,5,3),
+                            'kernel': ['rbf','laplacian'] }
         
-        #C_s = np.logspace(-10, 10, 3)
-        #gamma_s = np.logspace( -10,10,3)
-
         # see if new defaults are given via input
         for key in self.hparam:
             if key in kwargs:
@@ -53,22 +51,20 @@ class SupportVectorExperiment(Experiment):
         if X is None: X=self.X
         if y is None: y=self.y
 
-        svr_rbf = self.get_estimator()
+        krr_rbf = self.get_estimator()
         print "Fitting...",
-        svr_rbf.fit(X, y)
+        krr_rbf.fit(X, y)
 
-        if verbose: print "\tLearned model: ", svr_rbf
+        if verbose: print "\tLearned model: ", krr_rbf
 
-        return svr_rbf
+        return krr_rbf
 
     def get_estimator(self):
-        svr_rbf = SVR(kernel='rbf',
-                      C= self.hparam['C'],
-                      gamma= self.hparam['gamma'],
-                      tol = self.hparam['tol'],
-                      cache_size=200 # number of megabytes
+        krr_rbf = KernelRidge(kernel='rbf',
+                      alpha = self.hparam['alpha'],
+                      gamma = self.hparam['gamma'],
                       )
-        return svr_rbf
+        return krr_rbf
                        
 
     def test(self, X, model=None ):
@@ -94,7 +90,7 @@ class SupportVectorExperiment(Experiment):
         import time
 
         # 1. set hyperparamter search
-        svr = GridSearchCV( self.get_estimator(),
+        krr = GridSearchCV( self.get_estimator(),
                             cv= self.n_folds,
                             n_jobs=8,
                             param_grid = self.hparam_grid )
@@ -110,19 +106,18 @@ class SupportVectorExperiment(Experiment):
             X = self.X
             y = self.y
         stime = time.time()
-        svr.fit(X, y)
+        krr.fit(X, y)
         time_to_fit = time.time() - stime
         print "\tTime to fit: ", time_to_fit, ' s'
 
         # 3. print results
-        print "svr:", svr
-        print "n svr.best_estimator_.support_", len(svr.best_estimator_.support_)
-        print "best_params_:", svr.best_params_
-        print "best_score_:", svr.best_score_
-        #print "cv_results_", svr.cv_results_ # too verbose
+        print "krr:", krr
+        print "best_params_:", krr.best_params_
+        print "best_score_:", krr.best_score_
+        # print "cv_results_", krr.cv_results_ # too verbose
 
         # 4. update model.hparams to best ones. 
-        self.hparam.update(svr.best_params_)
+        self.hparam.update(krr.best_params_)
 
         return
 
@@ -154,10 +149,10 @@ class SupportVectorExperiment(Experiment):
         #raise SystemExit('stop')
         return
 
-class SupportVectorWithPCAExperiment(SupportVectorExperiment):
+class KernelRidgeWithPCAExperiment(KernelRidgeExperiment):
 
     def __init__(self, n_principal_components, **kwargs):
-        super(SupportVectorWithPCAExperiment, self).__init__(**kwargs)
+        super(KernelRidgeWithPCAExperiment, self).__init__(**kwargs)
         self.n_principal_components = n_principal_components
 
     def train(self, X=None, y=None, **kwargs):
@@ -172,16 +167,16 @@ class SupportVectorWithPCAExperiment(SupportVectorExperiment):
         print "\tDimensionality reduction: ", X_F.shape
 
         # Nearest neighbor
-        svr = super(SupportVectorWithPCAExperiment, self).train(X_F, y, **kwargs)
+        krr = super(KernelRidgeWithPCAExperiment, self).train(X_F, y, **kwargs)
         self.F = F
 
-        return svr
+        return krr
 
     def test(self, X, model=None):
         if model is None: model=self.model
-        svr = model
+        krr = model
         X_F = self.F.transform(X)
-        return super(SupportVectorWithPCAExperiment, self).test(X_F, svr)
+        return super(KernelRidgeWithPCAExperiment, self).test(X_F, krr)
 
     def save_model(self, count, model=None):
         if model is None: model=self.model
@@ -207,7 +202,7 @@ if __name__=="__main__":
     run = Run()
     run.identify = 'ada_'
     table = pickle.load(open('tablebin','rb'))
-    regressor = SupportVectorExperiment(table=table, retrain=True, n_folds=n_folds, run=run, identify='ada_',
+    regressor = KernelRidgeExperiment(table=table, retrain=True, n_folds=n_folds, run=run, identify='ada_',
                                         descriptor= '1DL' )
 
     print "regressor:", regressor

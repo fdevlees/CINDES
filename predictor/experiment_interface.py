@@ -8,8 +8,9 @@ pd.set_option('display.width',150)
 from sklearn.model_selection import KFold
 
 from IO import get_XY, get_X
+from CINDES4.utils.utils import processify
 
-debug=True
+debug=False
 
 
 class Experiment(object):
@@ -88,6 +89,14 @@ class Experiment(object):
         """
         pass
 
+    def get_best_hyperparams(self):
+        """
+        Interface for optimization of hyperparameters of the Experiment
+
+        This function will change self.hparams to best performing hparams
+        """
+        pass
+
     def get_model(self, count=0, nsite=0, *args, **kwargs):
         """
         Interface to get the model to use for prediction.
@@ -102,9 +111,14 @@ class Experiment(object):
             except IOError as e:
                 print "tried to load model but not found:", e
                 print "going to train model:"
-                self.X, self.y = get_XY(table=self.table, descriptor=self.descriptor, identify = self.run.identify, array = self.array, TZmat=self.run.TZmat, **kwargs)
+                self.X, self.y = get_XY(table=self.table,
+                                        descriptor=self.descriptor,
+                                        identify = self.run.identify,
+                                        array = self.array,
+                                        TZmat=self.run.TZmat,
+                                        **kwargs )
 
-        if self.reoptimize:
+        if self.reoptimize: # sets self.hparam
             self.get_best_hyperparams()
         elif self.getR:
             self.cross_val()
@@ -181,30 +195,6 @@ class Experiment(object):
 
         return stats_df_train.loc['means'], stats_df_test.loc['means']
 
-    def get_best_hyperparams(self):
-        # save R**2, MAE and percentiles of each fold to a row in a dataframe.
-        stats_df_train = pd.DataFrame(columns=('C', 'r','p-value','mae','perc_25', 'perc_50', 'perc_75' ))
-        stats_df_test =  pd.DataFrame(columns=('C', 'r','p-value','mae','perc_25', 'perc_50', 'perc_75' ))
-
-        C_s = np.logspace(-10, 10, 21)
-        gamma_s = np.logspace( -10,10,21)
-        #for i, C in enumerate(C_s):
-        for i, gamma in enumerate(gamma_s):
-            #df_train, df_test = self.cross_val(C=C)
-            df_train, df_test = self.cross_val(gamma=gamma)
-
-            stats_df_train.loc[i] = df_train
-            stats_df_test.loc[i] = df_test
-            stats_df_train['C'][i] = gamma
-            stats_df_test['C'][i] = gamma
-
-        print "end of hyper opt:"
-        print "stats_df_train:\n", stats_df_train
-        print "stats_df_test:\n", stats_df_test
-
-
-        raise SystemExit('stop')
-        return
 
     def get_fold(self):
         for train_ind, test_ind in KFold(n_splits=self.n_folds, shuffle=True).split(self.X):

@@ -1,6 +1,7 @@
 ''' module for getting data.xyz and descriptors '''
 
 from CINDES4.utils.converter import Converter
+from CINDES4.utils.utils import processify
 from CINDES4.INDES import construction as zcon
 
 import numpy as np
@@ -26,6 +27,15 @@ def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='', array=[
         X = get_X_int(indices=indices, array=array)
     else:
         X = get_X( indices, descriptor=descriptor, **TZmat)
+
+    #### LOG
+    print "\tmade X:",
+    try:
+        print X.shape
+    except AttributeError:
+        print len(X)
+    print "\tmade y:", y.shape
+
     return X,y
 
 def get_X(indices, descriptor='BoB',array=[], identify='x_', **TZmat):
@@ -69,6 +79,7 @@ def zmatoxyz(converter,mat):
     zmat = converter.read_zmalist(mat)
     return converter.zmatrix_to_cartesian()
 
+@processify
 def BoB(xyz):
     d = False
     from collections import OrderedDict

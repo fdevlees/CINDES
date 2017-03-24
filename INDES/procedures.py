@@ -4,6 +4,8 @@
 debug=1
 
 # import python libraries
+import time # for getting time/date and time delays
+start = time.clock()
 from inspect import stack
 import shutil #module to copy files
 from platform import node
@@ -12,12 +14,10 @@ import os # for getting window width and testing existence of files
 import re
 from re import findall # now only needed in construction.py
 import sys # for getting command line input
-import glob # for testing existence of files matching a pattern
+#import glob # for testing existence of files matching a pattern
 import random # for obtaining random geometry
-import time # for getting time/date and time delays
 import pickle # for saving and getting the tablebin
 import logging # instead of the large amount of print statements not using it at the moment
-from itertools import product
 from copy import deepcopy # for keeping matrices while changing others
 
 # import my own modules
@@ -27,11 +27,11 @@ import reader as r # this reads the zmatrix in gaussian format
 from predictions import predictor
 from montecarlo import montecarloprocedure
 from loggings import loggings
-import submitter as subm
-import datareader
+# import submitter as subm
+# import datareader
 
 # import utils 
-from CINDES4.utils.molecule import Molecule
+# from CINDES4.utils.molecule import Molecule
 from CINDES4.utils.writings import log_io, print_title, sprint, dump
 
 # initial global variables
@@ -39,6 +39,9 @@ logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 once = 0
 zmatrixfile = "ZMAT"
 #pp = pprint.PrettyPrinter(indent=4, width=100)
+
+print "time for imports:", time.clock()-start
+
 
 class Run(object):
     ''' This is the main object for all the parameters used during the process
@@ -117,6 +120,7 @@ class Run(object):
         return
 
     def set_adj(self, core, active):
+        debug=0
         from CINDES4.utils.converter import Converter
         import numpy as np
         conv = Converter()
@@ -129,15 +133,14 @@ class Run(object):
             for j in range(i,ncore):
                 adj[i][j]= 0.1 < np.linalg.norm( xyz[i] - xyz[j] ) < 2.0
                 adj[j][i]= adj[i][j]
-        print "adjacency matrix of core:", adj
-
-        print "self.sites:", self.line1
-        print "active: ", active
         sites = [ int(methyl[0][1])-1 for methyl in active ]
-        print "sites: ", sites
         sites_adj = adj[sites][:,sites]
-        print "sites_adj:", sites_adj
-
+        if debug:
+            print "adjacency matrix of core:", adj
+            print "self.sites:", self.line1
+            print "active: ", active
+            print "sites: ", sites
+            print "sites_adj:", sites_adj
         return sites_adj
 
     def runspecs_gaussian(self):
@@ -268,12 +271,18 @@ def get_sequence(count, myrun):
 
 # 4 table (database)
 def set_table(myrun):
+    try:
+        tablename = myrun.tablename
+    except AttributeError:
+        tablename = 'tablebin'
     if myrun.restart>0:
-        with open('tablebin','rb') as f:
+        with open(tablename,'rb') as f:
             table = pickle.load(f)
+        if True:
+            table = [[item[0]] + item[2:] for item in table ]
     else:
         table = []
-        open('tablebin','wb').close()
+        open(tablename,'wb').close()
     return table
 
 # 5 optimum at the start of the run
@@ -584,6 +593,7 @@ def generate_procedure(param,array):
     return
 
 def generate2(core,active,passive,converter):
+    from itertools import product
     confs=[]
     for item in product(*array):
         confs.append(item)
@@ -626,6 +636,21 @@ def genrandom(param,array):
 # 5: testrun
 def testrun(param,array):
     pass
+
+# 5b: testpred
+def testpred(param,array):
+    ''' run the predictions on the tablebin file '''
+    print_title("Testing Prediction procedure activated!", outline='l', signator=':')
+    class Mol(object):
+        def __init__(self):
+            self.predictions = 0
+    myrun = Run(**param)
+    print myrun
+    table = set_table(myrun)
+    sprint(10,table)
+    mols_todo, mols_nodo = ([Mol(),],[Mol(),])
+    mols_nocal, mols_tocal, made_pred = predictor(myrun, table, mols_todo,mols_nodo, 99, array=array, nsite=0)
+    return
 
 # 6: steepest descent
 def SteepestDescent(param,array):

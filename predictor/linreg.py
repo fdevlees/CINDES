@@ -2,13 +2,16 @@ from sklearn.decomposition.pca import PCA
 from sklearn.neighbors import NearestNeighbors
 from sklearn.externals import joblib
 from sklearn import linear_model
+from sklearn.utils import resample
+
+import numpy as np
 
 from experiment_interface import Experiment
 from descriptor import get_X_1D
 
 class LinRegOneExperiment(Experiment):
 
-    def __init__(self, **kwargs):
+    def __init__(self, subtype='ridge', **kwargs):
         """
         In **kwargs:
             - run=run
@@ -20,12 +23,25 @@ class LinRegOneExperiment(Experiment):
         """
         super(LinRegOneExperiment, self).__init__(**kwargs)
 
-    def train(self, X=None, y=None, verbose=False, subtype='ridge', intercept=False, twosite=False, alpha=1e-4,  **kwargs):
-        """ train the KNN with parameters:
-            - n_neighbors: 1
-        """
-        if X is None: X=self.X
-        if y is None: y=self.y
+        self.subtype = subtype
+
+        self.hparam = { 'alpha':1e4,
+                        'tol': 0.001,
+                        'intercept':True }
+        self.hparam_grid = {'alpha': np.logspace(-5,5,5) }
+
+        for key in self.hparam:
+            if key in kwargs:
+                self.hparam[key] = kwargs[key]
+                print "new default hyperparameter:", key, kwargs[key]
+        return
+
+
+    def get_estimator(self, **kwargs):
+        alpha = self.hparam['alpha']
+        intercept = self.hparam['intercept']
+        tol = self.hparam['tol']
+        subtype = self.subtype
 
         if subtype in ['linreg','ols']:
             clf = linear_model.LinearRegression(fit_intercept=intercept,
@@ -33,7 +49,7 @@ class LinRegOneExperiment(Experiment):
         elif subtype in ['ridge']:
             clf = linear_model.Ridge(alpha=alpha,
                                      fit_intercept=intercept,
-                                     tol=0.001,
+                                     tol=tol,
                                      solver='auto',
                                      copy_X=True)
         elif subtype in ['ridgecv']:
@@ -43,14 +59,23 @@ class LinRegOneExperiment(Experiment):
         elif subtype in ['lasso']:
             clf = linear_model.Lasso(alpha=alpha,
                                      fit_intercept=intercept,
-                                     tol=0.001)
+                                     tol=tol)
         elif subtype in ['ElasticNet']:
             l1_ratio = 0.1 #default 0.5
-            alpha = 1e-2
             clf = linear_model.ElasticNet(alpha=alpha,
                                           l1_ratio=l1_ratio,
                                           fit_intercept=intercept,
-                                          tol=0.001)
+                                          tol=tol)
+        return clf
+
+    def train(self, X=None, y=None, verbose=False, **kwargs):
+        """ train the KNN with parameters:
+            - n_neighbors: 1
+        """
+        if X is None: X=self.X
+        if y is None: y=self.y
+
+        clf = self.get_estimator(**kwargs)
 
         clf.fit(X,y)
 
@@ -85,3 +110,40 @@ class LinRegOneExperiment(Experiment):
         model = joblib.load(modelname)
         return model
 
+    def get_best_hyperparams(self):
+        ''' hyperparameter search with use of the sklearn GridSearchCV function '''
+        from sklearn.model_selection import GridSearchCV
+        import time
+
+        # 1. set hyperparamter search
+        clf = GridSearchCV( self.get_estimator(),
+                            cv= self.n_folds,
+                            n_jobs=8,
+                            param_grid = self.hparam_grid )
+
+        # 2. do search on dataset
+        if True:
+            n_train = 300
+            #X = self.X[:n_train]
+            #y = self.y[:n_train]
+            X, y = resample(self.X, self.y, n_samples=n_train)
+            print "restricted hparamopt to only {} samples".format(n_train)
+        else:
+            X = self.X
+            y = self.y
+        stime = time.time()
+        clf.fit(X, y)
+        time_to_fit = time.time() - stime
+        print "\tTime to fit: ", time_to_fit, ' s'
+
+        # 3. print results
+        print "clf:", clf
+        #print "n clf.best_estimator_.support_", len(clf.best_estimator_.support_)
+        print "best_params_:", clf.best_params_
+        print "best_score_:", clf.best_score_
+        # print "cv_results_", clf.cv_results_ # too verbose
+
+        # 4. update model.hparams to best ones. 
+        self.hparam.update(clf.best_params_)
+
+        return
