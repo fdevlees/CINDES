@@ -25,10 +25,11 @@ def read_input(siteinput):
     subinp = openfile(siteinput) #this is the fileID
     param = readfile(subinp) #inputline is a tuple with all kind of input variables
     #here for a new link feature. nsites is len(line1) - nlinks
-    if 'nlinks' in param:
-        param['nsites'] = len(param['line1']) - param['nlinks']
-    else:
-        param['nsites'] = len(param['line1'])
+    #if 'nlinks' in param:
+    #    param['nsites'] = len(param['line1']) - param['nlinks']
+    #else:
+    #    param['nsites'] = len(param['line1'])
+    param['nsites'] = len(param['line1'])
     #####################
     if param['procedure'] in [ 'genconf' ]:
         print "Generate Configuration Procedure Active"
@@ -194,6 +195,7 @@ def readfile(subinp):
            'extrawaittime': 2,
            'timelimit':250000,
            'timestep':300,
+           'restrictions':[],
            'predictions':[],
            'maxiter':10,
            'basisset':'6-31G',
@@ -357,7 +359,6 @@ def readfile(subinp):
                 elif paras['procedure'] in [ 'ga', 'genalg' ]:
                     subinp, paras['genalg'] = get_genalg_params( subinp, line)
                     pass
->>>>>>> master
         elif 'timelimit' in line: paras['timelimit'] = int(line.split()[1])
         elif 'timestep' in line: paras['timestep'] = int(line.split()[1])
         else:
