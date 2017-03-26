@@ -106,7 +106,7 @@ def filemaker(mols_tocal,myrun,passive,active,core): #----- dict with info for f
         c = deepcopy(core)
         a = deepcopy(active)
         p = deepcopy(passive)
-        molecule.set_zmat( zcon.constructor2(molecule.conf,c,a,p) )
+        molecule.set_zmat( zcon.constructor2(molecule.conf,c,a,p, links=myrun.symlinks) )
         if not myrun.stab==1:
             zcon.filewriter2(molecule.zmat,molecule.index,**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
         else:

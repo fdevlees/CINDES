@@ -1,5 +1,5 @@
 #!/bin/env python
-debug=0
+debug=False
 # python modules
 import numpy as np
 random = np.random.random
@@ -99,6 +99,9 @@ class Fitness_Function():
 
     def predict_via_submit_multi(self,confs):
         ''' this function is used by my_GSimpleGA class.my_evaluate '''
+        # 0. I have to deal with the fact that there can be similar configurations!
+        pass
+
         # 1. convert configuration lists to molecule instances
         individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
 
@@ -148,10 +151,15 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
           pop = self.internalPop.internalPop
       for id in pop:
           populationlist.append( id.genomeList)
-      if debug: print "populationlist", populationlist
+      if debug: print "populationlist", populationlist, "len:", len(populationlist)
+
+      # 1.1. make confs hashable to make it a set and make it list again
+      new_confs = tuple( tuple( map( tuple, item)) for item in populationlist )
+      unique_confs = [ map(list,item) for item in set(new_confs) ]
+      print "unique_confs:", unique_confs, "len:", len(unique_confs)
 
       # 2. call CINDES via FF to calculate the configurations
-      new_y = self.FF.predict_via_submit_multi(populationlist)
+      new_y = self.FF.predict_via_submit_multi(unique_confs)
 
       # 3. set the calculations to the correct indivual score
       y_dict = dict( [item[0], item[1:]] for item in new_y )
@@ -409,10 +417,11 @@ def run_pyevolve(array,table, options):
 
     # 2. Set Genome instance using as allelles the sites with the different functionalisations.
     setOfAlleles = GAllele.GAlleles()
-    for i in xrange(options.nsites):
+    nalleles = options.nsites
+    for i in xrange(nalleles):
        a = GAllele.GAlleleList(array[i])
        setOfAlleles.add(a)
-    genome = G1DList.G1DList(options.nsites)
+    genome = G1DList.G1DList(nalleles)
     genome.setParams(allele=setOfAlleles)
 
     # 3. Set evaluator function (objective function) or set precalculation is True! this circumvents serial evaluation

@@ -243,7 +243,8 @@ def get_startconf(param,array):
 def get_sequence(count, myrun):
     # START set sequence INPUT: param
     param = myrun.__dict__
-    nsites = param['nsites'] - param['nlinks']
+    #nsites = param['nsites'] - param['nlinks']
+    nsites = param['nsites']
     if 'sequences' in param:
         try:
             sequence = param['sequences'][count-1] #accounting for the fact count starts counting at 1
@@ -560,7 +561,7 @@ def genconf(param):
     c = deepcopy(TZmat['core'])
     a = deepcopy(TZmat['active'])
     p = deepcopy(TZmat['passive'])
-    mat = zcon.constructor2(conf,c,a,p)
+    mat = zcon.constructor2(conf,c,a,p, links=myrun.symlinks)
     zcon.filewriter2(mat,param['startind'],**param)
     return
 
@@ -580,10 +581,10 @@ def generate_procedure(param,array):
     learning.generate1(converter=converter,table=table,**TZmat)
 
     #to get an xyz file with all the possible structures possible:
-    #generate2(core,active,passive,converter)
+    #generate2(core,active,passive,converter, **param)
     return
 
-def generate2(core,active,passive,converter):
+def generate2(core,active,passive,converter,**kwargs):
     confs=[]
     for item in product(*array):
         confs.append(item)
@@ -596,7 +597,7 @@ def generate2(core,active,passive,converter):
             a = deepcopy(active)
             p = deepcopy(passive)
             logging.debug("i=" + str(i))
-            mat = zcon.constructor2(confs[i],c,a,p)
+            mat = zcon.constructor2(confs[i],c,a,p, **kwargs)
             xyz = zmatoxyz(converter,mat)
             if printindices==1:
                 fid.write('{:05d} {:4d} {:s}\n'.format(i+1,len(xyz), zcon.contoind(confs[i])))

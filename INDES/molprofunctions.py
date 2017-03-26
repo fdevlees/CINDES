@@ -65,7 +65,7 @@ def filemaker(confs,indices,myrun,passive,active,core): #----- dict with info fo
 	a = deepcopy(active)
 	p = deepcopy(passive)
 	logging.debug("i=" + str(i))
-	mat = zcon.constructor2(confs[i],c,a,p)
+	mat = zcon.constructor2(confs[i],c,a,p, links=myrun.symlinks)
         if not myrun.stab==1:
             mwriter.filewriter2(mat,indices[i],**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
         else:

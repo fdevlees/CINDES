@@ -25,11 +25,11 @@ def read_input(siteinput):
     subinp = openfile(siteinput) #this is the fileID
     param = readfile(subinp) #inputline is a tuple with all kind of input variables
     #here for a new link feature. nsites is len(line1) - nlinks
-    #if 'nlinks' in param:
-    #    param['nsites'] = len(param['line1']) - param['nlinks']
-    #else:
-    #    param['nsites'] = len(param['line1'])
-    param['nsites'] = len(param['line1'])
+    if param['nlinks']:
+        param['nsites'] = len(param['line1']) - param['nlinks']
+    else:
+        param['nsites'] = len(param['line1'])
+    #param['nsites'] = len(param['line1'])
     #####################
     if param['procedure'] in [ 'genconf' ]:
         print "Generate Configuration Procedure Active"
@@ -181,6 +181,7 @@ def readfile(subinp):
            'norandom':0,
            'sequence':[],
            'symlinks':[],
+           'nlinks':False,
            'restart':0,
            'semiempirical':0,
            'twojob':0,

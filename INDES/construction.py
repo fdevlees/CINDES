@@ -99,15 +99,15 @@ def get_configurations(startconf,array,k, run=[]):
     configurations =  [ startconf[0:k] + [array[k][i]] + startconf[k+1:] for i in range(len(array[k]))]
 
     print "configurations:", configurations
-    if hasattr(run,'nlinks'):
-        print "links:", run.symlinks
-        for link in run.symlinks:
-            (i,j) = (link[0]-1,link[1]-1)
-            print "link is:", i, " ",j
-            for conf in configurations:
-                print "conf:", conf
-                if not conf[i]==conf[j]:
-                    conf[j]=conf[i]
+    #if hasattr(run,'nlinks'):
+    #    print "links:", run.symlinks
+    #    for link in run.symlinks:
+    #        (i,j) = (link[0]-1,link[1]-1)
+    #        print "link is:", i, " ",j
+    #        for conf in configurations:
+    #            print "conf:", conf
+    #            if not conf[i]==conf[j]:
+    #                conf[j]=conf[i]
     logging.debug(pprint.pformat(configurations))
     return configurations
 
@@ -313,18 +313,37 @@ def indexmaker_SD(startconf,array,table,run=[]): #for CINDES2.3.py for the new s
     return indices,data,confs,indicesfull #indicesfull are all the indices. 
 
 
-def constructor2(conf,core,active,passive):
-    '''another constructor now with a counter
-    I hope it needs less functions but. yes
+def constructor2(conf,core,active,passive, links=[]):
+    ''' This is the main constructor of the zmatrix for a given configuration using
+    the core, active and passive zmatrices. Also symmetry links can be given
+
         >demethyl
+        >doper2
+        >substituter2
+        >matrixmerger2
+        >hydrogenizer
     '''
+    def extend_conf(conf, links):
+        print "Symmetry applied!",
+        # allocate room for new sites:
+        conf.extend([ [] for _ in range(len(links)) ])
+        # for all links: fill site with same group as the linked site.
+        for i,j in links:
+            conf[j-1]=conf[i-1]
+        return conf
+
+    # 1. if links change conf to extended conf
+    if links:
+        conf = extend_conf(conf, links)
+
     #print "CONFIGURATION:",conf
     passive = demethyl(passive)
+
+    # set counter for nth atom in new zmat
     count = 0
     #first the core part
     count += len(core)
-    #then the active part
-    # len(conf)==len(active)
+
     # start with the first site in active
     for i in range(len(conf)):
         #read the first element of conf
@@ -334,9 +353,8 @@ def constructor2(conf,core,active,passive):
         active[i],count = substituter2(conf[i],active[i],count)
         logging.debug('active' + str(i))
         logging.debug(pprint.pformat(active[i]))
-        #here we have to dope and we need to know the correct position in the core
-    mat = matrixmerger2(core,active,passive)      
-    mat = hydrogenizer(mat) 
+    mat = matrixmerger2(core,active,passive)
+    mat = hydrogenizer(mat)
     return mat
 
 def doper2(group, geom, core, passive):
@@ -812,7 +830,7 @@ def substituter2(group,geom0,count):
             count += len(zma)
 
         elif group==['C','Th']:
-            print "thiophene group"
+            #print "thiophene group"
             zma = [['C', 1, '1.4952220'],
                    ['C', 2, '1.3695029', 1, '128.4633279', 0, '0.0023405'],
                    ['S', 2, '1.7399783', 3, '110.1483490', 1, '179.9964292'],
