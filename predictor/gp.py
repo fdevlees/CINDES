@@ -16,10 +16,13 @@ class GaussianProcessExperiment(Experiment):
         super(GaussianProcessExperiment, self).__init__(**kwargs)
         self.white_noise = white_noise
 
-    def train(self, X=None, y=None, verbose=False, **kwargs):
+    def train(self, X=None, y=None, verbose=True, **kwargs):
 
         if X is None: X=self.X
         if y is None: y=self.y
+         
+        if verbose:
+            print "an example input vector:", X[3]
 
         # Get subset for hyperparameter optimization
         ind = np.arange(X.shape[0])
@@ -108,6 +111,8 @@ class GaussianProcessWithPCAExperiment(GaussianProcessExperiment):
         print "\tDimensionality reduction: ", X_F.shape
 
         gp = super(GaussianProcessWithPCAExperiment, self).train(X_F, y)
+
+        print "gp: in pca_gp:", gp
 
         return gp
 

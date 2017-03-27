@@ -417,7 +417,10 @@ class Gaussian(logfileparser.Logfile):
 
             scftargets = []
             # The RMS density matrix.
-            scftargets.append(self.float(line.split('=')[1].split()[0]))
+            try:
+                scftargets.append(self.float(line.split('=')[1].split()[0]))
+            except ValueError:
+                pass
             line = next(inputfile)
             # The MAX density matrix.
             scftargets.append(self.float(line.strip().split('=')[1][:-1]))

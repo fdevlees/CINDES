@@ -78,7 +78,7 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
                                                          run = run,
                                                          **kwargs )
         else:
-            regressor = GaussianProcessExperiment_skl(     table=table,
+            regressor = GaussianProcessExperiment(     table=table,
                                                        retrain = retrain,
                                                        array=array,
                                                        run = run,

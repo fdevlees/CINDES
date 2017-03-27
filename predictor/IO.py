@@ -5,6 +5,8 @@ from CINDES4.utils.utils import processify
 from CINDES4.INDES import construction as zcon
 
 import numpy as np
+import os
+import pickle
 from copy import deepcopy
 from descriptor import get_X_1D, get_X_int
 
@@ -56,7 +58,19 @@ def get_X(indices, descriptor='BoB',array=[], identify='x_', **TZmat):
  
     ## X.3: convert cartesian coordinates to descriptor
     if descriptor=='BoB':
-        X = np.asarray( tuple( BoB(item) for item in xyzs) )
+        if True:
+
+            # try to load a BoB file
+            datafile = 'BoB.pkl'
+            if os.path.exists(datafile):
+                with open(datafile,'rb') as f:
+                    X = pickle.load(f)
+            else:
+                X = np.asarray( tuple( BoB(item) for item in xyzs) )
+                with open(datafile,'wb') as f:
+                    pickle.dump(X,f,-1)
+        else:
+            X = np.asarray( tuple( BoB(item) for item in xyzs) )
     elif 'int' in descriptor:
         X = get_X_int( indices=indices, array=array)
     elif descriptor=='1DL':
