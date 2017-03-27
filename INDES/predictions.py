@@ -9,6 +9,7 @@ from CINDES4.predictor import learning_int as ml_int
 from CINDES4.predictor import tfitter
 
 from CINDES4.utils.writings import log_io, print_title, dump
+from CINDES4.utils.utils import processify
 #import learning_skl as learning
 #import learning_int as ml_int
 #from writings import log_io
@@ -69,6 +70,7 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
                                                )
     elif ptype=='gp':
         from CINDES4.predictor.gp import GaussianProcessExperiment, GaussianProcessWithPCAExperiment
+        from CINDES4.predictor.gp import GaussianProcessExperiment_skl
         if prediction['pca']:
             regressor = GaussianProcessWithPCAExperiment(table=table,
                                                          retrain = retrain,
@@ -102,14 +104,67 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
                                                       )
     elif ptype=='svr':
         from CINDES4.predictor.svr import SupportVectorExperiment, SupportVectorWithPCAExperiment
-        regressor = SupportVectorExperiment(          table=table,
-                                                      n_principal_components=100,
-                                                      retrain=retrain,
-                                                      array=array,
-                                                      run = run,
-                                                      **kwargs   #run=run
-                                                      )
+        regressor = SupportVectorExperiment(        table=table,
+                                                    n_principal_components=100,
+                                                    retrain=retrain,
+                                                    array=array,
+                                                    run = run,
+                                                    **kwargs   #run=run
+                                                    )
+    elif ptype=='krr':
+        from CINDES4.predictor.krr import KernelRidgeExperiment, KernelRidgeWithPCAExperiment
+        regressor = KernelRidgeExperiment(          table=table,
+                                                    n_principal_components=100,
+                                                    retrain=retrain,
+                                                    array=array,
+                                                    run = run,
+                                                    **kwargs   #run=run
+                                                    )
     return regressor
+
+
+#@processify
+def do_prediction(prediction, table, retrain, array, count, nsite, run, mols_todo):
+    # prediction in: prediction, table, mols_todo, retrain, run, array, count, nsite
+
+    # 0. log prediction:
+    made_pred=True
+    print_title(prediction['name'], outline='l')
+    dump(prediction)
+
+
+    # 1. initiate prediction experiment
+    regressor = get_experiment(prediction = prediction,
+                               table= table,
+                               retrain= retrain,
+                               array=array,
+                               run=run)
+
+    # 2. train or reload the model
+    regressor.get_model(
+                        write_log=True,
+                        reopt_hyps=False,
+                        count = count,
+                        nsite = nsite,
+                        )
+
+    # 3. use model to predict
+    if not run.procedure=='testpred':
+        regressor.predict(mols_todo)
+    return
+
+def do_prediction_process(*args,**kwargs):
+    import concurrent.futures
+    with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
+        result = executor.submit(do_prediction, *args, **kwargs).result()
+    return result
+
+def do_prediction_process2(*args,**kwargs):
+    import multiprocessing
+    with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
+        result = executor.submit(do_prediction, *args, **kwargs).result()
+    return result
+
 
 
 @log_io()
@@ -121,37 +176,18 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
     print "mols_todo:", mols_todo
     TZmat = run.TZmat
     retrain = False
-    enoughdata = not table==[] and not mols_todo==[] and count > 1
+    enoughdata = ( not table==[] and not mols_todo==[] and count > 1 ) or run.procedure=='testpred'
+
+    # make every item in run uncallable to be able to be pickled by the subprocess.Queue 
+    store_function = run.function
+    run.function = 'function'
 
     if enoughdata:
       for prediction in run.predictions:
-          # 0. log prediction:
-          made_pred=True
-          print_title(prediction['type'], outline='l')
-          dump(prediction)
-
-
-          # 1. initiate prediction experiment
-          regressor = get_experiment(prediction = prediction,
-                                     table= table,
-                                     retrain= retrain,
-                                     array=array,
-                                     run=run)
-
-          # 2. train or reload the model
-          regressor.get_model(
-                              write_log=True,
-                              reopt_hyps=False,
-                              count = count,
-                              nsite = nsite,
-                              )
-
-          # 3. use model to predict
-          regressor.predict(mols_todo)
-
+          #do_prediction_process(prediction, table, retrain, array, count, nsite, run, mols_todo)
+          do_prediction(prediction, table, retrain, array, count, nsite, run, mols_todo)
       for molecule in mols_todo:
-        print molecule.predictions
-
+          print molecule.predictions
     ##########
 
     # Splitting part
