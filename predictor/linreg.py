@@ -83,7 +83,7 @@ class LinRegOneExperiment(Experiment):
 
         return clf
 
-    def test(self, X, model=None ):
+    def test(self, X, model=None, **kwargs):
         if model is None: model=self.model
         y_pred = model.predict(X)
         return y_pred.flatten()
@@ -101,6 +101,7 @@ class LinRegOneExperiment(Experiment):
 
     def save_model(self, count, model=None):
         if model is None: model=self.model
+        model.R = self.R
         modelname = '{}_{}.pkl'.format(self.name, count)
         joblib.dump(model,modelname)
         return
@@ -108,9 +109,10 @@ class LinRegOneExperiment(Experiment):
     def load_model(self, count):
         modelname = '{}_{}.pkl'.format(self.name, count)
         model = joblib.load(modelname)
+        self.R = model.R
         return model
 
-    def get_best_hyperparams(self):
+    def get_best_hyperparams_old(self):
         ''' hyperparameter search with use of the sklearn GridSearchCV function '''
         from sklearn.model_selection import GridSearchCV
         import time
@@ -141,9 +143,56 @@ class LinRegOneExperiment(Experiment):
         #print "n clf.best_estimator_.support_", len(clf.best_estimator_.support_)
         print "best_params_:", clf.best_params_
         print "best_score_:", clf.best_score_
+        self.R = clf.best_score_
         # print "cv_results_", clf.cv_results_ # too verbose
 
         # 4. update model.hparams to best ones. 
         self.hparam.update(clf.best_params_)
 
         return
+
+
+
+class LinRegOneWithPCAExperiment(LinRegOneExperiment):
+
+    def __init__(self, n_principal_components=50, **kwargs):
+        super(LinRegOneWithPCAExperiment, self).__init__(**kwargs)
+        self.n_principal_components = n_principal_components
+
+    def train(self, X=None, y=None, **kwargs):
+        if X is None: X=self.X
+        if y is None: y=self.y
+        # Dimensionality reduction
+        F = PCA(self.n_principal_components)
+        F.fit(X)
+        X_F = F.transform(X)
+
+        print "\tLeast explained variance:", F.explained_variance_[-1]
+        print "\tDimensionality reduction: ", X_F.shape
+
+        # Nearest neighbor
+        krr = super(LinRegOneWithPCAExperiment, self).train(X_F, y, **kwargs)
+        self.F = F
+
+        return krr
+
+    def test(self, X, model=None, **kwargs):
+        if model is None: model=self.model
+        krr = model
+        X_F = self.F.transform(X)
+        return super(LinRegOneWithPCAExperiment, self).test(X_F, krr)
+
+    def save_model(self, count, model=None):
+        if model is None: model=self.model
+        model.R = self.R
+
+        modelname = '{}_pca_{}.pkl'.format(self.name,count)
+        joblib.dump( (model, self.F) ,modelname)
+        return
+
+    def load_model(self,count):
+        modelname = '{}_pca_{}.pkl'.format(self.name, count)
+        (model, self.F) = joblib.load(modelname)
+        self.R = model.R
+        return model
+

@@ -75,7 +75,7 @@ class Run(object):
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( dump( value ) )
-            elif key in ['TZmat']:
+            elif key in ['TZmat','genalg', 'adj']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( pprint.pformat(value, width=150) )
             else:
@@ -279,7 +279,12 @@ def set_table(myrun):
         with open(tablename,'rb') as f:
             table = pickle.load(f)
         if True:
-            table = [[item[0]] + item[2:] for item in table ]
+            # if all item[1] are ones:
+            if all( item[1]==1 for item in table ):
+                table = [[item[0]] + item[2:] for item in table ]
+            else:
+                table = [[item[0]] + item[1:] for item in table ]
+
     else:
         table = []
         open(tablename,'wb').close()
@@ -643,7 +648,7 @@ def testpred(param,array):
     print_title("Testing Prediction procedure activated!", outline='l', signator=':')
     class Mol(object):
         def __init__(self):
-            self.predictions = 0
+            self.predictions = {}
     myrun = Run(**param)
     print myrun
     table = set_table(myrun)

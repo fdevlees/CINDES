@@ -255,6 +255,8 @@ def classmaker_GA(individuals, table):
     '''checks for confs already calculated'''
     mols_todo = individuals[:]
     mols_nodo = []
+
+
     if not table == []:
         for item in table:
             for individual in individuals:
@@ -264,7 +266,7 @@ def classmaker_GA(individuals, table):
                     # add that item from table to data
                     mols_nodo.append(individual)
                     i=1
-                    if int(item[1]) == 1:
+                    if item[1] == 1:
                         print "WARNING tablebin has old style formatting (column with 1s is present)",
                         i=2
                     individual.Pvalue = item[i]

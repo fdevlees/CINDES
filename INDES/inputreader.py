@@ -70,7 +70,10 @@ def get_preds(subinp, line):
     preds = [] # this becomes a list of predictions to make
 
     for _ in range(npredictions):
-        line = subinp.readline() # on each line one prediction is specified
+        while True:
+            line = subinp.readline()
+            if not '#' in line: break
+            
         pname= line.split()[0]   # the first word is a unique prediction identifier (just a name which has to be unique)
         ptype= line.split()[1]   # the second word indicates the prediction type
         pred = defaults[ptype].copy()   # the defaults for that prediction type are then loaded in pred

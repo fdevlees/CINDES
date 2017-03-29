@@ -55,6 +55,12 @@ def get_X(indices, descriptor='BoB',array=[], identify='x_', **TZmat):
         i = mats.index(item)
         print "index:", table[i]
         raise
+
+    if True:
+        import pickle
+        with open('xyzs','wb') as f:
+            pickle.dump(xyzs, f)
+        raise SystemExit('printed xyz file')
  
     ## X.3: convert cartesian coordinates to descriptor
     if descriptor=='BoB':
@@ -70,7 +76,17 @@ def get_X(indices, descriptor='BoB',array=[], identify='x_', **TZmat):
                 with open(datafile,'wb') as f:
                     pickle.dump(X,f,-1)
         else:
-            X = np.asarray( tuple( BoB(item) for item in xyzs) )
+            if True:
+                from multiprocessing.dummy import Pool
+                def calculateParallel(xyzs, threads=4):
+                    pool = Pool(threads)
+                    results = pool.map(BoB, xyzs)
+                    pool.close()
+                    pool.join()
+                    return results
+                X = np.asarray( calculateParallel(xyzs, 16) )
+            else:
+                X = np.asarray( tuple( BoB(item) for item in xyzs) )
     elif 'int' in descriptor:
         X = get_X_int( indices=indices, array=array)
     elif descriptor=='1DL':
@@ -93,7 +109,7 @@ def zmatoxyz(converter,mat):
     zmat = converter.read_zmalist(mat)
     return converter.zmatrix_to_cartesian()
 
-@processify
+#@processify
 def BoB(xyz):
     d = False
     from collections import OrderedDict

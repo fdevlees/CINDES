@@ -37,14 +37,23 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
         pass
     elif ptype=='1d':
         print "kwargs:", kwargs
+        from CINDES4.predictor.linreg import LinRegOneExperiment, LinRegOneWithPCAExperiment
+        if prediction['pca']:
+            regressor = LinRegOneWithPCAExperiment(table=table,
+                                                   retrain=retrain,
+                                                   array=array,
+                                                   n_principal_components=100,
+                                                   run=run,
+                                                   **kwargs
+                                                   )
 
-        from CINDES4.predictor.linreg import LinRegOneExperiment
-        regressor = LinRegOneExperiment(    table=table,
-                                            retrain=retrain,
-                                            array=array,
-                                            run=run,
-                                            **kwargs
-                                            )
+        else:
+            regressor = LinRegOneExperiment(    table=table,
+                                                retrain=retrain,
+                                                array=array,
+                                                run=run,
+                                                **kwargs
+                                                )
     elif ptype=='2d':
         regressor = LinRegOneExperiment(    table=table,
                                             retrain=retrain,
@@ -150,8 +159,8 @@ def do_prediction(prediction, table, retrain, array, count, nsite, run, mols_tod
 
     # 3. use model to predict
     if not run.procedure=='testpred':
-        regressor.predict(mols_todo)
-    return
+        regressor.predict(mols_todo, rstd=True)
+    return regressor.R
 
 def do_prediction_process(*args,**kwargs):
     import concurrent.futures
@@ -175,6 +184,7 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
     made_pred=False
     print "mols_todo:", mols_todo
     TZmat = run.TZmat
+    retrain = nsite==0
     retrain = False
     enoughdata = ( not table==[] and not mols_todo==[] and count > 1 ) or run.procedure=='testpred'
 
@@ -182,13 +192,57 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
     store_function = run.function
     run.function = 'function'
 
-    if enoughdata:
-      for prediction in run.predictions:
-          #do_prediction_process(prediction, table, retrain, array, count, nsite, run, mols_todo)
-          do_prediction(prediction, table, retrain, array, count, nsite, run, mols_todo)
-      for molecule in mols_todo:
-          print molecule.predictions
-    ##########
+    if run.predictions and enoughdata:
+        # 1. do predictions
+        for prediction in run.predictions:
+            #do_prediction_process(prediction, table, retrain, array, count, nsite, run, mols_todo)
+            R = do_prediction(prediction, table, retrain, array, count, nsite, run, mols_todo)
+            prediction['R'] = R
+      
+        # 2. get best R
+        best_pred =  max(run.predictions, key= lambda x:x['R'])
+        print_title("best performing estimator: " +  best_pred['name'] +  " with R**2: " + str(best_pred['R']), outline='l' )
+
+        # 3. log
+        for molecule in mols_todo:
+            print molecule.predictions
+
+        # 4. decide which molecules to calculate and which not
+        if best_pred['R'] > 0.98 and run.ml:
+            print "prediction is good enough"
+            mols_nocal, mols_tocal = ([],[])
+            #for mol in mols_todo:
+            #    print mol.predictions.get(best_pred['name'],"empty")
+            # sort mols based on prediction value
+            mols_sorted = sorted( mols_todo, key=lambda x:x.predictions.get(best_pred['name']), reverse=(not run.optimum=='minimum') )
+            for i,mol in enumerate(mols_sorted):
+                print mol, mol.predictions.get(best_pred['name'],"empty")
+                if i<3:
+                    mols_tocal.append(mol)
+                else:
+                    mol.Pvalue = mol.predictions.get(best_pred['name'],None)
+                    mol.predicted = True
+                    mols_nocal.append(mol)
+            print "mols_tocal:\n", mols_tocal, "\nmols_nocal:\n", mols_nocal
+
+        else:
+            mols_nocal = mols_nodo
+            mols_tocal = mols_todo
+    else:
+        mols_nocal = mols_nodo
+        mols_tocal = mols_todo
+
+    if debug:
+        print "data_nocal",mols_nocal
+        try:
+            #print "data_tocal",data_tocal
+            print "indices_tocal",mols_tocal
+        except NameError:
+            print "NameError!"
+    #return mols_nocal, mols_tocal, predict
+    run.function = store_function
+    return mols_nocal, mols_tocal, made_pred
+
 
     # Splitting part
     #if run_object.ml==2 and not mols_todo==[]: #prescrean calculate only the best 50 %
@@ -210,20 +264,3 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
     #elif run_object.regression==2:
     #    raise SystemExit('prescreaning not implemented')
     #    pass
-    #else: #indentate off
-    mols_nocal = mols_nodo
-    mols_tocal = mols_todo
-    if debug:
-        print "data_nocal",mols_nocal
-        try:
-            #print "data_tocal",data_tocal
-            print "indices_tocal",mols_tocal
-        except NameError:
-            print "NameError!"
-    #return mols_nocal, mols_tocal, predict
-    return mols_nocal, mols_tocal, made_pred
-
-
-
-
-

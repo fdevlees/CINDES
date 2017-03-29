@@ -2,6 +2,21 @@ debug=0
 from scipy import stats
 import numpy as np
 
+def print_stats(y, pred):
+    from scipy.stats import pearsonr
+    sq_err = (y - pred)**2
+
+    r = pearsonr(y, pred)
+    mean_err = (np.mean(sq_err), np.var(sq_err))
+    perc = tuple(np.percentile(sq_err, quantile) for quantile in [25, 50, 75])
+
+    #print "\tPearson's R: ", r
+    #print "\tMean error: ", mean_err
+    #print "\tPercentiles: ", perc
+
+    ret = [ r[0], r[1], mean_err[0] ]
+    ret.extend(perc)
+    return ret
 
 def order_score(order1, order2):
     r1 = np.asarray(order1)
@@ -11,7 +26,7 @@ def order_score(order1, order2):
     print "o1:", o1
     print "o2:", o2
     scorefunction = lambda i,j: ( abs(i-j) )**1.0
-    difs =  scorefunction( o1, o2 ) 
+    difs =  scorefunction( o1, o2 )
     print "difs:", difs
     score = sum(difs)
     return score

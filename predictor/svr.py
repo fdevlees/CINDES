@@ -71,13 +71,13 @@ class SupportVectorExperiment(Experiment):
         return svr_rbf
                        
 
-    def test(self, X, model=None ):
+    def test(self, X, model=None, **kwargs):
         if model is None: model=self.model
         return model.predict(X).flatten()
 
     def save_model(self, count, model=None):
         if model is None: model=self.model
-
+        model.R = self.R
         modelname = '{}_{}.pkl'.format(self.name, count)
         joblib.dump(model,modelname)
         return
@@ -85,10 +85,11 @@ class SupportVectorExperiment(Experiment):
     def load_model(self,count):
         modelname = '{}_{}.pkl'.format(self.name, count)
         model = joblib.load(modelname)
+        self.R = model.R
         return model
 
 
-    def get_best_hyperparams(self):
+    def get_best_hyperparams_old(self):
         ''' hyperparameter search with use of the sklearn GridSearchCV function '''
         from sklearn.model_selection import GridSearchCV
         import time
@@ -119,6 +120,7 @@ class SupportVectorExperiment(Experiment):
         print "n svr.best_estimator_.support_", len(svr.best_estimator_.support_)
         print "best_params_:", svr.best_params_
         print "best_score_:", svr.best_score_
+        self.R = svr.best_score_
         #print "cv_results_", svr.cv_results_ # too verbose
 
         # 4. update model.hparams to best ones. 
@@ -126,7 +128,7 @@ class SupportVectorExperiment(Experiment):
 
         return
 
-    def get_best_hyperparams_old(self):
+    def get_best_hyperparams_older(self):
         ''' hyperparameter search '''
         # save R**2, MAE and percentiles of each fold to a row in a dataframe.
         stats_df_train = pd.DataFrame(columns=('C', 'r','p-value','mae','perc_25', 'perc_50', 'perc_75' ))
@@ -154,6 +156,7 @@ class SupportVectorExperiment(Experiment):
         #raise SystemExit('stop')
         return
 
+
 class SupportVectorWithPCAExperiment(SupportVectorExperiment):
 
     def __init__(self, n_principal_components, **kwargs):
@@ -177,14 +180,15 @@ class SupportVectorWithPCAExperiment(SupportVectorExperiment):
 
         return svr
 
-    def test(self, X, model=None):
+    def test(self, X, model=None, **kwargs):
         if model is None: model=self.model
         svr = model
         X_F = self.F.transform(X)
-        return super(SupportVectorWithPCAExperiment, self).test(X_F, svr)
+        return super(SupportVectorWithPCAExperiment, self).test(X_F, svr, **kwargs)
 
     def save_model(self, count, model=None):
         if model is None: model=self.model
+        model.R = self.R
 
         modelname = '{}_pca_{}.pkl'.format(self.name,count)
         joblib.dump( (model, self.F) ,modelname)
@@ -193,6 +197,7 @@ class SupportVectorWithPCAExperiment(SupportVectorExperiment):
     def load_model(self,count):
         modelname = '{}_pca_{}.pkl'.format(self.name, count)
         (model, self.F) = joblib.load(modelname)
+        self.R = model.R
         return model
 
 
