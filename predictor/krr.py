@@ -32,8 +32,8 @@ class KernelRidgeExperiment(Experiment):
                         'alpha': 1.e-3,
                         'gamma':1.e-6 }  # gamma parameter is specific for rbf/laplacian kernel
 
-        self.hparam_grid = {'alpha': np.logspace(-5,5,3),
-                            'gamma': np.logspace(-5,5,3),
+        self.hparam_grid = {'alpha': np.logspace(-7,5,5),
+                            'gamma': np.logspace(-7,5,5),
                             'kernel': ['rbf','laplacian'] }
         
         # see if new defaults are given via input
@@ -67,12 +67,13 @@ class KernelRidgeExperiment(Experiment):
         return krr_rbf
                        
 
-    def test(self, X, model=None ):
+    def test(self, X, model=None, **kwargs ):
         if model is None: model=self.model
         return model.predict(X).flatten()
 
     def save_model(self, count, model=None):
         if model is None: model=self.model
+        model.R = self.R
 
         modelname = '{}_{}.pkl'.format(self.name, count)
         joblib.dump(model,modelname)
@@ -81,45 +82,10 @@ class KernelRidgeExperiment(Experiment):
     def load_model(self,count):
         modelname = '{}_{}.pkl'.format(self.name, count)
         model = joblib.load(modelname)
+        self.R = model.R
         return model
 
 
-    def get_best_hyperparams(self):
-        ''' hyperparameter search with use of the sklearn GridSearchCV function '''
-        from sklearn.model_selection import GridSearchCV
-        import time
-
-        # 1. set hyperparamter search
-        krr = GridSearchCV( self.get_estimator(),
-                            cv= self.n_folds,
-                            n_jobs=8,
-                            param_grid = self.hparam_grid )
-
-        # 2. do search on dataset
-        if True:
-            n_train = 300
-            #X = self.X[:n_train]
-            #y = self.y[:n_train]
-            X, y = resample(self.X, self.y, n_samples=n_train)
-            print "restricted hparamopt to only {} samples".format(n_train)
-        else:
-            X = self.X
-            y = self.y
-        stime = time.time()
-        krr.fit(X, y)
-        time_to_fit = time.time() - stime
-        print "\tTime to fit: ", time_to_fit, ' s'
-
-        # 3. print results
-        print "krr:", krr
-        print "best_params_:", krr.best_params_
-        print "best_score_:", krr.best_score_
-        # print "cv_results_", krr.cv_results_ # too verbose
-
-        # 4. update model.hparams to best ones. 
-        self.hparam.update(krr.best_params_)
-
-        return
 
     def get_best_hyperparams_old(self):
         ''' hyperparameter search '''
@@ -172,14 +138,15 @@ class KernelRidgeWithPCAExperiment(KernelRidgeExperiment):
 
         return krr
 
-    def test(self, X, model=None):
+    def test(self, X, model=None, **kwargs):
         if model is None: model=self.model
         krr = model
         X_F = self.F.transform(X)
-        return super(KernelRidgeWithPCAExperiment, self).test(X_F, krr)
+        return super(KernelRidgeWithPCAExperiment, self).test(X_F, krr, **kwargs)
 
     def save_model(self, count, model=None):
         if model is None: model=self.model
+        model.R = self.R
 
         modelname = '{}_pca_{}.pkl'.format(self.name,count)
         joblib.dump( (model, self.F) ,modelname)
@@ -188,6 +155,7 @@ class KernelRidgeWithPCAExperiment(KernelRidgeExperiment):
     def load_model(self,count):
         modelname = '{}_pca_{}.pkl'.format(self.name, count)
         (model, self.F) = joblib.load(modelname)
+        self.R = model.R
         return model
 
 

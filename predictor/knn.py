@@ -63,7 +63,7 @@ class NearestNeighborExperiment(Experiment):
 
         return (NN,y)
 
-    def test(self, X, model=None ):
+    def test(self, X, model=None, **kwargs ):
         if model is None: model=self.model
         NN, y_train = model
         if supervised:
@@ -75,54 +75,23 @@ class NearestNeighborExperiment(Experiment):
 
     def save_model(self, count, model=None):
         if model is None: model=self.model
+        R = self.R
 
         modelname = '{}_{}.pkl'.format(self.name,count)
-        joblib.dump(model,modelname)
+        joblib.dump((model,R),modelname)
         return
 
     def load_model(self,count):
         modelname = '{}_{}.pkl'.format(self.name, count)
-        model = joblib.load(modelname)
+        model, self.R = joblib.load(modelname)
         return model
 
     def get_best_hyperparams(self):
         ''' hyperparameter search with use of the sklearn GridSearchCV function '''
-        from sklearn.model_selection import GridSearchCV
-        import time
-
-        if not supervised: return
-
-        # 1. set hyperparamter search
-        knn = GridSearchCV( self.get_estimator(),
-                            cv= self.n_folds,
-                            n_jobs=8,
-                            param_grid = self.hparam_grid )
-
-        # 2. do search on dataset
-        if True:
-            n_train = 300
-            #X = self.X[:n_train]
-            #y = self.y[:n_train]
-            X, y = resample(self.X, self.y, n_samples=n_train)
-            print "restricted hparamopt to only {} samples".format(n_train)
+        if not supervised:
+            return
         else:
-            X = self.X
-            y = self.y
-        stime = time.time()
-        knn.fit(X, y)
-        time_to_fit = time.time() - stime
-        print "\tTime to fit: ", time_to_fit, ' s'
-
-        # 3. print results
-        print "knn:", knn
-        #print "n knn.best_estimator_.support_", len(knn.best_estimator_.support_)
-        print "best_params_:", knn.best_params_
-        print "best_score_:", knn.best_score_
-        # print "cv_results_", knn.cv_results_ # too verbose
-
-        # 4. update model.hparams to best ones. 
-        self.hparam.update(knn.best_params_)
-
+            super(NearestNeighborExperiment, self).get_best_hyperparams()
         return
 
 
@@ -149,7 +118,7 @@ class NearestNeighborWithPCAExperiment(NearestNeighborExperiment):
 
         return (NN, y)
 
-    def test(self, X, model=None):
+    def test(self, X, model=None, **kwargs):
         if model is None: model=self.model
         NN, y_train = model
         X_F = self.F.transform(X)
@@ -157,12 +126,13 @@ class NearestNeighborWithPCAExperiment(NearestNeighborExperiment):
 
     def save_model(self, count, model=None):
         if model is None: model=self.model
+        R = self.R
 
         modelname = '{}_pca_{}.pkl'.format(self.name,count)
-        joblib.dump( (model, self.F) ,modelname)
+        joblib.dump( (model, self.F, R) ,modelname)
         return
 
     def load_model(self,count):
         modelname = '{}_pca_{}.pkl'.format(self.name, count)
-        (model, self.F) = joblib.load(modelname)
+        (model, self.F, self.R) = joblib.load(modelname)
         return model

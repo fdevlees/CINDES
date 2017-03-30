@@ -427,7 +427,10 @@ class Gaussian(logfileparser.Logfile):
             line = next(inputfile)
             # For G03, there's also the energy (not for G98).
             if line[1:10] == "Requested":
-                scftargets.append(self.float(line.strip().split('=')[1][:-1]))
+                try:
+                    scftargets.append(self.float(line.strip().split('=')[1][:-1]))
+                except ValueError:
+                    scftargets.append(numpy.nan)
 
             self.scftargets.append(scftargets)
 

@@ -7,14 +7,17 @@ from sklearn.decomposition.pca import PCA
 
 from experiment_interface import Experiment
 
+from CINDES4.utils.statistics import print_stats
+
 class GaussianProcessExperiment(Experiment):
 
-    def __init__(self, white_noise=1e-1, **kwargs):
+    def __init__(self, white_noise=1e-1, max_iters=500, **kwargs):
         """
         white_noise is a constant parameter in the GP to model observational noise. [Can be used as a regularizer] 
         """
         super(GaussianProcessExperiment, self).__init__(**kwargs)
         self.white_noise = white_noise
+        self.max_iters = max_iters
 
     def train(self, X=None, y=None, verbose=True, **kwargs):
 
@@ -27,9 +30,14 @@ class GaussianProcessExperiment(Experiment):
         # Get subset for hyperparameter optimization
         ind = np.arange(X.shape[0])
         np.random.shuffle(ind)
-        n_opt = min((300, X.shape[0]))
+        if X.shape[0] > 400:
+            n_opt = 300
+        else:
+            n_opt = int( 0.75 * X.shape[0] )
         X_hyp = X[ind[:n_opt],:]
         y_hyp = y[ind[:n_opt]]
+        X_test= X[ind[n_opt:],:]
+        y_test= y[ind[n_opt:]]
 
         # Define kernel
         kernel = RBF(X.shape[1], ARD=True)
@@ -37,7 +45,13 @@ class GaussianProcessExperiment(Experiment):
         # Optimize regularized GP hyperparameters
         gpr = GPRegression(X_hyp, y_hyp[:,None], kernel=kernel)
         gpr.Gaussian_noise.variance.constrain_fixed(self.white_noise) # White noise as regularizer
-        gpr.optimize('scg', max_iters=500)
+        gpr.optimize('scg', max_iters=self.max_iters)
+
+        # get an R**2 value:
+        if True:
+            y_pred = gpr.predict(X_test)[0].flatten()
+            stats =  print_stats(y_test, y_pred)
+            self.R = stats[0]
 
         # Fit GP through entire training data set
         gpr.set_XY(X, y[:,None])
@@ -46,12 +60,18 @@ class GaussianProcessExperiment(Experiment):
 
         return gpr
 
-    def test(self, X, model=None):
+    def test(self, X, model=None, return_std=False, **kwargs):
         if model is None: model = self.model
-        return model.predict(X)[0].flatten()
+        if return_std:
+            return model.predict(X)
+        else:
+            return model.predict(X)[0].flatten()
 
     def save_model(self, count, model=None):
         if model is None: model = self.model
+
+        # try to attach R to the model
+        model.R = self.R
 
         # other option:
         #modelname = 'gp_{}.npy'.format(1)
@@ -89,6 +109,12 @@ class GaussianProcessExperiment(Experiment):
 
         model = pickle.load(open(modelname2,'rb'))
         print "loaded model:", model
+
+        # try to take R from the model:
+        try:
+            self.R = model.R
+        except AttributeError:
+            self.R = 0.0
         return model
 
 
@@ -112,18 +138,17 @@ class GaussianProcessWithPCAExperiment(GaussianProcessExperiment):
 
         gp = super(GaussianProcessWithPCAExperiment, self).train(X_F, y)
 
-        print "gp: in pca_gp:", gp
-
         return gp
 
-    def test(self, X, model=None):
+    def test(self, X, model=None, **kwargs):
         if model is None: model = self.model
         gp = model
         X_F = self.F.transform(X)
-        return super(GaussianProcessWithPCAExperiment, self).test(X_F, gp)
+        return super(GaussianProcessWithPCAExperiment, self).test(X_F, gp, **kwargs)
 
     def save_model(self, count, model=None):
         if model is None: model = self.model
+        model.R = self.R
 
         modelname2 = '{}_pca_{}.npz'.format(self.name, count)
         with open(modelname2,'wb') as f:
@@ -134,7 +159,12 @@ class GaussianProcessWithPCAExperiment(GaussianProcessExperiment):
         modelname2 = '{}_pca_{}.npz'.format(self.name,count)
 
         model, self.F  = pickle.load(open(modelname2,'rb'))
+
         print "loaded model:", model
+        try:
+            self.R = model.R
+        except AttributeError:
+            self.R = 0.0
         return model
 
 
@@ -186,14 +216,15 @@ class GaussianProcessExperiment_skl(Experiment):
 
         return gpr
 
-    def test(self, X, model=None):
+    def test(self, X, model=None, **kwargs):
         if model is None: model = self.model
         #return model.predict(X)[0].flatten()
         return model.predict(X, return_std=False )
 
     def save_model(self, count, model=None):
         if model is None: model = self.model
-
+        model.R = self.R
+        
         # other option:
         #modelname = 'gp_{}.npy'.format(1)
         # model = gpr = GPy.models.GPRegression
@@ -230,4 +261,8 @@ class GaussianProcessExperiment_skl(Experiment):
 
         model = pickle.load(open(modelname2,'rb'))
         print "loaded model:", model
+        try:
+            self.R = model.R
+        except AttributeError:
+            self.R = 0.0
         return model
