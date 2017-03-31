@@ -284,7 +284,7 @@ def datareader( mols_tocal, fileparameters):
         if to_read_props:
             readings = gausread( file1, to_read_props)
             #print 'readings:', readings
-            props_dict.update( gausread( file1, to_read_props ) )
+            props_dict.update( readings )
 
         # set molecule attributes
         print "props_dict:", props_dict
@@ -447,6 +447,12 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1):
         results['rdv'] = sum([ float(item[2])**2 for item in spiden if abs(item[2])>0.05 ])
     if 'dipole' in props:
         results['dipole'] = mymol.dipole
+    if 'solv' in props:
+        ESCFs = mymol.scfenergies
+        print "ESCFs:", ESCFs
+        results['e0_solv'] = ESCFs[-3]
+        results['e1_solv'] = ESCFs[-2]
+        results['solv']    = - ( results['e0_solv'] - results['e1_solv'] ) * 627.5
 
     # assert that all props are filled
     print 'results:', results

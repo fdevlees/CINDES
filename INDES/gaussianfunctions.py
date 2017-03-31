@@ -254,11 +254,11 @@ def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
     if 'positions' in fileparameters: positions = fileparameters['positions']
     #for i in range(len(indices)):
     for mol in mol_tocal:
-        path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+        path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.com.o[0-9][0-9][0-9][0-9][0-9]*'
         paths.append(path1)
         if fileparameters['stab']==1: #property is global variable
             for pos in fileparameters['positions']:
-                path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+                path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.com.o[0-9][0-9][0-9][0-9][0-9]*'
                 paths.append(path2)
 
     newpaths = paths[:]

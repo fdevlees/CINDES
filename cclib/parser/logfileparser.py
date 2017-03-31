@@ -348,10 +348,14 @@ class Logfile(object):
         is a good place to add more tests in the future.        
         """
         if check and hasattr(self, name):
-            try:
-                assert getattr(self, name) == value
-            except AssertionError:
-                self.logger.warning("Attribute %s changed value (%s -> %s)" % (name, getattr(self, name), value))
+            if name in ['nmo','nbasis','natom']:
+                if not getattr(self,name)==value:
+                    print ' {}:{}->{} '.format(name,getattr(self,name), value),
+            else:
+                try:
+                    assert getattr(self, name) == value
+                except AssertionError:
+                    self.logger.warning("Attribute %s changed value (%s -> %s)" % (name, getattr(self, name), value))
         setattr(self, name, value)
 
     def skip_lines(self, inputfile, sequence):

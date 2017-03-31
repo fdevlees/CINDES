@@ -88,12 +88,18 @@ class LinRegOneExperiment(Experiment):
         y_pred = model.predict(X)
         return y_pred.flatten()
 
-    def predict(self, molecules):
+    def predict_old(self, molecules, **kwargs):
         ''' get molecules list '''
+        # same
         indices = [ mol.index for mol in molecules ]
-        X_pred = get_X_1D(indices=indices,descriptor=self.descriptor, identify=self.run.identify)
-        y_pred = self.test( X_pred)
-        print "y_pred:", y_pred
+
+        # different
+        #X_pred = get_X_1D(indices=indices, descriptor=self.descriptor, identify=self.run.identify)
+        X_pred = get_X(indices, array=self.array, descriptor=self.descriptor, identify=self.run.identify, **self.run.TZmat )
+
+        # same
+        y_pred = self.test( X_pred, **kwargs)
+        if debug: print "y_pred:", y_pred
         for molecule, y in zip(molecules, y_pred):
             molecule.predictions[self.name] = y
             print molecule, y

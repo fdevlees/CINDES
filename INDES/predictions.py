@@ -6,7 +6,7 @@ import pprint
 # my own modules
 from CINDES4.predictor import learning_skl as learning
 from CINDES4.predictor import learning_int as ml_int
-from CINDES4.predictor import tfitter
+#from CINDES4.predictor import tfitter
 
 from CINDES4.utils.writings import log_io, print_title, dump
 from CINDES4.utils.utils import processify

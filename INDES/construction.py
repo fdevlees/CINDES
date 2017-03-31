@@ -467,6 +467,25 @@ def filewriter2(zmat,index,**paras): #paras is short for fileparameters
             fid.writelines("%s " % item)
         fid.write("\n")
     fid.write("\n")
+    if paras['solv']:
+        fid.write("--link1--\n")
+        fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
+        fid.write("%mem=1500MB\n")
+        if not paras['nprocs']==1:
+            fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
+        fid.write(paras['gaussianline_solv0'])
+        fid.write("\n")
+        fid.write(str(index) + " no solvent calc\n")
+        fid.write("\n")
+        fid.write("--link1--\n")
+        fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
+        fid.write("%mem=1500MB\n")
+        if not paras['nprocs']==1:
+            fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
+        fid.write(paras['gaussianline_solv1'])
+        fid.write("\n")
+        fid.write(str(index) + " with solvent calc\n")
+        fid.write("\n")
     if paras['polar'] == 1 or paras['multiplejobs']>=1:
         fid.write("--link1--\n")
         fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")

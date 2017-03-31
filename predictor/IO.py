@@ -10,7 +10,7 @@ import pickle
 from copy import deepcopy
 from descriptor import get_X_1D, get_X_int
 
-def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='', array=[], **kwargs):
+def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='x_', array=[], **kwargs):
     ''' calculte X and y '''
     def get_y(table, tableindex):
         y =  np.fromiter((item[tableindex] for item in table ),np.float)
@@ -23,70 +23,22 @@ def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='', array=[
     #### MAKE X
     ## X.1: get indices from table
     indices = (item[0] for item in table)
-    if '1D' in descriptor:
-        X = get_X_1D(indices=indices, descriptor=descriptor, identify=identify, **kwargs)
-    elif 'int' in descriptor:
-        X = get_X_int(indices=indices, array=array)
-    else:
-        X = get_X( indices, descriptor=descriptor, **TZmat)
+    X = get_X( indices, descriptor=descriptor, identify=identify, array=array, **TZmat)
 
     #### LOG
     print "\tmade X:",
     try:
         print X.shape
     except AttributeError:
-        print len(X)
+        print "X should be a numpy array:"
+        X = np.asarray(X)
     print "\tmade y:", y.shape
 
     return X,y
 
 def get_X(indices, descriptor='BoB',array=[], identify='x_', **TZmat):
-
-    # 1. convert new indices to confs to ZMAT
-    converter = Converter()
-    mats = tuple( contozma(zcon.indtocon(item),**TZmat) for item in indices)
- 
-    # 2. convert new ZMATs to XYZs
-    converter = Converter()
-    try:
-        xyzs = [ zmatoxyz(converter,item) for item in mats ]
-    except KeyError:
-        print "Error: with:", item
-        i = mats.index(item)
-        print "index:", table[i]
-        raise
-
-    if True:
-        import pickle
-        with open('xyzs','wb') as f:
-            pickle.dump(xyzs, f)
-        raise SystemExit('printed xyz file')
- 
-    ## X.3: convert cartesian coordinates to descriptor
     if descriptor=='BoB':
-        if True:
-
-            # try to load a BoB file
-            datafile = 'BoB.pkl'
-            if os.path.exists(datafile):
-                with open(datafile,'rb') as f:
-                    X = pickle.load(f)
-            else:
-                X = np.asarray( tuple( BoB(item) for item in xyzs) )
-                with open(datafile,'wb') as f:
-                    pickle.dump(X,f,-1)
-        else:
-            if True:
-                from multiprocessing.dummy import Pool
-                def calculateParallel(xyzs, threads=4):
-                    pool = Pool(threads)
-                    results = pool.map(BoB, xyzs)
-                    pool.close()
-                    pool.join()
-                    return results
-                X = np.asarray( calculateParallel(xyzs, 16) )
-            else:
-                X = np.asarray( tuple( BoB(item) for item in xyzs) )
+        X = get_X_BoB(indices=indices, **TZmat )
     elif 'int' in descriptor:
         X = get_X_int( indices=indices, array=array)
     elif descriptor=='1DL':
@@ -95,7 +47,57 @@ def get_X(indices, descriptor='BoB',array=[], identify='x_', **TZmat):
         X = np.asarray( tuple( coulomb(item) for item in xyzs) )
     return X
 
+def get_X_BoB(indices, **TZmat):
+    parallel = True
 
+    # 1. convert new indices to confs to ZMAT
+    converter = Converter()
+    mats = tuple( contozma(zcon.indtocon(item),**TZmat) for item in indices)
+
+    # 2. convert new ZMATs to XYZs
+    converter = Converter()
+    try:
+        if False:
+            from multiprocessing.dummy import Pool
+            from functools import partial
+            get_xyz = partial(zmatoxyz, converter=converter)
+            def xyzParallel(mats, threads=4):
+                pool = Pool(threads)
+                results = pool.map(get_xyz, mats)
+            xyzs = xyzParallel( mats, 16)
+        else:
+            xyzs = [ zmatoxyz(converter=converter,zmat=item) for item in mats ]
+    except KeyError:
+        print "Error: with:", item
+        i = mats.index(item)
+        print "index:", table[i]
+        raise
+
+    ## X.3: convert cartesian coordinates to descriptor
+    if False:
+
+        # try to load a BoB file
+        datafile = 'BoB.pkl'
+        if os.path.exists(datafile):
+            with open(datafile,'rb') as f:
+                X = pickle.load(f)
+        else:
+            X = np.asarray( tuple( BoB(item) for item in xyzs) )
+            with open(datafile,'wb') as f:
+                pickle.dump(X,f,-1)
+    else:
+        if parallel:
+            from multiprocessing.dummy import Pool
+            def BoBParallel(xyzs, threads=4):
+                pool = Pool(threads)
+                results = pool.map(BoB, xyzs)
+                pool.close()
+                pool.join()
+                return results
+            X = np.asarray( BoBParallel(xyzs, 16) )
+        else:
+            X = np.asarray( tuple( BoB(item) for item in xyzs) )
+    return X
 
 def contozma(conf,core,active,passive):
     c = deepcopy(core)
@@ -104,9 +106,9 @@ def contozma(conf,core,active,passive):
     mat = zcon.constructor2(conf,c,a,p)
     return mat
 
-def zmatoxyz(converter,mat):
+def zmatoxyz(zmat, converter):
     ''' convert a zmat to xyz coordinates via the Converter instance '''
-    zmat = converter.read_zmalist(mat)
+    converter.read_zmalist(zmat)
     return converter.zmatrix_to_cartesian()
 
 #@processify

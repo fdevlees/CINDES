@@ -201,6 +201,17 @@ class Run(object):
                 else:
                     self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
                 self.gaussianline2 = '# geom=allcheck guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
+            elif param['twojob'] == 4:
+                self.multiplejobs = 4
+                if param['semiempirical'] == 1:
+                    self.gaussianline  = '# opt=(maxcycle=100) ' + 'pm6' +'\n'
+                else:
+                    self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
+                self.gaussianline2 = '# geom=allcheck guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
+                if param['solv']:
+                    self.gaussianline_solv0 = '# geom=allcheck guess=read scf=xqc b3lyp/6-31G(d,p)\n'
+                    self.gaussianline_solv1 = '# geom=allcheck guess=read scf=xqc scrf=(smd, solvent=aceticacid) b3lyp/6-31G(d,p)\n'
+
         for key in ['ip','ea','polar']:
             if param[key]==1:
                 self.multiplejobs +=1

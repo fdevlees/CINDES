@@ -248,6 +248,7 @@ def readfile(subinp):
         elif 'charge' in line: paras['charge'] = int(line.split()[1])
         elif 'debug' in line: paras['debug'] = True
         elif 'difmodel' in line: paras['difmodel'] = 1
+        elif 'extra_props' in line: paras['extra_props'] = line.split()[1:]
         elif 'extrawaittime' in line: paras['extrawaittime'] = float(line.split()[1])
         elif 'functional' in line: paras['functional'] = line.split()[1]
         elif 'identify' in line: paras['identify'] = line.split()[1]
@@ -373,31 +374,26 @@ def readfile(subinp):
         else:
             print "line is not interpreted!", line
 
-    # it turns out to be helpful to have a flag to know if the stab or polar property has to be calculated so:
-    # NOTE THAT HERE it is not possible to use polar and stab simultaneously
-    if 'bcprop' in paras: #test if we use a BC
-        if paras['bcprop']=='stab':
-            paras['stab']=1 #test if maybe that one is stab. if such stab=1
-        elif paras['property']=='stab':
-            paras['stab']=1
-        elif paras['bcprop']=='polar':
-            paras['polar']=1
-        elif paras['property']=='polar':
-            paras['polar']=1
-        if paras['bcprop'] in ['ip','IP'] or paras['property'] in ['ip','IP']: paras['ip']=1
-        if paras['bcprop'] in ['ea','EA'] or paras['property'] in ['ea','EA']: paras['ea']=1
+    # get a list of all properties that need to be calculated:
+    if paras['property']=='func':
+        props = []
+        props.extend( paras['func_args'] )
     else:
-        if paras['property']=='stab':
-            paras['stab']=1
-        elif paras['property']=='polar':
-            paras['polar']=1
-        elif paras['property'] in ['ip','IP']: paras['ip']=1
-        elif paras['property'] in ['aip','AIP']: paras['aip']=1
-        elif paras['property'] in ['ea','EA']: paras['ea']=1
-        elif paras['property'] in ['hardness' ]:
-            paras['ip'] = 1
-            paras['ea'] = 1
-    #print "in inputreader paras:", paras
+        props = [ paras['property'] ]
+    try:
+        props.append(paras['bcprop'])
+    except KeyError:
+        pass
+    props.extend( paras['extra_props'] )
+    paras['props'] = props
+    if 'stab' in props: paras['stab'] = True
+    if 'polar' in props: paras['polar'] = True
+    if 'ip' in props: paras['ip'] = True
+    if 'ea' in props: paras['ea'] = True
+    if 'aip' in props: paras['aip'] = True
+    if 'aea' in props: paras['aea'] = True
+    if 'solv' in props: paras['solv'] = True
+
     return paras
 
 def substireader(nsit,subinp):

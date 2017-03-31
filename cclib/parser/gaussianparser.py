@@ -1043,7 +1043,8 @@ class Gaussian(logfileparser.Logfile):
                 try:
                     assert nbasis == self.nbasis
                 except AssertionError:
-                    self.logger.warning("Number of basis functions (nbasis) has changed from %i to %i" % (self.nbasis, nbasis))
+                    #self.logger.warning("Number of basis functions (nbasis) has changed from %i to %i" % (self.nbasis, nbasis))
+                    pass
             self.nbasis = nbasis
 
         # Number of linearly-independent basis sets.
