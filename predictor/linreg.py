@@ -28,7 +28,7 @@ class LinRegOneExperiment(Experiment):
         self.hparam = { 'alpha':1e4,
                         'tol': 0.001,
                         'intercept':True }
-        self.hparam_grid = {'alpha': np.logspace(-5,5,5) }
+        self.hparam_grid = {'alpha': np.logspace(-10,5,15) }
 
         for key in self.hparam:
             if key in kwargs:
@@ -184,9 +184,8 @@ class LinRegOneWithPCAExperiment(LinRegOneExperiment):
 
     def test(self, X, model=None, **kwargs):
         if model is None: model=self.model
-        krr = model
         X_F = self.F.transform(X)
-        return super(LinRegOneWithPCAExperiment, self).test(X_F, krr)
+        return super(LinRegOneWithPCAExperiment, self).test(X_F, model)
 
     def save_model(self, count, model=None):
         if model is None: model=self.model

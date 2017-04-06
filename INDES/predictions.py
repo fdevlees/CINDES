@@ -42,7 +42,6 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
             regressor = LinRegOneWithPCAExperiment(table=table,
                                                    retrain=retrain,
                                                    array=array,
-                                                   n_principal_components=100,
                                                    run=run,
                                                    **kwargs
                                                    )
@@ -87,7 +86,7 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
                                                          run = run,
                                                          **kwargs )
         else:
-            regressor = GaussianProcessExperiment(     table=table,
+            regressor = GaussianProcessExperiment_skl( table=table,
                                                        retrain = retrain,
                                                        array=array,
                                                        run = run,
@@ -98,7 +97,6 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
         if prediction['pca']:
             print "PCA!"
             regressor = NearestNeighborWithPCAExperiment( table = table,
-                                                          n_principal_components=100,
                                                           retrain=retrain,
                                                           array=array,
                                                           run = run,
@@ -114,7 +112,6 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
     elif ptype=='svr':
         from CINDES4.predictor.svr import SupportVectorExperiment, SupportVectorWithPCAExperiment
         regressor = SupportVectorExperiment(        table=table,
-                                                    n_principal_components=100,
                                                     retrain=retrain,
                                                     array=array,
                                                     run = run,
@@ -123,7 +120,6 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
     elif ptype=='krr':
         from CINDES4.predictor.krr import KernelRidgeExperiment, KernelRidgeWithPCAExperiment
         regressor = KernelRidgeExperiment(          table=table,
-                                                    n_principal_components=100,
                                                     retrain=retrain,
                                                     array=array,
                                                     run = run,
@@ -151,16 +147,25 @@ def do_prediction(prediction, table, retrain, array, count, nsite, run, mols_tod
 
     # 2. train or reload the model
     regressor.get_model(
-                        write_log=True,
-                        reopt_hyps=False,
-                        count = count,
-                        nsite = nsite,
-                        )
+                                  write_log=True,
+                                  reopt_hyps=False,
+                                  count = count,
+                                  nsite = nsite,
+                               )
 
     # 3. use model to predict
     if not run.procedure=='testpred':
         regressor.predict(mols_todo, rstd=True)
-    return regressor.R
+
+    # 4. add R to prediction and plots?
+    prediction['R'] = regressor.R
+    prediction['retrained'] = regressor.retrained
+    try:
+        prediction['plot1'] = regressor.plot1
+        prediction['plot2'] = regressor.plot2
+    except AttributeError:
+        print "prediction", prediction['name'], "has no plot1 or plot2 attribute"
+    return prediction
 
 def do_prediction_process(*args,**kwargs):
     import concurrent.futures
@@ -174,6 +179,66 @@ def do_prediction_process2(*args,**kwargs):
         result = executor.submit(do_prediction, *args, **kwargs).result()
     return result
 
+def plot_predictions(predictions):
+    import matplotlib.pyplot as plt
+    if predictions[0]['plots']==[]:return
+    plotted = False
+    n = len(predictions)
+    nx,ny = set_nxy(len(predictions))
+    print nx, ny
+    f, axs = plt.subplots(ny,nx)
+    axs2d = [ item for sublist in axs for item in sublist ]
+    print "axs2d:",axs2d
+    for i,prediction in enumerate(predictions):
+        if prediction['retrained']:
+            j = 0
+            a=axs2d[i]
+            print prediction['name']
+
+            # plot test data
+            try:
+                print prediction['plot1']
+                x1 = prediction['plot1'][:,0]
+                y1 = prediction['plot1'][:,1]
+            except KeyError:
+                print "no plot1 Key"
+                j +=1
+            else:
+                a.scatter(x1, y1, label=prediction['name'], s=5, alpha=.8)
+                plotted = True
+
+            # plot train data
+            try:
+                print prediction['plot2']
+                x2 = prediction['plot2'][:,0]
+                y2 = prediction['plot2'][:,1]
+            except KeyError:
+                print "no plot2 Key"
+                j += 1
+            else:
+                a.scatter(x2, y2, label=prediction['name'], s=5, alpha=.5)
+                plotted = True
+
+            if j==2: continue
+
+            a.legend()
+    if plotted:
+        plt.show()
+    else:
+        del f, axs, axs2d
+        plt.close()
+        import gc
+        gc.collect()
+    return
+
+
+def set_nxy(n):
+    xys = { '1':(1,1), '2':(2,1), '3':(2,2),
+            '4':(2,2), '5':(3,2), '6':(3,2),
+            '7':(4,2), '8':(4,2), '9':(3,3),
+           '10':(4,3),'11':(4,3),'12':(4,3)
+          }
+    return xys[str(n)]
 
 
 @log_io()
@@ -196,8 +261,8 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
         # 1. do predictions
         for prediction in run.predictions:
             #do_prediction_process(prediction, table, retrain, array, count, nsite, run, mols_todo)
-            R = do_prediction(prediction, table, retrain, array, count, nsite, run, mols_todo)
-            prediction['R'] = R
+            prediction = do_prediction(prediction, table, retrain, array, count, nsite, run, mols_todo)
+            made_pred = True
       
         # 2. get best R
         best_pred =  max(run.predictions, key= lambda x:x['R'])
@@ -206,9 +271,11 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
         # 3. log
         for molecule in mols_todo:
             print molecule.predictions
+        # 3.1. do plottings
+        plot_predictions(run.predictions)
 
         # 4. decide which molecules to calculate and which not
-        if best_pred['R'] > 0.98 and run.ml:
+        if best_pred['R'] > 0.95 and run.ml:
             print "prediction is good enough"
             mols_nocal, mols_tocal = ([],[])
             #for mol in mols_todo:

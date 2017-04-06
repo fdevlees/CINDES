@@ -365,6 +365,8 @@ class DBSQLite(DBBaseAdapter):
 
       """
       c = self.getCursor()
+
+      # p statement make table with identify(text)-generation(integer), (k(real), v(real))**n )
       pstmt = "create table if not exists %s(identify text, generation integer, " % (Consts.CDefSQLiteDBTable)
       for k, v in stats.items():
          pstmt += "%s %s, " % (k, self.typeDict[type(v)])

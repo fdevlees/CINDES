@@ -32,8 +32,8 @@ class KernelRidgeExperiment(Experiment):
                         'alpha': 1.e-3,
                         'gamma':1.e-6 }  # gamma parameter is specific for rbf/laplacian kernel
 
-        self.hparam_grid = {'alpha': np.logspace(-7,5,5),
-                            'gamma': np.logspace(-7,5,5),
+        self.hparam_grid = {'alpha': np.logspace(-10,5,10),
+                            'gamma': np.logspace(-10,5,10),
                             'kernel': ['rbf','laplacian'] }
         
         # see if new defaults are given via input

@@ -57,7 +57,7 @@ def get_preds(subinp, line):
     defaults = { 'ml' : { 'type': 'ml', 'descriptor':'coulomb'},
                  'iml': { 'type':'iml' },
                  'nn' : { 'type': 'nn', 'descriptor':'bob'},
-                 '1d' : { 'type': '1d', 'descriptor':'1DL', 'subtype':'ridge', 'intercept':False },
+                 '1d' : { 'type': '1d', 'descriptor':'1DL', 'subtype':'ridge', 'intercept':True },
                  '2d' : { 'type': '2d' },
                  'knn': { 'type': 'knn'},
                  'gp' : { 'type': 'gp' },
@@ -65,7 +65,10 @@ def get_preds(subinp, line):
                  'krr': { 'type': 'krr', 'kernel':'rbf'}
                }
     # set n_folds default for each experiment:
-    for experiment in defaults.values(): experiment.update( {'n_folds':5 , 'pca':False} )
+    for experiment in defaults.values(): experiment.update( {'n_folds':5 ,
+                                                                 'pca':False,
+                                              'n_principal_components':100,
+                                                               'plots':[] } )
 
     npredictions = int(line.split()[1])
     preds = [] # this becomes a list of predictions to make
@@ -212,6 +215,7 @@ def readfile(subinp):
            'identify':'unspecified_',
            'charge':0,
            'mult':1,
+           'solv':False,
            'seed':randomseed,
            'montecarlo':0,   #Temperature at start
            'nrandsites':2}   #n random sites changed. for all choose 0

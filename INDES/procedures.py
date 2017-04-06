@@ -547,7 +547,7 @@ def BFS(param,array):
 
             # STEP 5: UPDATE DATABASE and LOG results of microiteration
             # logs new elements in data to table and tablebin and whole data to cyclesinfo
-            table = loggings(mols_all,table,count,k,l, made_pred )
+            table = loggings(mols_all,table,count,k,l, made_pred, tablename = myrun.tablename)
 
             # STEP 6: UPDATE OPTIMUM STRUCTURE
             # decide what the maximum site is and if the bc if fullfilled
@@ -600,7 +600,7 @@ def generate_procedure(param,array):
     #get structure
     TZmat = r.geometry(**param)
     #to get an xyz file with the data from tablebin do generate1()
-    with open('tablebin','rb') as f:
+    with open(param['tablename'],'rb') as f:
         table = pickle.load(f)
     #print table[508:510]
     learning.generate1(converter=converter,table=table,**TZmat)

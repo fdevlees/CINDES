@@ -24,7 +24,8 @@ class NearestNeighborExperiment(Experiment):
 
         self.hparam = { "n_neighbors":1,
                         "metric": "minkowski",
-                        "weights": "uniform"}
+                        "weights": "uniform",
+                        "supervised": True}
 
         self.hparam_grid = { "n_neighbors": [ 1, 2, 3, 4, 5, 7, 9 ],
                              "metric": ['minkowski', 'euclidean'],
@@ -39,7 +40,7 @@ class NearestNeighborExperiment(Experiment):
         return
 
     def get_estimator(self,**kwargs):
-        if supervised:
+        if self.hparam['supervised']:
             estimator = KNeighborsRegressor(n_neighbors=self.hparam['n_neighbors'],
                                             metric=self.hparam['metric'])
         else:
@@ -54,7 +55,7 @@ class NearestNeighborExperiment(Experiment):
         if X is None: X=self.X
         if y is None: y=self.y
         
-        if supervised:
+        if self.hparam['supervised']:
             NN = self.get_estimator(**kwargs).fit(X,y)
         else:
             NN = self.get_estimator(**kwargs).fit(X)
@@ -66,7 +67,7 @@ class NearestNeighborExperiment(Experiment):
     def test(self, X, model=None, **kwargs ):
         if model is None: model=self.model
         NN, y_train = model
-        if supervised:
+        if self.hparam['supervised']:
             y_test = NN.predict(X).flatten()
         else:
             _, ind = NN.kneighbors(X)
@@ -88,8 +89,8 @@ class NearestNeighborExperiment(Experiment):
 
     def get_best_hyperparams(self):
         ''' hyperparameter search with use of the sklearn GridSearchCV function '''
-        if not supervised:
-            return
+        if not self.hparam['supervised']:
+            self.cross_val(plot=True)
         else:
             super(NearestNeighborExperiment, self).get_best_hyperparams()
         return

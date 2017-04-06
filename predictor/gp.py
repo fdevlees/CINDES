@@ -55,6 +55,7 @@ class GaussianProcessExperiment(Experiment):
 
         # Fit GP through entire training data set
         gpr.set_XY(X, y[:,None])
+        self.retrained=True
 
         if verbose: print "\tLearned model: ", gpr
 
@@ -117,55 +118,12 @@ class GaussianProcessExperiment(Experiment):
             self.R = 0.0
         return model
 
-
-class GaussianProcessWithPCAExperiment(GaussianProcessExperiment):
-
-    def __init__(self, white_noise=1e-1, n_principal_components=50, **kwargs):
-        super(GaussianProcessWithPCAExperiment, self).__init__(white_noise, **kwargs)
-        self.n_principal_components = n_principal_components
-
-    def train(self, X=None, y=None, **kwargs):
-        if X is None: X=self.X
-        if y is None: y=self.y
-        # Dimensionality reduction
-        F = PCA(self.n_principal_components)
-        F.fit(X)
-        X_F = F.transform(X)
-        self.F = F
-
-        print "\tLeast explained variance:", F.explained_variance_[-1]
-        print "\tDimensionality reduction: ", X_F.shape
-
-        gp = super(GaussianProcessWithPCAExperiment, self).train(X_F, y)
-
-        return gp
-
-    def test(self, X, model=None, **kwargs):
-        if model is None: model = self.model
-        gp = model
-        X_F = self.F.transform(X)
-        return super(GaussianProcessWithPCAExperiment, self).test(X_F, gp, **kwargs)
-
-    def save_model(self, count, model=None):
-        if model is None: model = self.model
-        model.R = self.R
-
-        modelname2 = '{}_pca_{}.npz'.format(self.name, count)
-        with open(modelname2,'wb') as f:
-            pickle.dump((model,self.F),f)
+    def get_best_hyperparams(self):
+        ''' hyperparameter search with use of the sklearn GridSearchCV function '''
+        self.cross_val(plot=True)
         return
 
-    def load_model(self, count):
-        modelname2 = '{}_pca_{}.npz'.format(self.name,count)
 
-        model, self.F  = pickle.load(open(modelname2,'rb'))
-
-        print "loaded model:", model
-        try:
-            self.R = model.R
-        except AttributeError:
-            self.R = 0.0
-        return model
 
 
 
@@ -176,8 +134,12 @@ class GaussianProcessExperiment_skl(Experiment):
         """
         white_noise is a constant parameter in the GP to model observational noise. [Can be used as a regularizer] 
         """
-        super(GaussianProcessExperiment_skl, self).__init__(**kwargs)
         self.white_noise = white_noise
+        self.hparam = { 'alpha':1.e-6,
+                        'tol': 0.001,
+                        'intercept':True }
+        self.hparam_grid = {'alpha': np.logspace(-10,-5,3) }
+        super(GaussianProcessExperiment_skl, self).__init__(**kwargs)
 
     def train(self, X=None, y=None, verbose=True, **kwargs):
 
@@ -191,24 +153,8 @@ class GaussianProcessExperiment_skl(Experiment):
         X_hyp = X[ind[:n_opt],:]
         y_hyp = y[ind[:n_opt]]
 
-        # Define kernel # RBF ( alias Squared Exponential (SE) )
-        from sklearn.gaussian_process.kernels import RBF, WhiteKernel
-        #kernel = RBF( length_scale=1.0, length_scale_bounds=(1.e-5, 100000.0)
-        kernel = 1.0 * RBF( length_scale=1.0, length_scale_bounds=(1.e-5, 100000.0) )\
-                + WhiteKernel( noise_level=1.e-5, noise_level_bounds=(1e-10, 1e+1 ) )
-        #kernel = RBF(X.shape[1], ARD=True)
+        gpr = self.get_estimator()
 
-        # set estimator
-        from sklearn.gaussian_process import GaussianProcessRegressor
-        gpr = GaussianProcessRegressor(kernel=kernel, alpha= 0.0, n_restarts_optimizer=9)
-
-        # Optimize regularized GP hyperparameters
-        #gpr = GPRegression(X_hyp, y_hyp[:,None], kernel=kernel)
-        #gpr.Gaussian_noise.variance.constrain_fixed(self.white_noise) # White noise as regularizer
-        #gpr.optimize('scg', max_iters=500)
-
-        # Fit GP through entire training data set
-        #gpr.set_XY(X, y[:,None])
         gpr.fit(X,y)
 
         if verbose: print "\tLearned model: ", gpr
@@ -260,6 +206,69 @@ class GaussianProcessExperiment_skl(Experiment):
         #model.update_model(True)
 
         model = pickle.load(open(modelname2,'rb'))
+        print "loaded model:", model
+        try:
+            self.R = model.R
+        except AttributeError:
+            self.R = 0.0
+        return model
+
+    def get_estimator(self, **kwargs):
+        from sklearn.gaussian_process.kernels import RBF, WhiteKernel
+
+        # Define kernel # RBF ( alias Squared Exponential (SE) )
+        #kernel = RBF( length_scale=1.0, length_scale_bounds=(1.e-5, 100000.0)
+        kernel = 1.0 * RBF( length_scale=1.0, length_scale_bounds=(1.e-5, 100000.0) )\
+                + WhiteKernel( noise_level=1.e-5, noise_level_bounds=(1e-10, 1e+1 ) )
+
+        # set estimator
+        from sklearn.gaussian_process import GaussianProcessRegressor
+        gpr = GaussianProcessRegressor(kernel=kernel, alpha= 0.0, n_restarts_optimizer=9)
+        
+        return gpr
+
+class GaussianProcessWithPCAExperiment(GaussianProcessExperiment_skl):
+
+    def __init__(self, white_noise=1e-1, n_principal_components=50, **kwargs):
+        super(GaussianProcessWithPCAExperiment, self).__init__(white_noise, **kwargs)
+        self.n_principal_components = n_principal_components
+
+    def train(self, X=None, y=None, **kwargs):
+        if X is None: X=self.X
+        if y is None: y=self.y
+        # Dimensionality reduction
+        F = PCA(self.n_principal_components)
+        F.fit(X)
+        X_F = F.transform(X)
+        self.F = F
+
+        print "\tLeast explained variance:", F.explained_variance_[-1]
+        print "\tDimensionality reduction: ", X_F.shape
+
+        gp = super(GaussianProcessWithPCAExperiment, self).train(X_F, y)
+
+        return gp
+
+    def test(self, X, model=None, **kwargs):
+        if model is None: model = self.model
+        gp = model
+        X_F = self.F.transform(X)
+        return super(GaussianProcessWithPCAExperiment, self).test(X_F, gp, **kwargs)
+
+    def save_model(self, count, model=None):
+        if model is None: model = self.model
+        model.R = self.R
+
+        modelname2 = '{}_pca_{}.npz'.format(self.name, count)
+        with open(modelname2,'wb') as f:
+            pickle.dump((model,self.F),f)
+        return
+
+    def load_model(self, count):
+        modelname2 = '{}_pca_{}.npz'.format(self.name,count)
+
+        model, self.F  = pickle.load(open(modelname2,'rb'))
+
         print "loaded model:", model
         try:
             self.R = model.R

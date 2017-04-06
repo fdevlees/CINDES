@@ -3,8 +3,7 @@ debug=0
 
 import construction as zcon
 from CINDES4.utils.writings import log_io, print_title, sprint
-from CINDES4.predictor import learning_skl
-#import learning
+from CINDES4.predictor import learning_skl as learning
 import random
 from math import exp #exp(x) returns e^x
 #from operator import mul
@@ -73,7 +72,6 @@ def montecarloprocedure(fileparameters, subarray, maxi, table,**kwargs):
 
     # 3. FOR ML
     if fileparameters['ml']==1:
-        import learning
         ml_instance = learning.MC_init(table, **kwargs)
 
     # 4. select random configurations until one is accepted. 

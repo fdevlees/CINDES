@@ -32,7 +32,7 @@ def log_cyclesinfo(mols, count, k, l):
     #del filedata
     return
 
-def log_table( mols, table):
+def log_table( mols, table, tablename='tablebin'):
     if debug:
         print "in log_table: mols:", mols
         print "table:", table
@@ -56,9 +56,9 @@ def log_table( mols, table):
     #    else:
     #        assert item[1]==0, "item[1] has to be 1 or 0 but is %s" % str(item[1])
 
-    with open('tablebin','wb') as tfid: # write the table to a file
+    with open(tablename,'wb') as tfid: # write the table to a file
         pickle.dump(table,tfid)
-        print "dumped tablebin"
+        print "dumped table in {}".format(tablename)
     return table
 
 
@@ -102,7 +102,7 @@ def pstats(predinfo):
     from CINDES4.utils import statistics
     import pprint
     #import statistics
-    print "predinfo:\n", pprint.pformat(predinfo)
+    #print "predinfo:\n", pprint.pformat(predinfo)
 
     #print predinfo['pvalues'].corr( predinfo['knn'])
     #print predinfo['pvalues'].corr( predinfo['knn'], method='spearman')
@@ -118,13 +118,13 @@ def pstats(predinfo):
 
 
 @log_io()
-def loggings(mols,table,count,k,l, made_pred=False):
+def loggings(mols,table,count,k,l, made_pred=False, tablename='tablebin'):
 
     #--- LOGGINGS: CYCLESINFO
     log_cyclesinfo(mols, count,k,l)
 
     #---- LOGGINGS: TABLEBIN
-    table = log_table( mols, table )
+    table = log_table( mols, table, tablename=tablename )
 
     if debug:
         print "mols.Pvalue:", mols[0].Pvalue

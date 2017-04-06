@@ -36,7 +36,7 @@ import shutil
 once=0
 
 
-def get_secret_data(tablefilename,mols_tocal):
+def get_secret_data(tablefilename,mols_tocal, mols_nocal):
     '''checks for confs already calculated'''
     import pickle
     with open(tablefilename,'rb') as f:
@@ -48,11 +48,15 @@ def get_secret_data(tablefilename,mols_tocal):
     tabledict = dict( ( [ item[0], item[column] ] for item in secret_table ) )
     data = []
     for mol in mols_tocal:
-        mol.predicted = False
-        mol.Pvalue = tabledict[ mol.index ]
-        #data.append( [ index, 1.0, tabledict[index]] )
-        #if debug: print "table_dict[index:]", tabledict[index], index
-    return mols_tocal
+        try:
+            mol.Pvalue = tabledict[ mol.index ]
+            print "in secret data",
+        except KeyError:
+            pass
+        else:
+            mol.predicted = False
+            mols_nocal.append( mols_tocal.pop( mols_tocal.index(mol)) )
+    return mols_tocal, mols_nocal
 
 
 # PROCEDURE
@@ -66,16 +70,16 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
         once = 1
         print " "
     elif myrun.nosub==3:
-        print "SECRET DATA activated"
+        print "SECRET DATA activated:", myrun.nosub_file
         tablefilename = myrun.nosub_file
-        mols_calc = get_secret_data(tablefilename, mols_tocal)
-        mols_all  = mols_calc + mols_nocal
-        return mols_all
-    else:
+        print "before: mols_tocal", mols_tocal, "mols_nocal", mols_nocal
+        mols_tocal , mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal)
+        print "after: mols_tocal", mols_tocal, "mols_nocal", mols_nocal
+
+    if not mols_tocal==[]:
         # 1. Make the files
         filemaker(mols_tocal,myrun,**TZmat) #----------------------------------HERE IS THE FILEWRITER CALL
 
-    if not mols_tocal==[]:
         # 2. now the jobs have to be submitted 
         jobids = submission(mols_tocal,myrun)
 

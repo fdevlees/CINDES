@@ -11,6 +11,7 @@ from scipy.stats import pearsonr
 from IO import get_XY, get_X
 from CINDES4.utils.utils import processify
 from CINDES4.utils.statistics import print_stats
+from CINDES4.utils.writings import sprint, log_io
 
 debug=False
 
@@ -27,6 +28,7 @@ class Experiment(object):
                  getR = False,
                  reoptimize = True,
                  descriptor='BoB',
+                 plots=[],
                  **kwargs):
         """
         Initialize experiment by reading/constructing data.
@@ -45,6 +47,8 @@ class Experiment(object):
         self.n_folds = n_folds
         self.array = array # only for 'int' descriptor
         self.table = table
+        self.plots = plots
+        self.retrained = False
 
         if self.retrain:
             #self.X, self.y = read_BoB_data(setting, '../data')
@@ -132,7 +136,14 @@ class Experiment(object):
         clf_gs.fit(X_hyp, y_hyp)
 
         # 4. determine R on validation set:
-        self.R = pearsonr( y_test, clf_gs.predict(X_test))[0]
+        y_pred = clf_gs.predict(X_test)
+        y_pred_hyp = clf_gs.predict(X_hyp)
+        self.R = pearsonr( y_test, y_pred)[0]
+        self.plot1 = np.c_[ y_test, y_pred ]
+        self.plot2 = np.c_[ y_hyp, y_pred_hyp ]
+        for i in range(10):
+            print y_test[i], y_pred[i]
+        print "8"*30
 
         # 5. print time consumed
         time_to_fit = time.time() - stime
@@ -142,13 +153,14 @@ class Experiment(object):
         print "clf_gs:", clf_gs
         print "best_params_:", clf_gs.best_params_
         print "best_score_:", clf_gs.best_score_
+        self.retrained = True
         # print "R**2 on validation set:", self.R
         # print "cv_results_", clf_gs.cv_results_ # too verbose
 
         # 7. update model.hparams to best ones. 
         self.hparam.update(clf_gs.best_params_)
 
-        return
+        return clf_gs
 
 
     def get_model(self, count=0, nsite=0, *args, **kwargs):
@@ -178,22 +190,26 @@ class Experiment(object):
                 self.reoptimize = True
 
         if self.reoptimize: # sets self.hparam
-            self.get_best_hyperparams()
+            clf_gs = self.get_best_hyperparams()
         elif self.getR:
             self.cross_val()
         print "R**2 value is:", self.R
         
         # and always do a refit on total database:
-        print "Training for final model..."
-        stime = time.time()
-        self.model  = self.train(verbose=True, **kwargs)
-        time_to_fit = time.time() - stime
-        print "\tTime to fit: ", time_to_fit, ' s'
+        if True:
+            print "Training for final model..."
+            stime = time.time()
+            self.model  = self.train(verbose=True, **kwargs)
+            time_to_fit = time.time() - stime
+            print "\tTime to fit: ", time_to_fit, ' s'
+        else:
+            self.model=clf_gs
 
         # save model:
         self.save_model(count)
         return
 
+    @log_io()
     def predict(self, molecules, **kwargs):
         ''' get molecules list 
 
@@ -201,17 +217,24 @@ class Experiment(object):
         '''
         indices = [ mol.index for mol in molecules ]
         X_pred = get_X(indices, array=self.array, descriptor=self.descriptor, identify=self.run.identify, **self.run.TZmat )
+        #sprint(10, X_pred)
         y_pred = self.test( X_pred, **kwargs)
         if debug: print "y_pred:", y_pred
         for molecule, y in zip(molecules, y_pred):
             molecule.predictions[self.name] = y
-            print molecule, y
+            #print molecule, y
         return y_pred
 
-    def cross_val(self, write_log=False, **kwargs):
+    def cross_val(self, write_log=False, plot=False, **kwargs):
         # save R**2, MAE and percentiles of each fold to a row in a dataframe.
         stats_df_train = pd.DataFrame(columns=('r','p-value','mae','perc_25', 'perc_50', 'perc_75' ))
         stats_df_test =  pd.DataFrame(columns=('r','p-value','mae','perc_25', 'perc_50', 'perc_75' ))
+
+        # for plotting:
+        r_test = []
+        r_test_pred = []
+        r_train = []
+        r_train_pred = []
 
         # Randomly split training and py data
         for fold, (X_train, y_train, X_test, y_test) in enumerate(self.get_fold()):
@@ -219,6 +242,8 @@ class Experiment(object):
             
             # this 5 lines are also in get_model without crosval
             print "Training ...",
+            r_test.extend(y_test)
+            r_train.extend(y_train)
             stime = time.time()
             model = self.train(X_train, y_train, **kwargs)
             time_to_fit = time.time() - stime
@@ -228,6 +253,8 @@ class Experiment(object):
             stime = time.time()
             y_train_pred = self.test(X_train, model)
             y_test_pred = self.test(X_test, model)
+            r_test_pred.extend(y_test_pred)
+            r_train_pred.extend(y_train_pred)
             time_to_fit = time.time() - stime
             print "\tTime to predict: ", time_to_fit, ' s'
      
@@ -253,6 +280,11 @@ class Experiment(object):
         print "train statistics:\n", stats_df_train
         print " test statistics:\n", stats_df_test
         self.R = stats_df_test.loc['means']['r']
+
+        if plot:
+            self.plot1 = np.c_[ r_test, r_test_pred ]
+            self.plot2 = np.c_[ r_train, r_train_pred ]
+            self.retrained = True
 
         return stats_df_train.loc['means'], stats_df_test.loc['means']
 
