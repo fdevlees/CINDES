@@ -165,6 +165,10 @@ def do_prediction(prediction, table, retrain, array, count, nsite, run, mols_tod
         prediction['plot2'] = regressor.plot2
     except AttributeError:
         print "prediction", prediction['name'], "has no plot1 or plot2 attribute"
+    try:
+        prediction['plot3'] = regressor.plot3
+    except AttributeError:
+        print "prediction", prediction['name'], "has no plot3 attribute"
     return prediction
 
 def do_prediction_process(*args,**kwargs):
@@ -187,17 +191,23 @@ def plot_predictions(predictions):
     nx,ny = set_nxy(len(predictions))
     print nx, ny
     f, axs = plt.subplots(ny,nx)
-    axs2d = [ item for sublist in axs for item in sublist ]
+    try:
+        axs2d = [ item for sublist in axs for item in sublist ]
+    except TypeError:
+        try:
+            axs2d = [ item for item in axs ]
+        except TypeError:
+            axs2d = [axs]
     print "axs2d:",axs2d
     for i,prediction in enumerate(predictions):
-        if prediction['retrained']:
+        if prediction['retrained'] or True:
             j = 0
             a=axs2d[i]
             print prediction['name']
 
             # plot test data
             try:
-                print prediction['plot1']
+                #print prediction['plot1']
                 x1 = prediction['plot1'][:,0]
                 y1 = prediction['plot1'][:,1]
             except KeyError:
@@ -209,7 +219,7 @@ def plot_predictions(predictions):
 
             # plot train data
             try:
-                print prediction['plot2']
+                #print prediction['plot2']
                 x2 = prediction['plot2'][:,0]
                 y2 = prediction['plot2'][:,1]
             except KeyError:
@@ -233,7 +243,7 @@ def plot_predictions(predictions):
 
 
 def set_nxy(n):
-    xys = { '1':(1,1), '2':(2,1), '3':(2,2),
+    xys = { '1':(1,1), '2':(2,1), '3':(3,1),
             '4':(2,2), '5':(3,2), '6':(3,2),
             '7':(4,2), '8':(4,2), '9':(3,3),
            '10':(4,3),'11':(4,3),'12':(4,3)
@@ -251,7 +261,7 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
     TZmat = run.TZmat
     retrain = nsite==0
     retrain = False
-    enoughdata = ( not table==[] and not mols_todo==[] and count > 1 ) or run.procedure=='testpred'
+    enoughdata = ( len(table)>50 and not mols_todo==[]) or run.procedure=='testpred'
 
     # make every item in run uncallable to be able to be pickled by the subprocess.Queue 
     store_function = run.function
@@ -275,7 +285,7 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
         plot_predictions(run.predictions)
 
         # 4. decide which molecules to calculate and which not
-        if best_pred['R'] > 0.95 and run.ml:
+        if best_pred['R'] > 0.90 and run.ml:
             print "prediction is good enough"
             mols_nocal, mols_tocal = ([],[])
             #for mol in mols_todo:

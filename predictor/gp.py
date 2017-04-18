@@ -147,11 +147,11 @@ class GaussianProcessExperiment_skl(Experiment):
         if y is None: y=self.y
 
         # Get subset for hyperparameter optimization
-        ind = np.arange(X.shape[0])
-        np.random.shuffle(ind)
-        n_opt = min((300, X.shape[0]))
-        X_hyp = X[ind[:n_opt],:]
-        y_hyp = y[ind[:n_opt]]
+        #ind = np.arange(X.shape[0])
+        #np.random.shuffle(ind)
+        #n_opt = min((300, X.shape[0]))
+        #X_hyp = X[ind[:n_opt],:]
+        #y_hyp = y[ind[:n_opt]]
 
         gpr = self.get_estimator()
 
@@ -223,7 +223,7 @@ class GaussianProcessExperiment_skl(Experiment):
 
         # set estimator
         from sklearn.gaussian_process import GaussianProcessRegressor
-        gpr = GaussianProcessRegressor(kernel=kernel, alpha= 0.0, n_restarts_optimizer=9)
+        gpr = GaussianProcessRegressor(kernel=kernel, alpha= 0.0, n_restarts_optimizer=2)
         
         return gpr
 
@@ -257,9 +257,17 @@ class GaussianProcessWithPCAExperiment(GaussianProcessExperiment_skl):
 
     def save_model(self, count, model=None):
         if model is None: model = self.model
+
         model.R = self.R
 
+        try:
+            model.plot1 = self.plot1
+            model.plot2 = self.plot2
+        except AttributeError:
+            pass
+
         modelname2 = '{}_pca_{}.npz'.format(self.name, count)
+
         with open(modelname2,'wb') as f:
             pickle.dump((model,self.F),f)
         return
@@ -270,8 +278,15 @@ class GaussianProcessWithPCAExperiment(GaussianProcessExperiment_skl):
         model, self.F  = pickle.load(open(modelname2,'rb'))
 
         print "loaded model:", model
+
         try:
             self.R = model.R
         except AttributeError:
             self.R = 0.0
+
+        try:
+            self.plot1 = model.plot1
+            self.plot2 = model.plot2
+        except AttributeError:
+            pass
         return model

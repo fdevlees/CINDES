@@ -379,7 +379,7 @@ def runtest(run, maximum, maxsite, count, bcok,mctable=[], array=[]):
                    maxsite = montecarloprocedure(param, array, maximum, mctable)
                else:
                    maxsite = montecarloprocedure(param, array, maximum, mctable, **TZmat)
-               print "maxsite:", pprint.pfomat( maxsite, width=100 )
+               print "maxsite:", pprint.pformat( maxsite, width=100 )
         else:
             print "maximum and maxsite are not the same yet"
             print "maximum:" ,maximum

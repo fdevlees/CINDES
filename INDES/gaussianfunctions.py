@@ -47,15 +47,23 @@ def get_secret_data(tablefilename,mols_tocal, mols_nocal):
     column = 2 ################################################################################## COLUMN CHANGE HERE
     tabledict = dict( ( [ item[0], item[column] ] for item in secret_table ) )
     data = []
-    for mol in mols_tocal:
-        try:
-            mol.Pvalue = tabledict[ mol.index ]
-            print "in secret data",
-        except KeyError:
-            pass
-        else:
+    for mol in mols_tocal[:]:
+        if False: #old
             mol.predicted = False
-            mols_nocal.append( mols_tocal.pop( mols_tocal.index(mol)) )
+            mol.Pvalue = tabledict[ mol.index ]
+        else: # new
+            try:
+                mol.Pvalue = tabledict[ mol.index ]
+                print "in secret data",
+            except KeyError:
+                pass
+            else:
+                mol.predicted = False
+                mols_tocal.remove(mol)
+                # add that item from table to data
+                mols_nocal.append(mol)
+    
+
     return mols_tocal, mols_nocal
 
 
@@ -72,9 +80,16 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
     elif myrun.nosub==3:
         print "SECRET DATA activated:", myrun.nosub_file
         tablefilename = myrun.nosub_file
-        print "before: mols_tocal", mols_tocal, "mols_nocal", mols_nocal
+        #print "before\n: mols_tocal",
+        #sprint(10,mols_tocal)
+        #print "mols_nocal",
+        #sprint(10,mols_nocal)
         mols_tocal , mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal)
-        print "after: mols_tocal", mols_tocal, "mols_nocal", mols_nocal
+        #print "after\n: mols_tocal",
+        #sprint(10,mols_tocal)
+        #print "mols_nocal",
+        #sprint(10,mols_nocal)
+        #raise SystemExit('stop submit procedure')
 
     if not mols_tocal==[]:
         # 1. Make the files

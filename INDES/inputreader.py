@@ -68,7 +68,7 @@ def get_preds(subinp, line):
     for experiment in defaults.values(): experiment.update( {'n_folds':5 ,
                                                                  'pca':False,
                                               'n_principal_components':100,
-                                                               'plots':[] } )
+                                                               'plots':[1] } )
 
     npredictions = int(line.split()[1])
     preds = [] # this becomes a list of predictions to make
@@ -314,6 +314,8 @@ def readfile(subinp):
                 elif paras['procedure'] in [ 'ga', 'genalg' ]:
                     subinp, paras['genalg'] = get_genalg_params( subinp, line)
                     pass
+                elif paras['procedure'] in [ 'testpred', 'makepred' ]:
+                    paras['restart'] = 1
         elif 'regression' in line: paras['regression'] = 1
         elif 'restart' in line:
             paras['restart'] = int(line.split()[1])

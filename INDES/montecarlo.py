@@ -71,7 +71,7 @@ def montecarloprocedure(fileparameters, subarray, maxi, table,**kwargs):
     print "Number of tested configurations per temperature:", Tcountmax
 
     # 3. FOR ML
-    if fileparameters['ml']==1:
+    if fileparameters['ml']==2:
         ml_instance = learning.MC_init(table, **kwargs)
 
     # 4. select random configurations until one is accepted. 
@@ -106,7 +106,7 @@ def montecarloprocedure(fileparameters, subarray, maxi, table,**kwargs):
             print "erandom:", erandom
 
         # 4.2b predict property via MACHINE LEARNING
-        if fileparameters['ml']==1:
+        if fileparameters['ml']==2:
             print "ml_instance:", ml_instance
             print "indje:", indje
             erandom_ML = learning.MC_test_ind(ml=ml_instance, indices=[indje],**kwargs) 

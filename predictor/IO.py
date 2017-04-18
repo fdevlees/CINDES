@@ -48,7 +48,7 @@ def get_X(indices, descriptor='BoB',array=[], identify='x_', **TZmat):
     return X
 
 def get_X_BoB(indices, **TZmat):
-    parallel = True
+    parallel = False
 
     # 1. convert new indices to confs to ZMAT
     converter = Converter()
@@ -124,7 +124,8 @@ def BoB(xyz):
                          ( 'N' , 10 ),
                          ( 'F' , 30 ),
                          ( 'S' , 10 ),
-                         ( 'Cl', 10 ) ) )
+                         ( 'Cl', 10 ),
+                         ( 'Br',  5 )) )
     types = typef.keys()
     # make a list of typef with max no of combination of atom1 with atom2 
     def trianglen(typef,key1,key2):

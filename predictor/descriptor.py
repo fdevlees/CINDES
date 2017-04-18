@@ -540,8 +540,10 @@ class Propane(Dataset):
 class Thiadiazinyl(Dataset):
     def __init__(self,*args,**kwargs):
         #self.seq = [ 'N', 'CH', 'CF', 'CCFFF', 'CCHHH', 'COH', 'CNOO', 'CNHH', 'CCOOH', 'COCHHH', 'CNHCHHH' ]
-        self.seq = [ 'CNHCH3', 'CSOCH3', 'COCH3', 'CSCH3', 'CSO3H', 'N', 'CCOOH', 'CCF3', 'CCH3', 'CHCO', 'CFCO', 'COOH','CSOH',
-                     'CNH2'  , 'COH', 'CSH', 'CCN', 'CH', 'CF', 'CBr', 'CCl']
+        #self.seq = [ 'CNHCH3', 'CSOCH3', 'COCH3', 'CSCH3', 'CSO3H', 'N', 'CCOOH', 'CCF3', 'CCH3', 'CHCO', 'CFCO', 'COOH','CSOH',
+        #             'CNH2'  , 'COH', 'CSH', 'CCN', 'CH', 'CF', 'CBr', 'CCl']
+        self.seq = [ 'CNHCHHH', 'CSOCHHH', 'COCHHH', 'CSCHHH', 'CSOOOH', 'N', 'CCOOH', 'CCFFF', 'CCHHH', 'CCHO', 'CCFO', 'COOH','CSOH',
+                     'CNHH'  , 'COH', 'CSH', 'CCN', 'CH', 'CF', 'CBr', 'CCl', 'CSHO']
         global seq
         seq = self.seq
         self.ngps = 5 * (len(self.seq),)
@@ -642,12 +644,14 @@ def get_X_1D(indices, identify, descriptor='1DL',column=2, **kwargs):
     global args
     args.column=column
 
-    if any(item in identify for item in ['ada', 'adhoma']):
+    if any(item in identify for item in ['ada', 'adhoma','apm6']):
         myrun = Adamantane('ada')
     elif any(item in identify for item in ['dia','dilu','diho','dimi','dima','dilumi']):
         myrun = Diamantane('dia')
     elif 'pro' in identify:
         myrun = Propane(ngps=(3,3,3))
+    elif 'thi' in identify:
+        myrun = Thiadiazinyl()
     else:
         print "identify:", identify
         raise SystemExit('No identify_ identified')

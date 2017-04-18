@@ -21,7 +21,7 @@ parser.add_argument("-t","--tplot",action="store_true",help="make a tablebin-lik
 parser.add_argument("-T","--table",action="store_true",help="make a table dictionary with only single occupancy of that site for regression")
 parser.add_argument("-x","--regxy",action="store_true",help="make a plot of two propeties against each other and test linear correlation")
 parser.add_argument("-m","--minmax",nargs=2,help="use global cycles value1 until value2 \nNB: startcount = 0!")
-parser.add_argument("-l","--label",type=str,help="property type label")
+parser.add_argument("-l","--label",type=str,help="property type label", default='')
 parser.add_argument("-d","--datacolumn",type=int,default=1,help="which data column to choose")
 parser.add_argument('file', nargs='?', default='cyclesinfo',help='filename default is "cyclesinfo"')
 args=parser.parse_args()
@@ -50,7 +50,7 @@ matplotlib.use('GTK')
 #matplotlib.rcParams['text.usetex']=True
 #matplotlib.rcParams['text.latex.unicode']=True
 matplotlib.rcParams['mathtext.default']='regular'
-funcs = {'CCFFF': '$C-CF_3$',
+funcs_r = {'CCFFF': '$C-CF_3$',
          'CCHHH': '$C-CH_3$',
          'CCN': '$C-C\\equiv N$',
          'CCl': '$C-Cl$',
@@ -67,6 +67,28 @@ funcs = {'CCFFF': '$C-CF_3$',
          'S': '$S$',
          'CNHCHHH' : '$CNHCH_3$',
          'COCHHH'  : '$COCH_3$' }
+class Funcs(object):
+    def __init__(self):
+        self.funcs = funcs_r
+    def __getitem__(self, key):
+        try:
+            ret = self.funcs[key]
+        except KeyError:
+            ret = '${}$'.format(key)
+        return ret
+funcs = Funcs()
+
+class Cycle(object):
+    def __init__(self, iterable):
+        self.iterable = iterable
+    def __getitem__(self,i):
+        #assert isinstance(i, int), 'argument has to be an integer {}'.format(i)
+        try:
+            return self.iterable[ i % len(self.iterable) ]
+        except TypeError:
+            return self.iterable[ i ]
+    def __iter__(self):
+        return iter(self.iterable)
 
 def indtocon(index):
     #return [list(item) for item in index.split('_')]
@@ -321,9 +343,11 @@ def main():
     if args.pplot:
         import seaborn as sb
         #for runs in totalruns:
-        tags=['ro','bs','g^','c*','mp','y|','k+','rd','bv','gh']
-        tags=['-ro','-bs','-g^','-c*','-mp','-y|','-k+','-rd','-bv','-gh']
-        tags=['-o','-s','-^','-*','-p','-<','->','-d','-v','-h']
+        tags_r=['ro','bs','g^','c*','mp','y|','k+','rd','bv','gh']
+        tags_r=['-ro','-bs','-g^','-c*','-mp','-y|','-k+','-rd','-bv','-gh']
+        tags_r=['-o','-s','-^','-*','-p','-<','->','-d','-v','-h']
+        tags = Cycle(tags_r)
+
         #colors = sb.color_palette("viridis", n_colors=12)
         #colors = sb.hls_palette(10)
         colors = sb.hls_palette(nsites+1,l=.4) #l=lightness the smaller the darker. 
@@ -368,9 +392,10 @@ def main():
 
         # only for particular case: 
         def get_label():
-            labels = ('1.1','1.2', '1.3', '1.4','2.1','2.2','2.3','3.1', '3.2', '3.3')
+            #labels = ('1.1','1.2', '1.3', '1.4','2.1','2.2','2.3','3.1', '3.2', '3.3')
+            labels = xrange(100)
             for label in labels:
-                yield label
+                yield str(label)
         labels = get_label() # this is now an iterator !
         import seaborn as sb
         colors = sb.hls_palette(nsites+1,l=.4) #l=lightness the smaller the darker. 
@@ -389,7 +414,8 @@ def main():
              binlist.append(binlistje)
         pp.pprint(binlist)
         #tags=['ro','bs','g^','c*','mp','yv','k+','r|','bd','gh']
-        tags=['o','s','^','*','p','v','<','>','d','h']
+        tags_r=['o','s','^','*','p','v','<','>','d','h']
+        tags = Cycle(tags_r)
         for i in range(len(binlist)):
             l=0
             for j in range(len(binlist[i])):
@@ -464,17 +490,25 @@ def main():
 
     if args.cplot: #plot something to compare the different site
         from matplotlib.legend_handler import HandlerLine2D
-        tags=['ro','bs','g^','c*','mp','yv','k+','r|','bd','gh']
+        tags_r=['ro','bs','g^','c*','mp','yv','k+','r|','bd','gh']
+        tags = Cycle(tags_r)
         X = []
         Y = []
-        for site0,site1,tag,i in zip(totalsites[0],totalsites[-1],tags[:len(totalsites[0])],range(len(totalsites[0]))):
-            xs = [ item[1][0] for item in site0 ]
-            ys = [ item[1][0] for item in site1 ]
+        index = args.datacolumn
+        print "len:" + "totalsites[0]:", len(totalsites[0]), "totalsites:", len(totalsites)
+        print "tags[:len(totalsites[0])]", tags[:len(totalsites[0])]
+        tags_new = [ tags[i] for i in range(len(totalsites[0])) ]
+        for site0,site1,tag,i in zip(totalsites[0],totalsites[-1],tags_new,range(len(totalsites[0]))):
+            print "totalsites[0]:", len(totalsites[0])
+            print "totalsites[-1]:", len(totalsites[-1])
+            xs = [ item[1][args.datacolumn] for item in site0 ]
+            ys = [ item[1][args.datacolumn] for item in site1 ]
             labels = [ item[0] for item in site0 ]
             a, = plt.plot(xs,ys,tag)
-            a.set_label('site:'+str(i))
+            a.set_label('site:'+str(i+1))
+            print "i:", i
             for label, x, y in zip(labels,xs,ys):
-                if False: #for boxes set to True
+                if True: #for boxes set to True
                     plt.annotate(
                         label, xy = (x, y), xytext = (20, -20),
                         textcoords = 'offset points', ha = 'left', va = 'bottom',
@@ -503,10 +537,11 @@ def main():
         plt.title('last cycle vs. first cycle')
         plt.show()
 
-    if args.splot: 
+    if args.splot:
         '''try subplot splot'''
         from matplotlib.legend_handler import HandlerLine2D
-        tags=['ro','bs','g^','c*','mp','yv','k+','r|','bd','gh']
+        tags_r=['ro','bs','g^','c*','mp','yv','k+','r|','bd','gh']
+        tags = Cycle(tags_r)
         #subplots = tuple( (3,2,i) for i in range(1,7))
         X = []
         Y = []
@@ -516,10 +551,12 @@ def main():
         f, axs = plt.subplots(ny,nx)
         axs2d = [ item for sublist in axs for item in sublist ]
         print "axs2d:",axs2d
-        for site0,site1,tag,i in zip(totalsites[0],totalsites[-1],tags[:len(totalsites[0])],range(len(totalsites[0]))):
-            xs = [ item[1][0] for item in site0 ]
-            ys = [ item[1][0] for item in site1 ]
-            labels = [ item[0] for item in site0 ]
+        index = args.datacolumn
+        tags_new = [ tags[i] for i in range(len(totalsites[0])) ]
+        for site0,site1,tag,i in zip(totalsites[0],totalsites[-1],tags_new,range(len(totalsites[0]))):
+            xs = [ item[1][index] for item in site0 ]
+            ys = [ item[1][index] for item in site1 ]
+            labels = [ item[index] for item in site0 ]
             #plt.subplot(*subplots[i])
             #a, = plt.plot(xs,ys,tag)
             a=axs2d[i]
@@ -527,7 +564,7 @@ def main():
             a.plot(xs,ys,tag,label='site:' + str(i+1))
             #f.set_label('site:'+str(i))
             for label, x, y in zip(labels,xs,ys):
-                if False: #for boxes set to True
+                if True: #for boxes set to True
                     plt.annotate(
                         label, xy = (x, y), xytext = (20, -20),
                         textcoords = 'offset points', ha = 'left', va = 'bottom',
@@ -593,7 +630,8 @@ def main():
 
 def set_nxy(n):
     xys = { '1':(1,1),
-            '2':(2,1), '3':(2,2), '4':(2,2), '5':(3,2), '6':(3,2), '7':(4,2), '8':(4,2), '9':(3,3), '10':(4,3) 
+            '2':(2,1), '3':(2,2), '4':(2,2), '5':(3,2), '6':(3,2), '7':(4,2), '8':(4,2), '9':(3,3), '10':(4,3),
+           '11':(4,3),'12':(4,3),'13':(5,3),'14':(5,3),'15':(5,3),'16':(4,4)
           }
     return xys[str(n)]
 
