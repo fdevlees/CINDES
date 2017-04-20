@@ -316,7 +316,7 @@ def set_maximum(myrun,table):
 def testmax(myrun, mols, bcok):
     param = myrun.__dict__
 
-    data = [ molecule.log() for molecule in mols ]
+    data = [ molecule.log() for molecule in mols if molecule.predicted == False ]
     for item in data:
         print item
 
@@ -343,14 +343,14 @@ def testmax(myrun, mols, bcok):
             bcok=1
             print "BC fullfilled; voldoende is not empty:", pprint.pformat(voldoende, width=100)
             #maxsite = max(voldoende,key = lambda x:x[1])
-            if param['optimum']== 'minimum':
+            if param['optimum'] in ['minimum', 'min']:
                 maxsite = min(voldoende,key = lambda x:x[2])
             else:
                 maxsite = max(voldoende,key = lambda x:x[2])
     else:
         bcok=1 #no BC but need this variable to test later on
         # maximum of the list or MINIMUM
-        if param['optimum']== 'minimum':
+        if param['optimum'] in ['minimum', 'min']:
             if param['cutoff'] == 0:
                 maxsite = min(data,key = lambda x:x[2])
             else:

@@ -236,11 +236,11 @@ class Experiment(object):
         # 2. split in data_train and data_test
         for N in ns: # for every n in Ns
             # split in train / test
-            print "    N:", N
+            print "\n    N:", N
             if True:
                 result = []
                 for fold, (train_ind, test_ind) in enumerate( KFold(n_splits=self.n_folds, shuffle=True).split(X) ):
-                    print "    FOLD:", fold
+                    print "\n        FOLD:", fold
                     X_train, X_test = X[train_ind], X[test_ind]
                     y_train, y_test = y[train_ind], y[test_ind]
                     self.X = X_train
@@ -408,7 +408,7 @@ class Experiment(object):
 
         json_results = jsonify(results)
 
-        with open('results_{}'.format(self.name),'w') as f:
+        with open('results_{}.json'.format(self.name),'w') as f:
             try:
                 json.dump(json_results, f, sort_keys=True, separators=(',', ':'), indent=4)
             except TypeError:

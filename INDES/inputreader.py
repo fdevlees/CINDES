@@ -132,7 +132,7 @@ def get_genalg_params(subinp, line):
                  'optimum'      : 'maximum',
                  'nelitism'     : 1,
                  'scaling'      : 'sigmatrunc',
-                 'db_identify'  : 'ex4',
+                 'db_identify'  : 'ex' + str(np.random.randint(0,90)),
                  'freq_stats'   : 10,
                  'seed'         : 0,
                  'selector'     : 'RouletteWheel'
@@ -283,7 +283,10 @@ def readfile(subinp):
                     logging.warning( "no file found. nosub downgraded to 1" )
                     paras['nosub'] = 1
         elif 'nprocs' in line: paras['nprocs'] = int(line.split()[1])
-        elif 'optimum' in line: paras['optimum'] = line.split()[1]
+        elif 'optimum' in line:
+            if line.split() in [ 'max', 'maximum' ]:
+                print "changed optimization to maximum instead of minimum!"
+                paras['optimum'] = 'maximum'
         elif 'positions' in line: paras['positions'] = [ int(item) for item in line.split()[1:] ]
         elif any(item in line.split()[0] for item in ('program','ai','program','prog','programma')):
             if line.split()[1] in ['gaussian','g09']:

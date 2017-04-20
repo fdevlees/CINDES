@@ -233,7 +233,8 @@ def plot_predictions(predictions):
 
             a.legend()
     if plotted:
-        plt.show()
+        pass
+        #plt.show()
     else:
         del f, axs, axs2d
         plt.close()
@@ -286,15 +287,19 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
 
         # 4. decide which molecules to calculate and which not
         if best_pred['R'] > 0.90 and run.ml:
+            if best_pred['R'] > 0.95: # if R-value is between 0.95 - 1.00 take 3
+                ntake = 3
+            else: # if R-value is between 0.90 - 0.95 take 6
+                ntake = 6
             print "prediction is good enough"
-            mols_nocal, mols_tocal = ([],[])
+            mols_nocal, mols_tocal = (mols_nodo,[])
             #for mol in mols_todo:
             #    print mol.predictions.get(best_pred['name'],"empty")
             # sort mols based on prediction value
             mols_sorted = sorted( mols_todo, key=lambda x:x.predictions.get(best_pred['name']), reverse=(not run.optimum=='minimum') )
             for i,mol in enumerate(mols_sorted):
                 print mol, mol.predictions.get(best_pred['name'],"empty")
-                if i<3:
+                if i< ntake:
                     mols_tocal.append(mol)
                 else:
                     mol.Pvalue = mol.predictions.get(best_pred['name'],None)
