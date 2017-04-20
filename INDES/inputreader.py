@@ -140,13 +140,15 @@ def get_genalg_params(subinp, line):
     try:
         n_extra_lines = int(line.split()[2])
     except IndexError:
-        print "all default values for the genetic algorithms will be used:"
+        print "WARNING: all default values for the genetic algorithms will be used:"
     else: # execute only when no exception is thrown
         for _ in range(n_extra_lines):
             line = subinp.readline()
             key = line.split()[0]
+            if not key in defaults:
+                print "keyword in GA section not recognized:", key
+                raise SystemExit('program stopped')
             value_type = type(defaults[key])
-            if not key in defaults: print "keyword not recognized:", key
             defaults[key] = value_type( line.split()[1] )
             #if key in [ 'ngenerations', 'npopulation', 'nelitism', 'freq_stats' ]:
             #    defaults[key] = int(line.split()[1])
@@ -381,7 +383,10 @@ def readfile(subinp):
         elif 'timelimit' in line: paras['timelimit'] = int(line.split()[1])
         elif 'timestep' in line: paras['timestep'] = int(line.split()[1])
         else:
-            print "line is not interpreted!", line
+            if line.strip(): # so if not just an empty line:
+                print "line: \"{}\" is not interpreted".format(line.strip('\n')),
+                raise SystemExit('program stopped')
+            
 
     # get a list of all properties that need to be calculated:
     if paras['property']=='func':
@@ -402,6 +407,13 @@ def readfile(subinp):
     if 'aip' in props: paras['aip'] = True
     if 'aea' in props: paras['aea'] = True
     if 'solv' in props: paras['solv'] = True
+
+    # extra sanity checks on input
+    # sanity check 1: optimum in ga and bfs input similar
+    if hasattr(paras,'genalg'):
+        if not paras['genalg']['optimum'] == paras['optimum']:
+            print "WARNING OPTIMUM KEYWORDS ARE NOT THE SAME. \n    Please check carefully if program is working correctly!"
+        
 
     return paras
 
