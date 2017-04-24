@@ -448,8 +448,17 @@ def filewriter2(zmat,index,**paras): #paras is short for fileparameters
     # with filedic is:
     # filedic = {"charge":0,"mult":1,"identify":identify}
     #------------
+    if paras['gaussianlines']:
+        filewriter3(zmat, index, **paras)
+        return
+
+
     filename = paras['identify'] + str(index) + ".com"
     fid=open(paras['path'] + '/' + filename,'w')
+
+
+
+
     #fid.write("%chk=" + identify + str(index) + ".chk\n")
     fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
     fid.write("%mem=1500MB\n")
@@ -486,7 +495,7 @@ def filewriter2(zmat,index,**paras): #paras is short for fileparameters
         fid.write("\n")
         fid.write(str(index) + " with solvent calc\n")
         fid.write("\n")
-    if paras['polar'] == 1 or paras['multiplejobs']>=1:
+    if paras['polar'] == 1 and paras['multiplejobs']>=1:
         fid.write("--link1--\n")
         fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
         fid.write("%mem=1500MB\n")
@@ -525,7 +534,75 @@ def filewriter2(zmat,index,**paras): #paras is short for fileparameters
         fid.write("\n")
     #print "---- FILE PRINTED SUCCESFULLY -----"
     return
-#----- END FILEWRITER ----#
+#----- END FILEWRITER2 ----#
+
+def filewriter3(zmat,index,**paras): #paras is short for fileparameters
+    '''    This function creates a file with the geometry contained in zmat 
+    The name of the file contains the index in the name
+    Still a lot of hardcoded information:
+        - charge
+        - multiplicity
+        - memory
+        - number of processors
+        - calculation procedure:
+            > geometry optimization
+            > unrestricted DFT - B3LYP functional
+            > basisset: 6-31G(d)    '''
+    #------------
+    # this function uses globals: identify, path, gaussianline, gaussianline2, twojob
+    # maybe something like:
+    # filewriter(zmat,*args,**kwargs):
+    # and then calling it with
+    # filewriter(zmat, gaussianline, gaussianline2, path=path, identify=identify, charge=0, mult=1)
+    # or with
+    # filewriter(zmat, **filedic)
+    # with filedic is:
+    # filedic = {"charge":0,"mult":1,"identify":identify}
+    #------------
+    filename = paras['identify'] + str(index) + ".com"
+    fid=open(paras['path'] + '/' + filename,'w')
+
+    # JOB 1
+    charge, mult, line = paras['gaussianlines'][0]
+    fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
+    fid.write("%mem=1500MB\n")
+    if not paras['nprocs']==1:
+        fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
+    fid.write(line) # first gaussianline
+    fid.write("\n")
+    fid.write(paras['identify'] + str(index) + "\n")
+    fid.write("\n")
+    #fid.write(str(paras['charge']) + " " + str(paras['mult']) + "\n")
+    fid.write(str(charge) + " " + str(mult) + "\n")
+    # here the zmat
+    for i in range(len(zmat)):
+        for item in zmat[i]:
+            fid.writelines("%s " % item)
+        fid.write("\n")
+    fid.write("\n")
+
+    # THE OTHER JOBS
+    for i, (charge, mult, line) in enumerate(paras['gaussianlines'][1:]):
+        fid.write("--link1--\n")
+        fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
+        fid.write("%mem=1500MB\n")
+        if not paras['nprocs']==1:
+            fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
+        fid.write(line)
+        fid.write("\n")
+        fid.write(str(index) + " {}th calc\n".format(i+2) )
+        fid.write("\n")
+        if not 'allcheck' in line:
+            fid.write(str(charge) + " " + str(mult) + "\n")
+            fid.write("\n")
+    #print "---- FILE PRINTED SUCCESFULLY -----"
+    return
+
+
+
+
+
+
 #----- BEGIN FILEWRITER JOB TYPE A BDE-MODEL ----#
 def filewriterA(zmat,index,**paras): #paras is short for fileparameters
     paras['charge']=0

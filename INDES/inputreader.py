@@ -168,59 +168,62 @@ def readfile(subinp):
     '''this method reads all the inputkeywords'''
     #default values
     randomseed = np.random.randint(0,100)
-    paras={'program':'gaussian',
-           'procedure':'standard',
-           'property':'gap',
-           'optimum':'minimum',
-           'extra_props': [],
+    paras={
+           'aea':0,
+           'aip':0,
+           'basisset':'6-31G',
            'bc': False,
+           'charge':0,
+           'cutoff':0,
+           'debug':False,
+           'difmodel':0,
+           'ea':0,
+           'extra_props': [],
+           'extrawaittime': 2,
+           'functional':'b3lyp',
+           'function': lambda x:x,
+           'gaussianlines':[],
+           'identify':'unspecified_',
+           'ip':0,
+           'maxiter':10,
            'ml':0,
+           'montecarlo':0,   #Temperature at start
+           'mult':1,
+           'multiplejobs':0,
+           'nch3':16,
+           'ncore':10,
+           'nlinks':False,
+           'no1sub':0,
+           'norandom':0,
            'nosub':0,
            'nosub_file:':'',
-           'cutoff':0,
-           'no1sub':0,
-           'try_ready':0,
-           'test_ready':2,
-           'regression':0,
-           'tdregression':0,
-           'difmodel':0,
            'nprocs':2,
-           'debug':False,
-           'function': lambda x:x,
-           'norandom':0,
-           'sequence':[],
-           'symlinks':[],
-           'nlinks':False,
-           'restart':0,
-           'semiempirical':0,
-           'twojob':0,
-           'multiplejobs':0,
-           'stab':0,
+           'nrandsites':2,
+           'optimum':'minimum',
            'polar':0,
-           'ip':0,
-           'ea':0,
-           'aip':0,
-           'aea':0,
-           'startind': '',
-           'extrawaittime': 2,
+           'predictions':[],
+           'procedure':'standard',
+           'program':'gaussian',
+           'property':'gap',
+           'regression':0,
+           'restart':0,
            'restrictions': [],
+           'restrictions':[],
+           'seed':randomseed,
+           'semiempirical':0,
+           'sequence':[],
+           'solv':False,
+           'stab':0,
+           'startind': '',
+           'symlinks':[],
+           'tablename':'tablebin',
+           'tdregression':0,
+           'test_ready':2,
            'timelimit':250000,
            'timestep':300,
-           'restrictions':[],
-           'tablename':'tablebin',
-           'predictions':[],
-           'maxiter':10,
-           'basisset':'6-31G',
-           'functional':'b3lyp',
-           'ncore':10,
-           'nch3':16,
-           'identify':'unspecified_',
-           'charge':0,
-           'mult':1,
-           'solv':False,
-           'seed':randomseed,
-           'montecarlo':0,   #Temperature at start
-           'nrandsites':2}   #n random sites changed. for all choose 0
+           'try_ready':0,
+           'twojob':0
+           }   #n random sites changed. for all choose 0
     #scans all the lines until if will find the END keyword
     #this is a bit tricky because keywords can appear everywere in the file before END 
     #but the value of the keywords is always on the second and further position
@@ -257,6 +260,14 @@ def readfile(subinp):
         elif 'extra_props' in line: paras['extra_props'] = line.split()[1:]
         elif 'extrawaittime' in line: paras['extrawaittime'] = float(line.split()[1])
         elif 'functional' in line: paras['functional'] = line.split()[1]
+        elif 'gaussianlines' in line:
+            nlines = int(line.split()[1])
+            lines = []
+            for _ in range(nlines):
+                line = subinp.readline().split(' ')
+                gaussianline = [ line[0], line[1], ' '.join(line[2:]) ]
+                lines.append(gaussianline)
+            paras['gaussianlines'] = lines
         elif 'identify' in line: paras['identify'] = line.split()[1]
         elif 'maxiter' in line: paras['maxiter'] = int(line.split()[1])
         elif 'montecarlo' in line:

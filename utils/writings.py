@@ -160,7 +160,7 @@ def complexprint(data, func=lambda arg: arg, strfunc= lambda *s: s):
 
 import sys
 
-def dump(obj, nested_level=0, ret=[]):
+def dump(obj, nested_level=0, ret=[], n=10):
     spacing = '   '
     if type(obj) == dict:
         ret.append( '%s{' % ((nested_level) * spacing) )
@@ -173,11 +173,14 @@ def dump(obj, nested_level=0, ret=[]):
         ret.append( '%s}' % (nested_level * spacing))
     elif type(obj) == list or type(obj) == tuple:
         ret.append( '%s[' % ((nested_level) * spacing))
-        for v in obj:
+        nprint = min( len(obj), n )
+        for v in obj[: nprint ]:
             if hasattr(v, '__iter__'):
                 dump(v, nested_level + 1, ret)
             else:
                 ret.append( '%s%s' % ((nested_level + 1) * spacing, v))
+        if nprint==n:
+            ret.append( '%s%s' % ((nested_level + 1) * spacing, '... ({})'.format(len(obj)) ))
         ret.append('%s]' % ((nested_level) * spacing))
     else:
         ret.append( '%s%s' % (nested_level * spacing, obj))
