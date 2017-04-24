@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 pd.set_option('display.width',150)
 
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, train_test_split
 from scipy.stats import pearsonr
 
 from IO import get_XY, get_X
@@ -239,10 +239,15 @@ class Experiment(object):
             print "\n    N:", N
             if True:
                 result = []
-                for fold, (train_ind, test_ind) in enumerate( KFold(n_splits=self.n_folds, shuffle=True).split(X) ):
+                #for fold, (train_ind, test_ind) in enumerate( KFold(n_splits=self.n_folds, shuffle=True).split(X) ):
+                #for fold, (X_train, X_test, y_train, y_test) 
+                for fold in range(3):
                     print "\n        FOLD:", fold
-                    X_train, X_test = X[train_ind], X[test_ind]
-                    y_train, y_test = y[train_ind], y[test_ind]
+
+                    X_train, X_test, y_train, y_test = train_test_split( X, y, train_size=N, random_state = self.run.seed )
+
+                    #X_train, X_test = X[train_ind], X[test_ind]
+                    #y_train, y_test = y[train_ind], y[test_ind]
                     self.X = X_train
                     self.y = y_train
 
