@@ -18,6 +18,7 @@ class GaussianProcessExperiment(Experiment):
         super(GaussianProcessExperiment, self).__init__(**kwargs)
         self.white_noise = white_noise
         self.max_iters = max_iters
+        self.ARD = False
 
     def train(self, X=None, y=None, verbose=True, **kwargs):
 
@@ -40,7 +41,7 @@ class GaussianProcessExperiment(Experiment):
         y_test= y[ind[n_opt:]]
 
         # Define kernel
-        kernel = RBF(X.shape[1], ARD=True)
+        kernel = RBF(X.shape[1], ARD=self.ARD)
 
         # Optimize regularized GP hyperparameters
         gpr = GPRegression(X_hyp, y_hyp[:,None], kernel=kernel)

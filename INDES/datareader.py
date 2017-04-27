@@ -182,7 +182,7 @@ def extract_stab(file1 , molecule, fileparameters):
     for pos in fileparameters['positions']: #extract al AH energies and take the lowest
         file2= fileparameters['path'] + '/' + index + '/' + fileparameters['identify'] + index + '_' + str(pos) + '.log'
 
-        EAH= gausread(file2,'energy')['energy']
+        EAH= gausread(file2,'energy',multiplejobs=0)['energy']
 
         #---- HERE THE electronegativity part of the stab a bit tricky
         confje = construction.indtocon(index) # change index to conf list using the construction module
@@ -190,7 +190,7 @@ def extract_stab(file1 , molecule, fileparameters):
         siteindex = corresp[pos] #find for each position the methyl index
         if siteindex in fileparameters['line1']:# look if that index is used as a site
             # fileparameters['line1'].index(siteindex) is the place. this is the same as in confje
-            if confje[fileparameters['line1'].index(siteindex)]==['N']:
+            if confje[ fileparameters['line1'].index(siteindex) ]==['N']:
                 print "electronegativity correction for nitrogen: ", chi_term
                 Npos.append(pos)
                 #EAH -= chi_term
@@ -407,6 +407,15 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1):
         results['E0']   = mymol.scfenergies[-3]
         results['IP']   = mymol.scfenergies[-2] - results['E0']
         results['EA']   = results['E0'] - mymol.scfenergies[-1]
+    if 'omega' in props:
+        pprint(mymol.scfenergies[-5:])
+        results['Eopt'] = mymol.scfenergies[-4]
+        results['E0']   = mymol.scfenergies[-3]
+        results['IP']   = mymol.scfenergies[-2] - results['E0']
+        results['EA']   = results['E0'] - mymol.scfenergies[-1]
+        #omega = lambda I,A: ( (I+A)**2 ) / ( 8 * (I-A) )
+        #results['omega']= omega(results['IP'], results['EA'])
+        results['omega'] = ( ( results['IP'] + results['EA'] )**2 ) / ( 8 * ( results['IP'] - results['EA'] ) )
     if 'energy' in props:
         ESCFs = mymol.scfenergies
         results['energy'] = ESCFs[-(multiplejobs+1)]

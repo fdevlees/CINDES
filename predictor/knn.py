@@ -87,13 +87,13 @@ class NearestNeighborExperiment(Experiment):
         model, self.R = joblib.load(modelname)
         return model
 
-    def get_best_hyperparams(self):
+    def get_best_hyperparams(self, **kwargs):
         ''' hyperparameter search with use of the sklearn GridSearchCV function '''
         if not self.hparam['supervised']:
             self.cross_val(plot=True)
         else:
-            super(NearestNeighborExperiment, self).get_best_hyperparams()
-        return
+            cls_gs = super(NearestNeighborExperiment, self).get_best_hyperparams(**kwargs)
+        return cls_gs
 
 
 class NearestNeighborWithPCAExperiment(NearestNeighborExperiment):

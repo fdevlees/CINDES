@@ -171,7 +171,7 @@ def dump(obj, nested_level=0, ret=[], n=10):
             else:
                 ret.append( '%s%s: %s' % ((nested_level + 1) * spacing, k, v))
         ret.append( '%s}' % (nested_level * spacing))
-    elif type(obj) == list or type(obj) == tuple:
+    elif type(obj) == list or type(obj) == tuple or 'numpy' in str(type(obj)):
         ret.append( '%s[' % ((nested_level) * spacing))
         nprint = min( len(obj), n )
         for v in obj[: nprint ]:

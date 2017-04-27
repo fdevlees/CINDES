@@ -730,15 +730,26 @@ def substituter2(group,geom0,count):
     if len(group) == 7:
         # C N H C H H H
         # C S O C H H H
-        zma = [ ['N',1,'1.457'],
-                ['C',2,'1.457',1,'140.5',0,'180.0'],
-                ['H',3,'1.095',2,'109.5',1, '60.0'],
-                ['H',3,'1.095',2,'109.5',1,'180.0'],
-                ['H',3,'1.095',2,'109.5',1,'300.0'],
-                ['H',2,'1.018',3,'109.5',4,'-60.1'] ]
+        if group == [ 'C','N','H','C','H','H','H' ]:
+            zma = [ ['N',1,'1.457'],
+                    ['C',2,'1.457',1,'140.5',0,'180.0'],
+                    ['H',3,'1.095',2,'109.5',1, '60.0'],
+                    ['H',3,'1.095',2,'109.5',1,'180.0'],
+                    ['H',3,'1.095',2,'109.5',1,'300.0'],
+                    ['H',2,'1.018',3,'109.5',4,'-60.1'] ]
+        elif group == [ 'C','S','O','C','H','H','H' ]:
+            zma = [ ['S',1,'1.457'],
+                    ['C',2,'1.457',1,'140.5',0,'180.0'],
+                    ['H',3,'1.095',2,'109.5',1, '60.0'],
+                    ['H',3,'1.095',2,'109.5',1,'180.0'],
+                    ['H',3,'1.095',2,'109.5',1,'300.0'],
+                    ['O',2,'1.500',3,'109.5',4,'-60.1'] ]
+        else:
+            print "group:", group
+            raise SystemExit('group not recognized')
         if dihedral: zma[1][6]=dihedral
         geom=geomfiller(zma,geom,count)
-        count += len(zma)       
+        count += len(zma)
     elif len(group) == 6: # this is for the -OCH3 or -SCH3 group for example
         # i have to introduce a new line in geom. 
 
@@ -749,6 +760,8 @@ def substituter2(group,geom0,count):
                             ['H',3,'1.095',2,'109.5',1,'60.0'],
                             ['H',3,'1.095',2,'109.5',1,'180.0'],
                             ['H',3,'1.095',2,'109.5',1,'300.0']  ]
+            if group == ['C','S','C','H','H','H']:
+                zma[0][0]='S'
             # change C to O or S
             if group[1] == 'S':
                 geom[0][0] = 'S'
@@ -850,7 +863,7 @@ def substituter2(group,geom0,count):
             #geom[0][0] = group[1] # change C to O or also C
             #geom[1][0] = group[2] # change H to N or also H
             geom[2][0] = group[3] # change H to N or also H
-        if group == ['C','N','O','O']:
+        elif group == ['C','N','O','O']:
             #geom[0][2] = '1.5'
             #geom[1][2] = '1.227'
             #geom[2][2] = '1.227'
@@ -865,14 +878,22 @@ def substituter2(group,geom0,count):
             #if dihedral: 
             #    geom[1][6]=dihedral
             #    geom[2][6]=dihedral-180.0
-        if group == ['C','N','H','H']:
+        elif group in [ ['C','O','O','H'], ['C','S','O','H'] ]:
+            zma = [ ['O',1,'1.4'],
+                    ['O',2,'1.45',1,'104.0',0, '-61.0'],
+                    ['H',3,'0.96',2,'98.5',1,'170.0']]
+            if group == [ 'C','S','O','H']:
+                zma[0][0] = 'S'
+            if dihedral: zma[1][6]=dihedral
+            geom=geomfiller(zma,geom,count)
+        elif group == ['C','N','H','H']:
             geom[0][2] = '1.465'
             geom[1][2] = '1.02'
             geom[2][2] = '1.02'
-            if dihedral: 
+            if dihedral:
                 geom[1][6]=dihedral
                 geom[2][6]=dihedral-120.0
-        if group in [['C','C','H','O'],['C','C','O','H']]:
+        elif group in [['C','C','H','O'],['C','C','O','H']]:
             geom[1][1] = str(count+1) # this is the =O
             geom[2][1] = str(count+1) # this is the -H
 
@@ -890,7 +911,7 @@ def substituter2(group,geom0,count):
         # we need to remove two hydrogens
         del geom[3]
         del geom[2]
-        if group == ['C','C','N']:
+        if group in [['C','N','C'], ['C','C','N']]:
             #print "cyano"
             geom[1] = geom[0][:]
             geom[1][2] = '2.62'

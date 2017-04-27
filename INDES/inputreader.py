@@ -68,7 +68,7 @@ def get_preds(subinp, line):
     for experiment in defaults.values(): experiment.update( {'n_folds':5 ,
                                                                  'pca':False,
                                               'n_principal_components':100,
-                                                               'plots':[1] } )
+                                                               'plots':[] } )
 
     npredictions = int(line.split()[1])
     preds = [] # this becomes a list of predictions to make
@@ -222,7 +222,8 @@ def readfile(subinp):
            'timelimit':250000,
            'timestep':300,
            'try_ready':0,
-           'twojob':0
+           'twojob':0,
+           'volume':False
            }   #n random sites changed. for all choose 0
     #scans all the lines until if will find the END keyword
     #this is a bit tricky because keywords can appear everywere in the file before END 

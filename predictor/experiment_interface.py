@@ -11,7 +11,7 @@ from scipy.stats import pearsonr
 from IO import get_XY, get_X
 from CINDES4.utils.utils import processify
 from CINDES4.utils.statistics import print_stats
-from CINDES4.utils.writings import sprint, log_io
+from CINDES4.utils.writings import sprint, log_io, dump
 
 debug=True
 
@@ -230,7 +230,7 @@ class Experiment(object):
                       TZmat=self.run.TZmat,
                       **kwargs )
         n = y.shape[0]
-        ns = np.logspace( 4, np.log2(n-16), base=2, num=10, dtype=int)
+        ns = np.logspace( 4, np.log2(n-64), base=2, num=10, dtype=int)
         if debug: print "ns:", ns
 
         # 2. split in data_train and data_test
@@ -244,7 +244,7 @@ class Experiment(object):
                 for fold in range(3):
                     print "\n        FOLD:", fold
 
-                    X_train, X_test, y_train, y_test = train_test_split( X, y, train_size=N, random_state = self.run.seed )
+                    X_train, X_test, y_train, y_test = train_test_split( X, y, train_size=N, random_state = self.run.seed + fold )
 
                     #X_train, X_test = X[train_ind], X[test_ind]
                     #y_train, y_test = y[train_ind], y[test_ind]
@@ -301,7 +301,7 @@ class Experiment(object):
                                'y_test' :y_test , 'y_test_pred' :y_test_pred,
                                'y_train':y_train, 'y_train_pred':y_train_pred }]
 
-        print "results:", results
+        print "results:", dump(results, n=10)
         self.plot3 = results
 
         # jump results as json formatted file
