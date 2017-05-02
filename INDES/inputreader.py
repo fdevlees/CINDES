@@ -186,6 +186,7 @@ def readfile(subinp):
            'identify':'unspecified_',
            'ip':0,
            'maxiter':10,
+           'maxcycles':100,
            'ml':0,
            'montecarlo':0,   #Temperature at start
            'mult':1,
@@ -270,6 +271,7 @@ def readfile(subinp):
                 lines.append(gaussianline)
             paras['gaussianlines'] = lines
         elif 'identify' in line: paras['identify'] = line.split()[1]
+        elif 'maxcycles' in line: paras['maxcycles']= str(int(line.split()[1]))
         elif 'maxiter' in line: paras['maxiter'] = int(line.split()[1])
         elif 'montecarlo' in line:
             paras['montecarlo'] = float(line.split()[1])

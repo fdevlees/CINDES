@@ -180,18 +180,18 @@ class Run(object):
                 self.gaussianline3 =  '# geom=check guess=read b3p86/6-311+G(d,p) scf=xqc\n' #also for 7
         elif param['polar']==1:
             if param['volume']==1:
-                self.gaussianline = '# opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
+                self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') ' + param['functional'] +'/'+ param['basisset'] +'\n'
                 self.gaussianline2 = '#p geom=allcheck guess=read polar volume=tight '+param['functional']+'/'+param['basisset']+'\n'
             else:
-                self.gaussianline = '# opt=(maxcycle=100) ' + param['functional'] +'/'+ param['basisset'] +'\n'
+                self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') ' + param['functional'] +'/'+ param['basisset'] +'\n'
                 self.gaussianline2 = '#p geom=allcheck guess=read polar '+param['functional']+'/'+param['basisset']+'\n'
         elif param['aip']==1 or param['aea']==1:
-            self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
+            self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
             param['twojob']=1
             #param['multiplejobs']=1
             self.gaussianline2 = '# geom=check guess=read opt scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
         elif param['ip']==1 or param['ea']==1:
-            self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
+            self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
             param['twojob']=1
             #param['multiplejobs']=1
             self.gaussianline2 = '# geom=check guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
@@ -201,24 +201,24 @@ class Run(object):
                 self.gaussianline = '# ' + param['functional'] +'/'+ param['basisset'] +'\n'
             else:
                 if param['basisset'] in [ None, 0, '0', 'none', 'nalse', False, 'off' , 'n', 'na' ]:
-                    self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'\n'
+                    self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'\n'
                 else:
-                    self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
+                    self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
             if param['twojob'] == 1:
                 self.gaussianline2 = '# geom=check guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
             elif param['twojob'] == 2:
                 self.multiplejobs = 2
                 if param['semiempirical'] == 1:
-                    self.gaussianline  = '# opt=(maxcycle=100) ' + 'pm6' +'\n'
+                    self.gaussianline  = '# opt=(maxcycle=' + param['maxcycles'] + ') ' + 'pm6' +'\n'
                 else:
-                    self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
+                    self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
                 self.gaussianline2 = '# geom=allcheck guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
             elif param['twojob'] == 4:
                 self.multiplejobs = 4
                 if param['semiempirical'] == 1:
-                    self.gaussianline  = '# opt=(maxcycle=100) ' + 'pm6' +'\n'
+                    self.gaussianline  = '# opt=(maxcycle=' + param['maxcycles'] + ') ' + 'pm6' +'\n'
                 else:
-                    self.gaussianline = '# opt=(maxcycle=100) scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
+                    self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
                 self.gaussianline2 = '# geom=allcheck guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
                 if param['solv']:
                     self.gaussianline_solv0 = '# geom=allcheck guess=read scf=xqc b3lyp/6-31G(d,p)\n'
