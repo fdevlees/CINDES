@@ -186,14 +186,18 @@ def extract_stab(file1 , molecule, fileparameters):
 
         #---- HERE THE electronegativity part of the stab a bit tricky
         confje = construction.indtocon(index) # change index to conf list using the construction module
-        corresp = {2:46,6:18,7:42,9:34,11:22,12:30} # map the alpha positions to methyl indices 
-        siteindex = corresp[pos] #find for each position the methyl index
-        if siteindex in fileparameters['line1']:# look if that index is used as a site
-            # fileparameters['line1'].index(siteindex) is the place. this is the same as in confje
-            if confje[ fileparameters['line1'].index(siteindex) ]==['N']:
-                print "electronegativity correction for nitrogen: ", chi_term
-                Npos.append(pos)
-                #EAH -= chi_term
+        #corresp = {2:46,6:18,7:42,9:34,11:22,12:30} # map the alpha positions to methyl indices 
+        try:
+            siteindex = fileparameters['corresp'][pos] #find for each position the methyl index
+        except KeyError:
+            print "position of H atom is not a possible site. Therefore the program assumes H is attached to a nitrogen atom!"
+            print "electronegativity correction for nitrogen: ", chi_term
+            Npos.append(pos)
+        else:
+            if siteindex in fileparameters['line1']:# look if that index is used as a site
+                if confje[ fileparameters['line1'].index(siteindex) ]==['N']:
+                    print "electronegativity correction for nitrogen: ", chi_term
+                    Npos.append(pos)
         #-----
         EAHs.append([EAH,pos])
     print "EAHs:"
@@ -527,12 +531,12 @@ def errortermination(path,debug=False):
                 if multcharge.match(line) and once==0: #when found 
                     once+=1
                     newfile.append(line) #the line with the match itself has to be included in the newfile
-                    while True: 
+                    while True:
                         line= next(fid) #take al new lines
                         if line=='\n': #end of zmat
                             #now instead of this zmat that is now completely skipped place in newfile
                             #the last coordinates of the crashed run
-                            newfile.extend([' '.join(map(str,item))+'\n' for item in mymol.atomcoords[-1]])
+                            newfile.extend([' '.join( map("{12.6f}".format, item))+'\n' for item in mymol.atomcoords[-1]])
                             newfile.extend(['\n'])
                             break
                 else:

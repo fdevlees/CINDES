@@ -64,6 +64,7 @@ class Run(object):
         self.TZmat = r.geometry(**entries)
 
         self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
+        self.corresp = self.set_corresp( self.TZmat['active'], self.TZmat['passive'])
 
         #sets Gaussian09 input lines
         self.set_calculation_properties()
@@ -142,6 +143,15 @@ class Run(object):
             print "sites: ", sites
             print "sites_adj:", sites_adj
         return sites_adj
+
+    def set_corresp(self, active, passive):
+        '''makes a dictionary that gives the correspondance of sites with position in core matrix'''
+        corresp = dict()
+        for site in active:
+            corresp[ site[0][1] ] = site[1][1]
+        for site in passive:
+            corresp[ site[0][1] ] = site[1][1]
+        return corresp
 
     def runspecs_gaussian(self):
         param=self.__dict__

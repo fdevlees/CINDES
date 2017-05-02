@@ -611,7 +611,7 @@ def filewriterA(zmat,index,**paras): #paras is short for fileparameters
     fid=open(paras['path'] + '/' + filename,'w')
     fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
     fid.write("%mem=1500MB\n")
-    fid.write("%nprocshared=2\n")
+    fid.write("%nprocshared={:d}\n".format(paras['nprocs']) )
     # gaussianline now is:
     # "# opt=calcfc ub3lyp/6-31g(d) pop=npa freq'
     fid.write(paras['gaussianline1'])

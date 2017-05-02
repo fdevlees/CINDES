@@ -192,13 +192,13 @@ def maker1(zmat,pos,index,**fileparameters):
         item = zmat[pos-1]
         h=1
         if len(item)==1: #when pos is 1 so first index of a zmat
-            hline = ['H',1,0.9,2,109.5,3,126.0]
+            hline = ['H',1,0.9,2,109.5,3,176.0]
         elif len(item)==3: #when pos is 2 so second index of a zmat
-            hline = ['H',2,0.9,3,109.5,4,126.0]
+            hline = ['H',2,0.9,3,109.5,4,176.0]
         else:
             bondindex=item[1] #or if item only has length 1
             dihedralindex=item[3]
-            hline= ['H',spos,0.9,bondindex,109.5,item[3],126.0]#LOOK AT THIS
+            hline= ['H',spos,0.9,bondindex,109.5,item[3],176.0]#LOOK AT THIS
     else:
         for item in zmatnew[fileparameters['ncore']:]:
             #print "in loop", "spos:",spos,"str(item[1]",str(item[1])
