@@ -495,7 +495,7 @@ def filewriter2(zmat,index,**paras): #paras is short for fileparameters
         fid.write("\n")
         fid.write(str(index) + " with solvent calc\n")
         fid.write("\n")
-    if paras['polar'] == 1 and paras['multiplejobs']>=1:
+    elif paras['polar'] == 1 and paras['multiplejobs']>=1:
         fid.write("--link1--\n")
         fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
         fid.write("%mem=1500MB\n")
@@ -506,7 +506,7 @@ def filewriter2(zmat,index,**paras): #paras is short for fileparameters
         fid.write("\n")
         fid.write(str(index) + " 2nd calc\n")
         fid.write("\n")
-    if paras['ip'] == 1 or paras['aip']==1:
+    elif paras['ip'] == 1 or paras['aip']==1:
         fid.write("--link1--\n")
         fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
         fid.write("%mem=1500MB\n")
@@ -531,6 +531,19 @@ def filewriter2(zmat,index,**paras): #paras is short for fileparameters
         fid.write(str(index) + " 2nd calc\n")
         fid.write("\n")
         fid.write(str(paras['charge']-1) + " " + str(paras['mult']+1) + "\n")
+        fid.write("\n")
+    if paras['twojob']>=2:
+        fid.write("--link1--\n")
+        fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
+        fid.write("%mem=1500MB\n")
+        if not paras['nprocs']==1:
+            fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
+        #fid.write("%nprocshared=2\n")
+        fid.write(paras['gaussianline2'])
+        fid.write("\n")
+        fid.write(str(index) + " 2nd calc\n")
+        fid.write("\n")
+        fid.write(str(paras['charge']) + " " + str(paras['mult']) + "\n")
         fid.write("\n")
     #print "---- FILE PRINTED SUCCESFULLY -----"
     return

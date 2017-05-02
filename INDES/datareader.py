@@ -536,7 +536,16 @@ def errortermination(path,debug=False):
                         if line=='\n': #end of zmat
                             #now instead of this zmat that is now completely skipped place in newfile
                             #the last coordinates of the crashed run
-                            newfile.extend([' '.join( map("{12.6f}".format, item))+'\n' for item in mymol.atomcoords[-1]])
+                            #newfile.extend([' '.join( map("{12.6f}".format, item))+'\n' for item in mymol.atomcoords[-1]])
+                            xyz = mymol.atomcoords[-1]
+                            xyz_f = [ item[0] + ' '.join( map( "{:12.6f}".format, item[1:])) + '\n' for item in xyz ]
+                            #xyz_f = [ item[0] + ' '.join(
+                            #                              map(
+                            #                                   str, item[1:]
+                            #                                 )
+                            #                            ) + '\n' for item in xyz ]
+                            print xyz_f
+                            newfile.extend(xyz_f)
                             newfile.extend(['\n'])
                             break
                 else:
