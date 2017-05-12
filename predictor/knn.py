@@ -66,7 +66,10 @@ class NearestNeighborExperiment(Experiment):
 
     def test(self, X, model=None, **kwargs ):
         if model is None: model=self.model
-        NN, y_train = model
+        try:
+            NN, y_train = model
+        except TypeError:
+            NN = model
         if self.hparam['supervised']:
             y_test = NN.predict(X).flatten()
         else:
@@ -102,28 +105,46 @@ class NearestNeighborWithPCAExperiment(NearestNeighborExperiment):
         super(NearestNeighborWithPCAExperiment, self).__init__(**kwargs)
         self.n_principal_components = n_principal_components
 
-    def train(self, X=None, y=None, **kwargs):
-        if X is None: X=self.X
-        if y is None: y=self.y
-        # Dimensionality reduction
-        F = PCA(self.n_principal_components)
-        F.fit(X)
-        X_F = F.transform(X)
+    def get_XY(self, **kwargs):
+        X,y = super(NearestNeighborWithPCAExperiment, self).get_XY(**kwargs)
+        return self.do_PCA(X), y
 
-        print "\tLeast explained variance:", F.explained_variance_[-1]
-        print "\tDimensionality reduction: ", X_F.shape
+    def get_X(self, *args, **kwargs):
+        X = super(NearestNeighborWithPCAExperiment, self).get_X(*args, **kwargs)
+        return self.do_PCA(X, fit=False)
 
-        # Nearest neighbor
-        (NN, _) = super(NearestNeighborWithPCAExperiment, self).train(X_F, y, **kwargs)
-        self.F = F
-
-        return (NN, y)
-
-    def test(self, X, model=None, **kwargs):
-        if model is None: model=self.model
-        NN, y_train = model
+    def do_PCA(self, X, fit=True):
+        if fit:
+            F = PCA(self.n_principal_components)
+            F.fit(X)
+            print "\tLeast explained variance:", F.explained_variance_[-1]
+            self.F = F
         X_F = self.F.transform(X)
-        return super(NearestNeighborWithPCAExperiment, self).test(X_F, (NN, y_train))
+        print "\tDimensionality reduction: ", X_F.shape
+        return X_F
+
+#    def train(self, X=None, y=None, **kwargs):
+#        if X is None: X=self.X
+#        if y is None: y=self.y
+#        # Dimensionality reduction
+#        F = PCA(self.n_principal_components)
+#        F.fit(X)
+#        X_F = F.transform(X)
+#
+#        print "\tLeast explained variance:", F.explained_variance_[-1]
+#        print "\tDimensionality reduction: ", X_F.shape
+#
+#        # Nearest neighbor
+#        (NN, _) = super(NearestNeighborWithPCAExperiment, self).train(X_F, y, **kwargs)
+#        self.F = F
+#
+#        return (NN, y)
+
+#    def test(self, X, model=None, **kwargs):
+#        if model is None: model=self.model
+#        NN, y_train = model
+#        X_F = self.F.transform(X)
+#        return super(NearestNeighborWithPCAExperiment, self).test(X_F, (NN, y_train))
 
     def save_model(self, count, model=None):
         if model is None: model=self.model

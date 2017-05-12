@@ -5,6 +5,7 @@
 import argparse
 import logging
 import sys
+import time
 
 from utils.writings import print_title
 from INDES.inputreader import read_input
@@ -21,7 +22,8 @@ class Unbuffered(object):
 sys.stdout = Unbuffered(sys.stdout)
 
 if True:
-    print_title("C I N D E S\nAn Inverse Molecular Design Program\nwritten by Jos L. Teunissen", newlines=True)
+    print time.ctime()
+    print_title("C I N D E S\nAn Inverse Molecular Design Program\nwritten by Jos L. Teunissen".format(time.ctime()), newlines=True)
 
     # READ COMMAND LINE ARGUMENTS
     parser = argparse.ArgumentParser(description="INverse DESign package")

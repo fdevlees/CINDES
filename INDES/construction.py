@@ -133,7 +133,7 @@ def classmaker2(startconf,array,k,table,run=[]):
                     # set property value of that individual
                     print "item:", item
                     i=1
-                    if int(item[1]) == 1:
+                    if float(item[1]) == 1.0:
                         print "WARNING tablebin has old style formatting (column with 1s is present)",
                         i=2
                     individual.Pvalue = item[i]

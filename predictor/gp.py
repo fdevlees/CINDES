@@ -234,27 +234,45 @@ class GaussianProcessWithPCAExperiment(GaussianProcessExperiment_skl):
         super(GaussianProcessWithPCAExperiment, self).__init__(white_noise, **kwargs)
         self.n_principal_components = n_principal_components
 
-    def train(self, X=None, y=None, **kwargs):
-        if X is None: X=self.X
-        if y is None: y=self.y
-        # Dimensionality reduction
-        F = PCA(self.n_principal_components)
-        F.fit(X)
-        X_F = F.transform(X)
-        self.F = F
+    def get_XY(self, **kwargs):
+        X,y = super(GaussianProcessWithPCAExperiment, self).get_XY(**kwargs)
+        return self.do_PCA(X), y
 
-        print "\tLeast explained variance:", F.explained_variance_[-1]
-        print "\tDimensionality reduction: ", X_F.shape
+    def get_X(self, *args, **kwargs):
+        X = super(GaussianProcessWithPCAExperiment, self).get_X(*args, **kwargs)
+        return self.do_PCA(X, fit=False)
 
-        gp = super(GaussianProcessWithPCAExperiment, self).train(X_F, y)
-
-        return gp
-
-    def test(self, X, model=None, **kwargs):
-        if model is None: model = self.model
-        gp = model
+    def do_PCA(self, X, fit=True):
+        if fit:
+            F = PCA(self.n_principal_components)
+            F.fit(X)
+            print "\tLeast explained variance:", F.explained_variance_[-1]
+            self.F = F
         X_F = self.F.transform(X)
-        return super(GaussianProcessWithPCAExperiment, self).test(X_F, gp, **kwargs)
+        print "\tDimensionality reduction: ", X_F.shape
+        return X_F
+
+#    def train(self, X=None, y=None, **kwargs):
+#        if X is None: X=self.X
+#        if y is None: y=self.y
+#        # Dimensionality reduction
+#        F = PCA(self.n_principal_components)
+#        F.fit(X)
+#        X_F = F.transform(X)
+#        self.F = F
+#
+#        print "\tLeast explained variance:", F.explained_variance_[-1]
+#        print "\tDimensionality reduction: ", X_F.shape
+#
+#        gp = super(GaussianProcessWithPCAExperiment, self).train(X_F, y)
+#
+#        return gp
+
+#    def test(self, X, model=None, **kwargs):
+#        if model is None: model = self.model
+#        gp = model
+#        X_F = self.F.transform(X)
+#        return super(GaussianProcessWithPCAExperiment, self).test(X_F, gp, **kwargs)
 
     def save_model(self, count, model=None):
         if model is None: model = self.model

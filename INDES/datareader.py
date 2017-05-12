@@ -11,6 +11,18 @@ import construction
 
 corresp = {2:46,6:18,7:42,9:34,11:22,12:30}
 
+def rm_duplicates(seq):
+    seen = set()
+    seen_add = seen.add
+    new_seq = []
+    for x in seq:
+        if x in seen:
+            print "multiples found in sequence. name probably scfenergies! | value: ", x
+        else:
+            new_seq.append(x)
+            seen_add(x)
+    return new_seq
+
 class prettyfloat(float):
     def __repr__(self):
         return "%-0.4f" % self
@@ -393,6 +405,8 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1):
     if not hasattr(mymol,'optdone'):
         print "program did not do optimization or crashed"
 
+
+
     # set props
     if 'polar' in props:
         if hasattr(mymol,'polex'):
@@ -407,12 +421,20 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1):
             print "NO POLAR DATA FOUND IN FILE!"
     if 'stabA' in props:
         pprint(mymol.scfenergies[-5:])
+        #try to remove duplicates from list
+        if True:
+            mymol.scfenergies = rm_duplicates(mymol.scfenergies)
         results['Eopt'] = mymol.scfenergies[-4]
         results['E0']   = mymol.scfenergies[-3]
         results['IP']   = mymol.scfenergies[-2] - results['E0']
         results['EA']   = results['E0'] - mymol.scfenergies[-1]
     if 'omega' in props:
         pprint(mymol.scfenergies[-5:])
+
+        #try to remove duplicates from list
+        if True:
+            mymol.scfenergies = rm_duplicates(mymol.scfenergies)
+
         results['Eopt'] = mymol.scfenergies[-4]
         results['E0']   = mymol.scfenergies[-3]
         results['IP']   = mymol.scfenergies[-2] - results['E0']
@@ -436,11 +458,21 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1):
         results['gap']  = results['lumo'] - results['homo']
     if 'ip' in props:
         ESCFs = mymol.scfenergies
+
+        #try to remove duplicates from list
+        if True:
+            mymol.scfenergies = rm_duplicates(mymol.scfenergies)
+
         results['energy']  = ESCFs[-(multiplejobs+1)]
         results['ecation'] = ESCFs[-multiplejobs]
         results['ip']      = results['ecation'] - results['energy']
     if 'ea' in props:
         ESCFs = mymol.scfenergies
+
+        #try to remove duplicates from list
+        if True:
+            mymol.scfenergies = rm_duplicates(mymol.scfenergies)
+
         results['energy'] = ESCFs[-(1+multiplejobs)]
         results['eanion'] = ESCFs[-1]
         results['ea']     = results['energy'] - results['eanion']

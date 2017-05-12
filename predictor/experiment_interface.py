@@ -1,3 +1,4 @@
+
 import pickle
 import time
 
@@ -58,6 +59,19 @@ class Experiment(object):
             #self.X, self.y = read_BoB_data(setting, '../data')
             self.X, self.y = get_XY(table=self.table, descriptor=self.descriptor, identify = self.run.identify, array=self.array, TZmat=run.TZmat, **kwargs)
 
+    def get_XY(self, **kwargs):
+        X, y = get_XY(table=self.table,
+                                descriptor=self.descriptor,
+                                identify = self.run.identify,
+                                array = self.array,
+                                TZmat=self.run.TZmat,
+                                **kwargs )
+        return X, y
+
+    def get_X(self, indices, **kwargs):
+        X_pred = get_X(indices, array=self.array, descriptor=self.descriptor, identify=self.run.identify, **self.run.TZmat )
+        return X_pred
+
     def train(self, X, y, **kwargs):
         """
         Interface for training.
@@ -101,6 +115,55 @@ class Experiment(object):
         """
         pass
 
+    def get_model(self, count=0, nsite=0, *args, **kwargs):
+        """
+        Interface to get the model to use for prediction.
+        either:
+            - load old model
+            - fit new model
+        """
+
+        # 1. If self.retrain=False: try to load model. but if not found do nevertheless a training with hparam opt.
+        if not self.retrain and not self.multiple:
+            try:
+                self.model = self.load_model(count)
+                print "     LOAD succesful!"
+                print "     self.model:", self.model
+                # it gets the R**2 value from the moment where the model was created.
+                print "self.R:", self.R
+                return
+            except IOError as e:
+                print "tried to load model but not found:", e
+                print "going to train model:"
+                self.X, self.y = self.get_XY(**kwargs)
+                self.reoptimize = True
+
+        if self.multiple:
+            self.do_multiple(**kwargs)
+        elif self.reoptimize: # sets self.hparam
+            print "self.hparam before h_opt:", self.hparam
+            clf_gs = self.get_best_hyperparams( split=True)
+            print "self.hparam after h_opt:", self.hparam
+        elif self.getR:
+            self.cross_val()
+        print "R**2 value is:", self.R
+        
+        # and always do a refit on total database:
+        if not self.multiple:
+            if True:
+                print "Training for final model..."
+                stime = time.time()
+                self.model  = self.train(verbose=True, **kwargs)
+                time_to_fit = time.time() - stime
+                print "\tTime to fit: ", time_to_fit, ' s'
+            else:
+                self.model = clf_gs
+
+            # save model:
+            self.save_model(count)
+
+        return
+
     def get_best_hyperparams(self, split=True):
         """
         Interface for optimization of hyperparameters of the Experiment
@@ -125,21 +188,22 @@ class Experiment(object):
         # 2. set hyper_param set and validation set
         # if X.shape[0] > 400: do 300 for training. else do 75% for training
 
-        if split:
+        if split: # use a validation set. after the hyper_opt. This is used in normal run to decide based on R**2 value
             ind = np.arange(self.X.shape[0])
             np.random.shuffle(ind)
-            if self.X.shape[0] > 400:
+            if self.X.shape[0] > 400: # use only 300 or if nX<400 only 75% of items. 
                 n_opt = 300
             else:
                 n_opt = int( 0.75 * self.X.shape[0] )
-            X_hyp = self.X[ind[:n_opt],:]
-            y_hyp = self.y[ind[:n_opt]]
-            X_test= self.X[ind[n_opt:],:]
-            y_test= self.y[ind[n_opt:]]
+            X_hyp, X_test, y_hyp, y_test = train_test_split( self.X, self.y, train_size=n_opt, random_state = self.run.seed )
+            #X_hyp = self.X[ind[:n_opt],:]
+            #y_hyp = self.y[ind[:n_opt]]
+            #X_test= self.X[ind[n_opt:],:]
+            #y_test= self.y[ind[n_opt:]]
             print "\tn X:", self.X.shape, "n X_hyp:", X_hyp.shape, "n X_test:", X_test.shape
 
             # 3. Fit the GridSearch
-            clf_gs.fit(X_hyp, y_hyp)
+            gs_results = clf_gs.fit(X_hyp, y_hyp)
          
             # 4. determine R on validation set:
             y_pred = clf_gs.predict(X_test)
@@ -151,7 +215,7 @@ class Experiment(object):
                 print y_test[i], y_pred[i]
             print "8"*30
 
-        else:
+        else:   # no split. because in do_multiple there is already another validation set specified. 
             clf_gs.fit(self.X, self.y)
 
         # 5. print time consumed
@@ -170,54 +234,6 @@ class Experiment(object):
         self.hparam.update(clf_gs.best_params_)
 
         return clf_gs
-
-
-    def get_model(self, count=0, nsite=0, *args, **kwargs):
-        """
-        Interface to get the model to use for prediction.
-        either:
-            - load old model
-            - fit new model
-        """
-
-        # 1. If self.retrain=False: try to load model. but if not found do nevertheless a training with hparam opt.
-        if not self.retrain and not self.multiple:
-            try:
-                self.model = self.load_model(count)
-                # it gets the R**2 value from the moment where the model was created.
-                print "self.R:", self.R
-                return
-            except IOError as e:
-                print "tried to load model but not found:", e
-                print "going to train model:"
-                self.X, self.y = get_XY(table=self.table,
-                                        descriptor=self.descriptor,
-                                        identify = self.run.identify,
-                                        array = self.array,
-                                        TZmat=self.run.TZmat,
-                                        **kwargs )
-                self.reoptimize = True
-
-        if self.multiple:
-            self.do_multiple(**kwargs)
-        elif self.reoptimize: # sets self.hparam
-            clf_gs = self.get_best_hyperparams()
-        elif self.getR:
-            self.cross_val()
-        print "R**2 value is:", self.R
-        
-        # and always do a refit on total database:
-        if not self.multiple:
-            print "Training for final model..."
-            stime = time.time()
-            self.model  = self.train(verbose=True, **kwargs)
-            time_to_fit = time.time() - stime
-            print "\tTime to fit: ", time_to_fit, ' s'
-
-            # save model:
-            self.save_model(count)
-
-        return
 
     def do_multiple(self, **kwargs):
         results = dict()
@@ -309,17 +325,23 @@ class Experiment(object):
 
         return
 
-    @log_io()
-    def predict(self, molecules, **kwargs):
+    def predict(self, molecules, MC=False, **kwargs):
         ''' get molecules list 
 
         NB: for the LinRegOneExperiment this function is overwritten because it uses get_X_1D
         '''
         indices = [ mol.index for mol in molecules ]
-        X_pred = get_X(indices, array=self.array, descriptor=self.descriptor, identify=self.run.identify, **self.run.TZmat )
+        X_pred = self.get_X(indices)
         #sprint(10, X_pred)
         y_pred = self.test( X_pred, **kwargs)
-        if debug: print "y_pred:", y_pred
+
+        if not MC:
+            # test if numbers are different enough.
+            if len(set(y_pred.round(2)))<3:
+                self.R = -0.5
+                print "TOO MUCH SIMILAR PREDICTIONS> OVERFITTING?! > self.R set to -0.5"
+
+        if debug and not MC: print "y_pred:", y_pred
         for molecule, y in zip(molecules, y_pred):
             molecule.predictions[self.name] = y
             #print molecule, y

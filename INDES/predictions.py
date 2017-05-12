@@ -129,6 +129,7 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
 
 
 #@processify
+@log_io(print_time=True)
 def do_prediction(prediction, table, retrain, array, count, nsite, run, mols_todo):
     # prediction in: prediction, table, mols_todo, retrain, run, array, count, nsite
 
@@ -162,9 +163,12 @@ def do_prediction(prediction, table, retrain, array, count, nsite, run, mols_tod
     prediction['retrained'] = regressor.retrained
     try:
         prediction['plot1'] = regressor.plot1
+    except AttributeError:
+        print "prediction", prediction['name'], "has no plot1 attribute"
+    try:
         prediction['plot2'] = regressor.plot2
     except AttributeError:
-        print "prediction", prediction['name'], "has no plot1 or plot2 attribute"
+        print "prediction", prediction['name'], "has no plot2 attribute"
     try:
         prediction['plot3'] = regressor.plot3
     except AttributeError:
@@ -205,7 +209,7 @@ def plot_predictions(predictions):
             a=axs2d[i]
             print prediction['name']
 
-            # plot test data
+            # p#lot test data
             try:
                 #print prediction['plot1']
                 x1 = prediction['plot1'][:,0]
@@ -275,8 +279,9 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
             prediction = do_prediction(prediction, table, retrain, array, count, nsite, run, mols_todo)
             made_pred = True
       
-        # 2. get best R
+        # 2. get best R and set run.best_pred
         best_pred =  max(run.predictions, key= lambda x:x['R'])
+        run.best_pred = best_pred
         print_title("best performing estimator: " +  best_pred['name'] +  " with R**2: " + str(best_pred['R']), outline='l' )
 
         # 3. log
@@ -286,11 +291,19 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
         plot_predictions(run.predictions)
 
         # 4. decide which molecules to calculate and which not
-        if best_pred['R'] > 0.90 and run.ml:
-            if best_pred['R'] > 0.95: # if R-value is between 0.95 - 1.00 take 3
-                ntake = 3
-            else: # if R-value is between 0.90 - 0.95 take 6
-                ntake = 6
+        
+
+        if best_pred['R'] > 0.75 and run.ml:
+            def get_ntake(R, n):
+                fraction = 4. - 4. * R
+                ntake = max( 1, int(fraction * n) )
+                print "I will calculate only {:d} of the {:d} structures ;)".format( ntake, n)
+                return ntake
+            ntake = get_ntake( best_pred['R'], len( mols_todo ) )
+            #if best_pred['R'] > 0.95: # if R-value is between 0.95 - 1.00 take 3
+            #    ntake = 3
+            #else: # if R-value is between 0.90 - 0.95 take 6
+            #    ntake = 6
             print "prediction is good enough"
             mols_nocal, mols_tocal = (mols_nodo,[])
             #for mol in mols_todo:

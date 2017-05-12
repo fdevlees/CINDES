@@ -28,7 +28,7 @@ class LinRegOneExperiment(Experiment):
         self.hparam = { 'alpha':1e4,
                         'tol': 0.001,
                         'intercept':True }
-        self.hparam_grid = {'alpha': np.logspace(-10,5,15) }
+        self.hparam_grid = {'alpha': np.logspace(-5,5,10) }
 
         for key in self.hparam:
             if key in kwargs:
@@ -79,6 +79,8 @@ class LinRegOneExperiment(Experiment):
 
         clf.fit(X,y)
 
+        #print clf.coef_
+
         if verbose: print "\tLearned model: ", clf
 
         return clf
@@ -86,6 +88,7 @@ class LinRegOneExperiment(Experiment):
     def test(self, X, model=None, **kwargs):
         if model is None: model=self.model
         y_pred = model.predict(X)
+        #print y_pred, model, model.coef_
         return y_pred.flatten()
 
     def predict_old(self, molecules, **kwargs):
@@ -162,30 +165,43 @@ class LinRegOneExperiment(Experiment):
 class LinRegOneWithPCAExperiment(LinRegOneExperiment):
 
     def __init__(self, n_principal_components=50, **kwargs):
+        self.F = None
         super(LinRegOneWithPCAExperiment, self).__init__(**kwargs)
         self.n_principal_components = n_principal_components
+        #self.hparam_grid = {'linreg__alpha': np.logspace(-10,5,15) }
 
-    def train(self, X=None, y=None, **kwargs):
-        if X is None: X=self.X
-        if y is None: y=self.y
-        # Dimensionality reduction
-        F = PCA(self.n_principal_components)
-        F.fit(X)
-        X_F = F.transform(X)
+    def get_XY(self, **kwargs):
+        X,y = super(LinRegOneWithPCAExperiment, self).get_XY(**kwargs)
+        return self.do_PCA(X), y
 
-        print "\tLeast explained variance:", F.explained_variance_[-1]
-        print "\tDimensionality reduction: ", X_F.shape
+    def get_X(self, *args, **kwargs):
+        X = super(LinRegOneWithPCAExperiment, self).get_X(*args, **kwargs)
+        return self.do_PCA(X, fit=False)
 
-        # Nearest neighbor
-        krr = super(LinRegOneWithPCAExperiment, self).train(X_F, y, **kwargs)
-        self.F = F
-
-        return krr
-
-    def test(self, X, model=None, **kwargs):
-        if model is None: model=self.model
+    def do_PCA(self, X, fit=True):
+        if fit:
+            F = PCA(self.n_principal_components)
+            F.fit(X)
+            print "\tLeast explained variance:", F.explained_variance_[-1]
+            self.F = F
         X_F = self.F.transform(X)
-        return super(LinRegOneWithPCAExperiment, self).test(X_F, model)
+        print "\tDimensionality reduction: ", X_F.shape
+        return X_F
+
+#    def train(self, X=None, y=None, **kwargs):
+#        if X is None: X=self.X
+#        if y is None: y=self.y
+#        # Dimensionality reduction
+#
+#        # Nearest neighbor
+#        krr = super(LinRegOneWithPCAExperiment, self).train(X_F, y, **kwargs)
+#        self.F = F
+#        return krr
+
+#    def test(self, X, model=None, **kwargs):
+#        if model is None: model=self.model
+#        X_F = self.F.transform(X)
+#        return super(LinRegOneWithPCAExperiment, self).test(X_F, model)
 
     def save_model(self, count, model=None):
         if model is None: model=self.model
@@ -200,4 +216,11 @@ class LinRegOneWithPCAExperiment(LinRegOneExperiment):
         (model, self.F) = joblib.load(modelname)
         self.R = model.R
         return model
+
+#    def get_estimator(self, **kwargs):
+#        clf = super(LinRegOneWithPCAExperiment, self).get_estimator()
+#        pca = PCA(self.n_principal_components)
+#        from sklearn.pipeline import Pipeline
+#        pipe = Pipeline( steps=[ ('pca', pca), ('linreg', clf)])
+#        return pipe
 

@@ -15,8 +15,12 @@ def pre(f,**kwargs):
     printname("BEFORE: " + f.__name__,**kwargs)
     return
 
-def post(f,**kwargs):
-    printname(' AFTER: ' + f.__name__,**kwargs)
+def post(f, time=None, **kwargs):
+    if time:
+        name = ' AFTER: {} | consumed {} s'.format(f.__name__, time)
+    else:
+        name = ' AFTER: ' + f.__name__
+    printname(name,**kwargs)
     return
 
 def printname(name,signator='*',space='\n'*1):
@@ -33,14 +37,21 @@ def printname(name,signator='*',space='\n'*1):
 
 
 from functools import wraps
-def log_io(pre=pre,post=post,signator='*'):
+def log_io(pre=pre,post=post,signator='*', print_time=False):
     assert len(signator)==1
     def decorate(f):
         @wraps(f)
         def wrapped(*args,**kwargs):
+            if print_time:
+                import time
+                start = time.clock()
             pre(f,signator=signator)
             r = f(*args,**kwargs)
-            post(f,signator=signator)
+            if print_time:
+                consumed = time.clock() - start
+                post(f,signator=signator, time=consumed)
+            else:
+                post(f,signator=signator)
             return r
         return wrapped
     return decorate

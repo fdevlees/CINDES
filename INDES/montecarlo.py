@@ -2,7 +2,7 @@
 debug=0
 
 import construction as zcon
-from CINDES4.utils.writings import log_io, print_title, sprint
+from CINDES4.utils.writings import log_io, print_title, sprint, dump
 from CINDES4.predictor import learning_skl as learning
 import random
 from math import exp #exp(x) returns e^x
@@ -41,13 +41,49 @@ def generate(p):
     '''this generates zero or one on a probability of p'''
     return random.random() <= p
 
+@log_io(print_time=True)
+def ML_init(prediction, run, table, retrain=True, array=[], count=100, nsite=0, **kwargs):
+    # prediction in: prediction, table, mols_todo, retrain, run, array, count, nsite
+
+    # 0. log prediction:
+    made_pred=True
+    print_title(prediction['name'], outline='l')
+    dump(prediction)
+
+    # 1. initiate prediction experiment
+    from predictions import get_experiment
+    regressor = get_experiment(prediction = prediction,
+                               table= table,
+                               retrain= retrain,
+                               array=array,
+                               run=run)
+
+    # 2. train or reload the model
+    regressor.get_model(
+                                  write_log=True,
+                                  reopt_hyps=False,
+                                  count = count,
+                                  nsite = nsite,
+                               )
+
+    return regressor
+
+def ML_pred(regressor, conf, **kwargs):
+    # 3. use model to predict
+    from CINDES4.utils.molecule import Molecule
+    mol = Molecule(conf)
+    regressor.predict([mol], rstd=True, MC=True)
+    #print mol.predictions
+    return mol.predictions[ regressor.name ]
+
 @log_io()
-def montecarloprocedure(fileparameters, subarray, maxi, table,**kwargs):
+def montecarloprocedure(run, subarray, maxi, table,**kwargs):
     #version 4/10/2015
     #MONTE CARLO PROCEDURE. 
                #maxsite = montecarloprocedure(beta, array, maximum, table)
     # INPUT: beta - maximum - table - array
     # OUTPUT: maxsite
+    fileparameters = run.__dict__
 
     print "Monte Carlo switched on!"
 
@@ -64,6 +100,7 @@ def montecarloprocedure(fileparameters, subarray, maxi, table,**kwargs):
         print "len(table):", len(table)
         for item in table: print item
 
+
     Dtable = dict([ (item[0],item[1]) for item in table] )
     Tcount = 0 #temperature counter. to zero after increased.
     Rcount = 0 #number of random confs tested
@@ -71,8 +108,10 @@ def montecarloprocedure(fileparameters, subarray, maxi, table,**kwargs):
     print "Number of tested configurations per temperature:", Tcountmax
 
     # 3. FOR ML
-    if fileparameters['ml']==2:
-        ml_instance = learning.MC_init(table, **kwargs)
+    if fileparameters['ml']==2 or fileparameters['predictions']:
+        if not hasattr(run, 'best_pred'):
+            run.best_pred = run.predictions[0]
+        ml_instance = ML_init(table=table, array=subarray, run=run, prediction= run.best_pred     , **kwargs)
 
     # 4. select random configurations until one is accepted. 
     print "Temperatures:",
@@ -82,35 +121,37 @@ def montecarloprocedure(fileparameters, subarray, maxi, table,**kwargs):
         rind = zcon.contoind(rconf)
 
         # 4.2a predict property via difference algorithm
-        deltaetje = 0
-        for i in range(len(rconf)): # now we want to have a value erandom for this configuration and test it with a certain probability
-            if not rconf[i] == cmaximum[i]:
-                confje = cmaximum[0:i] + [rconf[i]] + cmaximum[i+1:]
-                indje= zcon.contoind(confje)
-                #print "Dtable[indje]:", Dtable[indje]
-                try:
-                    deltaetje += Dtable[indje] - maxi[2]
-                except KeyError as e:
-                    print "indje:", indje
-                    print "error:", e
-                    raise
-                #print "deltaetje:", deltaetje
-        erandom = float (maxi[2] + deltaetje)
-
-        if debug:
-            print "random conf:", rconf
-            print "random ind:",  rind
-            print "indje    :",   indje
-            print "Dtable[indje]",Dtable[indje]
-            print "deltaetje:", deltaetje
-            print "erandom:", erandom
-
+        if False:
+            deltaetje = 0
+            for i in range(len(rconf)): # now we want to have a value erandom for this configuration and test it with a certain probability
+                if not rconf[i] == cmaximum[i]:
+                    confje = cmaximum[0:i] + [rconf[i]] + cmaximum[i+1:]
+                    indje= zcon.contoind(confje)
+                    #print "Dtable[indje]:", Dtable[indje]
+                    try:
+                        deltaetje += Dtable[indje] - maxi[2]
+                    except KeyError as e:
+                        print "indje:", indje
+                        print "error:", e
+                        raise
+                    #print "deltaetje:", deltaetje
+            erandom = float (maxi[2] + deltaetje)
+            
+            if debug:
+                print "random conf:", rconf
+                print "random ind:",  rind
+                print "indje    :",   indje
+                print "Dtable[indje]",Dtable[indje]
+                print "deltaetje:", deltaetje
+                print "erandom:", erandom
+            
+        else:
         # 4.2b predict property via MACHINE LEARNING
-        if fileparameters['ml']==2:
-            print "ml_instance:", ml_instance
-            print "indje:", indje
-            erandom_ML = learning.MC_test_ind(ml=ml_instance, indices=[indje],**kwargs) 
-            print "erandom_ML:", erandom_ML
+            erandom = ML_pred(ml_instance, rconf,**kwargs)
+            if debug:
+                print "ml_instance:", ml_instance
+                print "random index:", rind
+                print "erandom_ML:", erandom
 
         # 4.3 determine acceptance based on Delta-P
         # calculate the gradient energy. > resulttry

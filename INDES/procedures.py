@@ -219,10 +219,14 @@ class Run(object):
                     self.gaussianline  = '# opt=(maxcycle=' + param['maxcycles'] + ') ' + 'pm6' +'\n'
                 else:
                     self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                self.gaussianline2 = '# geom=allcheck guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
+                self.gaussianline2 = '# geom=check scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
                 if param['solv']:
-                    self.gaussianline_solv0 = '# geom=allcheck guess=read scf=xqc b3lyp/6-31G(d,p)\n'
-                    self.gaussianline_solv1 = '# geom=allcheck guess=read scf=xqc scrf=(smd, solvent=aceticacid) b3lyp/6-31G(d,p)\n'
+                    if True:
+                        self.gaussianline_solv0 = '# geom=allcheck guess=read pm6\n'
+                        self.gaussianline_solv1 = '# geom=allcheck guess=read pm6 scrf=(smd, solvent=aceticacid)\n'
+                    else:
+                        self.gaussianline_solv0 = '# geom=allcheck guess=read scf=xqc b3lyp/6-31G(d,p)\n'
+                        self.gaussianline_solv1 = '# geom=allcheck scf=xqc scrf=(smd, solvent=aceticacid) b3lyp/6-31G(d,p)\n'
 
         for key in ['ip','ea','polar']:
             if param[key]==1:
@@ -388,9 +392,9 @@ def runtest(run, maximum, maxsite, count, bcok,mctable=[], array=[]):
                converged = 1
             else:
                if param['ml']==0:
-                   maxsite = montecarloprocedure(param, array, maximum, mctable)
+                   maxsite = montecarloprocedure(run, array, maximum, mctable)
                else:
-                   maxsite = montecarloprocedure(param, array, maximum, mctable, **TZmat)
+                   maxsite = montecarloprocedure(run, array, maximum, mctable, **TZmat)
                print "maxsite:", pprint.pformat( maxsite, width=100 )
         else:
             print "maximum and maxsite are not the same yet"
@@ -673,6 +677,7 @@ def testpred(param,array):
     class Mol(object):
         def __init__(self):
             self.predictions = {}
+        def __repr__(self): return "<empty molecule object>"
     myrun = Run(**param)
     print myrun
     table = set_table(myrun)
