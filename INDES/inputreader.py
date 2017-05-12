@@ -300,7 +300,7 @@ def readfile(subinp):
                     paras['nosub'] = 1
         elif 'nprocs' in line: paras['nprocs'] = int(line.split()[1])
         elif 'optimum' in line:
-            if line.split() in [ 'max', 'maximum' ]:
+            if 'max' in line.split()[1]:
                 print "changed optimization to maximum instead of minimum!"
                 paras['optimum'] = 'maximum'
         elif 'positions' in line: paras['positions'] = [ int(item) for item in line.split()[1:] ]

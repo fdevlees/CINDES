@@ -14,8 +14,8 @@ import numpy as np
 
 #for a progres bar:
 import time
-import progressbar
-bar = progressbar.ProgressBar()
+#import progressbar
+#bar = progressbar.ProgressBar()
 
 from copy import deepcopy
 from pprint import pprint

@@ -16,8 +16,8 @@ import matplotlib.pyplot as plt
 
 #for a progres bar:
 import time
-import progressbar
-bar = progressbar.ProgressBar()
+#import progressbar
+#bar = progressbar.ProgressBar()
 
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
