@@ -499,7 +499,7 @@ def run_pyevolve(array,table, options):
     print "GenAlg:", ga
 
     # Do the evolution, with stats dump
-    ga.evolve(freq_stats=2)
+    ga.evolve(freq_stats=options.genalg['freq_stats'])
     return ga
 
 if __name__ == "__main__":
