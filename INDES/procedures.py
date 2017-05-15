@@ -188,12 +188,10 @@ class Run(object):
         elif param['aip']==1 or param['aea']==1:
             self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
             param['twojob']=1
-            #param['multiplejobs']=1
             self.gaussianline2 = '# geom=check guess=read opt scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
         elif param['ip']==1 or param['ea']==1:
             self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
             param['twojob']=1
-            #param['multiplejobs']=1
             self.gaussianline2 = '# geom=check guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
         else:
             if param['property']=='dipole':

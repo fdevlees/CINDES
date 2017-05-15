@@ -40,7 +40,7 @@ if True:
     # END INPUT READING
 
     #START PROGRAM PROCEDURE
-    if param['procedure'] == 'standard':
+    if param['procedure'] in ['standard', 'bfs']:
         from INDES.procedures import BFS
         BFS(param,array)
 

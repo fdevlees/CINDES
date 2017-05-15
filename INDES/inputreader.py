@@ -278,7 +278,15 @@ def readfile(subinp):
             try:
                 paras['nrandsites']= int(line.split()[2])
             except IndexError: pass
+
+        #-----
+        # do not interchange the following two keywords!!!"
+        elif 'multiplejobs' in line:
+            print "set multiple jobs:"
+            paras['multiplejobs'] = int(line.split()[1])
         elif 'mult' in line: paras['mult'] = int(line.split()[1])
+        #-----
+
         elif 'ml'==line[:2]:
             paras['ml']= int(line.split()[1])
         elif 'norandom' in line: paras['norandom'] = 1
@@ -400,7 +408,6 @@ def readfile(subinp):
             if line.strip(): # so if not just an empty line:
                 print "line: \"{}\" is not interpreted".format(line.strip('\n')),
                 raise SystemExit('program stopped')
-            
 
     # get a list of all properties that need to be calculated:
     if paras['property']=='func':
@@ -427,7 +434,8 @@ def readfile(subinp):
     if hasattr(paras,'genalg'):
         if not paras['genalg']['optimum'] == paras['optimum']:
             print "WARNING OPTIMUM KEYWORDS ARE NOT THE SAME. \n    Please check carefully if program is working correctly!"
-        
+            print "set optimum to genalg.optimum", paras['genalg']['optimum']
+            paras['optimum'] = paras['genalg']['optimum']
 
     return paras
 

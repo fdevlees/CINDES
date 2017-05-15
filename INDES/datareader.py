@@ -435,13 +435,18 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1):
         if True:
             mymol.scfenergies = rm_duplicates(mymol.scfenergies)
 
-        results['Eopt'] = mymol.scfenergies[-4]
-        results['E0']   = mymol.scfenergies[-3]
-        results['IP']   = mymol.scfenergies[-2] - results['E0']
-        results['EA']   = results['E0'] - mymol.scfenergies[-1]
+        if multiplejobs > 1:
+            scfenergies = mymol.scfenergies[:multiplejobs-1]
+        else:
+            scfenergies = mymol.scfenergies[:]
+
+        results['Eopt'] = scfenergies[-4]
+        results['E0']   = scfenergies[-3]
+        results['IP']   = scfenergies[-2] - results['E0']
+        results['EA']   = results['E0'] - scfenergies[-1]
         #omega = lambda I,A: ( (I+A)**2 ) / ( 8 * (I-A) )
         #results['omega']= omega(results['IP'], results['EA'])
-        results['omega'] = ( ( results['IP'] + results['EA'] )**2 ) / ( 8 * ( results['IP'] - results['EA'] ) )
+        results['omega'] = ( ( results['IP'] + results['EA'] )**2 ) / ( 8 * ( results['IP'] - results['EA'] ) ) * 27.2113838
     if 'energy' in props:
         ESCFs = mymol.scfenergies
         results['energy'] = ESCFs[-(multiplejobs+1)]
