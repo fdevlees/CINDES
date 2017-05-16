@@ -298,7 +298,7 @@ def datareader( mols_tocal, fileparameters):
         # extract them
         # assume all properties can be easily obtained by gausread
         if to_read_props:
-            readings = gausread( file1, to_read_props)
+            readings = gausread( file1, to_read_props, multiplejobs=fileparameters['multiplejobs'])
             #print 'readings:', readings
             props_dict.update( readings )
 
@@ -436,7 +436,8 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1):
             mymol.scfenergies = rm_duplicates(mymol.scfenergies)
 
         if multiplejobs > 1:
-            scfenergies = mymol.scfenergies[:multiplejobs-1]
+            print 'i am here'
+            scfenergies = mymol.scfenergies[:-(multiplejobs-1)]
         else:
             scfenergies = mymol.scfenergies[:]
 
