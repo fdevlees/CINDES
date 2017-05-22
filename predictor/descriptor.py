@@ -72,8 +72,9 @@ funcs = {'CCFFF': '$C-CF_3$',
          'CSH': '$C-SH$',
          'N': '$N$',
          'O': '$O$',
-         'S': '$S$'}
-seq = ['CH','CCHHH','CCFFF','N','CF','CCl','CNHH','CNOO','CCN','CSH','COH','CCOOH','CO','O','S']
+         'S': '$S$',
+         'B': '$B$'}
+seq = ['CH','CCHHH','CCFFF','N','CF','CCl','CNHH','CNOO','CCN','CSH','COH','CCOOH','CO','O','S', 'B']
 fseq= [ funcs[func] for func in seq ] #whahaha :)
 
 ###########################
@@ -349,10 +350,10 @@ class Diamantane(Dataset):
     ngps = (12,12,12,12,15,15) #for every instance this is same
 
     def __init__(self,*rgs,**kwargs):
-        self.seq = ['CH','CCHHH','CCFFF','N','CF','CCl','CNHH','CNOO','CCN','CSH','COH','CCOOH','CO','O','S']
+        self.seq = ['CH','CCHHH','CCFFF','N','CF','CCl','CNHH','CNOO','CCN','CSH','COH','CCOOH','CO','O','S','B']
         if args.symmetry:
             if False:
-                self.syms = [ [ 0,1,2,3,4,5 ], [1,0,3,2,5,4] , 
+                self.syms = [ [ 0,1,2,3,4,5 ], [1,0,3,2,5,4] ,
                               [ 2,1,0,3,4,5 ], [1,2,3,0,5,4] ,
                               [ 0,3,2,1,4,5 ], [3,0,1,2,5,4] ,
                               [ 2,3,0,1,4,5 ], [3,2,1,0,5,4] ]

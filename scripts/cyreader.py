@@ -285,13 +285,14 @@ def main():
             #1. get a list of the substituents 
             subsA = [ item[0] for item in sortA]
             # check is 'CO' is in
-            group = 'CO'
-            if group in subsA:
-                #get index of the group
-                igroup = subsA.index(group)
-                #take it from the list is pop
-                #and insert it at the last position of the list
-                sortA.insert(len(subsA)-1, sortA.pop(igroup))
+            groups = ['CO','O','S']
+            for group in groups:
+                if group in subsA:
+                    #get index of the group
+                    igroup = subsA.index(group)
+                    #take it from the list is pop
+                    #and insert it at the last position of the list
+                    sortA.insert(len(subsA)-1, sortA.pop(igroup))
             if not sortA==[]: runsA.append(sortA)
             if not runC==[]: runsC.append(runC)
         if not runsA==[]: totalruns.append(runsA)
