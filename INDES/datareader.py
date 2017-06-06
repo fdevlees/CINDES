@@ -471,7 +471,17 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1):
 
         results['energy']  = ESCFs[-(multiplejobs+1)]
         results['ecation'] = ESCFs[-multiplejobs]
-        results['ip']      = results['ecation'] - results['energy']
+        ip                 = results['ecation'] - results['energy']
+
+        # now i want to test if it is not too small.
+        if True:
+            if ip < 0.001:
+                print "Ionization Potentential smaller than expected range!."
+                print "Program will take one scfenergy earlier!"
+                results['energy']  = ESCFs[-(multiplejobs+2)]
+                ip                 = results['ecation'] - results['energy']
+
+        results['ip']      = ip
     if 'ea' in props:
         ESCFs = mymol.scfenergies
 
@@ -504,6 +514,10 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1):
         results['e0_solv'] = ESCFs[-3]
         results['e1_solv'] = ESCFs[-2]
         results['solv']    = - ( results['e0_solv'] - results['e1_solv'] ) * 627.5
+    if 'mw' in props:
+        from CINDES4.cclib.parser import ccopen
+        myfile=ccopen(filename).parse()
+        results['mw'] = float( sum( myfile.atomnos) )
 
     # assert that all props are filled
     print 'results:', results

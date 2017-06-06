@@ -199,6 +199,7 @@ class Run(object):
                 self.gaussianline = '# ' + param['functional'] +'/'+ param['basisset'] +'\n'
             else:
                 if param['basisset'] in [ None, 0, '0', 'none', 'nalse', False, 'off' , 'n', 'na' ]:
+      
                     self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'\n'
                 else:
                     self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
@@ -296,7 +297,7 @@ def get_sequence(count, myrun):
     return sequence
 
 # 4 table (database)
-def set_table(myrun):
+def set_table(myrun, datacolumn=1):
     try:
         tablename = myrun.tablename
     except AttributeError:
@@ -307,9 +308,9 @@ def set_table(myrun):
         if True:
             # if all item[1] are ones:
             if all( item[1]==1 for item in table ):
-                table = [[item[0]] + item[2:] for item in table ]
+                table = [[item[0]] + item[datacolumn+1:] for item in table ]
             else:
-                table = [[item[0]] + item[1:] for item in table ]
+                table = [[item[0]] + item[datacolumn:] for item in table ]
 
     else:
         table = []
@@ -678,7 +679,7 @@ def testpred(param,array):
         def __repr__(self): return "<empty molecule object>"
     myrun = Run(**param)
     print myrun
-    table = set_table(myrun)
+    table = set_table(myrun, datacolumn=param['datacolumn'])
     sprint(10,table)
     mols_todo, mols_nodo = ([Mol(),],[Mol(),])
     mols_nocal, mols_tocal, made_pred = predictor(myrun, table, mols_todo,mols_nodo, 99, array=array, nsite=0)

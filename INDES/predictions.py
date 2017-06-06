@@ -187,10 +187,33 @@ def do_prediction_process2(*args,**kwargs):
         result = executor.submit(do_prediction, *args, **kwargs).result()
     return result
 
+
+def json_predictions(predictions):
+    import json
+    from CINDES4.predictor.experiment_interface import jsonify
+
+    print "predictions:", predictions
+
+    # try to load old predictions file:
+    try:
+        with open('predictions.json') as f:
+            pred_dict = json.load(f)
+    except IOError:
+        pred_dict = {}
+
+    for prediction in predictions:
+        pred_dict[ prediction['name'] ] = jsonify(prediction)
+
+    with open('predictions.json','w') as fout:
+        json.dump( pred_dict, fout, indent=4, sort_keys=True)
+
+    return
+
 def plot_predictions(predictions):
     import matplotlib.pyplot as plt
+    from numpy import asarray as A
     if predictions[0]['plots']==[]:return
-    plotted = False
+    plotted = True
     n = len(predictions)
     nx,ny = set_nxy(len(predictions))
     print nx, ny
@@ -212,8 +235,8 @@ def plot_predictions(predictions):
             # p#lot test data
             try:
                 #print prediction['plot1']
-                x1 = prediction['plot1'][:,0]
-                y1 = prediction['plot1'][:,1]
+                x1 = A(prediction['plot1'])[:,0]
+                y1 = A(prediction['plot1'])[:,1]
             except KeyError:
                 print "no plot1 Key"
                 j +=1
@@ -224,8 +247,8 @@ def plot_predictions(predictions):
             # plot train data
             try:
                 #print prediction['plot2']
-                x2 = prediction['plot2'][:,0]
-                y2 = prediction['plot2'][:,1]
+                x2 = A(prediction['plot2'])[:,0]
+                y2 = A(prediction['plot2'])[:,1]
             except KeyError:
                 print "no plot2 Key"
                 j += 1
@@ -238,7 +261,7 @@ def plot_predictions(predictions):
             a.legend()
     if plotted:
         pass
-        #plt.show()
+        plt.show()
     else:
         del f, axs, axs2d
         plt.close()
@@ -266,7 +289,19 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
     TZmat = run.TZmat
     retrain = nsite==0
     retrain = False
-    enoughdata = ( len(table)>50 and not mols_todo==[]) or run.procedure=='testpred'
+
+    # there is enough data to do predictive analytics when:
+    #    - there are at least 50 samples
+    #    - each site is at least visited once: COUNT>1 OR run.restart is larger than zero
+    #    - there should at least one prediction be made: not mols_todo==[] unless we are not interested in predictions: procedure testpred
+    enoughdata = (
+                    (
+                        len(table)>50 and (
+                                              count>1 or run.restart>0
+                                          )
+                    ) and
+                    not mols_todo==[]
+                 ) or run.procedure=='testpred'
 
     # make every item in run uncallable to be able to be pickled by the subprocess.Queue 
     store_function = run.function
@@ -278,20 +313,21 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
             #do_prediction_process(prediction, table, retrain, array, count, nsite, run, mols_todo)
             prediction = do_prediction(prediction, table, retrain, array, count, nsite, run, mols_todo)
             made_pred = True
-      
+
         # 2. get best R and set run.best_pred
         best_pred =  max(run.predictions, key= lambda x:x['R'])
         run.best_pred = best_pred
         print_title("best performing estimator: " +  best_pred['name'] +  " with R**2: " + str(best_pred['R']), outline='l' )
 
-        # 3. log
+        # 3.1 log
         for molecule in mols_todo:
             print molecule.predictions
-        # 3.1. do plottings
+        # 3.2. json_log
+        json_predictions(run.predictions)
+        # 3.3. do plottings
         plot_predictions(run.predictions)
 
         # 4. decide which molecules to calculate and which not
-        
 
         if best_pred['R'] > 0.75 and run.ml:
             def get_ntake(R, n):

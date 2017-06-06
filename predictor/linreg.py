@@ -111,6 +111,13 @@ class LinRegOneExperiment(Experiment):
     def save_model(self, count, model=None):
         if model is None: model=self.model
         model.R = self.R
+
+        try:
+            model.plot1 = self.plot1
+            model.plot2 = self.plot2
+        except AttributeError:
+            pass
+
         modelname = '{}_{}.pkl'.format(self.name, count)
         joblib.dump(model,modelname)
         return
@@ -119,6 +126,13 @@ class LinRegOneExperiment(Experiment):
         modelname = '{}_{}.pkl'.format(self.name, count)
         model = joblib.load(modelname)
         self.R = model.R
+
+        try:
+            self.plot1 = model.plot1
+            self.plot2 = model.plot2
+        except AttributeError:
+            pass
+
         return model
 
     def get_best_hyperparams_old(self):

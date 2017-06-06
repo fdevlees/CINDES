@@ -24,7 +24,7 @@ class GaussianProcessExperiment(Experiment):
 
         if X is None: X=self.X
         if y is None: y=self.y
-         
+
         if verbose:
             print "an example input vector:", X[3]
 
@@ -106,7 +106,7 @@ class GaussianProcessExperiment(Experiment):
         #model.initialize_parameter()
         #array = tuple(npzfile['param_array'])
         #print "array:", array
-        #model[:] = array
+        model[:] = array
         #model.update_model(True)
 
         model = pickle.load(open(modelname2,'rb'))

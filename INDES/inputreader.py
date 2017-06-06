@@ -77,7 +77,6 @@ def get_preds(subinp, line):
         while True:
             line = subinp.readline()
             if not '#' in line: break
-            
         pname= line.split()[0]   # the first word is a unique prediction identifier (just a name which has to be unique)
         ptype= line.split()[1]   # the second word indicates the prediction type
         pred = defaults[ptype].copy()   # the defaults for that prediction type are then loaded in pred
@@ -241,6 +240,9 @@ def readfile(subinp):
         elif 'startind' in line:
             paras['startind'] = line.split()[1]
             continue
+        elif 'identify' in line:
+            paras['identify'] = line.split()[1]
+            continue
         elif 'END' in line: break
 
         # 2. capital insensitive keywords:
@@ -270,7 +272,6 @@ def readfile(subinp):
                 gaussianline = [ line[0], line[1], ' '.join(line[2:]) ]
                 lines.append(gaussianline)
             paras['gaussianlines'] = lines
-        elif 'identify' in line: paras['identify'] = line.split()[1]
         elif 'maxcycles' in line: paras['maxcycles']= str(int(line.split()[1]))
         elif 'maxiter' in line: paras['maxiter'] = int(line.split()[1])
         elif 'montecarlo' in line:
@@ -342,6 +343,11 @@ def readfile(subinp):
                     subinp, paras['genalg'] = get_genalg_params( subinp, line)
                     pass
                 elif paras['procedure'] in [ 'testpred', 'makepred' ]:
+                    try:
+                        paras['datacolumn'] = int(line.split()[2])
+                    except IndexError:
+                        print "first column of table is taken as datacolumn. (default)"
+                        paras['datacolumn'] = 1
                     paras['restart'] = 1
         elif 'regression' in line: paras['regression'] = 1
         elif 'restart' in line:

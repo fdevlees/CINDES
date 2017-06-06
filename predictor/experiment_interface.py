@@ -235,7 +235,7 @@ class Experiment(object):
 
         return clf_gs
 
-    def do_multiple(self, **kwargs):
+    def do_multiple(self, n_max_train=None, **kwargs):
         results = dict()
 
         # 1. get X and y
@@ -251,6 +251,12 @@ class Experiment(object):
 
         # 2. split in data_train and data_test
         for N in ns: # for every n in Ns
+
+            # take a maximum number of training samples
+            if n_max_train:
+                if N > n_max_train:
+                    N=n_max_train
+
             # split in train / test
             print "\n    N:", N
             if True:
@@ -419,19 +425,6 @@ class Experiment(object):
     def save_json(self, results):
         import json
 
-        def jsonify(data):
-            json_data = dict()
-            for key, value in data.iteritems():
-                if isinstance(value, list):
-                    value = [ jsonify(item) if isinstance(item, dict) else item for item in value ]
-                if isinstance(value, dict):
-                    value = jsonify(value)
-                if isinstance(key, int):
-                    key = str(key)
-                if type(value).__module__=='numpy':
-                    value = value.tolist()
-                json_data[key] = value
-            return json_data
 
         json_results = jsonify(results)
 
@@ -444,6 +437,19 @@ class Experiment(object):
         return
 
 
+def jsonify(data):
+    json_data = dict()
+    for key, value in data.iteritems():
+        if isinstance(value, list):
+            value = [ jsonify(item) if isinstance(item, dict) else item for item in value ]
+        if isinstance(value, dict):
+            value = jsonify(value)
+        if isinstance(key, int):
+            key = str(key)
+        if type(value).__module__=='numpy':
+            value = value.tolist()
+        json_data[key] = value
+    return json_data
 
 
 # move later to a util module:

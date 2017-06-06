@@ -810,15 +810,16 @@ def substituter2(group,geom0,count):
 
     elif len(group) == 5:
         # it is CCHHH or CCFFF or CCOOH
-        #geom[0][0] = group[1] #until now this stays just C
+        geom[0][0] = group[1] #until now this stays just C
         geom[1][0] = group[2]
         geom[2][0] = group[3]
         geom[3][0] = group[4]
-        
-        if group in [['C','C','F','F','F'],['C','C','H','H','H'],['N','C','H','H','H']]:
+        if group in [['C','C','F','F','F'],['C','C','H','H','H'],['N','C','H','H','H'],['C','N','H','H','H']]:
             geom[1][1] = str(count+1)
             geom[2][1] = str(count+1) #if also attached to that one
             geom[3][1] = str(count+1)
+            if group in [['C','N','H','H','H']]:
+                print "WARNING: charged group: +1"
         elif group in [['C','C','O','O','H']]:
             #print "carbonic acid"
             geom[1][1] = str(count+1) # this is the =O
@@ -830,7 +831,6 @@ def substituter2(group,geom0,count):
                 geom[1][6]=dihedral
             else:
                 geom[1][6] = 0.1 # dihedral with one of the core
-            
             geom[2][2] = 1.3 # bond length C-O
             geom[2][4] = 120.1 # angle coreC-C=O
             if dihedral:
@@ -845,6 +845,9 @@ def substituter2(group,geom0,count):
             geom[3][2] = 0.9
             geom[3][4] = 109.5
             geom[3][6] = 2.1 # just to make it changebla i don't make it zero
+        else:
+            print group
+            raise Exception('Group does not exist')
 
         count += 4
     # when length == 4 then it is an amine or nitro group
@@ -854,7 +857,7 @@ def substituter2(group,geom0,count):
         geom[0][0] = group[1]
         geom[1][0] = group[2]
         geom[2][0] = group[3]
-        
+
         geom[1][1] = str(count+1)
         geom[2][1] = str(count+1) #if also attached to that one
 
@@ -863,7 +866,6 @@ def substituter2(group,geom0,count):
             #zma = [['C',1, '1.4554490', 0, '111.0852500', -1, '121.9277283'],
             #       ['C',1, '2.6636450', 0, '111.0852500', -1, '121.9277283'],
             #       ['H',1, '3.7296390', 0, '111.0852500', -1, '121.9277283']]
-            
             # geom of second ethyn carbon is same as first:
             geom[1] = geom[0][:]
             # also the H atom is same as first
@@ -877,20 +879,18 @@ def substituter2(group,geom0,count):
             #geom[1][0] = group[2] # change H to N or also H
             geom[2][0] = group[3] # change H to N or also H
         elif group == ['C','N','O','O']:
-            #geom[0][2] = '1.5'
-            #geom[1][2] = '1.227'
-            #geom[2][2] = '1.227'
-            #geom[1][4] = '117.02'
-            #geom[2][4] = '117.02'
-            #geom[2][6] = '179.5'
             zma = [ ['N',1,'1.51'],
                     ['O',2,'1.227',1,'117.01',0, '30.1'],
                     ['O',2,'1.227',1,'117.01',3,'178.5']]
             if dihedral: zma[1][6]=dihedral
             geom=geomfiller(zma,geom,count)
-            #if dihedral: 
-            #    geom[1][6]=dihedral
-            #    geom[2][6]=dihedral-180.0
+        elif group == ['C','C','O','O']:
+            print "WARNING: charged group: -1"
+            zma = [ ['C',1,'1.51'],
+                    ['O',2,'1.227',1,'117.01',0, '30.1'],
+                    ['O',2,'1.227',1,'117.01',3,'178.5']]
+            if dihedral: zma[1][6]=dihedral
+            geom=geomfiller(zma,geom,count)
         elif group in [ ['C','O','O','H'], ['C','S','O','H'] ]:
             zma = [ ['O',1,'1.4'],
                     ['O',2,'1.45',1,'104.0',0, '-61.0'],
