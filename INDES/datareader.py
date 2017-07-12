@@ -11,13 +11,24 @@ import construction
 
 corresp = {2:46,6:18,7:42,9:34,11:22,12:30}
 
-def rm_duplicates(seq):
+def round_sig( x, sig=8):
+    from math import log10, floor
+    try:
+        return round(x, sig-int(floor(log10(abs(x))))-1)
+    except ValueError:
+        if not x==0.0: print "ValueError:", x
+        return x
+
+def rm_duplicates(seq, nsig=8):
     seen = set()
     seen_add = seen.add
     new_seq = []
+    if True: # try to round to numerical precision errors:
+        print "    the sequence(scfenergies?) is rounded to max 10 significant digits"
+        seq = [ round_sig( item, sig=10 ) for item in seq ]
     for x in seq:
         if x in seen:
-            print "multiples found in sequence. name probably scfenergies! | value: ", x
+            print "    multiples found in sequence. name probably scfenergies! | value: ", x
         else:
             new_seq.append(x)
             seen_add(x)
@@ -520,8 +531,8 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1):
         results['mw'] = float( sum( myfile.atomnos) )
 
     # assert that all props are filled
-    print 'results:', results
-    print "props:", props
+    #print 'results:', results
+    #print "props:", props
     #if not 'stabA' in props:
     #    assert all( prop in results for prop in props), 'not all properties calculated '
 

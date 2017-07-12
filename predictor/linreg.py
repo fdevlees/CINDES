@@ -77,7 +77,11 @@ class LinRegOneExperiment(Experiment):
 
         clf = self.get_estimator(**kwargs)
 
-        clf.fit(X,y)
+        if self.weights:
+            sample_weights = self.get_weights(n = len(X))
+            clf.fit(X, y, sample_weight=sample_weights)
+        else:
+            clf.fit(X,y)
 
         #print clf.coef_
 

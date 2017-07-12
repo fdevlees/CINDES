@@ -121,7 +121,7 @@ def montecarloprocedure(run, subarray, maxi, table,**kwargs):
         rind = zcon.contoind(rconf)
 
         # 4.2a predict property via difference algorithm
-        if False:
+        if True:
             deltaetje = 0
             for i in range(len(rconf)): # now we want to have a value erandom for this configuration and test it with a certain probability
                 if not rconf[i] == cmaximum[i]:

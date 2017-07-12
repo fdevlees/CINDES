@@ -152,6 +152,7 @@ def do_prediction(prediction, table, retrain, array, count, nsite, run, mols_tod
                                   reopt_hyps=False,
                                   count = count,
                                   nsite = nsite,
+                                  n_max_train = None
                                )
 
     # 3. use model to predict
@@ -212,8 +213,8 @@ def json_predictions(predictions):
 def plot_predictions(predictions):
     import matplotlib.pyplot as plt
     from numpy import asarray as A
-    if predictions[0]['plots']==[]:return
-    plotted = True
+    #if predictions[0]['plots']==[]:return
+    plotted = False
     n = len(predictions)
     nx,ny = set_nxy(len(predictions))
     print nx, ny
@@ -241,7 +242,7 @@ def plot_predictions(predictions):
                 print "no plot1 Key"
                 j +=1
             else:
-                a.scatter(x1, y1, label=prediction['name'], s=5, alpha=.8)
+                a.scatter(x1, y1, label=prediction['name'], s=1, alpha=.8)
                 plotted = True
 
             # plot train data
@@ -253,7 +254,7 @@ def plot_predictions(predictions):
                 print "no plot2 Key"
                 j += 1
             else:
-                a.scatter(x2, y2, label=prediction['name'], s=5, alpha=.5)
+                a.scatter(x2, y2, label=prediction['name'], s=1, alpha=.5)
                 plotted = True
 
             if j==2: continue
@@ -261,10 +262,10 @@ def plot_predictions(predictions):
             a.legend()
     if plotted:
         pass
-        plt.show()
+        #plt.show()
     else:
         del f, axs, axs2d
-        plt.close()
+        #plt.close()
         import gc
         gc.collect()
     return
@@ -325,7 +326,7 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
         # 3.2. json_log
         json_predictions(run.predictions)
         # 3.3. do plottings
-        plot_predictions(run.predictions)
+        #plot_predictions(run.predictions)
 
         # 4. decide which molecules to calculate and which not
 

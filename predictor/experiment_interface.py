@@ -30,6 +30,7 @@ class Experiment(object):
                  reoptimize = True,
                  multiple = False,
                  descriptor='BoB',
+                 weights= False,
                  plots=[],
                  **kwargs):
         """
@@ -53,6 +54,7 @@ class Experiment(object):
         self.retrained = False
         self.multiple = multiple
         self.R = None
+        self.weights = weights
         if debug: print "self.multiple:", self.multiple
 
         if self.retrain:
@@ -101,7 +103,7 @@ class Experiment(object):
         """
         Interface for loading the model
 
-        Returns: 
+        Returns:
             - model
         """
         pass
@@ -109,7 +111,7 @@ class Experiment(object):
     def save_model(self, model):
         """
         Interface for saving the model
-        
+
         Params:
             - model
         """
@@ -246,15 +248,17 @@ class Experiment(object):
                       TZmat=self.run.TZmat,
                       **kwargs )
         n = y.shape[0]
-        ns = np.logspace( 4, np.log2(n-64), base=2, num=10, dtype=int)
+        ns = np.logspace( 4, np.log2(n-200), base=2, num=10, dtype=int)
         if debug: print "ns:", ns
 
         # 2. split in data_train and data_test
         for N in ns: # for every n in Ns
+            N_bu = N
 
             # take a maximum number of training samples
             if n_max_train:
                 if N > n_max_train:
+                    print "number of training data set from {:d} to {:d}".format(N, n_max_train)
                     N=n_max_train
 
             # split in train / test
@@ -290,7 +294,7 @@ class Experiment(object):
                     result.append({ 'R_test' :R_test  , 'R_train'     :R_train,
                                     'y_test' :y_test  , 'y_test_pred' :y_test_pred,
                                     'y_train':y_train , 'y_train_pred':y_train_pred })
-                results[N]=result
+                results[N_bu]=result
              
                     
 
@@ -436,6 +440,14 @@ class Experiment(object):
                 raise
         return
 
+    def get_weights(self,n):
+        n_higher = int( 0.20 * n )
+        higher = np.full(n_higher, 20.)
+        lower =  np.ones( n-n_higher)
+        sample_weights = np.concatenate( (higher, lower), axis=0)
+        print "    sample weights:\n", sample_weights
+
+        return sample_weights
 
 def jsonify(data):
     json_data = dict()
