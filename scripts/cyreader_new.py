@@ -35,6 +35,8 @@ import re
 from copy import deepcopy
 import sys
 import os
+rows, columns = os.popen('stty size', 'r').read().split()
+print 'console width=', columns
 
 class Unbuffered(object):
     def __init__(self,stream):
@@ -161,7 +163,16 @@ def complexprint(data, func=lambda arg: arg, strfunc= lambda *s: s):
     return
 
 def main():
-    with open(args.file,'r') as fid:
+    read_cyclesinfo(args.file)
+
+def read_cyclesinfo(filename):
+    ''' Reading cyclesinfo
+
+    Input:
+        - filename
+
+    '''
+    with open(filename,'r') as fid:
         data = [ item.split() for item in fid.read().splitlines() ]
     datar=[]
     confs=[]
@@ -169,52 +180,30 @@ def main():
     prop=1
     n=len(data)
     print 'len(data)', n
-    rows, columns = os.popen('stty size', 'r').read().split()
-    print 'console width=', columns
     homos = []
     for item in data:
         #print "item:",item
         conf = item[0].replace("'","")
         if not args.homo:
-            if len(item)==5:
-                item = [ item[0].replace("'",""), float(item[1]), int(item[2]), int(item[3]), int(item[4]) ]
-                value = (float(item[1]),int(item[2]),int(item[3]),int(item[4]))
-            elif len(item)==6:
-                item = [ item[0].replace("'",""), float(item[1]),float(item[2]), int(item[3]), int(item[4]), int(item[5]) ]
-                value = (float(item[1]),float(item[2]),int(item[3]),int(item[4]),int(item[5]))
-            elif len(item)==7:
-                item = [ item[0].replace("'",""), float(item[1]),float(item[2]),float(item[3]), int(item[4]), int(item[5]), int(item[6]) ]
-                value = (float(item[1]),float(item[2]),float(item[3]),int(item[4]),int(item[5]),int(item[6]))
-            elif len(item)>7:
-                #print "I'm here"
-                indices = map(int,item[-3:])
-                rest = map(float,item[1:-3])
-                value = rest + indices
-                item = [ item[0].replace("'","") ] + value
+            indices = map(int,item[-3:])
+            rest = map(float,item[1:-3])
+            value = rest + indices
+            item = [ item[0].replace("'","") ] + value
         else:
-            #if len(item)==5:
-            #    sys.stdout.write('#')
-            #    item = [ item[0].replace("'",""), float(item[1]), int(item[2]), int(item[3]), int(item[4]) ]
-            #    homo = get_homo(conf)
-            #    value = (float(item[1])*27.2113838,-homo,int(item[2]),int(item[3]),int(item[4]))
-            if False:
-                pass
-            else:
-                sys.stdout.write('#')
-                indices = map(int,item[-3:])
-                rest = map(float,item[1:-3])
-                homo = get_homo(conf)
-                homos.append([conf,homo])
-                IP = rest[0] * 27.2113838
-                value = [ IP] + [-homo] + rest[1:] + indices
-                item = [ item[0].replace("'","") ] + value
-                if -homo> 5.0 and IP<6.6:
-                    print "outlier:", conf, " ", item
-                    get_homo(conf,True)
-                    continue
+            sys.stdout.write('#')
+            indices = map(int,item[-3:])
+            rest = map(float,item[1:-3])
+            homo = get_homo(conf)
+            homos.append([conf,homo])
+            IP = rest[0] * 27.2113838
+            value = [ IP] + [-homo] + rest[1:] + indices
+            item = [ item[0].replace("'","") ] + value
+            if -homo> 5.0 and IP<6.6:
+                print "probably an outlier:", conf, " ", item
+                get_homo(conf,True)
+                continue
         item[0]=item[0].split('_')
         if item[1]:
-        #if item[1]<1000:
             datar.append(item)
             confs.append(conf)
             values.append(value)
@@ -226,8 +215,6 @@ def main():
     for br in datar:
         # each site wordt geformat tot 8 width. die worden samen gejoind en weer geformat samen met de rest
         print '{0} {1:8.5}  {2:3}  {3:3}  {4:3}'.format(' '.join(['{:8}'.format(item) for item in br[0]]),br[prop],br[-3],br[-2],br[-1])
-    #print confs
-    #print "values:",values
     print "len(values):", len(values)
     maxmacrocycles= values[-1][-3]
     nsites = values[-1][-1]
@@ -342,50 +329,8 @@ def main():
 
     # plot of property vs dopant/substituent
     if args.pplot:
-        import seaborn as sb
-        #for runs in totalruns:
-        tags_r=['ro','bs','g^','c*','mp','y|','k+','rd','bv','gh']
-        tags_r=['-ro','-bs','-g^','-c*','-mp','-y|','-k+','-rd','-bv','-gh']
-        tags_r=['-o','-s','-^','-*','-p','-<','->','-d','-v','-h']
-        tags = Cycle(tags_r)
-
-        #colors = sb.color_palette("viridis", n_colors=12)
-        #colors = sb.hls_palette(10)
-        colors = sb.hls_palette(nsites+1,l=.4) #l=lightness the smaller the darker. 
-        #for multiple sites:
-        #for i in range(len(totalruns)-1): #-1 because last runs always same as one but last
-        #otherwise:
-        if True:
-            i = len(totalsites)-1
-            #do for each site:
-            for j in range(len(totalsites[i])):
-            #for run in totalruns[i]:
-                run=totalsites[i][j]
-                x = np.array(range(len(run)))
-                if len(run) == maxnsites:
-                    #my_xticks = [ funcs[ item[0] ] for item in run ] 
-                    my_xticks = [ funcs[ re.split('[0-9]',item[0])[0] ] for item in run ] 
-                    plt.xticks(x,my_xticks)
-                    plt.xticks(rotation=45)
-                    print "my_xticks", my_xticks
-                y = [ item[1][args.datacolumn] for item in run ]
-                #print "y=", y
-                #itje = 2*(len(totalruns)-1)*i+j #index that cares for different dots/squares per site per cycle
-                itje = j
-                #plt.plot(x,y,tags[itje],label='cycle:'+ str(i+1) + ' site:' + str(j+1), color=colors[itje])
-                plt.plot(x,y,tags[itje],label=' site:' + str(j+1), color=colors[itje])
-        if True:
-            ax = plt.gca()
-            fig = plt.gcf()
-            fig.set_dpi(100)
-            box = ax.get_position()
-            ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-            legend=ax.legend(loc='center left', fancybox=True, framealpha=0.5, bbox_to_anchor=(1,.5),fontsize=12)
-        #plt.ylabel('ionization potential (a.u.)')
-        #plt.ylabel('ionization potential (eV)')
-        plt.ylabel(args.label)
-        plt.xlabel('substituent')
-        plt.title('property vs substituent')
+        from plotters import prop_substituent_last_cycle
+        prop_substituent_last_cycle(totalsites, maxnsites, datacolumn)
         plt.show()
 
     if args.tplot: #get a tablebin like plot
@@ -561,12 +506,11 @@ def main():
             #plt.subplot(*subplots[i])
             #a, = plt.plot(xs,ys,tag)
             a=axs2d[i]
-            a.axis('equal')
             print a
             a.plot(xs,ys,tag,label='site:' + str(i+1))
             #f.set_label('site:'+str(i))
             for label, x, y in zip(labels,xs,ys):
-                if False: #for boxes set to True
+                if True: #for boxes set to True
                     plt.annotate(
                         label, xy = (x, y), xytext = (20, -20),
                         textcoords = 'offset points', ha = 'left', va = 'bottom',
@@ -580,7 +524,6 @@ def main():
             xl = np.linspace(min(X),max(Y),100)
             yl = xl
             a.plot(xl[:],yl[:], 'k-')
-            a.set_yticks( a.get_xticks() )
             #for the legend:
             handles, labels = a.get_legend_handles_labels()
             a.legend(handles, labels, loc='best', fancybox=True, framealpha=0.5, numpoints=1)

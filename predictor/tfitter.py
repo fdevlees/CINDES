@@ -6,7 +6,7 @@ debug=True
 ########################
 #####   IMPORTS    #####
 ########################
-if False:
+if True:
     import seaborn as sns
     sns.set(style="white")
     #pass two degree values of hues. 
@@ -339,8 +339,10 @@ funcs = {'CCFFF': '$C-CF_3$',
          'N': '$N$',
          'O': '$O$',
          'S': '$S$'}
-seq = ['CH','CCHHH','CCFFF','N','CF','CCl','CNHH','CNOO','CCN','CSH','COH','CCOOH','CO','O','S']
-fseq= [ funcs[func] for func in seq ] #whahaha :)
+seq = ['CH','CCHHH','CCFFF','N','CF','CCl','CNHH','CNOO','CCN','CSH','COH','CCOOH','CO','O','S','CCHO','CPh', 'CSOOOH']
+seq = ['CH','CNHH','CNOO','CSH','COH','CCHO','CPh', 'CSOOOH']  # for substituent study of eline
+seq = ['CH','N','B','O','S','P']  # for substituent study of eline
+fseq= [ funcs.get(func, func) for func in seq ] #whahaha :)
 
 ###########################
 ####      CLASSES     #####
@@ -866,7 +868,7 @@ class Diamantane(Dataset):
     ngps = (12,12,12,12,15,15) #for every instance this is same
 
     def __init__(self,*rgs,**kwargs):
-        self.seq = ['CH','CCHHH','CCFFF','N','CF','CCl','CNHH','CNOO','CCN','CSH','COH','CCOOH','CO','O','S']
+        self.seq = ['CH','CCHHH','CCFFF','N','CF','CCl','CNHH','CNOO','CCN','CSH','COH','CCOOH','CO','O','S','CCHO','CPh','CSOOOH']
         if args.symmetry:
             if False:
                 self.syms = [ [ 0,1,2,3,4,5 ], [1,0,3,2,5,4] , 
@@ -968,7 +970,6 @@ class Diamantane(Dataset):
 class Phenalene(Dataset):
     def __init__(self,nsites,*args,**kwargs):
         self.ngps = nsites * (12,)
-        self.seq = [ 'N', 'CH', 'CF', 'CCFFF', 'CCHHH', 'COH', 'CNOO', 'CNHH', 'CCOOH', 'COCHHH', 'CNHCHHH' ]
         global seq
         seq = self.seq
         return
@@ -1313,6 +1314,7 @@ if __name__ == "__main__":
     #parser.add_argument('file', type=argparse.FileType('rb'),help="a pickled tablebin file")
     parser.add_argument('file',help="a pickled tablebin file")
     args=parser.parse_args()
+
     main(args)
 
 

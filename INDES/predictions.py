@@ -210,7 +210,7 @@ def json_predictions(predictions):
 
     return
 
-def plot_predictions(predictions):
+def plot_predictions(predictions, prop=""):
     import matplotlib.pyplot as plt
     from numpy import asarray as A
     #if predictions[0]['plots']==[]:return
@@ -242,7 +242,7 @@ def plot_predictions(predictions):
                 print "no plot1 Key"
                 j +=1
             else:
-                a.scatter(x1, y1, label=prediction['name'], s=1, alpha=.8)
+                a.scatter(x1, y1, label=prediction['name'] + " test", s=6, alpha=.8)
                 plotted = True
 
             # plot train data
@@ -254,7 +254,7 @@ def plot_predictions(predictions):
                 print "no plot2 Key"
                 j += 1
             else:
-                a.scatter(x2, y2, label=prediction['name'], s=1, alpha=.5)
+                a.scatter(x2, y2, label=prediction['name'] + " train", s=6, alpha=.5)
                 plotted = True
 
             if j==2: continue

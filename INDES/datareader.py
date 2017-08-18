@@ -459,6 +459,10 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1):
         #omega = lambda I,A: ( (I+A)**2 ) / ( 8 * (I-A) )
         #results['omega']= omega(results['IP'], results['EA'])
         results['omega'] = ( ( results['IP'] + results['EA'] )**2 ) / ( 8 * ( results['IP'] - results['EA'] ) ) * 27.2113838
+        if results['omega']<0.0:
+            print "    FAULTY VALUE FOR ELECTROPHILICITY: cannot be a negative value:"
+            print "    VALUE is set to None"
+            results['omega']=None
     if 'energy' in props:
         ESCFs = mymol.scfenergies
         results['energy'] = ESCFs[-(multiplejobs+1)]

@@ -183,6 +183,7 @@ class LinRegOneExperiment(Experiment):
 class LinRegOneWithPCAExperiment(LinRegOneExperiment):
 
     def __init__(self, n_principal_components=50, **kwargs):
+        print "         PCA                                                ---PCA init"
         self.F = None
         super(LinRegOneWithPCAExperiment, self).__init__(**kwargs)
         self.n_principal_components = n_principal_components

@@ -331,7 +331,7 @@ def set_maximum(myrun,table):
 def testmax(myrun, mols, bcok):
     param = myrun.__dict__
 
-    data = [ molecule.log() for molecule in mols if molecule.predicted == False ]
+    data = [ molecule.log() for molecule in mols if ( molecule.predicted == False and not molecule.Pvalue is None) ]
     for item in data:
         print item
 

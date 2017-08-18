@@ -149,7 +149,7 @@ class Experiment(object):
         elif self.getR:
             self.cross_val()
         print "R**2 value is:", self.R
-        
+
         # and always do a refit on total database:
         if not self.multiple:
             if True:
@@ -172,9 +172,8 @@ class Experiment(object):
 
         This function will change self.hparams to best performing hparams
 
-        NB! this function is used for the sklearn based methods. 
-         - Gaussian Processes has its own implementation of this function! see gp.py
-        
+        NB! this function is used for the sklearn based methods.
+         - Gaussian Processes has its own implementation of this function! see gp.py 
         hyperparameter search with use of the sklearn GridSearchCV function
         """
         from sklearn.model_selection import GridSearchCV
@@ -193,8 +192,8 @@ class Experiment(object):
         if split: # use a validation set. after the hyper_opt. This is used in normal run to decide based on R**2 value
             ind = np.arange(self.X.shape[0])
             np.random.shuffle(ind)
-            if self.X.shape[0] > 400: # use only 300 or if nX<400 only 75% of items. 
-                n_opt = 300
+            if self.X.shape[0] > 600: # use only 300 or if nX<400 only 75% of items. 
+                n_opt = 500
             else:
                 n_opt = int( 0.75 * self.X.shape[0] )
             X_hyp, X_test, y_hyp, y_test = train_test_split( self.X, self.y, train_size=n_opt, random_state = self.run.seed )
@@ -206,7 +205,7 @@ class Experiment(object):
 
             # 3. Fit the GridSearch
             gs_results = clf_gs.fit(X_hyp, y_hyp)
-         
+
             # 4. determine R on validation set:
             y_pred = clf_gs.predict(X_test)
             y_pred_hyp = clf_gs.predict(X_hyp)
@@ -248,7 +247,12 @@ class Experiment(object):
                       TZmat=self.run.TZmat,
                       **kwargs )
         n = y.shape[0]
-        ns = np.logspace( 4, np.log2(n-200), base=2, num=10, dtype=int)
+
+        # determine the numbers based on the datasize or based just on powers of 2 from 8 to 1024
+        if True: # maksimum n_totaal - 200 samples
+            ns = np.logspace( 4, np.log2(n-200), base=2, num=10, dtype=int)
+        else: # maksimum 1024 samples
+            ns = np.logspace(3,10,base=2,num=8,dtype=int)
         if debug: print "ns:", ns
 
         # 2. split in data_train and data_test
@@ -280,7 +284,7 @@ class Experiment(object):
                     # 3. hparam opt on data_train
                     best_estimator = self.get_best_hyperparams(split=False)
                     print "best_estimator:", best_estimator
-             
+
                     # 4. validate model on data_test
                     y_test_pred = best_estimator.predict(X_test)
                     y_train_pred = best_estimator.predict(X_train)
@@ -295,8 +299,9 @@ class Experiment(object):
                                     'y_test' :y_test  , 'y_test_pred' :y_test_pred,
                                     'y_train':y_train , 'y_train_pred':y_train_pred })
                 results[N_bu]=result
-             
-                    
+                if False: # if i want to let it write intermediate data
+                    self.save_json(results, extra_identifier=str(N_bu))
+
 
             else:
                 ind = np.arange(n)
@@ -426,13 +431,17 @@ class Experiment(object):
             print "shape self.X:", self.X.shape, "     shape self.y:", self.y.shape,
             yield (self.X[train_ind,:], self.y[train_ind], self.X[test_ind,:], self.y[test_ind])
 
-    def save_json(self, results):
+    def save_json(self, results, extra_identifier=None):
         import json
 
 
         json_results = jsonify(results)
+        if extra_identifier:
+            name_json_out = 'results_{}_{}'.format(self.name, extra_identifier)
+        else:
+            name_json_out = 'results_{}.json'.format(self.name)
 
-        with open('results_{}.json'.format(self.name),'w') as f:
+        with open(name_json_out,'w') as f:
             try:
                 json.dump(json_results, f, sort_keys=True, separators=(',', ':'), indent=4)
             except TypeError:
