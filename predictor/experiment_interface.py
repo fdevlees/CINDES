@@ -14,14 +14,14 @@ from CINDES4.utils.utils import processify
 from CINDES4.utils.statistics import print_stats
 from CINDES4.utils.writings import sprint, log_io, dump
 
-debug=True
+debug=False
 
 
 class Experiment(object):
 
     def __init__(self,
-                 run,
-                 name,
+                 run=None,
+                 name='default_estimator',
                  table=[],
                  array=[],
                  n_folds=5,
@@ -40,7 +40,7 @@ class Experiment(object):
             - setting: 'IP' or 'HLG'
             - n_folds: number of folds for splitting training and test data
         """
-        np.random.seed(run.seed)
+        if run: np.random.seed(run.seed)
         self.reoptimize = reoptimize
         self.getR = getR
         self.retrain = retrain
@@ -128,7 +128,7 @@ class Experiment(object):
         # 1. If self.retrain=False: try to load model. but if not found do nevertheless a training with hparam opt.
         if not self.retrain and not self.multiple:
             try:
-                self.model = self.load_model(count)
+                self.model = self.load_model(count=count)
                 print "     LOAD succesful!"
                 print "     self.model:", self.model
                 # it gets the R**2 value from the moment where the model was created.
@@ -162,7 +162,7 @@ class Experiment(object):
                 self.model = clf_gs
 
             # save model:
-            self.save_model(count)
+            self.save_model(count=count)
 
         return
 
@@ -193,7 +193,7 @@ class Experiment(object):
             ind = np.arange(self.X.shape[0])
             np.random.shuffle(ind)
             if self.X.shape[0] > 600: # use only 300 or if nX<400 only 75% of items. 
-                n_opt = 500
+                n_opt = 300
             else:
                 n_opt = int( 0.75 * self.X.shape[0] )
             X_hyp, X_test, y_hyp, y_test = train_test_split( self.X, self.y, train_size=n_opt, random_state = self.run.seed )
@@ -249,7 +249,9 @@ class Experiment(object):
         n = y.shape[0]
 
         # determine the numbers based on the datasize or based just on powers of 2 from 8 to 1024
-        if True: # maksimum n_totaal - 200 samples
+        if n<300:
+            ns = [16,32,64] 
+        elif True: # maksimum n_totaal - 200 samples
             ns = np.logspace( 4, np.log2(n-200), base=2, num=10, dtype=int)
         else: # maksimum 1024 samples
             ns = np.logspace(3,10,base=2,num=8,dtype=int)
@@ -340,7 +342,7 @@ class Experiment(object):
 
         return
 
-    def predict(self, molecules, MC=False, **kwargs):
+    def do_predict(self, molecules, MC=False, **kwargs):
         ''' get molecules list 
 
         NB: for the LinRegOneExperiment this function is overwritten because it uses get_X_1D
@@ -362,7 +364,7 @@ class Experiment(object):
             #print molecule, y
         return y_pred
 
-    def cross_val(self, write_log=False, plot=False, **kwargs):
+    def cross_val(self, write_log=False, plot=True, **kwargs):
         # save R**2, MAE and percentiles of each fold to a row in a dataframe.
         stats_df_train = pd.DataFrame(columns=('r','p-value','mae','perc_25', 'perc_50', 'perc_75' ))
         stats_df_test =  pd.DataFrame(columns=('r','p-value','mae','perc_25', 'perc_50', 'perc_75' ))
@@ -443,7 +445,7 @@ class Experiment(object):
 
         with open(name_json_out,'w') as f:
             try:
-                json.dump(json_results, f, sort_keys=True, separators=(',', ':'), indent=4)
+                json.dump(json_results, f, sort_keys=True, separators=(',', ':'), indent=0)
             except TypeError:
                 print "json error"
                 raise

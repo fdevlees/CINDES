@@ -43,8 +43,36 @@ def get_X(indices, descriptor='BoB',array=[], identify='x_', **TZmat):
         X = get_X_int( indices=indices, array=array)
     elif descriptor=='1DL':
         X = get_X_1D(indices=indices, descriptor=descriptor, identify = identify)
+    elif descriptor=='BoB_qml':
+        X = get_X_qml(indices=indices,descriptor='bob', **TZmat )
+    elif descriptor=='slatm':
+        X = get_X_qml(indices=indices,descriptor='slatm', **TZmat )
+    elif descriptor=='arad':
+        X = get_X_qml(indices=indices,descriptor='arad', **TZmat )
     else:
         X = np.asarray( tuple( coulomb(item) for item in xyzs) )
+    return X
+
+def get_X_qml(indices,descriptor='bob', **TZmat):
+    #1
+    converter = Converter()
+    mats = tuple( contozma(zcon.indtocon(item),**TZmat) for item in indices)
+
+    #2
+    converter = Converter()
+    xyzs = [ zmatoxyz(converter=converter,zmat=item) for item in mats ]
+    #X = np.asarray( tuple( BoB(item) for item in xyzs) )
+
+    #print "xyzs[1]:", xyzs[1]
+    if descriptor=='bob':
+        X = np.array([BoB_qml(xyz) for xyz in xyzs])
+    elif descriptor=='slatm':
+        X = np.array([slatm(xyz) for xyz in xyzs])
+    elif descriptor=='arad':
+        X = np.array([arad(xyz) for xyz in xyzs])
+    print "X[1]:", X[1], np.nonzero(X[1])
+
+    #raise SystemExit('stopped: implementation not ready')
     return X
 
 def get_X_BoB(indices, **TZmat):
@@ -109,6 +137,7 @@ def contozma(conf,core,active,passive):
 def zmatoxyz(zmat, converter):
     ''' convert a zmat to xyz coordinates via the Converter instance '''
     converter.read_zmalist(zmat)
+    #print zmat
     return converter.zmatrix_to_cartesian()
 
 #@processify
@@ -217,6 +246,50 @@ def coulomb(xyz, ctype='norm4'):
     else:
         assert ctype=='normal'
         return C
+
+def BoB_qml(xyz):
+    import qml
+    from collections import OrderedDict
+    mol = qml.Compound()
+    mol.coordinates = np.asarray([ item[1] for item in xyz ])
+    mol.atomtypes= [ item[0] for item in xyz ]
+    mol.natoms=len(mol.atomtypes)
+    mol.nuclear_charges=[int(item[2]) for item in xyz]
+    size=56 #max n adamantane with all COOH groups
+    asize = OrderedDict((( 'H' , 36 ),
+                         ( 'C' , 20 ),
+                         ( 'O' , 20 ),
+                         ( 'N' , 10 ),
+                         ( 'F' , 30 ),
+                         ( 'S' , 10 ),
+                         ( 'Cl', 10 ),
+                         ( 'Br',  5 )) )
+    mol.generate_bob(size=size, asize=asize)
+    print "b",
+    return mol.bob
+
+def slatm(xyz):
+    '''current qml version doesn't support this'''
+    import qml
+    from collections import OrderedDict
+    mol = qml.Compound()
+    mol.coordinates = np.asarray([ item[1] for item in xyz ])
+    mol.atomtypes= [ item[0] for item in xyz ]
+    mol.natoms=len(mol.atomtypes)
+    mol.nuclear_charges=[int(item[2]) for item in xyz]
+    return None
+
+def arad(xyz):
+    '''arad'''
+    import qml
+    from collections import OrderedDict
+    mol = qml.Compound()
+    mol.coordinates = np.asarray([ item[1] for item in xyz ])
+    mol.atomtypes= [ item[0] for item in xyz ]
+    mol.natoms=len(mol.atomtypes)
+    mol.nuclear_charges=[int(item[2]) for item in xyz]
+    mol.generate_arad_representation(size=56)
+    return mol.arad_representation
 
 def symsort(mat):
     indexlist = np.argsort(np.linalg.norm(mat,axis=1))[::-1]

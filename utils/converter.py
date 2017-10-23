@@ -60,11 +60,16 @@ class Converter():
         for item in zma[3:]:
             # Get the components of each line, dropping anything extra
             name, atom1, distance, atom2, angle, atom3, dihedral, zero = item
+            if name=='l':name='Cl'
             # convert to a base 0 indexing system and use radians
-            atom = [ name, [ [int(atom1) - 1, float(distance) ],
-                              [int(atom2) - 1, m.radians( float(angle) ) ],
-                              [int(atom3) - 1, m.radians( float(dihedral) ) ] ],
-                            self.masses[name] ]
+            try:
+                atom = [ name, [ [int(atom1) - 1, float(distance) ],
+                               [int(atom2) - 1, m.radians( float(angle) ) ],
+                               [int(atom3) - 1, m.radians( float(dihedral) ) ] ],
+                                self.masses[name] ]
+            except KeyError:
+                print item
+                raise
             self.zmatrix.append( atom )
         return self.zmatrix
 
@@ -144,11 +149,15 @@ class Converter():
         atom1, distance = coords[0]
         atom2, angle = coords[1]
         atom3, dihedral = coords[2]
-        
-        q = self.cartesian[atom1][1] # atom 1
-        r = self.cartesian[atom2][1] # atom 2
-        s = self.cartesian[atom3][1] # atom 3
-        
+        try:
+            q = self.cartesian[atom1][1] # atom 1
+            r = self.cartesian[atom2][1] # atom 2
+            s = self.cartesian[atom3][1] # atom 3
+        except IndexError:
+            print "atom1,2,3:", atom1, atom2, atom3
+            print "self.cartesian:"
+            for i,item in enumerate(self.cartesian): print i,item
+            raise
         # Vector pointing from q to r
         a = r - q
         # Vector pointing from s to r
@@ -177,7 +186,11 @@ class Converter():
         self.add_first_three_to_cartesian()
 
         for i in range( 3, len(self.zmatrix) ):
-            self.add_atom_to_cartesian( self.zmatrix[i] )
+            try:
+                self.add_atom_to_cartesian( self.zmatrix[i] )
+            except IndexError:
+                print "self.zmatrix[i]", self.zmatrix[i]
+                raise
 
         self.remove_dummy_atoms()
 

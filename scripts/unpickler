@@ -3,12 +3,13 @@ import sys
 import argparse
 parser = argparse.ArgumentParser(description="unpickles data stored with pickle module")
 parser.add_argument("-p","--plot",action="store_true",help="make also a plot of the data")
-parser.add_argument("-m","--max", type=float,default = 1.0e99, help="sets a maximum for the absolute values taken into account")
+parser.add_argument("-m","--max", type=float,default = 1e99, help="sets a maximum for the absolute values taken into account")
+parser.add_argument("-n","--ntoprint", type=int,default = 5, help="sets a maximum for the absolute values taken into account")
 parser.add_argument("-x","--regxy",action="store_true",help="make a plot of two propeties against each other and test linear correlation")
 parser.add_argument("-f","--formatted",action="store_true",help="print all in formatted order")
 parser.add_argument("-i","--identify",action="store",type=str,help="identify for gethomo")
 parser.add_argument("-y","--regrs",nargs=2,help="make a plot of value1 and value2 against each other and test linear correlation")
-parser.add_argument("-c","--column",nargs='+',default = [1], help="specify which columns are printed")
+parser.add_argument("-c","--column",nargs='+',default = [], help="specify which columns are printed")
 parser.add_argument('file', type=argparse.FileType('rb'), default='tablebin',nargs='?')
 args=parser.parse_args()
 import pickle
@@ -22,7 +23,8 @@ while True:
     except EOFError:
         break
 
-confs=[ item for item in data[-1] if abs(item[1]) < args.max ]  # last entry in tablebin
+#confs=[ item for item in data[-1] if abs(item[1]) < args.max ]  # last entry in tablebin
+confs=[ item for item in data[-1] if abs(float(item[1])) < args.max ]  # last entry in tablebin
 #for i in range(len(confs)):
 #    print i,confs[i]
 
@@ -31,26 +33,28 @@ confs=[ item for item in data[-1] if abs(item[1]) < args.max ]  # last entry in 
 
 sortconf=sorted(confs,key=lambda entry: entry[1]) #sort based on second column
 #sortev = [ [item[0],item[1]*27.2113838] for item in sortconf ]
-sortev = [ item[:1] + [item[1]*1.0] + item[2:] for item in sortconf ]
+sortev = [ item[:1] + [item[1]] + item[2:] for item in sortconf ]
 #pprint(sortev[::-1]) # reverse order
 
-if args.formatted:
-    for i,item in enumerate(sortev):
+#if args.formatted:
+if True:
+    for i,item in enumerate(sortev[:args.ntoprint]):
         conf = ' '.join( [ '{:9s}'.format(group) for group in item[0].split('_') ] )
         #print item
-	data = ' '.join( [ '{:15.8f}'.format(i) for i in item[1:] ] )
-        print '{:4} {} {}'.format(i,conf,data)
+	data = ' '.join( [ '{:15.8f}'.format(j) for j in item[1:] ] )
+        print '{:4d} {} {}'.format(i+1,conf,data)
 
 
-if args.column:
-    maxlen = max( [ len(item[0]) for item in sortev[::-1] ] )
-    for item in sortev[::-1]:
-        print  '{ind:{width}}{data}'.format(width= maxlen,ind = item[0], data = ' '.join( [ '{:15.8}'.format(item[int(i)]) for i in args.column ] ) )
-else:
-    for item in sortev[::-1]:
-       print '{} {:.6}'.format(item[0],item[1])
+#if args.column:
+#    maxlen = max( [ len(item[0]) for item in sortev[::-1] ] )
+#    for item in sortev[::-1][:args.ntoprint]:
+#        print  '{ind:{width}}{data}'.format(width= maxlen,ind = item[0], data = ' '.join( [ '{:15.8}'.format(item[int(i)]) for i in args.column ] ) )
+#else:
+#    print "here!"
+#    for item in sortev[::-1][:args.ntoprint]:
+#	print '{} {:.6}'.format(item[0],item[1:])
 
-print "number: ", len(data[-1]) # no. of entries
+print "number: ", len(sortev) # no. of entries
 
 if args.plot:
     SCFs = [ row[1] for row in confs ]

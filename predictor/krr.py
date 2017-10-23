@@ -1,6 +1,7 @@
 from sklearn.decomposition.pca import PCA
 from sklearn.externals import joblib
 from sklearn.kernel_ridge import KernelRidge
+from gpu_sklearn import GPU_KernelRidge
 from sklearn.utils import resample
 import pandas as pd
 import numpy as np
@@ -35,7 +36,6 @@ class KernelRidgeExperiment(Experiment):
         self.hparam_grid = {'alpha': np.logspace(-10,5,10),
                             'gamma': np.logspace(-10,5,10),
                             'kernel': ['rbf','laplacian'] }
-        
         # see if new defaults are given via input
         for key in self.hparam:
             if key in kwargs:
@@ -60,12 +60,17 @@ class KernelRidgeExperiment(Experiment):
         return krr_rbf
 
     def get_estimator(self):
-        krr_rbf = KernelRidge(kernel='rbf',
+        if True:
+            krr_rbf = GPU_KernelRidge(kernel='rbf',
+                      alpha = self.hparam['alpha'],
+                      gamma = self.hparam['gamma'],
+                      )
+        else:
+            krr_rbf = KernelRidge(kernel='rbf',
                       alpha = self.hparam['alpha'],
                       gamma = self.hparam['gamma'],
                       )
         return krr_rbf
-                       
 
     def test(self, X, model=None, **kwargs ):
         if model is None: model=self.model
@@ -84,8 +89,6 @@ class KernelRidgeExperiment(Experiment):
         model = joblib.load(modelname)
         self.R = model.R
         return model
-
-
 
     def get_best_hyperparams_old(self):
         ''' hyperparameter search '''

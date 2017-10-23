@@ -198,7 +198,42 @@ class Molecule(object):
             xyzs.append([splitted[0],xyztje,self.converter.masses[splitted[0]]])
         return xyzs
 
+from qml import compound
+class my_Compound(compound.Compound):
+    '''an inherited class of Compound which is different only in the fact that it reads from list input instead of filename input'''
 
+    def read_xyz(self, lines):
+        '''this function is overwritten from the inherited class and sees instead of a filename xyzcoordinates'''
+
+        # - f = open(filename, "r")
+        # - lines = f.readlines()
+        # - f.close()
+
+        # - self.natoms = int(lines[0])
+        # + :
+        self.natoms = len(lines)
+        self.atomtypes = []
+        self.nuclear_charges = []
+        self.coordinates = []
+
+        self.name = filename
+
+        for line in lines[2:]:
+            tokens = line.split()
+
+            if len(tokens) != 4:
+                break
+
+            self.atomtypes.append(tokens[0])
+            # - self.nuclear_charges.append(NUCLEAR_CHARGE[tokens[0]])
+            self.nuclear_charges.append(compound.NUCLEAR_CHARGE[tokens[0]])
+            x = float(tokens[1])
+            y = float(tokens[2])
+            z = float(tokens[3])
+
+            self.coordinates.append(np.array([x, y, z]))
+
+        self.coordinates = np.array(self.coordinates)
 
 '''
 Format of converter cartesian

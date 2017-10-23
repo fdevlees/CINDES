@@ -62,13 +62,15 @@ def get_preds(subinp, line):
                  'knn': { 'type': 'knn'},
                  'gp' : { 'type': 'gp' },
                  'svr': { 'type': 'svr'},
-                 'krr': { 'type': 'krr', 'kernel':'rbf'}
+                 'krr': { 'type': 'krr', 'kernel':'rbf'},
+                 'qml': { 'type': 'qml', 'kernel':'rbf'}
                }
     # set n_folds default for each experiment:
     for experiment in defaults.values(): experiment.update( {'n_folds':5 ,
                                                                  'pca':False,
                                               'n_principal_components':100,
-                                                               'plots':[] } )
+                                                               'plots':[],
+                                                          'tableindex':1 } )
 
     npredictions = int(line.split()[1])
     preds = [] # this becomes a list of predictions to make
@@ -349,6 +351,10 @@ def readfile(subinp):
                         print "first column of table is taken as datacolumn. (default)"
                         paras['datacolumn'] = 1
                     paras['restart'] = 1
+                elif paras['procedure']=='getdivers':
+                    paras['divers_nmax'] = int(line.split()[2])
+                    paras['divers_batchsize'] = int(line.split()[3])
+                    paras['divers_divindex'] = int(line.split()[4])
         elif 'regression' in line: paras['regression'] = 1
         elif 'restart' in line:
             paras['restart'] = int(line.split()[1])

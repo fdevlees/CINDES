@@ -72,6 +72,10 @@ if True:
         from INDES.procedures import testpred
         testpred(param, array)
 
+    elif param['procedure'] == 'getdivers':
+        from INDES.procedures import database_construction
+        database_construction(param, array)
+
     else:
         logging.warning('proceduretype not recognized')
 

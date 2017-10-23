@@ -26,12 +26,8 @@ def do_ml(indices, database, **TZmat):
 def get_experiment(prediction, table, run, retrain=True, array=[]):
     # each prediction element is a dictionary with a 'type' key. 
     ptype = prediction['type']
-
-
-
     kwargs = prediction # prediction is a dictonary with options specific for that experiment type
     kwargs['tableindex']=1
-    
     if ptype == 'ml':
         #preds = do_ml(mols_todo, table, **TZmat)
         pass
@@ -125,6 +121,14 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
                                                     run = run,
                                                     **kwargs   #run=run
                                                     )
+    elif ptype=='qml':
+        from CINDES4.predictor.krr_qml import KernelRidgeExperiment
+        regressor = KernelRidgeExperiment(          table=table,
+                                                    retrain=retrain,
+                                                    array=array,
+                                                    run = run,
+                                                    **kwargs   #run=run
+                                                    )
     return regressor
 
 
@@ -157,7 +161,7 @@ def do_prediction(prediction, table, retrain, array, count, nsite, run, mols_tod
 
     # 3. use model to predict
     if not run.procedure=='testpred':
-        regressor.predict(mols_todo, rstd=True)
+        regressor.do_predict(mols_todo, rstd=True)
 
     # 4. add R to prediction and plots?
     prediction['R'] = regressor.R

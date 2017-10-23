@@ -399,6 +399,7 @@ def main():
                 yield str(label)
         labels = get_label() # this is now an iterator !
         import seaborn as sb
+        sb.set_style('whitegrid')
         colors = sb.hls_palette(nsites+1,l=.4) #l=lightness the smaller the darker. 
         print "tablebin-like plot"
         binlist = []

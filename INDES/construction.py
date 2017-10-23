@@ -225,6 +225,10 @@ def classmaker2_SD(startconf,array,table,run=[]):
 
     individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
     #population = Population( population = individuals )
+    mols_todo, mols_nodo = check_in_table(individuals, table, run)
+    return mols_todo, mols_nodo
+
+def check_in_table(individuals, table, run):
     mols_todo = individuals[:]
     mols_nodo = []
     if not table == []:
@@ -349,8 +353,11 @@ def constructor2(conf,core,active,passive, links=[]):
     # start with the first site in active
     for i in range(len(conf)):
         #read the first element of conf
-        if (not conf[i][0]=='C' or conf[i] == ['C','O']):
+        #if (not conf[i][0]=='C' or conf[i] == ['C','O']):
+        if True:
+            if debug: print "in constructor 2. before doper:", conf[i], "len passive:", len(passive)
             core,passive=doper2(conf[i],active[i],core,passive)
+            if debug: print "in constructor 2. AFTER  doper:", conf[i], "len passive:", len(passive)
         # now for EACH! one goes to the substituter
         active[i],count = substituter2(conf[i],active[i],count)
         logging.debug('active' + str(i))
@@ -363,8 +370,9 @@ def doper2(group, geom, core, passive):
     # the actual doping command. taking care of index difference Gaussian/Python
     coreindex = int(geom[0][1])
     core[coreindex-1][0]=group[0]
+    if debug: print "coreindex:", coreindex, "group:", group
     #print "coreindex is: ", coreindex
-    if group in [['O'],['S'],['C','O']]:
+    if group in [['O'],['S'],['C','O'],'O','S','CO']:
         # we remove the hydrogen at the passive site on that location
         for i in range(len(passive)):
             # number [0][1] is the former C index. it bond length index is the index of the number

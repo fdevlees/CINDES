@@ -44,7 +44,7 @@ def get_secret_data(tablefilename,mols_tocal, mols_nocal):
     if debug:
         print "secret_table:"
         sprint(10,secret_table)
-    column = 2 ################################################################################## COLUMN CHANGE HERE
+    column = 1 ################################################################################## COLUMN CHANGE HERE
     tabledict = dict( ( [ item[0], item[column] ] for item in secret_table ) )
     data = []
     for mol in mols_tocal[:]:
@@ -157,8 +157,9 @@ def filemaker(mols_tocal,myrun,passive,active,core): #----- dict with info for f
         except IndexError:
             print "IndexError while trying to make smiles for molecule"
         except NameError:
-            print "openbabel not implemented"
- 
+            print "NameError while trying to make smiles for molecule"
+        except KeyError:
+            print "KeyError while trying to make smiles for molecule"
     return
 
 def extract_zmat(filename):
@@ -268,12 +269,17 @@ def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
         - Note that this function does return new indices and no jobids
     """
 
+    arrayjob=True
+
     # 1. make a list of paths that need to exist when job is ready
     paths = [] #here we are going to make a list of paths of the jobs
     if 'positions' in fileparameters: positions = fileparameters['positions']
     #for i in range(len(indices)):
     for mol in mol_tocal:
-        path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.com.o[0-9][0-9][0-9][0-9][0-9]*'
+        if arrayjob:
+            path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.log'
+        else:
+            path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.com.o[0-9][0-9][0-9][0-9][0-9]*'
         paths.append(path1)
         if fileparameters['stab']==1: #property is global variable
             for pos in fileparameters['positions']:

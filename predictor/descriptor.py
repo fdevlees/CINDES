@@ -536,7 +536,6 @@ class Propane(Dataset):
         print "X:", X
         print "X.shape:", X.shape
         return X
-        
 
 class Thiadiazinyl(Dataset):
     def __init__(self,*args,**kwargs):
@@ -579,6 +578,32 @@ class Thiadiazinyl(Dataset):
         return X
 
 
+class Pentacene(Dataset):
+    def __init__(self,nsites=4,*args,**kwargs):
+        self.seq = ['CH','N','CCHHH','CNHH','COH','CPh','CTh','CCl','CF','CSH','CNOO','CCCH','CCN','CNC','CCHO','CSOOOH','CCFFF']
+        self.ngps = nsites * (len(self.seq),)
+        return
+
+    def extractX(self,confs):
+        nC= len(confs)
+        nsites = len(self.ngps)
+        if args.verbose>2:
+            for i in range(10):
+                print confs[i]
+            print "self.seq:", self.seq
+            print "len confs:", len(confs)
+            print "len confs[0]:", len(confs[0])
+        LoS = []
+        for i in range(nsites):
+            LoS.append( np.zeros( [nC, self.ngps[i] ] ) )
+        if args.verbose>1: print "dim site0", LoS[0].shape
+        for k in range(len(confs)): # for all the configurations:
+            for i in range(len(confs[k])): #for all the groups in the configuration
+                group = confs[k][i]
+                j = self.seq.index(group) #find the index of the group of that sequence
+                LoS[i][k,j] = 1
+        X = np.concatenate(LoS,axis=1)
+        return X
 
 #####################################
 #####       MAIN PROGRAM       ######
@@ -604,6 +629,8 @@ def main(args):
         myrun = Adamantane(args.file)
     elif any(item in identify for item in ['dia','dilu','diho','dimi','dima','dilumi']):
         myrun = Diamantane(args.file)
+    elif 'penta' in identify:
+        myrun = Pentacene(name=args.file,nsites=9)
     elif 'phe' in identify:
         myrun = Phenalene(name=args.file,nsites=9)
     elif any(item in identify for item in ['fre','thia']):
@@ -649,6 +676,8 @@ def get_X_1D(indices, identify, descriptor='1DL',column=2, **kwargs):
         myrun = Adamantane('ada')
     elif any(item in identify for item in ['dia','dilu','diho','dimi','dima','dilumi']):
         myrun = Diamantane('dia')
+    elif 'penta' in identify:
+        myrun = Pentacene()
     elif 'pro' in identify:
         myrun = Propane(ngps=(3,3,3))
     elif 'thi' in identify:

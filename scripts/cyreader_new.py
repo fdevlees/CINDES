@@ -91,6 +91,8 @@ class Cycle(object):
             return self.iterable[ i ]
     def __iter__(self):
         return iter(self.iterable)
+    def __len__(self):
+        return len(self.iterable)
 
 def indtocon(index):
     #return [list(item) for item in index.split('_')]
@@ -329,22 +331,24 @@ def read_cyclesinfo(filename):
 
     # plot of property vs dopant/substituent
     if args.pplot:
-        from plotters import prop_substituent_last_cycle
+        from CINDES4.utils.plotters import prop_substituent_last_cycle
         prop_substituent_last_cycle(totalsites, maxnsites, datacolumn)
         plt.show()
 
     if args.tplot: #get a tablebin like plot
-        fontsize = 18
+        fontsize = 11
 
         # only for particular case: 
         def get_label():
-            #labels = ('1.1','1.2', '1.3', '1.4','2.1','2.2','2.3','3.1', '3.2', '3.3')
-            labels = xrange(100)
+            labels = ('1.1','1.2', '1.3', '1.4','2.1','2.2','2.3','3.1', '3.2', '3.3')
+            #labels = map(str,range(1,4))
+            labels = xrange(1,100)
             for label in labels:
                 yield str(label)
         labels = get_label() # this is now an iterator !
         import seaborn as sb
-        colors = sb.hls_palette(nsites+1,l=.4) #l=lightness the smaller the darker. 
+        sb.set_style('whitegrid')
+        colors = sb.hls_palette(10,l=.4) #l=lightness the smaller the darker. 
         print "tablebin-like plot"
         binlist = []
         start=0
@@ -369,9 +373,11 @@ def read_cyclesinfo(filename):
                 site = totalruns[i][j][0][1][-2]
 
                 # cutoff 
-                if True:
+                if False:
                     a[a>1000] = None
                     if np.isnan(a).any(): print "cutoff is applied and used!"
+
+                print "len: tags:", len(tags), "len colors:", len(colors), "site:", site
 
                 b, = plt.plot(a[0],a[1],tags[site]+'-',color=colors[site],
                                                        markersize=5)
@@ -384,7 +390,7 @@ def read_cyclesinfo(filename):
             x = binlist[i][-1][-1][0] + 0.5
             plt.axvline(x=x, linewidth=2, color = 'k')
             if True: #if want to plot labels see function above
-                y = 2.2
+                y = 5.05
                 ax.text(x-0.5*l,y,next(labels), horizontalalignment='center',fontsize=fontsize)
 
         #to reorder the legend 
