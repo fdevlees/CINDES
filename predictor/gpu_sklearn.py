@@ -85,12 +85,12 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
             #       use the fall-back solution below in case a LinAlgError
             #       is raised
             if use_gpu:
-                pass
+                dual_coef = cuda_cho_solve(K, y)
 
             else:
                 dual_coef = linalg.solve(K, y, sym_pos=True,
                                          overwrite_a=False)
-            print "Jos is Here!"
+            #print "Jos is Here!"
         except np.linalg.LinAlgError:
             warnings.warn("Singular matrix in solving dual problem. Using "
                           "least-squares solution instead.")
@@ -121,3 +121,20 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
 
         return dual_coefs.T
 
+def cuda_cho_solve(A, B):
+    import pycuda.gpuarray as gpuarray
+    import pycuda.autoinit
+    import numpy as np
+    import scipy.linalg
+    import skcuda.linalg as linalg
+
+    linalg.init()
+
+    a = np.array(A).asarray(np.float64)
+    a_gpu = gpuarray.to_gpu(a)
+    b = np.array(B).asarray(np.float64)
+    b_gpu = gpuarray.to_gpu(b)
+
+    cho_solve(a_gpu, b_gpu)
+    c = b_gpu.get()
+    return c

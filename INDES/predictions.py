@@ -197,7 +197,7 @@ def json_predictions(predictions):
     import json
     from CINDES4.predictor.experiment_interface import jsonify
 
-    print "predictions:", predictions
+    #print "predictions:", predictions
 
     # try to load old predictions file:
     try:

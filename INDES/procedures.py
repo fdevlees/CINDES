@@ -947,11 +947,13 @@ def getdivers(array, table, myrun):
             #print "in get divers: occupancy:", occupancy
             conf = make_molecule3(occupancy, seq, array, confs)
         if discardCH:
-            from numpy.random import binomial, shuffle
+            from numpy.random import binomial, shuffle, seed
+            seed(40)
             # adjust conf and place CH groups in it via a binomial distribution
             nsites=10
             while True:
-                nch = binomial(nsites+3,0.5)
+                #nch = binomial(nsites+3,0.5) ###### here tuning factor. 
+                nch = binomial(nsites,0.5) ###### here tuning factor. 
                 if nch<nsites: break
             positions = range(nsites)
             shuffle(positions)
@@ -984,6 +986,7 @@ def make_molecule12(occupancy, seq, array, confs, index=1):
 @log_io()
 def make_molecule3(occupancy, seq, array, confs):
     import numpy as np
+    np.random.seed(40)
     #print seq
     from collections import OrderedDict
     occD = dict()

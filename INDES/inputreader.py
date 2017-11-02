@@ -239,11 +239,28 @@ def readfile(subinp):
         if line == '\n':continue
         if line[0]=='#':continue
         # 1. some capital sensitive keywords:
+        elif 'tablename' in line:
+            paras['tablename'] = line.split()[1]
+            continue
         elif 'startind' in line:
             paras['startind'] = line.split()[1]
             continue
         elif 'identify' in line:
             paras['identify'] = line.split()[1]
+            continue
+        elif 'nosub' in line:
+            splitted = line.split()
+            try:
+                paras['nosub'] = int( splitted[1] )
+            except IndexError:
+                paras['nosub'] = 1
+            if paras['nosub']==3:
+                try:
+                    paras['nosub_file'] = splitted[2]
+                    logging.info( "nosub3. external file is used for data!: " + paras['nosub_file'])
+                except IndexError:
+                    logging.warning( "no file found. nosub downgraded to 1" )
+                    paras['nosub'] = 1
             continue
         elif 'END' in line: break
 
@@ -296,19 +313,6 @@ def readfile(subinp):
         elif 'no1sub' in line: paras['no1sub'] = 1
         elif any(item in line for item in ('ncore','natomscore')): paras['ncore'] = int(line.split()[1])
         elif 'nch3' in line: paras['nch3'] = int(line.split()[1])
-        elif 'nosub' in line:
-            splitted = line.split()
-            try:
-                paras['nosub'] = int( splitted[1] )
-            except IndexError:
-                paras['nosub'] = 1
-            if paras['nosub']==3:
-                try:
-                    paras['nosub_file'] = splitted[2]
-                    logging.info( "nosub3. external file is used for data!: " + paras['nosub_file'])
-                except IndexError:
-                    logging.warning( "no file found. nosub downgraded to 1" )
-                    paras['nosub'] = 1
         elif 'nprocs' in line: paras['nprocs'] = int(line.split()[1])
         elif 'optimum' in line:
             if 'max' in line.split()[1]:
@@ -395,7 +399,6 @@ def readfile(subinp):
             print "SYMMETRY ACTIVATED!"
         elif 'simple' in line: paras['simple'] = 1
         elif 'sites' in line: paras['line1'] = [ int(item) for item in line.split()[1:] ]
-        elif 'tablename' in line: paras['tablename'] = line.split()[1]
         elif 'twodimreg' in line: paras['tdregression'] = 1
         elif 'try_ready' in line: paras['try_ready'] = 1
         elif 'test_ready' in line: paras['test_ready'] = int(line.split()[1])

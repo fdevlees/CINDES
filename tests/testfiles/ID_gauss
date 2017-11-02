@@ -30,8 +30,8 @@ export GAUSS_SCRDIR=\$TMPDIR/\$PBS_JOBID
 if [ ! -d \$GAUSS_SCRDIR ] ; then mkdir \$GAUSS_SCRDIR; fi
 ( for i in {1..60}; do sleep 24h; touch \$GAUSS_SCRDIR/*; done )&
 cd \$GAUSS_SCRDIR
-time g09 <\$PBS_O_WORKDIR/$1>\$PBS_O_WORKDIR/${i%.*}.log
-cp ${i%.*}.chk \$PBS_O_WORKDIR
+time g09 <\$PBS_O_WORKDIR/$1>\$PBS_O_WORKDIR/${1%.*}.log
+cp ${1%.*}.chk \$PBS_O_WORKDI
 cd ..
 rmdir \$GAUSS_SCRDIR
 kill \$!

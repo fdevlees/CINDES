@@ -25,6 +25,7 @@ while True:
 
 #confs=[ item for item in data[-1] if abs(item[1]) < args.max ]  # last entry in tablebin
 confs=[ item for item in data[-1] if abs(float(item[1])) < args.max ]  # last entry in tablebin
+nconfs=len(confs)
 #for i in range(len(confs)):
 #    print i,confs[i]
 
@@ -37,11 +38,21 @@ sortev = [ item[:1] + [item[1]] + item[2:] for item in sortconf ]
 #pprint(sortev[::-1]) # reverse order
 
 #if args.formatted:
+
+
 if True:
-    for i,item in enumerate(sortev[:args.ntoprint]):
+    # decide what entries to print. print the n/2 smallest and n/2 largest entries
+    ALL = list(enumerate(sortev))
+    n = int(args.ntoprint/2)
+    if args.ntoprint>nconfs:
+        print "$"
+        PRINT=ALL
+    else:
+        PRINT=ALL[:n] + ALL[-n:]
+    for i,item in PRINT:
         conf = ' '.join( [ '{:9s}'.format(group) for group in item[0].split('_') ] )
         #print item
-	data = ' '.join( [ '{:15.8f}'.format(j) for j in item[1:] ] )
+        data = ' '.join( [ '{:15.8f}'.format(j) for j in item[1:] ] )
         print '{:4d} {} {}'.format(i+1,conf,data)
 
 
@@ -53,8 +64,6 @@ if True:
 #    print "here!"
 #    for item in sortev[::-1][:args.ntoprint]:
 #	print '{} {:.6}'.format(item[0],item[1:])
-
-print "number: ", len(sortev) # no. of entries
 
 if args.plot:
     SCFs = [ row[1] for row in confs ]

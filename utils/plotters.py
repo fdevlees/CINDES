@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 ######## GLOBAL VARIABLES
 
 ttert = False
-cmap = sns.diverging_palette(220, 20, as_cmap=True)
+#cmap = sns.diverging_palette(220, 20, as_cmap=True)
 funcs_r = {'CCFFF': '$C-CF_3$',
          'CCHHH': '$C-CH_3$',
          'CCN': '$C-C\\equiv N$',
@@ -130,6 +130,7 @@ def heatmap_2d(data,hits,labels,args):
         fig.colorbar(cax)
     else:
         #convert the data to a nice pandas.DataFrame. Seaborn likes dataframes.
+        print "BLA"
         import pandas as pd
         from matplotlib.colors import ListedColormap
         if ttert:
@@ -138,13 +139,13 @@ def heatmap_2d(data,hits,labels,args):
             print "labels_columns:", labels_columns
             data_pd = pd.DataFrame(data=data,index=labels[:data.shape[0]],columns=labels_columns)
         else: data_pd = pd.DataFrame(data=data,index=labels[:data.shape[0]],columns=labels[:data.shape[1]])
-        cax2=sns.heatmap(hits,annot=True,alpha=0.0,fmt="d",cbar=False,annot_kws={"color":'k'})
+        #cax2=sns.heatmap(hits,annot=True,alpha=0.0,fmt="d",cbar=False,annot_kws={"color":'k'})
         cax= sns.heatmap(data_pd,
                          cmap=cmap,
                          #cmap = ListedColormap( cmap.colors[::-1] ),
                          square=True,
                          linewidths=1.0,
-                         center=args.center,
+                         center=None,
                          cbar_kws={ "label" : "contribution to " + args.label }
                          )
         plt.xticks(rotation=45)

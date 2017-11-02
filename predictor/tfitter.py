@@ -10,7 +10,7 @@ if True:
     import seaborn as sns
     sns.set(style="white")
     #pass two degree values of hues. 
-    cmap = sns.diverging_palette(220, 20, as_cmap=True)
+    #cmap = sns.diverging_palette(220, 20, as_cmap=True)
     #cmap = sns.diverging_palette(20, 220, as_cmap=True)
 
 import pickle
@@ -59,7 +59,8 @@ def slice_it(li, splits, ngps=None):
     if args.equalsites:
         #splits = (7,7,7)            ### HARD CODED!
         #splits = (4,4,6)
-        splits=(11,13)
+        #splits=(11,13)
+        splits=(15,13)
     nkinds = len(splits)
     for i in xrange(nkinds):
         stop = start+splits[i]
@@ -345,6 +346,7 @@ class Dataset(): #abstract data class
 
         if combined:
             C = clf.coef_
+            print "alpha:", clf.alpha_
             print list(C)
             # split the coefficients:
             n1 = self.X.shape[1]
@@ -366,7 +368,11 @@ class Dataset(): #abstract data class
             df = pd.DataFrame(C, columns=columns, index=indices)
 
             import seaborn as sns
-            sns.heatmap(df, square=True, annot=False, cmap='viridis')
+            #sns.heatmap(df, square=True, annot=False, cmap='viridis')
+            sns.set(style="white")
+            cmap = sns.diverging_palette(230, 15, s=40, l=50, as_cmap=True, center='light')
+            sns.heatmap(df, square=True, annot=True, fmt="4.2f", annot_kws={'fontsize':9}, cmap=cmap)
+            #sns.set(font_scale=3)
             plt.xticks(rotation=45)
             plt.yticks(rotation=45)
             plt.show()
@@ -1015,13 +1021,20 @@ def main(args):
     if args.combined:
         myrun.extract12()
         # 4.2.2: do regressions
-        if True:
-            alpha=50
+        if False:
+            alpha=0.005
             print "args.ridge:", alpha
             clf_Ridge2D = myrun.linreg(model='Ridge', alpha=alpha, combined=True)
             if args.analyze:
                 errors = myrun.linreg_analyze2(clf_Ridge2D, model='Ridge', combined=True)
                 allerrors.append(errors)
+        else:
+            alpha = [ 10**i for i in np.arange(-10,0,0.5) ]
+            clf_RidgeCV = myrun.linreg(model='RidgeCV',alpha=alpha, combined=True)
+            if args.intercept:
+                print "intercept:", clf_RidgeCV.intercept_
+            if args.analyze:
+                myrun.linreg_analyze2(clf_RidgeCV,model='RidgeCV', combined=True)
 
 
     # step 5: gather data
@@ -1081,7 +1094,7 @@ def regression(table, indices,identify,column=2, **kwargs):
 
     # DETERMINE ALPHA:
     if True:
-        alphas = [ 1*10**i for i in [ -4, -2, -1, 0, 1, 2, 4 ] ]
+        alphas = [ 1*10**i for i in [ -12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4 ] ]
         clf_RidgeCV = myrun.linreg(model='RidgeCV', alpha=alphas)
         alpha = clf_RidgeCV.alpha_
         print "alpha used:", alpha
@@ -1112,7 +1125,7 @@ def twodim_regression(table, indices,identify,column=2, **kwargs):
     print hits
     # DETERMINE ALPHA:
     if True:
-        alphas = [ 1*10**i for i in [ -4, -2, -1, 0, 1, 2, 4 ] ]
+        alphas = [ 1*10**i for i in [ -12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4 ] ]
         clf_RidgeCV = myrun.linreg(model='RidgeCV', twosite=True, alpha=alphas)
         alpha = clf_RidgeCV.alpha_
         print "alpha used:", alpha

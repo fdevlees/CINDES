@@ -12,12 +12,10 @@ import pickle
 import math as m
 import gc
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 #for a progres bar:
 import time
-import progressbar
-bar = progressbar.ProgressBar()
 
 from copy import deepcopy
 from pprint import pprint

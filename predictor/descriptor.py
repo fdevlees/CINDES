@@ -8,8 +8,6 @@ debug=True
 ########################
 import pickle
 from pprint import pprint
-import matplotlib.pyplot as plt
-import matplotlib
 from re import findall, split
 import numpy as np
 from sklearn import linear_model, metrics
