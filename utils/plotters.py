@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 ######## GLOBAL VARIABLES
 
 ttert = False
-#cmap = sns.diverging_palette(220, 20, as_cmap=True)
+cmap = sns.diverging_palette(220, 20, as_cmap=True)
 funcs_r = {'CCFFF': '$C-CF_3$',
          'CCHHH': '$C-CH_3$',
          'CCN': '$C-C\\equiv N$',

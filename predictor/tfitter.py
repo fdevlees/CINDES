@@ -154,7 +154,7 @@ class Dataset(): #abstract data class
         if True:
             from CINDES4.utils.table import Tablebin
             print "args.filename:", args.filename
-            table = Tablebin( filename=args.filename )
+            table = Tablebin( filename=args.filename, column=args.column )
             self.confs = table.confs
             self.Y = table.Y
             self.seq = list(table.get_seq())
@@ -366,16 +366,51 @@ class Dataset(): #abstract data class
             columns= ['CH', 'CPh', 'CSH', 'CCHO', 'N', 'P', 'B', 'CSOOOH', 'COH', 'CNHH', 'CNOO', 'O', 'S']
             indices= ['secondary','tertiary',''] + columns[:-2]
             df = pd.DataFrame(C, columns=columns, index=indices)
+            order =  ['CH', 'COH', 'CSOOOH', 'CNHH', 'CSH', 'CPh', 'CNOO', 'CCHO', 'N', 'P', 'B', 'O', 'S']
+            df=df[order]
 
             import seaborn as sns
-            #sns.heatmap(df, square=True, annot=False, cmap='viridis')
             sns.set(style="white")
-            cmap = sns.diverging_palette(230, 15, s=40, l=50, as_cmap=True, center='light')
-            sns.heatmap(df, square=True, annot=True, fmt="4.2f", annot_kws={'fontsize':9}, cmap=cmap)
-            #sns.set(font_scale=3)
-            plt.xticks(rotation=45)
-            plt.yticks(rotation=45)
-            plt.show()
+            if True:
+                #cmap1 = sns.diverging_palette(230, 15, s=40, l=50, as_cmap=True, center='light')
+                cmap1 = "viridis_r"
+                #cmap2 = sns.diverging_palette(220, 10, s=40, l=50, as_cmap=True, center='light')
+                cmap2 = sns.diverging_palette(220, 10, as_cmap=True, center='dark')
+                fig, ax = plt.subplots()
+                mask1 = np.zeros_like(df).astype(np.bool)
+                mask1[0:2]=True
+                #print mask1
+                mask2 = np.zeros_like(df).astype(np.bool)
+                mask2[2:]=True
+                #print mask2
+                vmax1= max(np.array(df.values.tolist())[mask1])
+                vmax2= max(np.array(df.values.tolist())[mask2])
+                vmin1= min(np.array(df.values.tolist())[mask1])
+                vmin2= min(np.array(df.values.tolist())[mask2])
+                sns.heatmap(df, ax=ax, mask=mask1, vmin=vmin2, vmax=vmax2,
+                        square=True, annot=True, fmt="4.2f",
+                        cbar_kws={'label':'2nd order corrections'},
+                        annot_kws={'fontsize':9}, cmap=cmap2)
+                sns.heatmap(df, ax=ax, mask=mask2, vmin=vmin1, vmax=vmax1,
+                        square=True, annot=True, fmt="4.2f",
+                        annot_kws={'fontsize':9},
+                        cbar_kws={'label':'1st order coefficients'},
+                        cmap=cmap1)
+                plt.xticks(rotation=45)
+                plt.yticks(rotation=45)
+                plt.xlabel('secondary groups')
+                plt.ylabel('tertiary groups')
+                plt.show()
+
+
+            else:
+                #sns.heatmap(df, square=True, annot=False, cmap='viridis')
+                cmap = sns.diverging_palette(230, 15, s=40, l=50, as_cmap=True, center='light')
+                sns.heatmap(df, square=True, annot=True, fmt="4.2f", annot_kws={'fontsize':9}, cmap=cmap)
+                #sns.set(font_scale=3)
+                plt.xticks(rotation=45)
+                plt.yticks(rotation=45)
+                plt.show()
 
         else:
             if ttert: C = clf.coef_.reshape([self.nter,self.nsec*2])[:]
@@ -577,7 +612,59 @@ class Dataset(): #abstract data class
             print "size test set:", np.shape(self.Y_test)
             clf.fit(self.X_train, self.Y_train)
         else:
-            if combined:
+            if True:
+                #
+                alpha = [ 1*10**i for i in [ -12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4 ] ]
+                sprint(2, self.X)
+                sprint(2, self.X2)
+
+                # fit 1D model
+                clf1 = linear_model.RidgeCV(alphas=alpha, fit_intercept=intercept, store_cv_values=True)
+                clf1.fit(self.X, self.Y)
+                print "score 1D:", clf1.score(self.X, self.Y)
+                print "best 1D alpha:", clf1.alpha_
+                print "1D coefs:", clf1.coef_
+
+                # get the differences of real values and predicted values
+                y_pred1 = clf1.predict(self.X)
+                y_1D_errors = self.Y - y_pred1
+                print "MAE:", np.sum(abs(y_1D_errors))/float(len(y_1D_errors))
+                print "self.Y, y_pred1, error:"
+                for i in range(5): print self.Y[i], y_pred1[i], y_1D_errors[i]
+
+                # predict the differences. 
+                #alpha = [ 1*10**i for i in [ -12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4 ] ]
+                alpha = np.logspace(-15,15,30)
+                if True:
+                    from sklearn.model_selection import StratifiedShuffleSplit
+                    sss = StratifiedShuffleSplit(n_splits=3, test_size=0.1, random_state=0)
+                    clf2 = linear_model.RidgeCV(alphas=alpha, fit_intercept=True, store_cv_values=False, cv=sss)
+                else:
+                    clf2 = linear_model.RidgeCV(alphas=alpha, fit_intercept=True, store_cv_values=True)
+                clf2.fit(self.X2, y_1D_errors)
+                print "score 2D:", clf2.score(self.X2, y_1D_errors)
+                print "best 2D alpha:", clf2.alpha_
+                print "self.cv_values_:", clf2.cv_values_
+
+                # get the real values of 1D+2D
+                y_pred_errors = clf2.predict(self.X2)
+                y_pred2 = y_pred1 + y_pred_errors
+                y_2D_errors = self.Y - y_pred2 # == y_1D_errors - y_pred_errors
+                print "MAE:", np.sum(abs(y_2D_errors))/float(len(y_2D_errors))
+                print "self.Y, y_pred1, y_pred2"
+                for i in range(5): print self.Y[i], y_pred1[i], y_pred2[i], y_2D_errors[i]
+
+                clf = CLF(clf1, clf2)
+                if True:
+                    plt.scatter(self.Y, y_pred1, c='C1', label='1D', alpha=0.6)
+                    plt.scatter(self.Y, y_pred2, c='C2', label='2D', alpha=0.6)
+                    plt.legend()
+                    plt.show()
+
+            elif combined:
+                #if True:
+                #    alpha= len(self.X[0])*[0.01] + len(self.X2[0])*[0.1]
+                #    clf = linear_model.Ridge(alpha=alpha,fit_intercept=intercept,tol=0.001,solver='auto')
                 clf.fit(self.X12, self.Y)
             elif twosite:
                 clf.fit(self.X2, self.Y)
@@ -910,6 +997,41 @@ class Thiadiazinyl(Dataset):
         X = np.concatenate(LoS,axis=1)
         return X
 
+class CLF(object):
+    '''combination of two clfs. DELTA LEARNING'''
+    def __init__(self, clf1, clf2):
+        self.clf1=clf1
+        self.clf2=clf2
+        self.alpha_ = (self.clf1.alpha_, self.clf2.alpha_)
+        #print self.clf1.coef_
+        #print self.clf2.coef_
+        self.coef_ = np.r_[self.clf1.coef_,self.clf2.coef_]
+        try:
+            self.intercept_ = self.clf1.intercept_
+        except AttributeError:
+            self.intercept_ = None
+
+    def splitX(self, X):
+        X1 = np.asarray([ x[:24] for x in X ])
+        X2 = np.asarray([ x[24:] for x in X ])
+        return X1, X2
+
+    def predict(self, X):
+        X1, X2 = self.splitX(X)
+        # 1D part
+        y1d = self.clf1.predict(X1)
+        # 2nd order correction
+        y2d = self.clf2.predict(X2)
+        return y1d + y2d
+
+    def score(self, X, Y):
+        Y = np.array(Y)
+        y_pred = self.predict(X)
+        u = ((Y - y_pred)**2).sum()
+        v = ((Y - Y.mean())**2).sum()
+        R = 1 - (u/v)
+        return R
+
 
 
 #####################################
@@ -997,7 +1119,7 @@ def main(args):
 
         # 4.2.2: do regressions
         if True:
-            alpha=50
+            alpha=1e-4
             print "args.ridge:", alpha
             clf_Ridge2D = myrun.linreg(model='Ridge', alpha=alpha,twosite=True)
             if args.analyze:

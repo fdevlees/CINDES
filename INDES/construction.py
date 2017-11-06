@@ -119,102 +119,42 @@ def classmaker2(startconf,array,k,table,run=[]):
     from CINDES4.utils.molecule import Molecule, Population
     individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
     #population = Population( population = individuals )
-    mols_todo = individuals[:]
-    mols_nodo = []
-    if not table == []:
-        for item in table:
-            for individual in individuals:
-                if item[0] == individual.index: # so if item in table
-                    # remove it from the individuals to do list
-                    mols_todo.remove(individual)
-                    # add that item from table to data
-                    mols_nodo.append(individual)
+    mols_todo, mols_nodo = check_in_table(individuals, table, run)
+    #mols_todo = individuals[:]
+    #mols_nodo = []
+    #if not table == []:
+    #    for item in table:
+    #        for individual in individuals:
+    #            if item[0] == individual.index: # so if item in table
+    #                # remove it from the individuals to do list
+    #                mols_todo.remove(individual)
+    #                # add that item from table to data
+    #                mols_nodo.append(individual)
 
-                    # set property value of that individual
-                    print "item:", item
-                    i=1
-                    if float(item[1]) == 1.0:
-                        print "WARNING tablebin has old style formatting (column with 1s is present)",
-                        i=2
-                    individual.Pvalue = item[i]
-                    individual.predicted = False
-                    if run.bc:
-                        individual.boundaries = [ item[i+1] ]
-                        individual.infoline   = item[i+2:]
-                    else:
-                        individual.infoline  = item[i+1:]
-
-                    print "already calculated:", individual.index, "with property:", individual.Pvalue
-
-    if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
-
+    #                # set property value of that individual
+    #                print "item:", item
+    #                i=1
+    #                if float(item[1]) == 1.0:
+    #                    print "WARNING tablebin has old style formatting (column with 1s is present)",
+    #                    i=2
+    #                individual.Pvalue = item[i]
+    #                individual.predicted = False
+    #                if run.bc:
+    #                    individual.boundaries = [ item[i+1] ]
+    #                    individual.infoline   = item[i+2:]
+    #                else:
+    #                    individual.infoline  = item[i+1:]
+    #
+    #                print "already calculated:", individual.index, "with property:", individual.Pvalue
+    #
+    #if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
+    #
     return mols_todo, mols_nodo  #indicesfull are all the indices. 
-
-def indexmaker3(startconf,array,k,table,run=[]):
-    '''checks for confs already calculated'''
-    #print "IN INDEXMAKER3", type(run)
-    confs = get_configurations(startconf,array,k,run=run)
-    data=[]
-    indices = []
-    for i in range(len(confs)):
-        index = contoind(confs[i])
-        indices.append(index)
-        #pp.pprint(confs[i])
-    indicesfull = indices[:]
-    if not table == []:
-        for item in table:
-            for index,confje in izip(indices[:],confs[:]):
-                if item[0] == index:
-                    # remove that from the configurations
-                    indices.remove(index)
-                    confs.remove(confje)
-                    # add that item from table to data
-                    if item[1]==1:
-                        #raise SystemExit('elements in tablebin shouldnt be one')
-                        data.append(item)
-                    else:
-                        new_item = item[:]
-                        new_item.insert(1,1)
-                        data.append(new_item)
-        if not data == []:
-            logging.info('filled data with ones already calced:' + pprint.pformat(data))
-
-    # get SMILES of all confs using the run instance (i dont' have the zmat yet here)
-    #try:
-    #    from CINDES4.utils.molecule import Molecule
-    #    for conf in confs:
-    #        mol_conf = Molecule()
-    return indices,data,confs,indicesfull #indicesfull are all the indices. 
-
-def indexmaker4(table,indices, confs):
-    '''checks for confs already calculated this one is used in GA.py'''
-    indicesfull = indices[:]
-    data = []
-    if not table == []:
-        for item in table:
-            for index,confje in izip(indices[:],confs[:]):
-                if item[0] == index:
-                    # remove that from the configurations
-                    indices.remove(index)
-                    confs.remove(confje)
-                    # add that item from table to data
-                    if item[1]==1:
-                        raise SystemExit('elements in tablebin shouldnt be one')
-                        data.append(item)
-                    else:
-                        new_item = item[:]
-                        new_item.insert(1,1)
-                        data.append(new_item)
-        if not data == []:
-            logging.info('filled data with ones already calced:' + pprint.pformat(data))
-    return indices,data,confs #indicesfull are all the indices. 
-
 
 def classmaker2_SD(startconf,array,table,run=[]):
     '''checks for confs already calculated'''
     print "IN CLASSMAKER", type(run)
     from CINDES4.utils.molecule import Molecule, Population
-
     # make configurations
     confs = []
     for i in run.restingsites:
@@ -222,102 +162,51 @@ def classmaker2_SD(startconf,array,table,run=[]):
     # remove duplicates by sorting and subsequently only adding when the previous one is not similar
     sortedconfs = sorted(confs)
     confs = [ sortedconfs[i] for i in xrange(len(sortedconfs)) if i==0 or sortedconfs[i] != sortedconfs[i-1] ]
-
     individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
     #population = Population( population = individuals )
     mols_todo, mols_nodo = check_in_table(individuals, table, run)
     return mols_todo, mols_nodo
 
-def check_in_table(individuals, table, run):
-    mols_todo = individuals[:]
-    mols_nodo = []
-    if not table == []:
-        for item in table:
-            for individual in individuals:
-                if item[0] == individual.index: # so if item in table
-                    # remove it from the individuals to do list
-                    mols_todo.remove(individual)
-                    # add that item from table to data
-                    mols_nodo.append(individual)
-
-                    individual.Pvalue = item[1]
-                    individual.predicted = False
-                    if run.bc:
-                        individual.boundaries = [ item[2] ]
-                        individual.infoline   = item[3:]
-                    else:
-                        individual.infoline  = item[2:]
-                    # log
-                    print "already calculated:", individual.index, "with property:", individual.Pvalue
-
-    if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
-
-    return mols_todo, mols_nodo  #indicesfull are all the indices. 
-
-
 def classmaker_GA(individuals, table):
     '''checks for confs already calculated'''
-    mols_todo = individuals[:]
-    mols_nodo = []
-
-
-    if not table == []:
-        for item in table:
-            for individual in individuals:
-                if item[0] == individual.index: # so if item in table
-                    # remove it from the individuals to do list
-                    mols_todo.remove(individual)
-                    # add that item from table to data
-                    mols_nodo.append(individual)
-                    i=1
-                    if item[1] == 1:
-                        print "WARNING tablebin has old style formatting (column with 1s is present)",
-                        i=2
-                    individual.Pvalue = item[i]
-                    individual.predicted = False
-                    individual.infoline  = item[i+1:]
-                    print "already calculated:", individual.index, "with property:", individual.Pvalue
-
-    if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
-
+    mols_todo, mols_nodo = check_in_table(individuals, table, run)
+    #mols_todo = individuals[:]
+    #mols_nodo = []
+    #if not table == []:
+    #    for item in table:
+    #        for individual in individuals:
+    #            if item[0] == individual.index: # so if item in table
+    #                # remove it from the individuals to do list
+    #                mols_todo.remove(individual)
+    #                # add that item from table to data
+    #                mols_nodo.append(individual)
+    #                i=1
+    #                if item[1] == 1:
+    #                    print "WARNING tablebin has old style formatting (column with 1s is present)",
+    #                    i=2
+    #                individual.Pvalue = item[i]
+    #                individual.predicted = False
+    #                individual.infoline  = item[i+1:]
+    #                print "already calculated:", individual.index, "with property:", individual.Pvalue
+    #
+    #if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
+    #
     return mols_todo, mols_nodo  #indicesfull are all the indices. 
 
-def indexmaker_SD(startconf,array,table,run=[]): #for CINDES2.3.py for the new symmetry feature
-    '''checks for confs already calculated'''
-    print "IN INDEXMAKER3", type(run)
-    confs = []
-    for i in run.restingsites:
-        confs.extend( get_configurations(startconf,array,i,run=run) )
-    sortedconfs = sorted(confs)
-    confs = [ sortedconfs[i] for i in xrange(len(sortedconfs)) if i==0 or sortedconfs[i] != sortedconfs[i-1] ]
-
-    data=[]
-    indices = []
-    for i in range(len(confs)):
-        index = contoind(confs[i])
-        indices.append(index)
-        #pp.pprint(confs[i])
-    indicesfull = indices[:]
-    if not table == []:
-        for item in table:
-            for index,confje in izip(indices[:],confs[:]):
-                if item[0] == index:
-                    # remove that from the configurations
-                    indices.remove(index)
-                    confs.remove(confje)
-                    # add that item from table to data
-                    if item[1]==1:
-                        #raise SystemExit('elements in tablebin shouldnt be one')
-                        data.append(item)
-                    else:
-                        new_item = item[:]
-                        new_item.insert(1,1)
-                        data.append(new_item)
-        if not data == []:
-            logging.info('filled data with ones already calced:' + pprint.pformat(data))
-
-    return indices,data,confs,indicesfull #indicesfull are all the indices. 
-
+def check_in_table(individuals, table, run=None):
+    mols_todo = individuals[:]
+    mols_nodo = []
+    if table:
+        for individual in individuals:
+            if individual.index in table:
+                # check if the right properties are given for this property
+                if all(prop in table[individual.index] for prop in props):
+                    individual.props = table[individual.index]
+                    mols_todo.remove(individual)
+                    mols_nodo.append(individual)
+                    print "already calculated:", individual.index, "with props:", individual.props
+    if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
+    return mols_todo, mols_nodo  #indicesfull are all the indices. 
 
 def constructor2(conf,core,active,passive, links=[]):
     ''' This is the main constructor of the zmatrix for a given configuration using

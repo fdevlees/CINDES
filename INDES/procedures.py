@@ -16,7 +16,7 @@ from re import findall # now only needed in construction.py
 import sys # for getting command line input
 #import glob # for testing existence of files matching a pattern
 import random # for obtaining random geometry
-import pickle # for saving and getting the tablebin
+import json
 import logging # instead of the large amount of print statements not using it at the moment
 from copy import deepcopy # for keeping matrices while changing others
 
@@ -301,19 +301,19 @@ def set_table(myrun, datacolumn=1):
     try:
         tablename = myrun.tablename
     except AttributeError:
-        tablename = 'tablebin'
+        tablename = 'table.json'
     if myrun.restart>0:
         with open(tablename,'rb') as f:
-            table = pickle.load(f)
-        if True:
-            # if all item[1] are ones:
-            if all( item[1]==1 for item in table ):
-                table = [[item[0]] + item[datacolumn+1:] for item in table ]
-            else:
-                table = [[item[0]] + item[datacolumn:] for item in table ]
+            table = json.load(f)
+        #if True:
+        #    # if all item[1] are ones:
+        #    if all( item[1]==1 for item in table ):
+        #        table = [[item[0]] + item[datacolumn+1:] for item in table ]
+        #    else:
+        #        table = [[item[0]] + item[datacolumn:] for item in table ]
 
     else:
-        table = []
+        table = dict()
         open(tablename,'wb').close()
     return table
 
@@ -673,23 +673,6 @@ def generate_procedure(param,array):
     print "mols_all:", mols_all
     table = loggings(mols_all,table,count,1,1, made_pred=made_pred )
 
-
-
-    #'''generate all structures and print in format'''
-    #from CINDES4.utils.converter import Converter
-    #from CINDES4.utils import writings
-    #from CINDES4.predictor import learning_skl as learning
-    #converter = Converter()
-    #get structure
-    #TZmat = r.geometry(**param)
-    #to get an xyz file with the data from tablebin do generate1()
-    #with open(param['tablename'],'rb') as f:
-    #    table = pickle.load(f)
-    #print table[508:510]
-    #learning.generate1(converter=converter,table=table,**TZmat)
-
-    #to get an xyz file with all the possible structures possible:
-    #generate2(core,active,passive,converter, **param)
     print "DONE"
     return
 
