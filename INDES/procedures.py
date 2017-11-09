@@ -867,9 +867,12 @@ def SteepestDescent(param,array):
 
 # procedure 7. Farthest Point Selection based on the diversity index. 
 def database_construction(param,array):
+    import numpy as np
+    np.random.seed(41)
     debug=True
     myrun = Run(**param)
-    myrun.divers_discardCH=True
+    myrun.divers_discardCH=False
+    myrun.divers_minnch=True
     print(myrun) #this should print all the class elements via the __str__ function
     # the table with all the results of all calculated configs
     table = set_table(myrun)
@@ -915,6 +918,7 @@ def database_construction(param,array):
             break
     return
 
+@log_io()
 def getdivers(array, table, myrun):
     '''give the next n most divers molecules
 
@@ -924,6 +928,7 @@ def getdivers(array, table, myrun):
     index = myrun.divers_divindex
     batchsize = myrun.divers_batchsize
     discardCH = myrun.divers_discardCH
+    minnch = myrun.divers_minnch
 
     #1.
     from CINDES4.utils.molecule import Molecule
@@ -947,8 +952,7 @@ def getdivers(array, table, myrun):
             #print "in get divers: occupancy:", occupancy
             conf = make_molecule3(occupancy, seq, array, confs)
         if discardCH:
-            from numpy.random import binomial, shuffle, seed
-            seed(40)
+            from numpy.random import binomial, shuffle
             # adjust conf and place CH groups in it via a binomial distribution
             nsites=10
             while True:
@@ -958,6 +962,20 @@ def getdivers(array, table, myrun):
             positions = range(nsites)
             shuffle(positions)
             conf = [ item if i<nch else 'CH' for item,i in zip(conf,positions)]
+        elif minnch:
+            # conf has to contain at least n ch groups.
+            from numpy.random import shuffle
+            nch = conf.count('CH')
+            nmin= 4
+            if nch<nmin:
+                # place CH on certain groups
+                #i_noch = [ i for i, group in enumerate(conf) if not group=='CH' ]
+                i_noch = range(10)
+                shuffle(i_noch)
+                #print "i_noch", i_noch
+                for i in range(5): conf[i_noch[i]]='CH'
+                #conf = [ 'CH' if i in i_noch[:nmin-nch] else group for i, group in enumerate(conf) ]
+        print conf
         fconf = zcon.indtocon( '_'.join(conf))
         mols.append(Molecule(conf=fconf))
 
@@ -983,10 +1001,8 @@ def make_molecule12(occupancy, seq, array, confs, index=1):
             new_conf = take_nth(occupancy, seq, array, confs)
     return new_conf
 
-@log_io()
 def make_molecule3(occupancy, seq, array, confs):
     import numpy as np
-    np.random.seed(40)
     #print seq
     from collections import OrderedDict
     occD = dict()
@@ -1050,7 +1066,7 @@ def make_molecule3(occupancy, seq, array, confs):
             break
     else:
         raise StandardError
-    print new_conf
+    #print new_conf
     assert not '' in new_conf, "one group not defined!"
     # now the change that a group appears on 4 8 is different from appearing on the others? so randomly symmetry permutation:
     Adasym = [
