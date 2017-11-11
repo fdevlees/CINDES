@@ -269,41 +269,47 @@ def datareader( mols_tocal, fileparameters):
     normaltermination( paths, fileparameters['debug'] )
 
     # 3. get a list of properties that need to be extracted for each molecule
+    # THIS IS ALREADY DONE AT INPUTREADER > run.props
+    uni_props_set = fileparameters['props']
 
     # 3.1. the function properties or the standard property
-    if fileparameters['property']=='func':
-        props = []
-        props.extend( fileparameters['func_args'] )
-    else:
-        props = [ fileparameters['property'] ]
+    #if fileparameters['property']=='func':
+    #    props = []
+    #    props.extend( fileparameters['func_args'] )
+    #else:
+    #    props = [ fileparameters['property'] ]
     # 3.2. the boundary conditional properties
-    try:
-        props.append(fileparameters['bcprop'])
-    except KeyError:
-        pass
+    #try:
+    #    props.append(fileparameters['bcprop'])
+    #except KeyError:
+    #    pass
     # 3.3. the extra properties
-    props.extend( fileparameters['extra_props'] )
+    #props.extend( fileparameters['extra_props'] )
     # 3.4. make an empty dictionary
-    uni_props_dict = { item:None for item in props }
+    #uni_props_dict = { item:None for item in props }
 
     # 4. obtain data for each molecule
     for molecule in mols_tocal:
         print "><"*10, molecule, "><"*10
         # make a copy of props_dict
-        props_dict = uni_props_dict.copy()
+        props_set = uni_props_set.copy()
 
         file1 = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + '.log'
 
         # start by looking if stab is one of the crucial properties because it contains many others
-        if 'stab' in props_dict:
+        if 'stab' in props_set:
             X_stab_props = extract_stab( file1, molecule, fileparameters )
             # expect to get something like: { 'stab': value, 'I':..., 'A':...,'omega':...,'RDV'....}
 
             # fill props_dict
-            props_dict.update(X_stab_props)
+            #props_dict.update(X_stab_props)
+            molecule.props.update(X_stab_props)
 
         # check which properties are still necessary to obtain:
-        to_read_props = [ key for key, value in props_dict.iteritems() if value==None ]
+        #to_read_props = [ key for key, value in props_dict.iteritems() if value==None ]
+        # new: test which in fileparameters['props'] but not in molecule.props.viewkeys()
+        # NB: - is here a set operator! returns a set!
+        to_read_props = props_set - molecule.props.viewkeys()
         print "to read props:", to_read_props
 
         # extract them
@@ -311,25 +317,21 @@ def datareader( mols_tocal, fileparameters):
         if to_read_props:
             readings = gausread( file1, to_read_props, multiplejobs=fileparameters['multiplejobs'])
             #print 'readings:', readings
-            props_dict.update( readings )
+            molecule.props.update( readings )
 
         # set molecule attributes
-        print "props_dict:", props_dict
-        if fileparameters['property']=='func':
-            #kwargs = {}
-            #for prop in fileparameters['func_args']:
-            #    kwargs[prop] = props_dict[prop]
-            kwargs = { prop:props_dict[prop] for prop in fileparameters['func_args'] }
-            #print "kwargs:", kwargs
-            molecule.Pvalue = fileparameters['function'](**kwargs)
-            print "function value:", molecule.Pvalue
-        else:
-            molecule.Pvalue = props_dict.pop( fileparameters['property'] )
+        #print "mol.props:", molecule.props
+        #if fileparameters['property']=='func':
+        #    kwargs = { prop:props_dict[prop] for prop in fileparameters['func_args'] }
+        #    molecule.Pvalue = fileparameters['function'](**kwargs)
+        #    print "function value:", molecule.Pvalue
+        #else:
+        #    molecule.Pvalue = molecule.props[ fileparameters['property'] ]
         try:
-            molecule.boundaries = [ props_dict.pop( fileparameters[ 'bcprop' ] ) ]
+            molecule.boundaries = [ molecule.props[bcp] for bcp in fileparameters['bcprop'] ]
         except KeyError:
             pass
-        molecule.infoline = props_dict.values()
+        #molecule.infoline = props_dict.values()
         molecule.predicted = False
 
     return mols_tocal
@@ -402,7 +404,7 @@ def datareader_old(mols_tocal,jobids,path,fileparameters):
     return mols_tocal
 
 def gausread(filename,props,multiplejobs=1,rdvindex=1):
-    ''' props is a list of props to extract '''
+    ''' props is a set of props to extract '''
     mymol = Logfile(filename)
     results = {}
 
@@ -415,8 +417,6 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1):
     # check opt 
     if not hasattr(mymol,'optdone'):
         print "program did not do optimization or crashed"
-
-
 
     # set props
     if 'polar' in props:

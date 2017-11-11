@@ -137,6 +137,11 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
 def do_prediction(prediction, table, retrain, array, count, nsite, run, mols_todo):
     # prediction in: prediction, table, mols_todo, retrain, run, array, count, nsite
 
+    raise SystemExit('predictions are not jet JSON implemented')
+    # table has changed format is dict and has not automatically the properties that 
+    # must be predicted (for example function values are not included in table
+    # so they must be calculated somewhere from the other items in table
+
     # 0. log prediction:
     made_pred=True
     print_title(prediction['name'], outline='l')

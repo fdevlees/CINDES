@@ -113,42 +113,13 @@ def get_configurations(startconf,array,k, run=[]):
 
 def classmaker2(startconf,array,k,table,run=[]):
     '''checks for confs already calculated'''
-    #print "IN CLASSMAKER", type(run)
     confs = get_configurations(startconf,array,k,run=run)
 
     from CINDES4.utils.molecule import Molecule, Population
     individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
     #population = Population( population = individuals )
-    mols_todo, mols_nodo = check_in_table(individuals, table, run)
-    #mols_todo = individuals[:]
-    #mols_nodo = []
-    #if not table == []:
-    #    for item in table:
-    #        for individual in individuals:
-    #            if item[0] == individual.index: # so if item in table
-    #                # remove it from the individuals to do list
-    #                mols_todo.remove(individual)
-    #                # add that item from table to data
-    #                mols_nodo.append(individual)
-
-    #                # set property value of that individual
-    #                print "item:", item
-    #                i=1
-    #                if float(item[1]) == 1.0:
-    #                    print "WARNING tablebin has old style formatting (column with 1s is present)",
-    #                    i=2
-    #                individual.Pvalue = item[i]
-    #                individual.predicted = False
-    #                if run.bc:
-    #                    individual.boundaries = [ item[i+1] ]
-    #                    individual.infoline   = item[i+2:]
-    #                else:
-    #                    individual.infoline  = item[i+1:]
-    #
-    #                print "already calculated:", individual.index, "with property:", individual.Pvalue
-    #
-    #if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
-    #
+    mols_todo, mols_nodo = check_in_table(individuals, table, run.props)
+    # set here (*mols_nodo).Pvalue
     return mols_todo, mols_nodo  #indicesfull are all the indices. 
 
 def classmaker2_SD(startconf,array,table,run=[]):
@@ -164,12 +135,12 @@ def classmaker2_SD(startconf,array,table,run=[]):
     confs = [ sortedconfs[i] for i in xrange(len(sortedconfs)) if i==0 or sortedconfs[i] != sortedconfs[i-1] ]
     individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
     #population = Population( population = individuals )
-    mols_todo, mols_nodo = check_in_table(individuals, table, run)
+    mols_todo, mols_nodo = check_in_table(individuals, table, run.props)
     return mols_todo, mols_nodo
 
 def classmaker_GA(individuals, table):
     '''checks for confs already calculated'''
-    mols_todo, mols_nodo = check_in_table(individuals, table, run)
+    mols_todo, mols_nodo = check_in_table(individuals, table, run.props)
     #mols_todo = individuals[:]
     #mols_nodo = []
     #if not table == []:
@@ -193,15 +164,18 @@ def classmaker_GA(individuals, table):
     #
     return mols_todo, mols_nodo  #indicesfull are all the indices. 
 
-def check_in_table(individuals, table, run=None):
+def check_in_table(individuals, table, props=set()):
     mols_todo = individuals[:]
     mols_nodo = []
     if table:
         for individual in individuals:
             if individual.index in table:
-                # check if the right properties are given for this property
+                #check if the right properties are given for this property
                 if all(prop in table[individual.index] for prop in props):
                     individual.props = table[individual.index]
+                    individual.predicted=False
+                    #individual.Pvalue=0.0 #function!
+                    #raise SystemExit('implement furter')
                     mols_todo.remove(individual)
                     mols_nodo.append(individual)
                     print "already calculated:", individual.index, "with props:", individual.props

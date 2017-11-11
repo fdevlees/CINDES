@@ -78,6 +78,9 @@ class Molecule(object):
         self.predictions = {}
         self.predicted = None
         self.mat = None
+
+        # for jsonification:
+        self.props = {}
         return
 
     def __getitem__(self,key):

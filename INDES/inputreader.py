@@ -435,14 +435,10 @@ def readfile(subinp):
     except KeyError:
         pass
     props.extend( paras['extra_props'] )
-    paras['props'] = props
-    if 'stab' in props: paras['stab'] = True
-    if 'polar' in props: paras['polar'] = True
-    if 'ip' in props: paras['ip'] = True
-    if 'ea' in props: paras['ea'] = True
-    if 'aip' in props: paras['aip'] = True
-    if 'aea' in props: paras['aea'] = True
-    if 'solv' in props: paras['solv'] = True
+    paras['props'] = set(props)
+    for prop in ['stab', 'polar', 'ip', 'aip', 'ea', 'aea', 'solv' ]:
+        if prop in paras['props']:
+            paras[prop]=True
 
     # extra sanity checks on input
     # sanity check 1: optimum in ga and bfs input similar

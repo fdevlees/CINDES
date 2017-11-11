@@ -62,13 +62,9 @@ def get_secret_data(tablefilename,mols_tocal, mols_nocal):
                 mols_tocal.remove(mol)
                 # add that item from table to data
                 mols_nocal.append(mol)
-    
-
     return mols_tocal, mols_nocal
 
-
 # PROCEDURE
-#data = gausf.procedure(myrun,confs,indices,data,kwargs)
 def procedure(myrun, mols_tocal, mols_nocal, TZmat):
     global once
     #print "nconfs:", len(population)
@@ -80,16 +76,7 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
     elif myrun.nosub==3:
         print "SECRET DATA activated:", myrun.nosub_file
         tablefilename = myrun.nosub_file
-        #print "before\n: mols_tocal",
-        #sprint(10,mols_tocal)
-        #print "mols_nocal",
-        #sprint(10,mols_nocal)
         mols_tocal , mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal)
-        #print "after\n: mols_tocal",
-        #sprint(10,mols_tocal)
-        #print "mols_nocal",
-        #sprint(10,mols_nocal)
-        #raise SystemExit('stop submit procedure')
 
     if not mols_tocal==[]:
         # 1. Make the files
@@ -104,14 +91,19 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
         # 4. test normal termination and read jobs #NOTE data_nocal is passed to this one. results are appended to it
         mols_calc = datareader.datareader(mols_tocal,myrun.__dict__)
 
-        # 5. add ones to each data_calc element. this means the values are obtained by real calculation
-        #for item in mols_calc:
-        #    #item.predicted = False
-        #    item.insert(1,1)
     else: mols_calc = []
 
-    # 6. merge data_calc and data_nocal to data_all
+    # 5. merge data_calc and data_nocal to data_all
     mols_all = mols_calc + mols_nocal
+
+    # 6. set target property i.e. mol.Pvalue
+    for mol in mols_all:
+        if myrun.property=='func':
+            kwargs = { prop:mol.props[prop] for prop in myrun.func_args }
+            mol.Pvalue = myrun.function(**kwargs)
+            print "function value:", molecule.Pvalue
+        else:
+            mol.Pvalue = mol.props[ myrun.property ]
 
     return mols_all
 

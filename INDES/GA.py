@@ -409,6 +409,8 @@ def run_pyevolve(array,table, options):
         options.
 
     '''
+    raise SystemExit('new JSON table not yet implemented')
+
     # 0. 
     print "options:", options
 

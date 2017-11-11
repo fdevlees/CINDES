@@ -297,20 +297,54 @@ def get_sequence(count, myrun):
     return sequence
 
 # 4 table (database)
-def set_table(myrun, datacolumn=1):
+def set_table(myrun):
+    '''this function loads molecules from a given database it uses a few runattributes:
+        - tablename (str)
+        - restart (int)
+        - props (set)
+
+    '''
+    def try_oldstyle(tablename):
+        import pickle
+        print tablename
+        with open(tablename,'rb') as f:
+            pickle_db = pickle.load(f)
+        print "pickled table is loaded"
+        print "pickle_db:", pickle_db
+        json_db = dict()
+        tableprops=['mw','solv', 'e0_solv', 'e1_solv', 'lumo', 'solv']
+        for item in pickle_db:
+            key=item[0]
+            value={prop:prop_value for prop,prop_value in zip(tableprops,item[1:])}
+            json_db[key]=value
+        print "an old_style formatted tablefile was loaded with props:", tableprops
+        # touch new json file
+        open('{}.json'.format(tablename),'w').close()
+        return json_db
+
     try:
         tablename = myrun.tablename
     except AttributeError:
         tablename = 'table.json'
     if myrun.restart>0:
-        with open(tablename,'rb') as f:
-            table = json.load(f)
-        #if True:
-        #    # if all item[1] are ones:
-        #    if all( item[1]==1 for item in table ):
-        #        table = [[item[0]] + item[datacolumn+1:] for item in table ]
-        #    else:
-        #        table = [[item[0]] + item[datacolumn:] for item in table ]
+        try:
+            with open(tablename,'rb') as f:
+                db = json.load(f, parse_float=True)
+        except ValueError:
+            print "no json table"
+            print "try to load as pickle {}".format(tablename)
+            try:
+                db = try_oldstyle(tablename)
+            except:
+                print "also no correct pickled table"
+                raise
+
+        print "loaded json database with {} molecules".format(len(db))
+        # myrun.props has to be a subset of value.viewkeys(): set operations <= means "is subset of"
+        table = { key:value for key,value in db.iteritems() if myrun.props <= value.viewkeys() }
+        print "made a table with {} molecules that have the required properties".format(len(table))
+
+        # should the function value be included in the table? otherwise here is the place ;)
 
     else:
         table = dict()
@@ -557,16 +591,16 @@ def BFS(param,array):
             else: mols_all = skipper(mols_tocal,mols_nocal)
             print "mols_all:",mols_all
 
-            # STEP 4: SORT
-            # sort data in same order as allindices:
-            # not necessary anymore in molsclass
-            #mols_all = sorted(mols_all, key=lambda x:x.Pvalue)
-
-            # STEP 5: UPDATE DATABASE and LOG results of microiteration
+            # STEP 4: UPDATE DATABASE and LOG results of microiteration
             # logs new elements in data to table and tablebin and whole data to cyclesinfo
-            table = loggings(mols_all,table,count,k,l, made_pred, tablename = myrun.tablename)
+            table = loggings(mols_all,
+                    table,
+                    count,
+                    k,l,
+                    made_pred,
+                    tablename = myrun.tablename)
 
-            # STEP 6: UPDATE OPTIMUM STRUCTURE
+            # STEP 5: UPDATE OPTIMUM STRUCTURE
             # decide what the maximum site is and if the bc if fullfilled
             print "BCOK:", bcok
             maxsite, bcok = testmax(myrun, mols_all, bcok)
