@@ -13,10 +13,19 @@ from scipy import stats
 import pandas as pd
 
 def formatitem(item):
+    def formatter(item):
+        try:
+            return '{:15.8f}'.format(item)
+        except ValueError:
+            return item.rjust(15)
+            #return "      {}".format(item)
+
     index = '{:50s}'.format(item[0])
     abin  = ' {} '.format(str(item[1]))
     try:
-        datas = ' '.join(( '{:15.8f}'.format(datatje) for datatje in map(float,item[2:]) ) )
+        #datas = ' '.join(( fmt.format('{:15.8f}', (datatje for datatje in item[2:] ))))
+        datar = [ formatter(datatje) for datatje in item[2:] ]
+        datas = ' '.join(datar)
     except ValueError:
         print item[2:]
         raise
@@ -69,8 +78,6 @@ def log_table( mols, table, tablename='tablebin'):
             else:
                 json_table[key]=value
 
-        print "json_table:", json_table
-
         #3 write updated json object
         with open(filename,'w') as f:
             json.dump(json_table, f, indent=-1)
@@ -113,7 +120,7 @@ def log_screen( mols ):
     # print data
     for molecule in mols:
         item = [ molecule.index, molecule.predicted, molecule.Pvalue ]
-        propvals = [ molecule.props[prop] for prop in props ]
+        propvals = [ molecule.props.get(prop,'unknown') for prop in props ]
         item.extend(propvals)
         print formatitem(item)
     return

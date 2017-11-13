@@ -35,7 +35,6 @@ import os
 import shutil
 once=0
 
-
 def get_secret_data(tablefilename,mols_tocal, mols_nocal):
     '''checks for confs already calculated'''
     import pickle
@@ -88,7 +87,7 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
         # 3. test of all jobs are ready
         jobtester(mols_tocal,myrun,jobids)
 
-        # 4. test normal termination and read jobs #NOTE data_nocal is passed to this one. results are appended to it
+        # 4. test normal termination and read jobs 
         mols_calc = datareader.datareader(mols_tocal,myrun.__dict__)
 
     else: mols_calc = []
@@ -96,14 +95,8 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
     # 5. merge data_calc and data_nocal to data_all
     mols_all = mols_calc + mols_nocal
 
-    # 6. set target property i.e. mol.Pvalue
-    for mol in mols_all:
-        if myrun.property=='func':
-            kwargs = { prop:mol.props[prop] for prop in myrun.func_args }
-            mol.Pvalue = myrun.function(**kwargs)
-            print "function value:", molecule.Pvalue
-        else:
-            mol.Pvalue = mol.props[ myrun.property ]
+    # 6. set target property i.e. mol.Pvalue and mol.boundaries
+    set_target_properties( mols_all, myrun)
 
     return mols_all
 
@@ -490,3 +483,37 @@ def test_ready3(indices,myrun):
     time.sleep(fileparameters['extrawaittime']) #just wait for the files to write back before opening them
     return
     pass
+
+#6. set molecular property attributes
+def set_target_properties(molecules, myrun):
+    ''' set mol.Pvalue and if boundary conditions mol.boundaries
+    uses myrun attributes:
+        -property
+        -function
+        -func_args
+        -bcprop
+    and molecule attributes:
+        -props
+    and sets molecule attributes:
+        -Pvalue
+        -boundaries
+    '''
+    for mol in molecules:
+        if myrun.property=='func':
+            kwargs = { prop:mol.props[prop] for prop in myrun.func_args }
+            mol.Pvalue = myrun.function(**kwargs)
+            print "function value:", molecule.Pvalue
+        else:
+            mol.Pvalue = mol.props[ myrun.property ]
+        try:
+            print "I'm here: myrun.bcprop", myrun.bcprop, "mol.props?:", mol.props
+            mol.boundaries = [ mol.props[bcp] for bcp in [myrun.bcprop] ]
+        except KeyError as e:
+            print e
+            pass
+    #print "test json attributes:"
+    #for mol in molecules:
+    #    print mol.index, mol.boundaries, mol.Pvalue
+    return
+
+

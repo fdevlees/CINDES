@@ -103,7 +103,7 @@ class Molecule(object):
         ret.append( int( not self.predicted ) )
         ret.append( self.Pvalue     )
         ret.extend( self.boundaries )
-        ret.extend( self.infoline   )
+        #ret.extend( self.infoline   )
         return ret
 
     def set_path(self, path, extension='.com'):

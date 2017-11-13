@@ -97,7 +97,7 @@ class Run(object):
         else:
             #param['workdir'] = os.getcwd()
             self.workdir = os.getcwd()
-            path = self.workdir  + '/databc'
+            path = self.workdir  + '/CALC'
             param["path"]=str(path)
             logging.info("PATH:"+str(path))
             if not os.path.exists(path):
@@ -241,8 +241,8 @@ class Run(object):
 # 3. site order
 # 4. table (database)
 # 5. optimum at the start of the run
-# 6. maximum configuration within run
-# 7. global maximum
+# 6. optimum configuration within run
+# 7. global optimum
 # 8. logging of output # loggings module
 
 # 1 startconfiguration
@@ -322,20 +322,26 @@ def set_table(myrun):
         open('{}.json'.format(tablename),'w').close()
         return json_db
 
+    #--------
+    print "------------"
+    # look if tablename given in INPUT otherwise default
     try:
         tablename = myrun.tablename
     except AttributeError:
         tablename = 'table.json'
+    # look if extension is used otherwise set it automatically
+    if not tablename[-5:]=='.json': tablename='{}.json'.format(tablename)
+
     if myrun.restart>0:
         try:
             with open(tablename,'rb') as f:
-                db = json.load(f, parse_float=True)
-        except ValueError:
+                db = json.load(f)
+        except (IOError,ValueError):
             print "no json table"
             print "try to load as pickle {}".format(tablename)
             try:
                 db = try_oldstyle(tablename)
-            except:
+            except IOError:
                 print "also no correct pickled table"
                 raise
 
@@ -352,92 +358,104 @@ def set_table(myrun):
     return table
 
 # 5 optimum at the start of the run
-def set_maximum(myrun,table):
+def set_optimum(myrun,table):
     if myrun.restart >= 3:
         tabledict = dict( [ item[0:2] for item in table ] )
-        maximum = [ myrun.startconf, tabledict[myrun.startconf] ]
-        logging.info("maximum:"+ str(maximum))
+        optimum = [ myrun.startconf, tabledict[myrun.startconf] ]
+        logging.info("optimum:"+ str(optimum))
     else:
-        maximum = 0
-    return maximum
+        optimum = 0
+    return optimum
 
 # 6 optimum within the global iterations
 def testmax(myrun, mols, bcok):
-    param = myrun.__dict__
+    ''' sets optsite
+    multiple boundary conditions are not yet implemented
 
-    data = [ molecule.log() for molecule in mols if ( molecule.predicted == False and not molecule.Pvalue is None) ]
-    for item in data:
-        print item
+    '''
+    param = myrun.__dict__
+    # there are molecules that are predicted and are not calculated so they have molecule.Pvalue is None? 
+    # NOT: no they should have a Pvalue but just there predicted attribute is set to True
+    # so which molecule could possibly have a None Pvalue? 
+    # neglected molecules will have a None value so indeed filter them out 
+    # data = [ molecule.log() for molecule in mols if ( molecule.predicted == False and not molecule.Pvalue is None) ]
+    # data = [ molecule.log() for molecule in mols if not ( molecule.predicted == False or not molecule.Pvalue is None) ]
+    # INDEED mols that are only predicted are left out! Pred values are only used at the decision for tocal/nocal!
+    mols = [ mol for mol in mols if mol.predicted == False and not mol.Pvalue is None ]
 
     if 'bcprop' in param:
         if param['bcoptimum'] in ['min','Min','MIN']:
         #test if BC fullfilled. 
             try:
-                voldoende = [ it for it in data if float(it[3]) < float(param['bcval']) ]
-            except TypeError: pass
+                satisfactory = [ mol for mol in mols if mol.boundaries[0] < float(param['bcval']) ]
+            except TypeError as e:
+                print e
+                pass
         else:
             assert param['bcoptimum'] in ['max','Max','MAX']
             try:
-                voldoende = [ it for it in data if float(it[3]) > float(param['bcval']) ]
-            except TypeError: pass
+                satisfactory = [ mol for mol in mols if mol.boundaries[0] > float(param['bcval']) ]
+            except TypeError as e:
+                print e
+                pass
 
-        print "voldoende:\n", pprint.pformat(voldoende, width=100)
+        print "satisfactory:\n", pprint.pformat(satisfactory, width=100)
         print "the BC condition is bc<:", param['bcval']
-        if voldoende==[]: #so if there is at least one fullfilling BC
+        if satisfactory==[]: #so if there is at least one fullfilling BC
             bcok=0
             print "BC not fullfilled:"
-            #maxsite = min(data,key = lambda x:x[2])
-            maxsite = min(data,key = lambda x:abs( float(x[3]) - float(param['bcval']) ) )
+            #optsite = min(data,key = lambda x:x[2])
+            optsite = min(mols,key = lambda mol:abs( mol.boundaries[0] - float(param['bcval']) ) )
         else: #BC nog niet
             bcok=1
-            print "BC fullfilled; voldoende is not empty:", pprint.pformat(voldoende, width=100)
-            #maxsite = max(voldoende,key = lambda x:x[1])
+            print "BC fullfilled; satisfactory is not empty:", pprint.pformat(satisfactory, width=100)
+            #optsite = max(satisfactory,key = lambda x:x[1])
             if param['optimum'] in ['minimum', 'min']:
-                maxsite = min(voldoende,key = lambda x:x[2])
+                optsite = min(satisfactory,key = lambda x:x[2])
             else:
-                maxsite = max(voldoende,key = lambda x:x[2])
+                optsite = max(satisfactory,key = lambda x:x[2])
     else:
         bcok=1 #no BC but need this variable to test later on
-        # maximum of the list or MINIMUM
+        # optimum of the list or MINIMUM
         if param['optimum'] in ['minimum', 'min']:
             if param['cutoff'] == 0:
-                maxsite = min(data,key = lambda x:x[2])
+                optsite = min(mols,key = lambda x:x.Pvalue)
             else:
-                testdata = [ item for item in data if abs(item[2]) > param['cutoff'] ]
-                maxsite = min(testdata,key = lambda x:x[2])
+                testmols = [ mol for mol in mols if abs(mol.Pvalue) > param['cutoff'] ]
+                optsite = min(testmols, key = lambda mol:mol.Pvalue)
         else:
-            maxsite = max(data,key = lambda x:x[2])
-    logging.warning('maxisite:' + pprint.pformat(maxsite, width=100))
-    return maxsite,bcok
+            optsite = max(mols, key = lambda mol:mols.Pvalue)
+    logging.warning('optsite:' + pprint.pformat(optsite, width=100))
+    return optsite, bcok
 
 # 7 set global optimum and define convergence and redirect to Monte Carlo component
-def runtest(run, maximum, maxsite, count, bcok,mctable=[], array=[]):
+def runtest(run, optimum, optsite, count, bcok,mctable=[], array=[]):
     param = run.__dict__
     TZmat= run.TZmat
     converged=0
-    # test if this is same as previous maximum. if so then converged and break
+    # test if this is same as previous optimum. if so then converged and break
     print
     if (count > 1 and bcok) or param['restart']>=3: #BCOK is a test of the boundary condition is already fullfilled
-        if maximum[2] == maxsite[2]:  #test the property value! not 1 anymore!
+        if optimum[2] == optsite[2]:  #test the property value! not 1 anymore!
             print "optimum is the same!"
             print "converged to a optimum configuration!"
             if param['montecarlo'] == 0:
                converged = 1
             else:
                if param['ml']==0:
-                   maxsite = montecarloprocedure(run, array, maximum, mctable)
+                   optsite = montecarloprocedure(run, array, optimum, mctable)
                else:
-                   maxsite = montecarloprocedure(run, array, maximum, mctable, **TZmat)
-               print "optimal_after_this_site:", pprint.pformat( maxsite, width=100 )
+                   optsite = montecarloprocedure(run, array, optimum, mctable, **TZmat)
+               print "optimal_after_this_site:", pprint.pformat( optsite, width=100 )
         else:
             print "Global_Iteration_optimum and optimum_after_this_site are not the same yet"
-            print "gi_optimum:" ,maximum
-            print "current optimum:" ,maxsite
+            print "gi_optimum:" ,optimum
+            print "current optimum:" ,optsite
     else: #except NameError:
         print "NameError no optimal structure or BC not yet fullfilled."
         #pass
-    maximum = maxsite[:]
-    return maximum, maxsite, converged
+    optimum = optsite[:]
+    return optimum, optsite, converged
 
 # DATA GETTING:
 # A: fake data for testing (skipper)
@@ -537,8 +555,8 @@ def BFS(param,array):
     print(myrun) #this should print all the class elements via the __str__ function
     # the table with all the results of all calculated configs
     table = set_table(myrun)
-    # set maximum
-    maximum = set_maximum(myrun,table)
+    # set optimum
+    optimum = set_optimum(myrun,table)
     #set calculation properties
     #END MYRUN CLASS assignments. from now myrun should contain all the necessary information to work with during the whole program run.
 
@@ -559,9 +577,10 @@ def BFS(param,array):
             print_title("k(site)= " + str(k) + " l(nsite)= "+ str(l),outline='l',signator='=')
             if not l == 0 or count > 1: #define new startconfiguration if not first cycle
                 # define new starting geometry
-                print "maxsite[0]",maxsite[0]
+                print "optsite",optsite
                 del startconf
-                startconf = zcon.indtocon(maxsite[0])
+                #startconf = zcon.indtocon(optsite[0])
+                startconf = optsite.conf
                 print "newconf: ", startconf
 
 
@@ -601,21 +620,21 @@ def BFS(param,array):
                     tablename = myrun.tablename)
 
             # STEP 5: UPDATE OPTIMUM STRUCTURE
-            # decide what the maximum site is and if the bc if fullfilled
+            # decide what the optimum site is and if the bc if fullfilled
             print "BCOK:", bcok
-            maxsite, bcok = testmax(myrun, mols_all, bcok)
+            optsite, bcok = testmax(myrun, mols_all, bcok)
 
             print("--- %s seconds ---" % (time.time() - myrun.starttime))
             print(myrun.currenttime())
         # END LOOP OVER SITES
 
-        #get maximum and test convergence
-        maximum, maxsite,converged = runtest(myrun, maximum, maxsite, count, bcok, mctable=table, array = array)
+        #get optimum and test convergence
+        optimum, optsite,converged = runtest(myrun, optimum, optsite, count, bcok, mctable=table, array = array)
         if converged==1: break
         count +=1
         if count > param['maxiter']:
             print "maxiterations is reached"
-            print "maximum is: ", maximum
+            print "optimum is: ", optimum
             break
     # ---------------------------- #
     # ------ END OF LOOPING ------ # 
@@ -695,7 +714,7 @@ def generate_procedure(param,array):
         # $PBS_ARRAY_INDEX has to be used in the submitscript to submit each job. 
         # each number has to refer to a certain filename.
         # make file with all the filenames:
-        with open('./databc/filenames.txt','w') as fout:
+        with open('./CALC/filenames.txt','w') as fout:
             fout.write( '\n'.join([myrun.identify + mol.index for mol in mols_tocal]) )
         print "njobs:", len(mols_tocal)
 
@@ -801,8 +820,8 @@ def SteepestDescent(param,array):
     print(myrun) #this should print all the class elements via the __str__ function
     # the table with all the results of all calculated configs
     table = set_table(myrun)
-    # set maximum
-    maximum = set_maximum(myrun,table)
+    # set optimum
+    optimum = set_optimum(myrun,table)
     #set calculation properties
     startconf = get_startconf(param,array)
     #END MYRUN CLASS assignments. from now myrun should contain all the necessary information to work with during the whole program run.
@@ -818,9 +837,9 @@ def SteepestDescent(param,array):
 
         if count > 1: #define new startconfiguration if not first cycle
             # define new starting geometry
-            print "maxsite[0]",maxsite[0]
+            print "optsite[0]",optsite[0]
             del startconf
-            startconf = zcon.indtocon(maxsite[0])
+            startconf = zcon.indtocon(optsite[0])
             print "newconf: ", startconf
 
         # STEP 1: INDEXMAKER
@@ -846,12 +865,12 @@ def SteepestDescent(param,array):
         table = loggings(mols_all,table,count,1,1, made_pred=made_pred )
 
         # STEP 6: UPDATE OPTIMUM STRUCTURE
-        # decide what the maximum site is and if the bc if fullfilled
+        # decide what the optimum site is and if the bc if fullfilled
         print "BCOK:", bcok
-        maxsite, bcok = testmax(myrun, mols_all, bcok)
+        optsite, bcok = testmax(myrun, mols_all, bcok)
 
         if myrun.procedure=='steepest2':
-            maxconf = zcon.indtocon(maxsite[0])
+            maxconf = zcon.indtocon(optsite[0])
             print "maxconf:", maxconf, 'while startconf:', startconf
             try:
                 changedsite = [ siteM == siteS for siteM,siteS in zip(maxconf,startconf) ].index(False)
@@ -868,13 +887,13 @@ def SteepestDescent(param,array):
         print(myrun.currenttime())
         # END LOOP OVER SITES
 
-        #get maximum and test convergence
-        maximum, maxsite,converged = runtest(myrun, maximum, maxsite, count, bcok, mctable=table, array = array)
+        #get optimum and test convergence
+        optimum, optsite,converged = runtest(myrun, optimum, optsite, count, bcok, mctable=table, array = array)
         if converged==1: break
         count +=1
         if count > param['maxiter']:
             print "maxiterations is reached"
-            print "maximum is: ", maximum
+            print "optimum is: ", optimum
             break
     # ---------------------------- #
     # ------ END OF LOOPING ------ # 

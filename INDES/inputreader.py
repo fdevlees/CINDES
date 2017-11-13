@@ -37,8 +37,13 @@ def read_input(siteinput):
     else:
         array = substireader(param['nsites'],subinp)
         if not param['procedure'] in ['getrandom', 'genrandom','testpred']:
-            print "ARRAY:",
-            pprint(array)
+            print "ARRAY:"
+            for item in array:
+                print "|",
+                for sub in item:
+                    print "{:9s}".format("".join(sub)),
+                    print "|",
+                print
     if not param['procedure'] in ['getrandom', 'genrandom']:
         logging.info("INPUT PARAMETERS:")
         for key,value in param.iteritems():
