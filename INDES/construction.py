@@ -97,8 +97,6 @@ def matrixmerger2(core,active,passive):
 def get_configurations(startconf,array,k, run=[]):
     'select on site k all the configurations with the different functionalizations for that site present in array'
     configurations =  [ startconf[0:k] + [array[k][i]] + startconf[k+1:] for i in range(len(array[k]))]
-
-    print "configurations:", configurations
     #if hasattr(run,'nlinks'):
     #    print "links:", run.symlinks
     #    for link in run.symlinks:
@@ -167,6 +165,7 @@ def classmaker_GA(individuals, table):
 def check_in_table(individuals, table, props=set()):
     mols_todo = individuals[:]
     mols_nodo = []
+    i=0
     if table:
         for individual in individuals:
             if individual.index in table:
@@ -178,7 +177,9 @@ def check_in_table(individuals, table, props=set()):
                     #raise SystemExit('implement furter')
                     mols_todo.remove(individual)
                     mols_nodo.append(individual)
-                    print "already calculated:", individual.index, "with props:", individual.props
+                    i+=1
+                    #print "already calculated:", individual.index
+        if i: print "{} molecules are already in database".format(i)
     if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
     return mols_todo, mols_nodo  #indicesfull are all the indices. 
 
@@ -230,10 +231,25 @@ def constructor2(conf,core,active,passive, links=[]):
     return mat
 
 def doper2(group, geom, core, passive):
+    debug=False
+    if debug:
+        print "group:", group
+        print "geom:", geom
+        print "core"
+        for item in core:print item
+        print "passive:", passive
     # the actual doping command. taking care of index difference Gaussian/Python
     coreindex = int(geom[0][1])
-    core[coreindex-1][0]=group[0]
-    if debug: print "coreindex:", coreindex, "group:", group
+    if not group[0]=='C':
+        # this assumes standard a C is present. 
+        # this also prevents other groups from overwriting dopants on this site
+        # only one site is allowed to have the dopants in that case btw!
+        core[coreindex-1][0]=group[0]
+    if debug:
+        print "coreindex:", coreindex, "group:", group
+        print "core after doping:",
+        for item in core:
+            print item
     #print "coreindex is: ", coreindex
     if group in [['O'],['S'],['C','O'],'O','S','CO']:
         # we remove the hydrogen at the passive site on that location

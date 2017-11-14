@@ -12,7 +12,7 @@ import numpy as np
 from scipy import stats
 import pandas as pd
 
-def formatitem(item):
+def formatitem(opt, item):
     def formatter(item):
         try:
             return '{:15.8f}'.format(item)
@@ -20,12 +20,12 @@ def formatitem(item):
             return item.rjust(15)
             #return "      {}".format(item)
 
-    index = '{:50s}'.format(item[0])
-    abin  = ' {} '.format(str(item[1]))
+    index = '{} {:49s}'.format(opt, item[0])
+    abin  = ' {:5s} '.format(str(item[1]))
     try:
         #datas = ' '.join(( fmt.format('{:15.8f}', (datatje for datatje in item[2:] ))))
         datar = [ formatter(datatje) for datatje in item[2:] ]
-        datas = ' '.join(datar)
+        datas = ' '.join(datar) + "    |"
     except ValueError:
         print item[2:]
         raise
@@ -81,7 +81,7 @@ def log_table( mols, table, tablename='tablebin'):
         #3 write updated json object
         with open(filename,'w') as f:
             json.dump(json_table, f, indent=-1)
-        print "dumped table in {}".format(filename)
+        print "dumped table in {} with {} of the {} molecules".format(filename, len(table), len(json_table))
         return
     # -------------
 
@@ -104,7 +104,13 @@ def log_table( mols, table, tablename='tablebin'):
 
 def log_screen( mols ):
     # get property line. 
-    props=mols[0].props.keys()
+    # get all the props that possibly have to be printed
+    # NB there are predicted confs that only have a Pvalue so they have no props attribute
+    props = set()
+    for mol in mols:
+        try: props.update(mol.props.keys())
+        except AttributeError:pass
+    props = list(props)
     # check if Pvalue is one of these singular props
     if mols[0].Pvalue in mols[0].props.values():
         # get index of prop
@@ -115,23 +121,39 @@ def log_screen( mols ):
         #props.insert(0,props.pop(i))
 
     # print header line.
-    print "index"+9*"     "+" pred?     {:15s} ".format(p) + " ".join(('{:15s}'.format(prop) for prop in props))
-
+    lenh = 50+27+len(props)*16-1
+    print "+{}+".format(lenh*"-")
+    print "|index"+9*"     "+" pred?     {:15s} ".format(p) + " ".join(('{:15s}'.format(prop) for prop in props)) +"|"
+    print "}}{}{{".format(lenh*"-")
     # print data
     for molecule in mols:
+        opt="|"
+        if molecule.opt: opt="+"
         item = [ molecule.index, molecule.predicted, molecule.Pvalue ]
         propvals = [ molecule.props.get(prop,'unknown') for prop in props ]
         item.extend(propvals)
-        print formatitem(item)
+        print formatitem(opt, item)
+    print "+{}+".format(lenh*"-")
     return
 
 def log_screen_pred( mols ):
+    print
     preds = [ mol.predictions for mol in mols ]
     indices = [ mol.index for mol in mols ]
     pvalues = [ mol.Pvalue for mol in mols ]
     df = pd.DataFrame( preds, index = indices )
     df.insert(0,'pvalues', pvalues)
-    print df
+
+    #----- pretty print df -----
+    s = df.to_string().split('\n')
+    ls=len(s[0])
+    print "+{}+".format((ls+2)*"-")
+    print "| {} |".format(s[0])
+    print "+{}+".format((ls+2)*"-")
+    for item in s[1:]: print "| {} |".format(item)
+    print "+{}+".format((ls+2)*"-")
+    #----- end pretty print-----
+
     return df
     #for molecule in mols:
     #    #pd.DataFrame( [ a.p, b.p, c.p ], index = [ a.name, b.name, c.name ] )

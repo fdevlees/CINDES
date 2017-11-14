@@ -72,12 +72,13 @@ class Molecule(object):
         self.converter = Converter()
         self.conf = conf
         self.index= contoind(self.conf)
-        self.Pvalue = [] # for storing the principal properties
+        self.Pvalue = None # for storing the principal properties
         self.boundaries = [] # for storing the boundary condition properties
         self.infoline = [] # for storing additional properties
         self.predictions = {}
         self.predicted = None
         self.mat = None
+        self.opt = False
 
         # for jsonification:
         self.props = {}
@@ -97,6 +98,12 @@ class Molecule(object):
 
     def __str__(self):
         return "Molecule: " + self.index
+
+    def __eq__(self, other):
+        return self.index==other.index
+
+    def copy(self):
+        return Molecule(self.conf)
 
     def log(self):
         ret = [ self.index ]

@@ -38,10 +38,10 @@ def read_input(siteinput):
         array = substireader(param['nsites'],subinp)
         if not param['procedure'] in ['getrandom', 'genrandom','testpred']:
             print "ARRAY:"
-            for item in array:
-                print "|",
+            for i,item in enumerate(array):
+                print "site{:>2d}:  |".format(i),
                 for sub in item:
-                    print "{:9s}".format("".join(sub)),
+                    print " {} ".format("".join(sub)),
                     print "|",
                 print
     if not param['procedure'] in ['getrandom', 'genrandom']:
@@ -223,7 +223,7 @@ def readfile(subinp):
            'stab':0,
            'startind': '',
            'symlinks':[],
-           'tablename':'tablebin',
+           'tablename':'table.json',
            'tdregression':0,
            'test_ready':2,
            'timelimit':250000,

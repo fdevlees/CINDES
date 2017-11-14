@@ -3,7 +3,8 @@ debug=False
 # python modules
 import numpy as np
 random = np.random.random
-import pickle
+#import pickle
+import json
 from itertools import izip
 import pprint
 
@@ -52,10 +53,10 @@ def get_database():
     try:
         #with open('table_unbiased','rb') as f:
         with open('table_new3.dat','rb') as f:
-            table = pickle.load(f)
+            table = json.load(f)
     except IOError as e:
         print "NO TABLE ONLY VALID IF SKIPPER IS USED:,", e
-        table = []
+        table = dict()
     return table
 
 def get_input():
@@ -77,7 +78,7 @@ class Fitness_Function():
     and subsequently in each iteration
         evaluator.evaluate(population)
     '''
-    def __init__(self, run, array=None, table=[]):
+    def __init__(self, run, array=None, table=dict()):
         '''for evaluation i need at least to have the database and the core / active / passive (all in zmatrix)
         i probably should also already get a self.kernel here such that the evaluatefunction only should call predict
         '''
@@ -114,12 +115,12 @@ class Fitness_Function():
                                                          mols_nocal,
                                                          myrun,
                                                        **myrun.TZmat     ) # here call submitting procedure
-        newy = [ molecule.log() for molecule in mols_all ]
+        #newy = [ molecule.log() for molecule in mols_all ]
 
         # 4. log new results
         if debug: print "newy:", newy
         self.table = INDES.loggings.log_table( mols_all , table=self.table)
-        return newy
+        return mols_all
 
     @log_io()
     def evaluate_skip_multi(self,confs):
@@ -134,7 +135,7 @@ class Fitness_Function():
 
 class My_GSimpleGA(GSimpleGA.GSimpleGA):
 
-   def __init__(self,genome,run, precalculation=True, table=[], **kwargs):
+   def __init__(self,genome,run, precalculation=True, table=dict(), **kwargs):
        GSimpleGA.GSimpleGA.__init__(self,genome, **kwargs)
        self.FF = Fitness_Function(run, table=table)
        self.precalculation = precalculation
@@ -159,14 +160,15 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
       print "unique_confs:", unique_confs, "len:", len(unique_confs)
 
       # 2. call CINDES via FF to calculate the configurations
-      new_y = self.FF.predict_via_submit_multi(unique_confs)
+      mols = self.FF.predict_via_submit_multi(unique_confs)
 
       # 3. set the calculations to the correct indivual score
-      y_dict = dict( [item[0], item[1:]] for item in new_y )
+      y_dict = { mol.index:mol.Pvalue for mol in mols )
       for ind in population:
           index = INDES.procedures.zcon.contoind(ind.genomeList)
           print "individual:", ind.genomeList, "y:", y_dict[index], index
-          ind.score = y_dict[index][1]
+          #ind.score = y_dict[index][1]
+          ind.score = y_dict[index]
       return
 
    def step(self):

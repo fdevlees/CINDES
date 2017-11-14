@@ -213,7 +213,8 @@ class Experiment(object):
             self.plot1 = np.c_[ y_test, y_pred ]
             self.plot2 = np.c_[ y_hyp, y_pred_hyp ]
             for i in range(10):
-                print y_test[i], y_pred[i]
+                try:print y_test[i], y_pred[i]
+                except IndexError: pass
             print "8"*30
 
         else:   # no split. because in do_multiple there is already another validation set specified. 
@@ -354,7 +355,7 @@ class Experiment(object):
 
         if not MC:
             # test if numbers are different enough.
-            if len(set(y_pred.round(2)))<3:
+            if len(set(y_pred.round(2)))<3 and len(y_pred)>10:
                 self.R = -0.5
                 print "TOO MUCH SIMILAR PREDICTIONS> OVERFITTING?! > self.R set to -0.5"
 

@@ -35,47 +35,41 @@ import os
 import shutil
 once=0
 
-def get_secret_data(tablefilename,mols_tocal, mols_nocal):
-    '''checks for confs already calculated'''
-    import pickle
+def get_secret_data(tablefilename,mols_tocal, mols_nocal, myrun):
+    '''checks for confs already calculated:
+        uses myrun.~
+        -props (set)
+    '''
+    import json
     with open(tablefilename,'rb') as f:
-        secret_table = pickle.load(f)
+        db = json.load(f)
     if debug:
         print "secret_table:"
         sprint(10,secret_table)
-    column = 1 ################################################################################## COLUMN CHANGE HERE
-    tabledict = dict( ( [ item[0], item[column] ] for item in secret_table ) )
-    data = []
+    table = { key:value for key,value in db.iteritems() if myrun.props <= value.viewkeys() }
     for mol in mols_tocal[:]:
-        if False: #old
-            mol.predicted = False
-            mol.Pvalue = tabledict[ mol.index ]
-        else: # new
-            try:
-                mol.Pvalue = tabledict[ mol.index ]
-                print "in secret data",
-            except KeyError:
-                pass
-            else:
-                mol.predicted = False
-                mols_tocal.remove(mol)
-                # add that item from table to data
-                mols_nocal.append(mol)
+        try:
+            mol.props=table[mol.index]
+        except KeyError:
+            continue
+        mol.predicted=False
+        mols_tocal.remove(mol)
+        mols_nocal.append(mol)
     return mols_tocal, mols_nocal
 
 # PROCEDURE
 def procedure(myrun, mols_tocal, mols_nocal, TZmat):
     global once
     #print "nconfs:", len(population)
-    print "n_indices_tocal:", len(mols_tocal)
-    print "n_data_nocal:", len(mols_nocal)
+    print "| n_indices_tocal:", len(mols_tocal)
+    print "|    n_data_nocal:", len(mols_nocal)
     if myrun.no1sub==1 and once==0:
         once = 1
         print " "
     elif myrun.nosub==3:
         print "SECRET DATA activated:", myrun.nosub_file
         tablefilename = myrun.nosub_file
-        mols_tocal , mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal)
+        mols_tocal , mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun)
 
     if not mols_tocal==[]:
         # 1. Make the files
@@ -499,18 +493,24 @@ def set_target_properties(molecules, myrun):
         -boundaries
     '''
     for mol in molecules:
+        if mol.Pvalue:
+            print "molecular target property already set. Predicted?", mol
+            if myrun.bc: print "boundary condition cannot be set"
+            print "molecule has probably no .props attribute"
+            continue
         if myrun.property=='func':
             kwargs = { prop:mol.props[prop] for prop in myrun.func_args }
             mol.Pvalue = myrun.function(**kwargs)
-            print "function value:", molecule.Pvalue
+            print "function value:", mol.Pvalue
         else:
             mol.Pvalue = mol.props[ myrun.property ]
-        try:
-            print "I'm here: myrun.bcprop", myrun.bcprop, "mol.props?:", mol.props
-            mol.boundaries = [ mol.props[bcp] for bcp in [myrun.bcprop] ]
-        except KeyError as e:
-            print e
-            pass
+        if myrun.bc:
+            try:
+                print "I'm here: myrun.bcprop", myrun.bcprop, "mol.props?:", mol.props
+                mol.boundaries = [ mol.props[bcp] for bcp in [myrun.bcprop] ]
+            except KeyError as e:
+                print e
+                pass
     #print "test json attributes:"
     #for mol in molecules:
     #    print mol.index, mol.boundaries, mol.Pvalue
