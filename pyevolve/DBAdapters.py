@@ -271,7 +271,7 @@ class DBSQLite(DBBaseAdapter):
 
    This parameter will erase all the database tables and will create the new ones.
    The *resetDB* parameter is different from the *resetIdentify* parameter, the *resetIdentify*
-   only erases the rows with the same "identify" name.   
+   only erases the rows with the same "identify" name.
 
    :param dbname: the database filename
    :param identify: the identify if the run
@@ -374,8 +374,11 @@ class DBSQLite(DBBaseAdapter):
       logging.debug("Creating table %s: %s.", Consts.CDefSQLiteDBTable, pstmt)
       c.execute(pstmt)
 
+      #pstmt = """create table if not exists %s(identify text, generation integer,
+      #        individual integer, fitness real, raw real)""" % (Consts.CDefSQLiteDBTablePop)
+      # added molecular index but "index" itself is forbidden :s"
       pstmt = """create table if not exists %s(identify text, generation integer,
-              individual integer, fitness real, raw real)""" % (Consts.CDefSQLiteDBTablePop)
+              individual integer, fitness real, raw real, molindex text)""" % (Consts.CDefSQLiteDBTablePop)
       logging.debug("Creating table %s: %s.", Consts.CDefSQLiteDBTablePop, pstmt)
       c.execute(pstmt)
       self.commit()
@@ -409,7 +412,7 @@ class DBSQLite(DBBaseAdapter):
       c.execute("drop table if exists %s" % (Consts.CDefSQLiteDBTablePop,))
       self.commit()
       self.createStructure(stats)
-      
+
    def insert(self, ga_engine):
       """ Inserts the statistics data to database
 
@@ -426,14 +429,14 @@ class DBSQLite(DBBaseAdapter):
       pstmt = "insert into %s values (?, ?, " % (Consts.CDefSQLiteDBTable)
       for i in xrange(len(stats)):
          pstmt += "?, "
-      pstmt = pstmt[:-2] + ")" 
+      pstmt = pstmt[:-2] + ")"
       c.execute(pstmt, (self.getIdentify(), generation) + stats.asTuple())
 
-      pstmt = "insert into %s values(?, ?, ?, ?, ?)" % (Consts.CDefSQLiteDBTablePop,)
+      pstmt = "insert into %s values(?, ?, ?, ?, ?, ?)" % (Consts.CDefSQLiteDBTablePop,)
       tups = []
       for i in xrange(len(population)):
          ind = population[i]
-         tups.append((self.getIdentify(), generation, i, ind.fitness, ind.score))
+         tups.append((self.getIdentify(), generation, i, ind.fitness, ind.score, ind.index))
 
       c.executemany(pstmt, tups)
       if (generation % self.commitFreq == 0):
@@ -732,7 +735,7 @@ class DBMySQLAdapter(DBBaseAdapter):
       c.execute(pstmt)
 
       pstmt = """create table if not exists %s(identify VARCHAR(80), generation INTEGER,
-              individual INTEGER, fitness DOUBLE(14,6), raw DOUBLE(14,6))""" % (Consts.CDefMySQLDBTablePop)
+              individual INTEGER, fitness DOUBLE(14,6), raw DOUBLE(14,6), index VARCHAR(255))""" % (Consts.CDefMySQLDBTablePop)
       logging.debug("Creating table %s: %s.", Consts.CDefMySQLDBTablePop, pstmt)
       c.execute(pstmt)
       self.commit()

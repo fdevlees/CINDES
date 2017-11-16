@@ -24,7 +24,7 @@ class ZMatrix(object):
         # FORMATTING AND SPLITTING OF ZMATRIX
         self.zmat = zmatprinter(self.zmat,self.zmatdic)
         logging.debug("zmat:\n" + pprint.pformat(zmat))
-        (coremat, activemat, passivemat) = sitesplitter(zmat, param['ncore'], param['line1'], param['nch3'])
+        (coremat, activemat, passivemat) = sitesplitter(zmat, param['ncore'], param['sites'], param['nch3'])
         return
 
 
@@ -38,7 +38,7 @@ def geometry(zmatrixfile='ZMAT', **param):
     # FORMATTING AND SPLITTING OF ZMATRIX
     zmat = zmatprinter(zmat,zmatdic)
     logging.debug("zmat:\n" + pprint.pformat(zmat))
-    (coremat, activemat, passivemat) = sitesplitter(zmat, param['ncore'], param['line1'], param['nch3'])
+    (coremat, activemat, passivemat) = sitesplitter(zmat, param['ncore'], param['sites'], param['nch3'])
     # now i save here the matrices for later use, and then the others are allowed to change for each molecule
     logging.info('activemat:' + pprint.pformat(activemat))
     logging.info('passivemat:' + pprint.pformat(passivemat))
@@ -116,7 +116,7 @@ def sitesplitter(zmatrix,natomscore,index,nsites): #here nsites is number of pos
     # pprint.pprint(coremat)
     sitemat=[]
     # here i split the rest, that are al ch3 groups 
-    for i in range(nsites): 
+    for i in range(nsites):
         sitemat.append(zmatrix[natomscore+4*i:natomscore+4*(i+1)])
     logging.debug('sitemat' + pprint.pformat(sitemat))
     # now split in passive and active part

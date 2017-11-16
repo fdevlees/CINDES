@@ -12,7 +12,7 @@ import numpy as np
 from scipy import stats
 import pandas as pd
 
-def formatitem(opt, item):
+def formatitem(opt, item, maxlenconf=49):
     def formatter(item):
         try:
             return '{:15.8f}'.format(item)
@@ -20,12 +20,12 @@ def formatitem(opt, item):
             return item.rjust(15)
             #return "      {}".format(item)
 
-    index = '{} {:49s}'.format(opt, item[0])
+    index = '{opt} {conf:{width}s}'.format(opt=opt, conf=item[0], width=maxlenconf+1)
     abin  = ' {:5s} '.format(str(item[1]))
     try:
         #datas = ' '.join(( fmt.format('{:15.8f}', (datatje for datatje in item[2:] ))))
         datar = [ formatter(datatje) for datatje in item[2:] ]
-        datas = ' '.join(datar) + "    |"
+        datas = ' '.join(datar) + "  |"
     except ValueError:
         print item[2:]
         raise
@@ -103,6 +103,7 @@ def log_table( mols, table, tablename='tablebin'):
 
 
 def log_screen( mols ):
+    print "in log_screen:", mols[0].index, mols[0].props, mols[0].Pvalue
     # get property line. 
     # get all the props that possibly have to be printed
     # NB there are predicted confs that only have a Pvalue so they have no props attribute
@@ -113,17 +114,23 @@ def log_screen( mols ):
     props = list(props)
     # check if Pvalue is one of these singular props
     if mols[0].Pvalue in mols[0].props.values():
+        # so yes. Pvalue is one of the propvalues. but which one?
         # get index of prop
-        i=mols[0].props.values().index(mols[0].Pvalue)
-        p=props.pop(i)
+        keys, values= zip(*mols[0].props.items())
+        i=values.index(mols[0].Pvalue)
+        p=keys[i]
+        # remove that one from props
+        props.remove(p)
+        print "property seems to be:", p
     else:
         p='function'
         #props.insert(0,props.pop(i))
 
     # print header line.
-    lenh = 50+27+len(props)*16-1
+    maxlenconf= max(map(lambda x:len(x.index),mols))
+    lenh = maxlenconf+28+len(props)*16
     print "+{}+".format(lenh*"-")
-    print "|index"+9*"     "+" pred?     {:15s} ".format(p) + " ".join(('{:15s}'.format(prop) for prop in props)) +"|"
+    print "| index"+(maxlenconf-4)*" "+" pred?     {:15s} ".format(p) + " ".join(('{:15s}'.format(prop) for prop in props)) +"|"
     print "}}{}{{".format(lenh*"-")
     # print data
     for molecule in mols:
@@ -132,7 +139,7 @@ def log_screen( mols ):
         item = [ molecule.index, molecule.predicted, molecule.Pvalue ]
         propvals = [ molecule.props.get(prop,'unknown') for prop in props ]
         item.extend(propvals)
-        print formatitem(opt, item)
+        print formatitem(opt, item, maxlenconf)
     print "+{}+".format(lenh*"-")
     return
 

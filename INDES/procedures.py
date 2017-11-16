@@ -76,7 +76,7 @@ class Run(object):
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( dump( value ) )
-            elif key in ['TZmat','genalg', 'adj']:
+            elif key in ['TZmat','genalg', 'adj', 'jobs']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( pprint.pformat(value, width=150) )
             else:
@@ -138,7 +138,7 @@ class Run(object):
         sites_adj = adj[sites][:,sites]
         if debug:
             print "adjacency matrix of core:", adj
-            print "self.sites:", self.line1
+            print "self.sites:", self.sites
             print "active: ", active
             print "sites: ", sites
             print "sites_adj:", sites_adj
@@ -411,7 +411,7 @@ def testmax(myrun, mols, bcok):
             print "BC not fullfilled:"
             #optsite = min(data,key = lambda x:x[2])
             optsite = min(mols,key = lambda mol:abs( mol.boundaries[0] - float(param['bcval']) ) )
-        else: #BC nog niet
+        else: #BC not yet
             bcok=1
             print "BC fullfilled; satisfactory is not empty:", pprint.pformat(satisfactory, width=100)
             #optsite = max(satisfactory,key = lambda x:x[1])

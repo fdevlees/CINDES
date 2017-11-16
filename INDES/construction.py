@@ -136,32 +136,6 @@ def classmaker2_SD(startconf,array,table,run=[]):
     mols_todo, mols_nodo = check_in_table(individuals, table, run.props)
     return mols_todo, mols_nodo
 
-def classmaker_GA(individuals, table):
-    '''checks for confs already calculated'''
-    mols_todo, mols_nodo = check_in_table(individuals, table, run.props)
-    #mols_todo = individuals[:]
-    #mols_nodo = []
-    #if not table == []:
-    #    for item in table:
-    #        for individual in individuals:
-    #            if item[0] == individual.index: # so if item in table
-    #                # remove it from the individuals to do list
-    #                mols_todo.remove(individual)
-    #                # add that item from table to data
-    #                mols_nodo.append(individual)
-    #                i=1
-    #                if item[1] == 1:
-    #                    print "WARNING tablebin has old style formatting (column with 1s is present)",
-    #                    i=2
-    #                individual.Pvalue = item[i]
-    #                individual.predicted = False
-    #                individual.infoline  = item[i+1:]
-    #                print "already calculated:", individual.index, "with property:", individual.Pvalue
-    #
-    #if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
-    #
-    return mols_todo, mols_nodo  #indicesfull are all the indices. 
-
 def check_in_table(individuals, table, props=set()):
     mols_todo = individuals[:]
     mols_nodo = []
@@ -335,6 +309,12 @@ def filewriter2(zmat,index,**paras): #paras is short for fileparameters
     # with filedic is:
     # filedic = {"charge":0,"mult":1,"identify":identify}
     #------------
+    if paras['jobs']:
+        filewriter4(zmat, index, **paras)
+        return
+    else:
+        print "WARNING: you use a deprecated functionality. use jobs keyword for up-to-date program"
+
     if paras['gaussianlines']:
         filewriter3(zmat, index, **paras)
         return
@@ -498,10 +478,47 @@ def filewriter3(zmat,index,**paras): #paras is short for fileparameters
     #print "---- FILE PRINTED SUCCESFULLY -----"
     return
 
+def filewriter4(zmat,index,**paras): #paras is short for fileparameters
+    '''    This function creates a file with the geometry contained in zmat
+    The name of the file contains the index in the name
+    '''
+    #------------
+    # this function uses globals: identify, path
+    #------------
+    filename = paras['identify'] + str(index) + ".com"
+    fid=open(paras['path'] + '/' + filename,'w')
 
+    # JOB 1
+    job1 = paras['jobs'][0]
+    fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
+    fid.write("%mem=1500MB\n")
+    if not paras['nprocs']==1:
+        fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
+    fid.write(job1['hotline']) # first gaussianline
+    fid.write("\n\n")
+    fid.write(paras['identify'] + str(index) + "\n\n")
+    fid.write("{} {}\n".format(job1['charge'], job1['mult']))
+    # here the zmat
+    for i in range(len(zmat)):
+        for item in zmat[i]:
+            fid.writelines("%s " % item)
+        fid.write("\n")
+    fid.write("\n")
 
-
-
+    # THE OTHER JOBS
+    #for i, (charge, mult, line) in enumerate(paras['gaussianlines'][1:]):
+    for i, job in enumerate(paras['jobs'][1:]):
+        fid.write("--link1--\n")
+        fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
+        fid.write("%mem=1500MB\n")
+        if not paras['nprocs']==1:
+            fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
+        fid.write(job['hotline'])
+        fid.write("\n\n")
+        fid.write(str(index) + " {}th calc\n\n".format(i+2) )
+        if not 'allcheck' in job['hotline']:
+            fid.write("{} {}\n\n".format(job['charge'], job['mult']))
+    return
 
 #----- BEGIN FILEWRITER JOB TYPE A BDE-MODEL ----#
 def filewriterA(zmat,index,**paras): #paras is short for fileparameters
@@ -800,7 +817,7 @@ def substituter2(group,geom0,count):
             geom[1][2] = 1.18 # bond length C=O
             geom[1][4] = 125.1 # angle coreC-C=O
             geom[1][6] = 0.1 # dihedral with one of the core
-            
+
             geom[2][2] = 1.11 # bond length C-O
             geom[2][4] = 115.1 # angle coreC-C=O
             geom[2][6] = 180.1 # dihedral with one of core
@@ -861,7 +878,7 @@ def substituter2(group,geom0,count):
             if dihedral: zma[1][6]=dihedral
             geom=geomfiller(zma,geom,count)
             count += len(zma)
-             
+
         else:
             # all the three hydrogens need to be removed
 
@@ -914,6 +931,6 @@ if __name__ == "__main__":
         del zmatnew
         del ind
         del hline
-        del item   
+        del item
     print "DONE"
 

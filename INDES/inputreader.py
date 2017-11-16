@@ -26,9 +26,9 @@ def read_input(siteinput):
     param = readfile(subinp) #inputline is a tuple with all kind of input variables
     #here for a new link feature. nsites is len(line1) - nlinks
     if param['nlinks']:
-        param['nsites'] = len(param['line1']) - param['nlinks']
+        param['nsites'] = len(param['sites']) - param['nlinks']
     else:
-        param['nsites'] = len(param['line1'])
+        param['nsites'] = len(param['sites'])
     #param['nsites'] = len(param['line1'])
     #####################
     if param['procedure'] in [ 'genconf' ]:
@@ -296,6 +296,19 @@ def readfile(subinp):
                 gaussianline = [ line[0], line[1], ' '.join(line[2:]) ]
                 lines.append(gaussianline)
             paras['gaussianlines'] = lines
+        elif 'jobs' in line:
+            njobs = int(line.split()[1])
+            jobs=[]
+            for _ in range(njobs):
+                job=dict()
+                # read propline
+                line = subinp.readline().split()
+                job['info']=set(line)
+                # read mult/charge/hotline
+                line = subinp.readline().split()
+                job['charge'], job['mult'], job['hotline'] = (line[0], line[1], ' '.join(line[2:]))
+                jobs.append(job)
+                paras['jobs']=jobs
         elif 'maxcycles' in line: paras['maxcycles']= str(int(line.split()[1]))
         elif 'maxiter' in line: paras['maxiter'] = int(line.split()[1])
         elif 'montecarlo' in line:
@@ -403,7 +416,7 @@ def readfile(subinp):
             paras['symlinks'] = links
             print "SYMMETRY ACTIVATED!"
         elif 'simple' in line: paras['simple'] = 1
-        elif 'sites' in line: paras['line1'] = [ int(item) for item in line.split()[1:] ]
+        elif 'sites' in line: paras['sites'] = [ int(item) for item in line.split()[1:] ]
         elif 'twodimreg' in line: paras['tdregression'] = 1
         elif 'try_ready' in line: paras['try_ready'] = 1
         elif 'test_ready' in line: paras['test_ready'] = int(line.split()[1])

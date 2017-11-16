@@ -40,10 +40,18 @@ class prettyfloat(float):
 
 class Logfile():
 
-    def __init__(self,name):
+    def __init__(self,name, afile=True):
         self.data = []
-        self.fid = open(name) # + '.log')
+
+        # here a trick. later i will remove the afile part but for now i want to keep 
+        # both functionalities. so in the new version. afile=False and self.name is just a longstring.
+        if afile:
+            self.fid = open(name) # + '.log')
+        else:
+            self.fid = self.name.split('\n')
         self.name = name
+        return
+
     def extract(self,coords=0):
       for line in self.fid:
         if line[1:23] == "Optimization completed":
@@ -217,8 +225,8 @@ def extract_stab(file1 , molecule, fileparameters):
             print "electronegativity correction for nitrogen: ", chi_term
             Npos.append(pos)
         else:
-            if siteindex in fileparameters['line1']:# look if that index is used as a site
-                if confje[ fileparameters['line1'].index(siteindex) ]==['N']:
+            if siteindex in fileparameters['sites']:# look if that index is used as a site
+                if confje[ fileparameters['sites'].index(siteindex) ]==['N']:
                     print "electronegativity correction for nitrogen: ", chi_term
                     Npos.append(pos)
         #-----
@@ -261,7 +269,6 @@ def get_paths( mols, fileparameters):
 
 @log_io()
 def datareader( mols_tocal, fileparameters):
-
     # 1. get all paths
     paths = get_paths( mols_tocal, fileparameters)
 
@@ -271,22 +278,6 @@ def datareader( mols_tocal, fileparameters):
     # 3. get a list of properties that need to be extracted for each molecule
     # THIS IS ALREADY DONE AT INPUTREADER > run.props
     uni_props_set = fileparameters['props']
-
-    # 3.1. the function properties or the standard property
-    #if fileparameters['property']=='func':
-    #    props = []
-    #    props.extend( fileparameters['func_args'] )
-    #else:
-    #    props = [ fileparameters['property'] ]
-    # 3.2. the boundary conditional properties
-    #try:
-    #    props.append(fileparameters['bcprop'])
-    #except KeyError:
-    #    pass
-    # 3.3. the extra properties
-    #props.extend( fileparameters['extra_props'] )
-    # 3.4. make an empty dictionary
-    #uni_props_dict = { item:None for item in props }
 
     # 4. obtain data for each molecule
     for molecule in mols_tocal:
@@ -315,97 +306,66 @@ def datareader( mols_tocal, fileparameters):
         # extract them
         # assume all properties can be easily obtained by gausread
         if to_read_props:
-            readings = gausread( file1, to_read_props, multiplejobs=fileparameters['multiplejobs'])
-            #print 'readings:', readings
+            if True: # new JSON / cclib style
+                readings = new_style_reader( file1, to_read_props, fileparameters )
+            else: # old pickle. Logfile-gausread style
+                readings = gausread( file1, to_read_props, multiplejobs=fileparameters['multiplejobs'])
             molecule.props.update( readings )
 
-        # set molecule attributes
-        #print "mol.props:", molecule.props
-        #if fileparameters['property']=='func':
-        #    kwargs = { prop:props_dict[prop] for prop in fileparameters['func_args'] }
-        #    molecule.Pvalue = fileparameters['function'](**kwargs)
-        #    print "function value:", molecule.Pvalue
-        #else:
-        #    molecule.Pvalue = molecule.props[ fileparameters['property'] ]
-        try:
-            molecule.boundaries = [ molecule.props[bcp] for bcp in fileparameters['bcprop'] ]
-        except KeyError:
-            pass
-        #molecule.infoline = props_dict.values()
         molecule.predicted = False
 
     return mols_tocal
 
-@log_io(signator='#')
-def datareader_old(mols_tocal,jobids,path,fileparameters):
-    ''' NOTE indices = indices_tocal here! 
-    '''
-    indices = [ mol.index for mol in mols_tocal ]
-    data_calc = []
-    files=[]
-    print "multiplejobs:", fileparameters['multiplejobs']
+def new_style_reader( file1, to_read_props, fileparameters ):
+    # for every jobfile do a cclib extraction. faking the separate jobs as if it were single files
+    jobslines = open(file1).read().split('termination')[:-1]
+    from cStringIO import StringIO
+    jobfiles = map(StringIO, jobslines)
+    datadict = dict()
+    for jobfile, job in zip(jobfiles, fileparameters['jobs']):
+        from CINDES4.cclib.parser.gaussianparser import Gaussian
+        job_data = Gaussian(jobfile).parse()
+        for inf in job['info']:
+            if inf[0]=='e': # so it concerns an energy!:
+                print inf, "scfenergies:", job_data.scfenergies
+                datadict[inf]=job_data.scfenergies[-1]
+            elif inf in ['homo','lumo']:
+                datadict['homo']=job_data.moenergies[-1][job_data.homos[0]]
+                datadict['lumo']=job_data.moenergies[-1][job_data.homos[0]+1]
+            elif inf=='dipole': datadict[inf]=job_data.dipole
+            elif inf=='polar':
+                datadict['polar'] = sum([job_data.polex[i]/3 for i in [0,2,5]]) # = 1/3*(axx+ayy+azz)
+            elif inf=='mw':
+                datadict['mw'] = float( sum( job_data.atomnos) )
+            else:
+                print "value not recognized:", inf
 
-    # get paths off all
-    # check normal termination
-    normaltermination(files,fileparameters['debug']) #test normal termination of all the files
+    print "datadict:", datadict
 
-    # extract data
-    for i in range(len(indices)):
-        print "><"*10, indices[i], "><"*10
-        file1 = path + '/' + fileparameters['identify'] + indices[i] + '.log'
-        #------
-        if fileparameters['stab']:#if so we are sure we have to do the following
-            stab, BDE_ah, I, A, omega, RDV, E_AH = extract_stab( file1, indices[i], fileparameters )
+    # so now datadict should have all energy keys + homo/lumo + dipole
+    # but not yet omega/solv/gap so:
+    results=datadict.copy()
+    if 'gap' in to_read_props:
+        results['gap']=datadict['lumo']-datadict['homo']
+    if 'solv' in to_read_props:
+        results['solv']= (datadict['e1_solv']-datadict['e0_solv'])*627.5
+    if any(i in to_read_props for i in ['IP','omega']):
+        results['IP']= (datadict['eIP']-datadict['e0'])
+        print "results:IP", results['IP']
+    if any(i in to_read_props for i in ['EA','omega']):
+        results['EA']= (datadict['e0']-datadict['eEA'])
+    if 'omega' in to_read_props:
+        results['omega'] = ( ( results['IP'] + results['EA'] )**2 ) / ( 8 * ( results['IP'] - results['EA'] ))
 
-            #----------
-            if 'bcprop' in fileparameters:#decide how to put the data in the datalist
-                if fileparameters['property']=='stab': #optimize stab and use another prop as bc
-                    if fileparameters['bcprop'] in ['ip','IP','I']:
-                        propy = I
-                    elif fileparameters['bcprop'] in ['ea','EA','A']:
-                        propy = A
-                    else:
-                        propy = gausread(file1,fileparameters['bcprop'])[0]
-                    mols_tocal[i].Pvalue = stabA
-                    mols_tocal[i].boudaries = [ propy ]
-                    #data_calc.append([indices[i],stabA,propy,BDE_ah,I,A,RDV,E_ah[1]])
-                else: #so bcprop is stab so propx is the other property to optimize
-                    if fileparameters['property'] in ['ip','IP','I']:
-                        propx = I
-                    elif fileparameters['property'] in ['ea','EA','A']:
-                        propx = A
-                    else:
-                        propx = gausread(file1,fileparameters['property'])[0]
-                    mols_tocal[i].Pvalue = propx
-                    mols_tocal[i].boudaries = [ stabA ]
-                    #data_calc.append([indices[i],propx,stabA,BDE_ah,I,A,RDV,E_ah[1]])
-            else: #just simple single stab property optimization
-                mols_tocal[i].Pvalue = stabA
-                #data_calc.append([indices[i],stabA,BDE_ah,I,A,RDV,E_ah[1]]) #all extra data now included
-            mols_tocal[i].infoline = [ BDE_ah, I, A, omega, RDV, E_ah[1] ]
-        #------
-        elif fileparameters['property'] == 'func':
-            pass
-        else:
-            #propx,extra = gausread(file1,fileparameters['property']) # later this has to change to EHOMO and ELUMO etc
-            datax = gausread(file1,fileparameters['property'],fileparameters['multiplejobs']) # later this has to change to EHOMO and ELUMO etc
-            (propx,extradata) = (datax[0],datax[1:]) #if no extradata = []
-            mols_tocal[i].Pvalue = propx
-            mols_tocal[i].infoline = extradata
-            if 'bcprop' in fileparameters:
-                #datay = gausread(file1,fileparameters['bcprop']) # later this has to change to EHOMO and ELUMO etc
-                datay = gausread(file1,fileparameters['bcprop'],fileparameters['multiplejobs']) # later this has to change to EHOMO and ELUMO etc
-                (propy,extradata)=(datay[0],datay[1:])
-                #data_calc.append([indices[i],propx,propy]+extradata) #extradata may be an empty list
-                mols_tocal[i].boundaries = [propy]
-        mols_tocal[i].predicted = False
-    # insert all ones at second position
+    print "results:", results
+    return results
 
-    return mols_tocal
-
-def gausread(filename,props,multiplejobs=1,rdvindex=1):
+def gausread(filename,props,multiplejobs=1,rdvindex=1, afile=True):
     ''' props is a set of props to extract '''
-    mymol = Logfile(filename)
+    if afile:
+        mymol = Logfile(filename)
+    else:
+        mymol = Logfile(filename, afile=False)
     results = {}
 
     # extract
