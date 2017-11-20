@@ -72,8 +72,11 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
         mols_tocal , mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun)
 
     if not mols_tocal==[]:
+        # 0. Set the molecular geometries
+        geommaker(mols_tocal,myrun,**TZmat)
+
         # 1. Make the files
-        filemaker(mols_tocal,myrun,**TZmat) #----------------------------------HERE IS THE FILEWRITER CALL
+        filemaker(mols_tocal,myrun) #----------------------------------HERE IS THE FILEWRITER CALL
 
         # 2. now the jobs have to be submitted 
         jobids = submission(mols_tocal,myrun)
@@ -94,17 +97,43 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
 
     return mols_all
 
-# 1. file making
+#0. geom making
 @log_io()
-def filemaker(mols_tocal,myrun,passive,active,core): #----- dict with info for filewriter has to pass here)
-    ''' jkl'''
-    path = myrun.path
-    fileparameters = myrun.__dict__
+def geommaker(mols_tocal,myrun,passive, active, core):
     for molecule in mols_tocal:
         c = deepcopy(core)
         a = deepcopy(active)
         p = deepcopy(passive)
         molecule.set_zmat( zcon.constructor2(molecule.conf,c,a,p, links=myrun.symlinks) )
+
+        # Try to print SMILES
+        try:
+            smiles= molecule.get_format()
+            print "smiles:", smiles,
+        except IndexError:
+            print "IndexError while trying to make smiles for molecule"
+        except NameError:
+            print "NameError while trying to make smiles for molecule"
+        except KeyError:
+            print "KeyError while trying to make smiles for molecule"
+
+        if True:
+            from CINDES4.utils.ga_dihedrals import reduce_conflicts
+            # this function sets molecule.conf with optimized dihedrals in the conf attribute
+            reduce_conflicts(molecule, c, a, p)
+            # here location for conformational analysis
+            # here location for avoiding geom conflicts
+            pass
+
+    return
+
+# 1. file making
+@log_io()
+def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pass here)
+    ''' jkl'''
+    path = myrun.path
+    fileparameters = myrun.__dict__
+    for molecule in mols_tocal:
         if not myrun.stab==1:
             zcon.filewriter2(molecule.zmat,molecule.index,**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
         else:
@@ -129,16 +158,6 @@ def filemaker(mols_tocal,myrun,passive,active,core): #----- dict with info for f
                 #if not hornot == 1: #if not there are two ways to place the hydrogen.
                     #maker2(zmat,pos,indices[i],**fileparameters)
 
-        # Try to print SMILES
-        try:
-            smiles= molecule.get_format()
-            print "smiles:", smiles,
-        except IndexError:
-            print "IndexError while trying to make smiles for molecule"
-        except NameError:
-            print "NameError while trying to make smiles for molecule"
-        except KeyError:
-            print "KeyError while trying to make smiles for molecule"
     return
 
 def extract_zmat(filename):

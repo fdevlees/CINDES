@@ -191,6 +191,7 @@ def readfile(subinp):
            'gaussianlines':[],
            'identify':'unspecified_',
            'ip':0,
+           'jobs':[],
            'maxiter':10,
            'maxcycles':'100',
            'ml':0,

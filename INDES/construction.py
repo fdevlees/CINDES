@@ -824,6 +824,7 @@ def substituter2(group,geom0,count):
 
         count += 3 # three atoms added to activemat
     elif len(group) == 3:
+        print "geom:", geom
         # when length is 3 it is a COH, NOH? or CCN group
         # we need to remove two hydrogens
         del geom[3]

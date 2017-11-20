@@ -749,8 +749,9 @@ def generate_procedure(param,array):
         print "njobs:", len(mols_tocal)
 
         # generate all inputfiles
-        from gaussianfunctions import filemaker
-        filemaker(mols_tocal,myrun,**myrun.TZmat) #----------------------------------HERE IS THE FILEWRITER CALL
+        from gaussianfunctions import filemaker, geommaker
+        geommaker(mols_tocal,myrun,**myrun.TZmat)
+        filemaker(mols_tocal,myrun) #----------------------------------HERE IS THE FILEWRITER CALL
 
 
     print "mols_all:", mols_all

@@ -12,7 +12,8 @@ except:
 
 def contoind(conf):
     ''' to convert a configuration to an index-string '''
-    return '_'.join([''.join(item) for item in conf])
+    #return '_'.join([''.join(str(item)) for item in conf])
+    return '_'.join([ ''.join(filter(lambda x:x.isalpha(), item)) for item in conf ])
 
 class Population(MutableSequence):
     def __init__(self, population):

@@ -306,7 +306,7 @@ def datareader( mols_tocal, fileparameters):
         # extract them
         # assume all properties can be easily obtained by gausread
         if to_read_props:
-            if True: # new JSON / cclib style
+            if fileparameters['jobs']: # new JSON / cclib style
                 readings = new_style_reader( file1, to_read_props, fileparameters )
             else: # old pickle. Logfile-gausread style
                 readings = gausread( file1, to_read_props, multiplejobs=fileparameters['multiplejobs'])
