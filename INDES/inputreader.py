@@ -208,6 +208,7 @@ def readfile(subinp):
            'nprocs':2,
            'nrandsites':2,
            'optimum':'minimum',
+           'optga':False,
            'polar':0,
            'predictions':[],
            'procedure':'standard',
@@ -337,6 +338,7 @@ def readfile(subinp):
             if 'max' in line.split()[1]:
                 print "changed optimization to maximum instead of minimum!"
                 paras['optimum'] = 'maximum'
+	elif 'optga' in line: paras['optga']=True
         elif 'positions' in line: paras['positions'] = [ int(item) for item in line.split()[1:] ]
         elif any(item in line.split()[0] for item in ('program','ai','program','prog','programma')):
             if line.split()[1] in ['gaussian','g09']:

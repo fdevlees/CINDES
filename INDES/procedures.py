@@ -313,7 +313,8 @@ def set_table(myrun):
         print "pickle_db:", pickle_db
         json_db = dict()
         #tableprops=['mw','solv', 'e0_solv', 'e1_solv', 'lumo', 'solv']
-        tableprops=['omega']
+        #tableprops=['omega']
+        tableprops=['gap','lumo','homo']
         for item in pickle_db:
             key=item[0]
             value={prop:prop_value for prop,prop_value in zip(tableprops,item[1:])}

@@ -117,9 +117,12 @@ def geommaker(mols_tocal,myrun,passive, active, core):
         except KeyError:
             print "KeyError while trying to make smiles for molecule"
 
-        if True:
+        if myrun.optga:
             from CINDES4.utils.ga_dihedrals import reduce_conflicts
             # this function sets molecule.conf with optimized dihedrals in the conf attribute
+            c = deepcopy(core)
+            a = deepcopy(active)
+            p = deepcopy(passive)
             reduce_conflicts(molecule, c, a, p)
             # here location for conformational analysis
             # here location for avoiding geom conflicts

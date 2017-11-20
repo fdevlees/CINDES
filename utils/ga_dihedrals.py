@@ -6,7 +6,7 @@ import CINDES4.pyevolve as pyevolve
 
 # main function:
 def reduce_conflicts(molecule, core=[], active=[], passive=[]):
-
+    print "{0} {1} {0}".format("$"*20, molecule.index)
     conf = molecule.conf
     new_conf = []
     for group in conf:
@@ -21,7 +21,10 @@ def reduce_conflicts(molecule, core=[], active=[], passive=[]):
     molecule.dihedrals = [item[-1] for item in new_conf]
     print "dihedrals:", molecule.dihedrals
 
-    run_pyevolve(molecule, TZMat={'core':core, 'passive':passive, 'active':active})
+    import pickle
+    TZMat={'core':core, 'passive':passive, 'active':active}
+    #with open('TZMat','w') as f: pickle.dump(TZMat, f)
+    run_pyevolve(molecule, **TZMat)
     #print "best conf:", molecule.conf
     return
 
@@ -32,13 +35,40 @@ def is_float(s):
     except ValueError:
         return False
 
-def get_xyz(molecule, core,active,passive):
+def slice_it(li, splits, ngps=None):
+    '''splits the large coefficients vector in small vectors per funct. group'''
+    start = 0
+    lis = []
+    nkinds = len(splits)
+    for i in xrange(nkinds):
+        if splits[i]==0: continue
+        stop = start+splits[i]
+        lis.append(li[start:stop])
+        start = stop
+    return lis
+
+#def get_xyz(molecule, core,active,passive):
+def get_xyz(molecule, core, active, passive):
     #print "core,active,passive:", core, active, passive
     from CINDES4.INDES.construction import constructor2
+    import pickle
+    #with open('TZMat','r') as f: TZMAT=pickle.load(f)
+    ncore = len(core)
 
+    #TZMATGLOBAL = deepcopy(TZMat)
+
+    #from pprint import pprint
+    #print "in get_xyz; TZMATGLOBAL:"
+    #pprint(TZMATGLOBAL)
+    c = deepcopy(core)
+    a = deepcopy(active)
+    p = deepcopy(passive)
+    #c = deepcopy(TZMAT['core'])
+    #a = deepcopy(TZMAT['active'])
+    #p = deepcopy(TZMAT['passive'])
     #molecule.set_zmat( zcon.constructor2(molecule.conf,c,a,p, links=myrun.symlinks) )
     try:
-        molecule.set_zmat( constructor2(molecule.conf,core,active,passive) )
+        molecule.set_zmat( constructor2(molecule.conf,c,a,p) )
     except IndexError:
         print "indexerror:", molecule.conf
         raise
@@ -46,7 +76,7 @@ def get_xyz(molecule, core,active,passive):
     #print molecule.xyz
     xyz = np.array([ item[1] for item in molecule.xyz ])
     #print "xyz:", xyz
-    return xyz
+    return xyz[ncore:]
 
 def get_distance_matrix(xyz):
     from scipy.spatial.distance import pdist
@@ -63,13 +93,12 @@ class Fitness_Function():
     and subsequently in each iteration
         evaluator.evaluate(population)
     '''
-    def __init__(self, molecule, TZMat=[]):
+    def __init__(self, molecule, **kwargs):
         '''for evaluation i need at least to have the database and the core / active / passive (all in zmatrix)
         i probably should also already get a self.kernel here such that the evaluatefunction only should call predict
         '''
         self.molecule = molecule
-        self.TZMat = deepcopy(TZMat)
-        self.ncore = len(TZMat['core'])
+        self.kwargs = kwargs
         self.dihedralindices = []
         for i, group in enumerate(self.molecule.conf):
             if len(group)>2 or group in [['C','Ph'], ['C','Th']]:
@@ -80,16 +109,18 @@ class Fitness_Function():
 
     def eval_function(self, dihedrals):
         dihedrals=map(int,dihedrals)
-        return sum(self.dihedrals_to_dist(dihedrals))
+        #return sum(self.dihedrals_to_dist2(dihedrals))
+        return self.dihedrals_to_minvalue(dihedrals)
 
     def dihedrals_to_dist(self, dihedrals):
         self.dihedrals_to_conf(dihedrals)
         # set xyz for that conf:
-        TZMat = deepcopy(self.TZMat.copy())
-        xyz = get_xyz(self.molecule, **TZMat)
-        del TZMat
+        #TZMat = deepcopy(self.TZMat.copy())
+        #xyz = get_xyz(self.molecule, **TZMat)
+        xyz = get_xyz(self.molecule, **self.kwargs)
+        #del TZMat
         # now focus only on xyz of not the core.
-        xyz = xyz[self.ncore:]
+        #xyz = xyz[self.ncore:]
         dist= get_distance_matrix(xyz)
         #print "len dist:", len(dist)
         dist=dist[dist<2.0]
@@ -98,6 +129,51 @@ class Fitness_Function():
         #print "dist:", dist
         #raise SystemExit('stop')
         return dist
+
+    def dihedrals_to_minvalue(self, dihedrals):
+        ''' a more clever evaluation function hopefully '''
+        self.dihedrals_to_conf(dihedrals)
+        # set xyz for that conf:
+        #TZMat = deepcopy(self.TZMat.copy())
+        #global TZMat
+        #import pprint
+        #print "in dihedrals_to_minvalue: TZMAT:", pprint.pformat(TZMat)
+        xyz = get_xyz(self.molecule, **self.kwargs)
+        #xyz = get_xyz(self.molecule)
+        # now focus only on xyz of not the core.
+        #print "len xyz:", len(xyz)
+        #xyz = xyz[self.ncore:]
+
+        # maybe juse myrun.adj? NO
+        #print "self.conf:", self.molecule.conf
+        #print "len xyz:", len(xyz)
+
+        # get list of natoms site
+        natoms_site = []
+        for group in self.molecule.conf:
+            if is_float(group[-1]): group=group[:-1]
+            if group == [ 'C', 'Ph']: natoms_site.append(11)
+            else:
+                natoms_site.append(len(group)-1)
+        #print "natoms_site:", natoms_site
+        XYZs = slice_it(xyz, natoms_site)
+        #print XYZs
+        minvalues=[]
+        for i, xyz1 in enumerate(XYZs):
+            for j, xyz2 in enumerate(XYZs):
+                if i>=j: continue
+                # get distance matrix between xyz1 and xyz2
+                from scipy.spatial.distance import cdist
+                dist12 = cdist(xyz1, xyz2)
+                # take the minimum value of that distance matrix
+                mind = np.min(dist12)
+                # append that minimum value to a list
+                minvalues.append(mind)
+        #print "minvalues:", minvalues
+        #print len(minvalues)
+        #raise SystemExit('raise')
+        # return sum of that list
+        return np.min(minvalues)
 
     def dihedrals_to_conf(self, dihedrals):
         # set conf related to the given dihedrals
@@ -119,32 +195,37 @@ class Fitness_Function():
         from string import digits
         self.molecule.index= self.molecule.index.translate(None, digits)
         print "self.molecule.index:", self.molecule.index
-        get_xyz(self.molecule, **self.TZMat)
+        get_xyz(self.molecule, **self.kwargs)
+        #get_xyz(self.molecule)
         return
 
+def GoodEnoughDistance(ga_engine):
+    distance_goal = 1.8
+    return ga_engine.bestIndividual().score > distance_goal
 
-def run_pyevolve(molecule, TZMat):
+#def run_pyevolve(molecule, TZMat):
+def run_pyevolve(molecule, **kwargs):
     '''options should be a Run instance having at least:
         options.nsites
         options.
 
     '''
     # 0.
-    print "TZMat:", TZMat
-    function = Fitness_Function(molecule, TZMat)
+    #print "TZMat:", TZMat
+    function = Fitness_Function(molecule, **kwargs)
 
     # 1. Enable the logging system:
     pyevolve.logEnable()
 
     # 2. Set Genome instance using as allelles the sites with the different functionalisations.
     genome = G1DList.G1DList(len(molecule.dihedrals))
-    genome.setParams(rangemin=1, rangemax=360)
+    genome.setParams(rangemin=1, rangemax=360, gauss_mu=10, gauss_sigma=5)
 
     # 3. Set evaluator function (objective function) or set precalculation is True! this circumvents serial evaluation
     genome.evaluator.set(function.eval_function)
     # 4. Set mutator function
     genome.mutator.set(Mutators.G1DListMutatorRealGaussian)
-    #genome.mutator.set(Mutators.G1DListMutatorIntegerRange, rangemax=10)
+    genome.mutator.set(Mutators.G1DListMutatorIntegerRange)
 
     # 5. Set initalizator function
     genome.initializator.set(Initializators.G1DListInitializatorReal)
@@ -157,7 +238,7 @@ def run_pyevolve(molecule, TZMat):
     # 8. set Selector
     ga.selector.set(Selectors.GRouletteWheel)
     # 9. set NGEN (number of generations)
-    ga.setGenerations(20)
+    ga.setGenerations(50)
     # 10. set min / max (optimize to a maximum or to a minimum)
     ga.setMinimax(Consts.minimaxType["maximize"])
     # 11. set MUP (mutation probability)
@@ -166,6 +247,7 @@ def run_pyevolve(molecule, TZMat):
     ga.setCrossoverRate(0.5)
     # 13. set termination at convergence?:
     #ga.terminationCriteria.set(GSimpleGA.ConvergenceCriteria)
+    ga.terminationCriteria.set(GoodEnoughDistance)
     # 14. set population size
     ga.setPopulationSize(20)
     # 15. set elitism
@@ -173,17 +255,17 @@ def run_pyevolve(molecule, TZMat):
     ga.nElitismReplacement = 1
 
     # 17. for plotting / logging
-    sqlite_adapter = DBAdapters.DBSQLite(identify='testconf', resetDB=False, resetIdentify=True, commit_freq=1)
+    sqlite_adapter = DBAdapters.DBSQLite(identify=molecule.index, resetDB=False, resetIdentify=True, commit_freq=5)
     ga.setDBAdapter(sqlite_adapter)
 
     print "GenAlg:", ga
 
     # Do the evolution, with stats dump
-    ga.evolve(freq_stats=1)
+    ga.evolve(freq_stats=5)
     best = ga.bestIndividual()
     print "best individual:", best.score
-    from pprint import pprint
-    pprint(vars(best))
+    #from pprint import pprint
+    #pprint(vars(best))
     print "genomeList:", best.genomeList
     function.get_final_molecule(best.genomeList)
     return
@@ -270,14 +352,17 @@ if __name__=="__main__":
               ['C', 'S', 'H', 60.],
                ['C', 'H'],
                 ['C', 'S', 'H', 135.],
-                 ['C', 'S', 'H'],
+                 ['O'],
                   ['C', 'C', 'H', 'O'],
                    ['C', 'N', 'O', 'O'],
                     ['C', 'N', 'H', 'H'],
                      ['C', 'N', 'H', 'H']]
     conf = [['C', 'Ph'], ['C', 'Ph'], ['C', 'Ph'], ['C', 'Ph'], ['C', 'Ph'], ['C', 'Ph'], ['C', 'Ph'], ['C', 'Ph'], ['C', 'Ph'], ['C', 'Ph']]
+    conf = [['C', 'Ph', 69], ['C', 'Ph', 168], ['C', 'Ph', 352], ['C', 'Ph', 188], ['C', 'Ph', 253], ['C', 'Ph', 20], ['C', 'Ph', 343], ['C', 'Ph', 238], ['C',
+        'Ph', 289], ['C', 'Ph', 250]]
     from molecule import Molecule
     mol = Molecule(conf=conf)
     if True:
+        #[ reduce_conflicts(mol, **TZMat) for _ in xrange(10) ]
         reduce_conflicts(mol, **TZMat)
 

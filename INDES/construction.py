@@ -78,21 +78,27 @@ def hydrogenizer(totalmat):
             totalmat[i][2] = '1.4'
     return totalmat
 
+#@profile
 def matrixmerger2(core,active,passive):
-    totalmat = []
-    nact = 0 
-    for i in range(len(core)):
-        totalmat.append(core[i])
-    for j in range(len(active)):
-        for l in range(len(active[j])):
-            totalmat.append(active[j][l])
-            nact += 1
-    for k in range(len(passive)):
-        totalmat.append(passive[k][0])
-    #print "************************************************************************************"
-    with open('TOTALMAT','w') as tmfid:
-        tmfid.write(pprint.pformat(totalmat))
-    return totalmat
+    ''' this has to be translated to numpy '''
+    import numpy as np
+    C = np.concatenate
+    actpas = C((C(active), C(passive)))
+    core.extend( actpas )
+
+    #totalmat = []
+    #for i in range(len(core)):
+    #    totalmat.append(core[i])
+    #for j in range(len(active)):
+    #    # THIS PART IS TIME CONSUMING (all 3 next lines)
+    #    for l in range(len(active[j])):
+    #        totalmat.append(active[j][l])
+    #for k in range(len(passive)):
+    #    totalmat.append(passive[k][0])
+    #with open('TOTALMAT','w') as tmfid:
+    #    tmfid.write(pprint.pformat(totalmat))
+    #return totalmat
+    return core
 
 def get_configurations(startconf,array,k, run=[]):
     'select on site k all the configurations with the different functionalizations for that site present in array'
@@ -106,7 +112,6 @@ def get_configurations(startconf,array,k, run=[]):
     #            print "conf:", conf
     #            if not conf[i]==conf[j]:
     #                conf[j]=conf[i]
-    logging.debug(pprint.pformat(configurations))
     return configurations
 
 def classmaker2(startconf,array,k,table,run=[]):
@@ -198,8 +203,6 @@ def constructor2(conf,core,active,passive, links=[]):
             if debug: print "in constructor 2. AFTER  doper:", conf[i], "len passive:", len(passive)
         # now for EACH! one goes to the substituter
         active[i],count = substituter2(conf[i],active[i],count)
-        logging.debug('active' + str(i))
-        logging.debug(pprint.pformat(active[i]))
     mat = matrixmerger2(core,active,passive)
     mat = hydrogenizer(mat)
     return mat
@@ -236,10 +239,9 @@ def doper2(group, geom, core, passive):
                 break
     return core,passive
 
-
+#@profile
 def geomfiller(zma,geom,count):
     ''' this function fills the zma of a functionalisation into the -methyl geometry of that site '''
-    logging.debug( "geomfiller")
     nagroup = len(zma)
     nageom = len(geom)
     delta = nagroup - nageom
@@ -259,12 +261,14 @@ def geomfiller(zma,geom,count):
     # afspraak2: if in zma an index is 1 it will become the bond index
     # afspraak3: if in zma an index is empty? 
     # for all the other entries
+
+    # THIS PART IS TIME CONSUMING:
+    #print "zma:", zma
+    #print "geom:", geom
+    #print "count:", count, "bi", bi, "ai", ai
+
     for i in range(1,len(zma)): # loop over zma except first entry
         # test entries of i and if they exist, fill geom with the right thing
-        logging.debug("geom item")
-        logging.debug(pprint.pformat(geom[i]))
-        logging.debug("zma item")
-        logging.debug(pprint.pformat(zma[i]))
         for j in [0,2,4,6]: # just replacements of strings
             geom[i][j] = zma[i][j]
         for j in [1,3,5]: # the indexjes
@@ -274,6 +278,8 @@ def geomfiller(zma,geom,count):
                 geom[i][j] = bi
             else:
                 geom[i][j] = str(zma[i][j] + count-1)
+    #print "final geom:", geom
+    #raise SystemExit('stop')
     return geom
 
 def is_float(s):
@@ -639,7 +645,8 @@ def substituter2(group,geom0,count):
     # aantal te verwijderen H is gerelateerd aan de lengte
     # 5 - 0 / 4 - 1 etc 
     # ndelh = 5 - length(group)
-    geom = geom0
+    from copy import copy
+    geom = copy(geom0)
     dihedral = None
     if is_float(group[-1]):
         dihedral = float(group[-1])
@@ -824,7 +831,6 @@ def substituter2(group,geom0,count):
 
         count += 3 # three atoms added to activemat
     elif len(group) == 3:
-        print "geom:", geom
         # when length is 3 it is a COH, NOH? or CCN group
         # we need to remove two hydrogens
         del geom[3]
@@ -860,8 +866,6 @@ def substituter2(group,geom0,count):
                     ['H',5,'1.086',4,'119.9',3,'180.1'],
                     ['H',6,'1.086',5,'120.1',4,'180.1'],
                     ['H',7,'1.087',6,'119.7',5,'180.1'] ]
-            logging.debug('zma benzene:')
-            logging.debug(pprint.pformat(zma))
             if dihedral: zma[1][6]=dihedral
             geom=geomfiller(zma,geom,count)
             count += len(zma)
