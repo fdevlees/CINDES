@@ -1006,6 +1006,7 @@ def getdivers(array, table, myrun):
     seq = [ 'CH','B','O','S','N','P',
                                'CNHH', 'CNOO','COH','CSH','CPh','CCHO','CSOOOH']
     print "seq:", seq
+    once = True
     for _ in range(batchsize):
         if index==1 or index==2:
             occupancy_sum, occupancy = diversifier.get_occupancy12(seq, confs, discardCH=discardCH)
@@ -1013,7 +1014,9 @@ def getdivers(array, table, myrun):
             conf = make_molecule12(occupancy, seq, array, confs, index=myrun.divers_divindex)
         elif index==3:
             occupancy, occupancy_percentages = diversifier.get_occupancy3(seq, confs)
-            #print "in get divers: occupancy:", occupancy
+            if once:
+                print "in get divers: occupancy:", occupancy
+                once = False
             conf = make_molecule3(occupancy, seq, array, confs)
         if discardCH:
             from numpy.random import binomial, shuffle, seed

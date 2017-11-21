@@ -253,6 +253,7 @@ class Dataset(): #abstract data class
         # DIAMONDOIDS:
         if ttert: hits = np.sum(self.X2, axis=0).reshape([self.nter,self.nscec*2]).astype(int)
         else: hits = np.sum(self.X2, axis=0).reshape([self.nter,self.nsec]).astype(int)
+        print hits
         return hits
 
     def extract12(self):
@@ -260,7 +261,8 @@ class Dataset(): #abstract data class
             self.extract()
         print "X1.shape:", self.X.shape
         if not hasattr(self,'X2'):
-            self.extract2()
+            hits = self.extract2()
+        self.hits = hits
         print "X2.shape:", self.X2.shape
         X12 = np.concatenate((self.X,self.X2),axis=1)
         print "X12.shape:", X12.shape
@@ -637,14 +639,16 @@ class Dataset(): #abstract data class
                 alpha = np.logspace(-15,15,30)
                 if True:
                     from sklearn.model_selection import StratifiedShuffleSplit
-                    sss = StratifiedShuffleSplit(n_splits=3, test_size=0.1, random_state=0)
+                    from sklearn.model_selection import StratifiedKFold
+                    sss = StratifiedShuffleSplit(n_splits=2, random_state=0)
+                    #skf = StratifiedKFold(n_splits=3, test_size=0.1, random_state=0)
                     clf2 = linear_model.RidgeCV(alphas=alpha, fit_intercept=True, store_cv_values=False, cv=sss)
                 else:
-                    clf2 = linear_model.RidgeCV(alphas=alpha, fit_intercept=True, store_cv_values=True)
+                    clf2 = linear_model.RidgeCV(alphas=alpha, fit_intercept=True, store_cv_values=False, cv=2)
                 clf2.fit(self.X2, y_1D_errors)
                 print "score 2D:", clf2.score(self.X2, y_1D_errors)
                 print "best 2D alpha:", clf2.alpha_
-                print "self.cv_values_:", clf2.cv_values_
+                #print "self.cv_values_:", clf2.cv_values_
 
                 # get the real values of 1D+2D
                 y_pred_errors = clf2.predict(self.X2)
