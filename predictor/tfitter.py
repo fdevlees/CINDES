@@ -157,10 +157,13 @@ class Dataset(): #abstract data class
             table = Tablebin( filename=args.filename )
             self.confs = table.confs
             self.Y = table.Y
-            self.seq = list(table.get_seq())
+            self.confs, self.Y = zip(*[[conf, y] for conf,y in zip(self.confs, self.Y) if not any( group in conf for group in ['CCHHH','CCOOH','CF','CCl'])])
+            #self.seq = list(table.get_seq())
+            self.seq = ['CH', 'CPh', 'CSH', 'CCHO', 'N', 'P', 'B', 'CSOOOH', 'COH', 'CNHH', 'CNOO', 'O', 'S']
             self.nsec = len(self.seq)
             self.nter = len( [ item for item in self.seq if not item in ['S','O','CO'] ] )
-            self.ngps= table.get_ngps()
+            #self.ngps= table.get_ngps()
+            self.ngps = (11,11,11,11,13,13,13,13,13,13)
             print self.ngps
             print self.seq
         #else:
@@ -997,7 +1000,7 @@ def main(args):
 
         # 4.2.2: do regressions
         if True:
-            alpha=50
+            alpha=0.1
             print "args.ridge:", alpha
             clf_Ridge2D = myrun.linreg(model='Ridge', alpha=alpha,twosite=True)
             if args.analyze:

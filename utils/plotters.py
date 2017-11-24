@@ -103,7 +103,7 @@ def bar_plot2(X,std=0, xlabels=None):
     #plt.xlim(0,15)
     return fig,ax
 
-def heatmap_2d(data,hits,labels,args):
+def heatmap_2d(data,hits,labels,args,cmap='viridis'):
     '''two dimensional data plot. data should be a numpy.array.
 
     the plotted matrix: data

@@ -892,6 +892,11 @@ def database_construction(param,array):
             #1.1. run diversity on table and get occupancy per site. 
             #1.2. select for each site the least occuring group.
         mols = getdivers(array,table, myrun)
+        with open('confsall','wb') as f:
+            confsall = [ mol.index for mol in mols ]
+            confsall.extend([item[0] for item in table])
+            pickle.dump(confsall, f)
+            print "new confsall written"
         if debug: print mols
         #1b check already in database
         mols_todo, mols_nodo = zcon.check_in_table(mols, table, myrun)
