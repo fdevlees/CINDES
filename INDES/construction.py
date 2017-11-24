@@ -83,7 +83,10 @@ def matrixmerger2(core,active,passive):
     ''' this has to be translated to numpy '''
     import numpy as np
     C = np.concatenate
-    actpas = C((C(active), C(passive)))
+    try:
+        actpas = C((C(active), C(passive)))
+    except ValueError:
+        print active
     core.extend( actpas )
 
     #totalmat = []
@@ -194,6 +197,7 @@ def constructor2(conf,core,active,passive, links=[]):
     count += len(core)
 
     # start with the first site in active
+    indices_empty_active=[]
     for i in range(len(conf)):
         #read the first element of conf
         #if (not conf[i][0]=='C' or conf[i] == ['C','O']):
@@ -203,6 +207,9 @@ def constructor2(conf,core,active,passive, links=[]):
             if debug: print "in constructor 2. AFTER  doper:", conf[i], "len passive:", len(passive)
         # now for EACH! one goes to the substituter
         active[i],count = substituter2(conf[i],active[i],count)
+        if not active[i]: indices_empty_active.append(i)
+    #remove empty elemements from active:
+    for i in indices_empty_active[::-1]: del active[i]
     mat = matrixmerger2(core,active,passive)
     mat = hydrogenizer(mat)
     return mat
@@ -909,6 +916,7 @@ def substituter2(group,geom0,count):
         del geom[2]
         del geom[1]
         del geom[0]
+        return None, count
     # so whole geom is deleted actualy
     # there will not appear any of this ones in the activemat so count is not changed
     return geom,count

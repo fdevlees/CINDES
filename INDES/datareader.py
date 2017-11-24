@@ -510,6 +510,9 @@ def normaltermination(filepaths,debug=False):
            if re.search('Normal termination',''.join(text)):
                fid.close()
                return 1
+           #elif re.search('IGNORE',''.join(text)):
+           #    fid.close()
+           #    return 2
     #-----
     copyfilepaths = filepaths[:] #copy to be able to append to it while looping over it
     for path in copyfilepaths: #test all for information which jobs crashed

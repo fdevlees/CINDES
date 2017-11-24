@@ -387,6 +387,7 @@ class Dataset(): #abstract data class
                 #print mask2
                 vmax1= max(np.array(df.values.tolist())[mask1])
                 vmax2= max(np.array(df.values.tolist())[mask2])
+                #vmax2=
                 vmin1= min(np.array(df.values.tolist())[mask1])
                 vmin2= min(np.array(df.values.tolist())[mask2])
                 sns.heatmap(df, ax=ax, mask=mask1, vmin=vmin2, vmax=vmax2,
@@ -636,15 +637,13 @@ class Dataset(): #abstract data class
 
                 # predict the differences. 
                 #alpha = [ 1*10**i for i in [ -12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4 ] ]
-                alpha = np.logspace(-15,15,30)
+                alpha = np.logspace(-15,-1,10)
                 if True:
                     from sklearn.model_selection import StratifiedShuffleSplit
-                    from sklearn.model_selection import StratifiedKFold
-                    sss = StratifiedShuffleSplit(n_splits=2, random_state=0)
-                    #skf = StratifiedKFold(n_splits=3, test_size=0.1, random_state=0)
-                    clf2 = linear_model.RidgeCV(alphas=alpha, fit_intercept=True, store_cv_values=False, cv=sss)
+                    sss = StratifiedShuffleSplit(n_splits=2, test_size=0.5, random_state=0)
+                    clf2 = linear_model.RidgeCV(alphas=alpha, normalize=True, fit_intercept=True, store_cv_values=False, cv=sss)
                 else:
-                    clf2 = linear_model.RidgeCV(alphas=alpha, fit_intercept=True, store_cv_values=False, cv=2)
+                    clf2 = linear_model.RidgeCV(alphas=alpha, fit_intercept=True, store_cv_values=False, cv=None)
                 clf2.fit(self.X2, y_1D_errors)
                 print "score 2D:", clf2.score(self.X2, y_1D_errors)
                 print "best 2D alpha:", clf2.alpha_
@@ -787,6 +786,20 @@ class Adamantane(Dataset):
                 Bflatten = B.flatten()
                 X[k] = Bflatten
         #print "X2 constructed; shape X2:", np.shape(X)
+
+        if True: # analyse X2
+            print "sum of all elements:"
+            s = np.sum(X, axis=0)
+            print s
+            print min(s)
+            hits = s.reshape([self.nter, self.nsec])
+            hitsdf = pd.DataFrame(hits[1:, 1:], columns=self.seq[1:], index=self.seq[1:-2])
+            import seaborn as sb
+            sb.heatmap(hitsdf, annot=True)
+            plt.show()
+            raise SystemExit('stop in extract2')
+            
+
         return X
 
     def test_conf(confs):

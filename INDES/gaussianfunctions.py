@@ -127,7 +127,25 @@ def geommaker(mols_tocal,myrun,passive, active, core):
             # here location for conformational analysis
             # here location for avoiding geom conflicts
             pass
+        elif False:
+            import fafoom
+            # conformational analysis could be implemented here
+            # the program is not ready for multiple conformations at the moment!
+            # possibly the molecule has only 1 index attribute without dihedral angles 
+            # but multiple conf lists with different dihedral angles. 
+            # or when we also want to consider more than one dihedral per group
+            # for example not only the core-COOH but also the coreCOO-H dihedral 
+            # then the zma or xyz attribute is a list of multiple zmatrices or cartesian coordinates
+            # the the filenames should not be similar so also an index should be included in the filename
+            # subsequently the program has to check readyness of all structures 
+            # and read them
+            # and take the props of the lowest energy structure.
 
+            # on the other hand: fafoom could be used to find the configuration with the smallest rdkit-ff configuration
+            # nevertheless probably also a tweeked ga_dihedrals with a different eval_function could do this!
+        else:
+            # no special action. the first assigned geometry is used as a start
+            pass
     return
 
 # 1. file making
@@ -514,6 +532,7 @@ def set_target_properties(molecules, myrun):
         -Pvalue
         -boundaries
     '''
+    #print "I'm here: molecules:", molecules,
     for mol in molecules:
         if mol.Pvalue:
             print "molecular target property already set. Predicted?", mol
@@ -525,7 +544,11 @@ def set_target_properties(molecules, myrun):
             mol.Pvalue = myrun.function(**kwargs)
             print "function value:", mol.Pvalue
         else:
+            #print "I'm here too:", mol.props
+            #print "myrun.property:", myrun.property
             mol.Pvalue = mol.props[ myrun.property ]
+            #print "myrun.Pvalue:", mol.Pvalue
+
         if myrun.bc:
             try:
                 print "I'm here: myrun.bcprop", myrun.bcprop, "mol.props?:", mol.props

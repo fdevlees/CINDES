@@ -430,7 +430,7 @@ def testmax(myrun, mols, bcok):
                 testmols = [ mol for mol in mols if abs(mol.Pvalue) > param['cutoff'] ]
                 optsite = min(testmols, key = lambda mol:mol.Pvalue)
         else:
-            optsite = max(mols, key = lambda mol:mols.Pvalue)
+            optsite = max(mols, key = lambda mol:mol.Pvalue)
 
     optsite.opt=True
     #logging.warning('optsite:' + pprint.pformat(optsite, width=100))
@@ -935,6 +935,8 @@ def SteepestDescent(param,array):
 
 # procedure 7. Farthest Point Selection based on the diversity index. 
 def database_construction(param,array):
+    from numpy.random import seed
+    seed(40)
     debug=True
     myrun = Run(**param)
     myrun.divers_discardCH=True
@@ -948,7 +950,7 @@ def database_construction(param,array):
         table = None #make initial calculation. get table with length 1.
 
     count=1
-    maxiter=10
+    maxiter=100
     while True: #later while True
         print_title("COUNT: " + str(count),outline='l',signator="-")
         print "len table:", len(table)
@@ -1000,7 +1002,8 @@ def getdivers(array, table, myrun):
     diversifier = Diversifier(index=index)
     mols = []
     #confs = [ item[0].split('_') for item in table ]
-    confs = [ item.conf for item in table ]
+    #confs = [ item.conf for item in table ]
+    confs = table.keys()
     print "confs:", confs[:5]
     #seq = list(set([ group for conf in confs for group in conf ]))
     seq = [ 'CH','B','O','S','N','P',
@@ -1019,8 +1022,7 @@ def getdivers(array, table, myrun):
                 once = False
             conf = make_molecule3(occupancy, seq, array, confs)
         if discardCH:
-            from numpy.random import binomial, shuffle, seed
-            seed(40)
+            from numpy.random import binomial, shuffle
             # adjust conf and place CH groups in it via a binomial distribution
             nsites=10
             while True:
@@ -1058,7 +1060,6 @@ def make_molecule12(occupancy, seq, array, confs, index=1):
 @log_io()
 def make_molecule3(occupancy, seq, array, confs):
     import numpy as np
-    np.random.seed(40)
     #print seq
     from collections import OrderedDict
     occD = dict()

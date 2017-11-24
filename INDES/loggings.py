@@ -14,10 +14,13 @@ import pandas as pd
 
 def formatitem(opt, item, maxlenconf=49):
     def formatter(item):
-        try:
+        try: #float
             return '{:15.8f}'.format(item)
-        except ValueError:
-            return item.rjust(15)
+        except ValueError: #str
+            try:
+                return item.rjust(15)
+            except AttributeError:
+                return "{}None".format(11*" ")
             #return "      {}".format(item)
 
     index = '{opt} {conf:{width}s}'.format(opt=opt, conf=item[0], width=maxlenconf+1)
