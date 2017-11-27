@@ -82,11 +82,16 @@ def hydrogenizer(totalmat):
 def matrixmerger2(core,active,passive):
     ''' this has to be translated to numpy '''
     import numpy as np
+    V = np.vstack
     C = np.concatenate
     try:
-        actpas = C((C(active), C(passive)))
-    except ValueError:
-        print active
+        actpas = C((V(active), V(passive)))
+    except (UnboundLocalError, ValueError):
+        if passive==[]:
+            print "passive is empty"
+            actpas=V(active)
+        else: raise
+
     core.extend( actpas )
 
     #totalmat = []
