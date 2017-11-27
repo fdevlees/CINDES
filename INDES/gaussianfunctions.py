@@ -35,65 +35,48 @@ import os
 import shutil
 once=0
 
-
-def get_secret_data(tablefilename,mols_tocal, mols_nocal):
-    '''checks for confs already calculated'''
-    import pickle
+def get_secret_data(tablefilename,mols_tocal, mols_nocal, myrun):
+    '''checks for confs already calculated:
+        uses myrun.~
+        -props (set)
+    '''
+    import json
     with open(tablefilename,'rb') as f:
-        secret_table = pickle.load(f)
+        db = json.load(f)
     if debug:
         print "secret_table:"
         sprint(10,secret_table)
-    column = 1 ################################################################################## COLUMN CHANGE HERE
-    tabledict = dict( ( [ item[0], item[column] ] for item in secret_table ) )
-    data = []
+    table = { key:value for key,value in db.iteritems() if myrun.props <= value.viewkeys() }
     for mol in mols_tocal[:]:
-        if False: #old
-            mol.predicted = False
-            mol.Pvalue = tabledict[ mol.index ]
-        else: # new
-            try:
-                mol.Pvalue = tabledict[ mol.index ]
-                print "in secret data",
-            except KeyError:
-                pass
-            else:
-                mol.predicted = False
-                mols_tocal.remove(mol)
-                # add that item from table to data
-                mols_nocal.append(mol)
-    
-
+        try:
+            mol.props=table[mol.index]
+        except KeyError:
+            continue
+        mol.predicted=False
+        mols_tocal.remove(mol)
+        mols_nocal.append(mol)
     return mols_tocal, mols_nocal
 
-
 # PROCEDURE
-#data = gausf.procedure(myrun,confs,indices,data,kwargs)
 def procedure(myrun, mols_tocal, mols_nocal, TZmat):
     global once
     #print "nconfs:", len(population)
-    print "n_indices_tocal:", len(mols_tocal)
-    print "n_data_nocal:", len(mols_nocal)
+    print "| n_indices_tocal:", len(mols_tocal)
+    print "|    n_data_nocal:", len(mols_nocal)
     if myrun.no1sub==1 and once==0:
         once = 1
         print " "
     elif myrun.nosub==3:
         print "SECRET DATA activated:", myrun.nosub_file
         tablefilename = myrun.nosub_file
-        #print "before\n: mols_tocal",
-        #sprint(10,mols_tocal)
-        #print "mols_nocal",
-        #sprint(10,mols_nocal)
-        mols_tocal , mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal)
-        #print "after\n: mols_tocal",
-        #sprint(10,mols_tocal)
-        #print "mols_nocal",
-        #sprint(10,mols_nocal)
-        #raise SystemExit('stop submit procedure')
+        mols_tocal , mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun)
 
     if not mols_tocal==[]:
+        # 0. Set the molecular geometries
+        geommaker(mols_tocal,myrun,**TZmat)
+
         # 1. Make the files
-        filemaker(mols_tocal,myrun,**TZmat) #----------------------------------HERE IS THE FILEWRITER CALL
+        filemaker(mols_tocal,myrun) #----------------------------------HERE IS THE FILEWRITER CALL
 
         # 2. now the jobs have to be submitted 
         jobids = submission(mols_tocal,myrun)
@@ -101,31 +84,77 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
         # 3. test of all jobs are ready
         jobtester(mols_tocal,myrun,jobids)
 
-        # 4. test normal termination and read jobs #NOTE data_nocal is passed to this one. results are appended to it
+        # 4. test normal termination and read jobs 
         mols_calc = datareader.datareader(mols_tocal,myrun.__dict__)
 
-        # 5. add ones to each data_calc element. this means the values are obtained by real calculation
-        #for item in mols_calc:
-        #    #item.predicted = False
-        #    item.insert(1,1)
     else: mols_calc = []
 
-    # 6. merge data_calc and data_nocal to data_all
+    # 5. merge data_calc and data_nocal to data_all
     mols_all = mols_calc + mols_nocal
+
+    # 6. set target property i.e. mol.Pvalue and mol.boundaries
+    set_target_properties( mols_all, myrun)
 
     return mols_all
 
-# 1. file making
+#0. geom making
 @log_io()
-def filemaker(mols_tocal,myrun,passive,active,core): #----- dict with info for filewriter has to pass here)
-    ''' jkl'''
-    path = myrun.path
-    fileparameters = myrun.__dict__
+def geommaker(mols_tocal,myrun,passive, active, core):
     for molecule in mols_tocal:
         c = deepcopy(core)
         a = deepcopy(active)
         p = deepcopy(passive)
         molecule.set_zmat( zcon.constructor2(molecule.conf,c,a,p, links=myrun.symlinks) )
+
+        # Try to print SMILES
+        try:
+            smiles= molecule.get_format()
+            print "smiles:", smiles,
+        except IndexError:
+            print "IndexError while trying to make smiles for molecule"
+        except NameError:
+            print "NameError while trying to make smiles for molecule"
+        except KeyError:
+            print "KeyError while trying to make smiles for molecule"
+
+        if myrun.optga:
+            from CINDES4.utils.ga_dihedrals import reduce_conflicts
+            # this function sets molecule.conf with optimized dihedrals in the conf attribute
+            c = deepcopy(core)
+            a = deepcopy(active)
+            p = deepcopy(passive)
+            reduce_conflicts(molecule, c, a, p)
+            # here location for conformational analysis
+            # here location for avoiding geom conflicts
+            pass
+        elif False:
+            import fafoom
+            # conformational analysis could be implemented here
+            # the program is not ready for multiple conformations at the moment!
+            # possibly the molecule has only 1 index attribute without dihedral angles 
+            # but multiple conf lists with different dihedral angles. 
+            # or when we also want to consider more than one dihedral per group
+            # for example not only the core-COOH but also the coreCOO-H dihedral 
+            # then the zma or xyz attribute is a list of multiple zmatrices or cartesian coordinates
+            # the the filenames should not be similar so also an index should be included in the filename
+            # subsequently the program has to check readyness of all structures 
+            # and read them
+            # and take the props of the lowest energy structure.
+
+            # on the other hand: fafoom could be used to find the configuration with the smallest rdkit-ff configuration
+            # nevertheless probably also a tweeked ga_dihedrals with a different eval_function could do this!
+        else:
+            # no special action. the first assigned geometry is used as a start
+            pass
+    return
+
+# 1. file making
+@log_io()
+def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pass here)
+    ''' jkl'''
+    path = myrun.path
+    fileparameters = myrun.__dict__
+    for molecule in mols_tocal:
         if not myrun.stab==1:
             zcon.filewriter2(molecule.zmat,molecule.index,**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
         else:
@@ -150,16 +179,6 @@ def filemaker(mols_tocal,myrun,passive,active,core): #----- dict with info for f
                 #if not hornot == 1: #if not there are two ways to place the hydrogen.
                     #maker2(zmat,pos,indices[i],**fileparameters)
 
-        # Try to print SMILES
-        try:
-            smiles= molecule.get_format()
-            print "smiles:", smiles,
-        except IndexError:
-            print "IndexError while trying to make smiles for molecule"
-        except NameError:
-            print "NameError while trying to make smiles for molecule"
-        except KeyError:
-            print "KeyError while trying to make smiles for molecule"
     return
 
 def extract_zmat(filename):
@@ -498,3 +517,48 @@ def test_ready3(indices,myrun):
     time.sleep(fileparameters['extrawaittime']) #just wait for the files to write back before opening them
     return
     pass
+
+#6. set molecular property attributes
+def set_target_properties(molecules, myrun):
+    ''' set mol.Pvalue and if boundary conditions mol.boundaries
+    uses myrun attributes:
+        -property
+        -function
+        -func_args
+        -bcprop
+    and molecule attributes:
+        -props
+    and sets molecule attributes:
+        -Pvalue
+        -boundaries
+    '''
+    #print "I'm here: molecules:", molecules,
+    for mol in molecules:
+        if mol.Pvalue:
+            print "molecular target property already set. Predicted?", mol
+            if myrun.bc: print "boundary condition cannot be set"
+            print "molecule has probably no .props attribute"
+            continue
+        if myrun.property=='func':
+            kwargs = { prop:mol.props[prop] for prop in myrun.func_args }
+            mol.Pvalue = myrun.function(**kwargs)
+            print "function value:", mol.Pvalue
+        else:
+            #print "I'm here too:", mol.props
+            #print "myrun.property:", myrun.property
+            mol.Pvalue = mol.props[ myrun.property ]
+            #print "myrun.Pvalue:", mol.Pvalue
+
+        if myrun.bc:
+            try:
+                print "I'm here: myrun.bcprop", myrun.bcprop, "mol.props?:", mol.props
+                mol.boundaries = [ mol.props[bcp] for bcp in [myrun.bcprop] ]
+            except KeyError as e:
+                print e
+                pass
+    #print "test json attributes:"
+    #for mol in molecules:
+    #    print mol.index, mol.boundaries, mol.Pvalue
+    return
+
+

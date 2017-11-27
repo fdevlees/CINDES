@@ -58,10 +58,12 @@ class GenomeBase:
       self.initializator = FunctionSlot("Initializator")
       self.mutator = FunctionSlot("Mutator")
       self.crossover = FunctionSlot("Crossover")
- 
+
       self.internalParams = {}
       self.score = 0.0
       self.fitness = 0.0
+      self.index = 'undefined'
+      self.props = []
 
    def getRawScore(self):
       """ Get the Raw Score of the genome

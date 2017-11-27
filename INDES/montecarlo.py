@@ -95,13 +95,10 @@ def montecarloprocedure(run, subarray, maxi, table,**kwargs):
 
     # 2. set additional initial parameters
     cmaximum = zcon.indtocon(maxi[0]) # maximum is in index format. change to confformat
-    if debug:
-        print "maxi:", maxi
-        print "len(table):", len(table)
-        for item in table: print item
 
-
-    Dtable = dict([ (item[0],item[1]) for item in table] )
+    raise SystemExit('not implemented JSON style table')
+    # Dtable should be comming directly. similar as predictions.py as { index:Pvalue, index2:Pvalue2 }
+    #Dtable = dict([ (item[0],item[1]) for item in table] )
     Tcount = 0 #temperature counter. to zero after increased.
     Rcount = 0 #number of random confs tested
     Tcountmax = int ( 10** ( float( 1 + fileparameters['nrandsites'] ) ) )

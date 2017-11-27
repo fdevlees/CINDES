@@ -78,27 +78,34 @@ def hydrogenizer(totalmat):
             totalmat[i][2] = '1.4'
     return totalmat
 
+#@profile
 def matrixmerger2(core,active,passive):
-    totalmat = []
-    nact = 0 
-    for i in range(len(core)):
-        totalmat.append(core[i])
-    for j in range(len(active)):
-        for l in range(len(active[j])):
-            totalmat.append(active[j][l])
-            nact += 1
-    for k in range(len(passive)):
-        totalmat.append(passive[k][0])
-    #print "************************************************************************************"
-    with open('TOTALMAT','w') as tmfid:
-        tmfid.write(pprint.pformat(totalmat))
-    return totalmat
+    ''' this has to be translated to numpy '''
+    import numpy as np
+    C = np.concatenate
+    try:
+        actpas = C((C(active), C(passive)))
+    except ValueError:
+        print active
+    core.extend( actpas )
+
+    #totalmat = []
+    #for i in range(len(core)):
+    #    totalmat.append(core[i])
+    #for j in range(len(active)):
+    #    # THIS PART IS TIME CONSUMING (all 3 next lines)
+    #    for l in range(len(active[j])):
+    #        totalmat.append(active[j][l])
+    #for k in range(len(passive)):
+    #    totalmat.append(passive[k][0])
+    #with open('TOTALMAT','w') as tmfid:
+    #    tmfid.write(pprint.pformat(totalmat))
+    #return totalmat
+    return core
 
 def get_configurations(startconf,array,k, run=[]):
     'select on site k all the configurations with the different functionalizations for that site present in array'
     configurations =  [ startconf[0:k] + [array[k][i]] + startconf[k+1:] for i in range(len(array[k]))]
-
-    print "configurations:", configurations
     #if hasattr(run,'nlinks'):
     #    print "links:", run.symlinks
     #    for link in run.symlinks:
@@ -108,113 +115,23 @@ def get_configurations(startconf,array,k, run=[]):
     #            print "conf:", conf
     #            if not conf[i]==conf[j]:
     #                conf[j]=conf[i]
-    logging.debug(pprint.pformat(configurations))
     return configurations
 
 def classmaker2(startconf,array,k,table,run=[]):
     '''checks for confs already calculated'''
-    #print "IN CLASSMAKER", type(run)
     confs = get_configurations(startconf,array,k,run=run)
 
     from CINDES4.utils.molecule import Molecule, Population
     individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
     #population = Population( population = individuals )
-    mols_todo = individuals[:]
-    mols_nodo = []
-    if not table == []:
-        for item in table:
-            for individual in individuals:
-                if item[0] == individual.index: # so if item in table
-                    # remove it from the individuals to do list
-                    mols_todo.remove(individual)
-                    # add that item from table to data
-                    mols_nodo.append(individual)
-
-                    # set property value of that individual
-                    print "item:", item
-                    i=1
-                    if float(item[1]) == 1.0:
-                        print "WARNING tablebin has old style formatting (column with 1s is present)",
-                        i=2
-                    individual.Pvalue = item[i]
-                    individual.predicted = False
-                    if run.bc:
-                        individual.boundaries = [ item[i+1] ]
-                        individual.infoline   = item[i+2:]
-                    else:
-                        individual.infoline  = item[i+1:]
-
-                    print "already calculated:", individual.index, "with property:", individual.Pvalue
-
-    if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
-
+    mols_todo, mols_nodo = check_in_table(individuals, table, run.props)
+    # set here (*mols_nodo).Pvalue
     return mols_todo, mols_nodo  #indicesfull are all the indices. 
-
-def indexmaker3(startconf,array,k,table,run=[]):
-    '''checks for confs already calculated'''
-    #print "IN INDEXMAKER3", type(run)
-    confs = get_configurations(startconf,array,k,run=run)
-    data=[]
-    indices = []
-    for i in range(len(confs)):
-        index = contoind(confs[i])
-        indices.append(index)
-        #pp.pprint(confs[i])
-    indicesfull = indices[:]
-    if not table == []:
-        for item in table:
-            for index,confje in izip(indices[:],confs[:]):
-                if item[0] == index:
-                    # remove that from the configurations
-                    indices.remove(index)
-                    confs.remove(confje)
-                    # add that item from table to data
-                    if item[1]==1:
-                        #raise SystemExit('elements in tablebin shouldnt be one')
-                        data.append(item)
-                    else:
-                        new_item = item[:]
-                        new_item.insert(1,1)
-                        data.append(new_item)
-        if not data == []:
-            logging.info('filled data with ones already calced:' + pprint.pformat(data))
-
-    # get SMILES of all confs using the run instance (i dont' have the zmat yet here)
-    #try:
-    #    from CINDES4.utils.molecule import Molecule
-    #    for conf in confs:
-    #        mol_conf = Molecule()
-    return indices,data,confs,indicesfull #indicesfull are all the indices. 
-
-def indexmaker4(table,indices, confs):
-    '''checks for confs already calculated this one is used in GA.py'''
-    indicesfull = indices[:]
-    data = []
-    if not table == []:
-        for item in table:
-            for index,confje in izip(indices[:],confs[:]):
-                if item[0] == index:
-                    # remove that from the configurations
-                    indices.remove(index)
-                    confs.remove(confje)
-                    # add that item from table to data
-                    if item[1]==1:
-                        raise SystemExit('elements in tablebin shouldnt be one')
-                        data.append(item)
-                    else:
-                        new_item = item[:]
-                        new_item.insert(1,1)
-                        data.append(new_item)
-        if not data == []:
-            logging.info('filled data with ones already calced:' + pprint.pformat(data))
-    return indices,data,confs #indicesfull are all the indices. 
-
 
 def classmaker2_SD(startconf,array,table,run=[]):
     '''checks for confs already calculated'''
     print "IN CLASSMAKER", type(run)
     from CINDES4.utils.molecule import Molecule, Population
-
     # make configurations
     confs = []
     for i in run.restingsites:
@@ -222,102 +139,31 @@ def classmaker2_SD(startconf,array,table,run=[]):
     # remove duplicates by sorting and subsequently only adding when the previous one is not similar
     sortedconfs = sorted(confs)
     confs = [ sortedconfs[i] for i in xrange(len(sortedconfs)) if i==0 or sortedconfs[i] != sortedconfs[i-1] ]
-
     individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
     #population = Population( population = individuals )
-    mols_todo, mols_nodo = check_in_table(individuals, table, run)
+    mols_todo, mols_nodo = check_in_table(individuals, table, run.props)
     return mols_todo, mols_nodo
 
-def check_in_table(individuals, table, run):
+def check_in_table(individuals, table, props=set()):
     mols_todo = individuals[:]
     mols_nodo = []
-    if not table == []:
-        for item in table:
-            for individual in individuals:
-                if item[0] == individual.index: # so if item in table
-                    # remove it from the individuals to do list
+    i=0
+    if table:
+        for individual in individuals:
+            if individual.index in table:
+                #check if the right properties are given for this property
+                if all(prop in table[individual.index] for prop in props):
+                    individual.props = table[individual.index]
+                    individual.predicted=False
+                    #individual.Pvalue=0.0 #function!
+                    #raise SystemExit('implement furter')
                     mols_todo.remove(individual)
-                    # add that item from table to data
                     mols_nodo.append(individual)
-
-                    individual.Pvalue = item[1]
-                    individual.predicted = False
-                    if run.bc:
-                        individual.boundaries = [ item[2] ]
-                        individual.infoline   = item[3:]
-                    else:
-                        individual.infoline  = item[2:]
-                    # log
-                    print "already calculated:", individual.index, "with property:", individual.Pvalue
-
+                    i+=1
+                    #print "already calculated:", individual.index
+        if i: print "{} molecules are already in database".format(i)
     if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
-
     return mols_todo, mols_nodo  #indicesfull are all the indices. 
-
-
-def classmaker_GA(individuals, table):
-    '''checks for confs already calculated'''
-    mols_todo = individuals[:]
-    mols_nodo = []
-
-
-    if not table == []:
-        for item in table:
-            for individual in individuals:
-                if item[0] == individual.index: # so if item in table
-                    # remove it from the individuals to do list
-                    mols_todo.remove(individual)
-                    # add that item from table to data
-                    mols_nodo.append(individual)
-                    i=1
-                    if item[1] == 1:
-                        print "WARNING tablebin has old style formatting (column with 1s is present)",
-                        i=2
-                    individual.Pvalue = item[i]
-                    individual.predicted = False
-                    individual.infoline  = item[i+1:]
-                    print "already calculated:", individual.index, "with property:", individual.Pvalue
-
-    if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
-
-    return mols_todo, mols_nodo  #indicesfull are all the indices. 
-
-def indexmaker_SD(startconf,array,table,run=[]): #for CINDES2.3.py for the new symmetry feature
-    '''checks for confs already calculated'''
-    print "IN INDEXMAKER3", type(run)
-    confs = []
-    for i in run.restingsites:
-        confs.extend( get_configurations(startconf,array,i,run=run) )
-    sortedconfs = sorted(confs)
-    confs = [ sortedconfs[i] for i in xrange(len(sortedconfs)) if i==0 or sortedconfs[i] != sortedconfs[i-1] ]
-
-    data=[]
-    indices = []
-    for i in range(len(confs)):
-        index = contoind(confs[i])
-        indices.append(index)
-        #pp.pprint(confs[i])
-    indicesfull = indices[:]
-    if not table == []:
-        for item in table:
-            for index,confje in izip(indices[:],confs[:]):
-                if item[0] == index:
-                    # remove that from the configurations
-                    indices.remove(index)
-                    confs.remove(confje)
-                    # add that item from table to data
-                    if item[1]==1:
-                        #raise SystemExit('elements in tablebin shouldnt be one')
-                        data.append(item)
-                    else:
-                        new_item = item[:]
-                        new_item.insert(1,1)
-                        data.append(new_item)
-        if not data == []:
-            logging.info('filled data with ones already calced:' + pprint.pformat(data))
-
-    return indices,data,confs,indicesfull #indicesfull are all the indices. 
-
 
 def constructor2(conf,core,active,passive, links=[]):
     ''' This is the main constructor of the zmatrix for a given configuration using
@@ -351,6 +197,7 @@ def constructor2(conf,core,active,passive, links=[]):
     count += len(core)
 
     # start with the first site in active
+    indices_empty_active=[]
     for i in range(len(conf)):
         #read the first element of conf
         #if (not conf[i][0]=='C' or conf[i] == ['C','O']):
@@ -360,17 +207,33 @@ def constructor2(conf,core,active,passive, links=[]):
             if debug: print "in constructor 2. AFTER  doper:", conf[i], "len passive:", len(passive)
         # now for EACH! one goes to the substituter
         active[i],count = substituter2(conf[i],active[i],count)
-        logging.debug('active' + str(i))
-        logging.debug(pprint.pformat(active[i]))
+        if not active[i]: indices_empty_active.append(i)
+    #remove empty elemements from active:
+    for i in indices_empty_active[::-1]: del active[i]
     mat = matrixmerger2(core,active,passive)
     mat = hydrogenizer(mat)
     return mat
 
 def doper2(group, geom, core, passive):
+    debug=False
+    if debug:
+        print "group:", group
+        print "geom:", geom
+        print "core"
+        for item in core:print item
+        print "passive:", passive
     # the actual doping command. taking care of index difference Gaussian/Python
     coreindex = int(geom[0][1])
-    core[coreindex-1][0]=group[0]
-    if debug: print "coreindex:", coreindex, "group:", group
+    if not group[0]=='C':
+        # this assumes standard a C is present. 
+        # this also prevents other groups from overwriting dopants on this site
+        # only one site is allowed to have the dopants in that case btw!
+        core[coreindex-1][0]=group[0]
+    if debug:
+        print "coreindex:", coreindex, "group:", group
+        print "core after doping:",
+        for item in core:
+            print item
     #print "coreindex is: ", coreindex
     if group in [['O'],['S'],['C','O'],'O','S','CO']:
         # we remove the hydrogen at the passive site on that location
@@ -383,10 +246,9 @@ def doper2(group, geom, core, passive):
                 break
     return core,passive
 
-
+#@profile
 def geomfiller(zma,geom,count):
     ''' this function fills the zma of a functionalisation into the -methyl geometry of that site '''
-    logging.debug( "geomfiller")
     nagroup = len(zma)
     nageom = len(geom)
     delta = nagroup - nageom
@@ -406,12 +268,14 @@ def geomfiller(zma,geom,count):
     # afspraak2: if in zma an index is 1 it will become the bond index
     # afspraak3: if in zma an index is empty? 
     # for all the other entries
+
+    # THIS PART IS TIME CONSUMING:
+    #print "zma:", zma
+    #print "geom:", geom
+    #print "count:", count, "bi", bi, "ai", ai
+
     for i in range(1,len(zma)): # loop over zma except first entry
         # test entries of i and if they exist, fill geom with the right thing
-        logging.debug("geom item")
-        logging.debug(pprint.pformat(geom[i]))
-        logging.debug("zma item")
-        logging.debug(pprint.pformat(zma[i]))
         for j in [0,2,4,6]: # just replacements of strings
             geom[i][j] = zma[i][j]
         for j in [1,3,5]: # the indexjes
@@ -421,6 +285,8 @@ def geomfiller(zma,geom,count):
                 geom[i][j] = bi
             else:
                 geom[i][j] = str(zma[i][j] + count-1)
+    #print "final geom:", geom
+    #raise SystemExit('stop')
     return geom
 
 def is_float(s):
@@ -456,6 +322,12 @@ def filewriter2(zmat,index,**paras): #paras is short for fileparameters
     # with filedic is:
     # filedic = {"charge":0,"mult":1,"identify":identify}
     #------------
+    if paras['jobs']:
+        filewriter4(zmat, index, **paras)
+        return
+    else:
+        print "WARNING: you use a deprecated functionality. use jobs keyword for up-to-date program"
+
     if paras['gaussianlines']:
         filewriter3(zmat, index, **paras)
         return
@@ -619,10 +491,47 @@ def filewriter3(zmat,index,**paras): #paras is short for fileparameters
     #print "---- FILE PRINTED SUCCESFULLY -----"
     return
 
+def filewriter4(zmat,index,**paras): #paras is short for fileparameters
+    '''    This function creates a file with the geometry contained in zmat
+    The name of the file contains the index in the name
+    '''
+    #------------
+    # this function uses globals: identify, path
+    #------------
+    filename = paras['identify'] + str(index) + ".com"
+    fid=open(paras['path'] + '/' + filename,'w')
 
+    # JOB 1
+    job1 = paras['jobs'][0]
+    fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
+    fid.write("%mem=1500MB\n")
+    if not paras['nprocs']==1:
+        fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
+    fid.write(job1['hotline']) # first gaussianline
+    fid.write("\n\n")
+    fid.write(paras['identify'] + str(index) + "\n\n")
+    fid.write("{} {}\n".format(job1['charge'], job1['mult']))
+    # here the zmat
+    for i in range(len(zmat)):
+        for item in zmat[i]:
+            fid.writelines("%s " % item)
+        fid.write("\n")
+    fid.write("\n")
 
-
-
+    # THE OTHER JOBS
+    #for i, (charge, mult, line) in enumerate(paras['gaussianlines'][1:]):
+    for i, job in enumerate(paras['jobs'][1:]):
+        fid.write("--link1--\n")
+        fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
+        fid.write("%mem=1500MB\n")
+        if not paras['nprocs']==1:
+            fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
+        fid.write(job['hotline'])
+        fid.write("\n\n")
+        fid.write(str(index) + " {}th calc\n\n".format(i+2) )
+        if not 'allcheck' in job['hotline']:
+            fid.write("{} {}\n\n".format(job['charge'], job['mult']))
+    return
 
 #----- BEGIN FILEWRITER JOB TYPE A BDE-MODEL ----#
 def filewriterA(zmat,index,**paras): #paras is short for fileparameters
@@ -743,7 +652,8 @@ def substituter2(group,geom0,count):
     # aantal te verwijderen H is gerelateerd aan de lengte
     # 5 - 0 / 4 - 1 etc 
     # ndelh = 5 - length(group)
-    geom = geom0
+    from copy import copy
+    geom = copy(geom0)
     dihedral = None
     if is_float(group[-1]):
         dihedral = float(group[-1])
@@ -921,7 +831,7 @@ def substituter2(group,geom0,count):
             geom[1][2] = 1.18 # bond length C=O
             geom[1][4] = 125.1 # angle coreC-C=O
             geom[1][6] = 0.1 # dihedral with one of the core
-            
+
             geom[2][2] = 1.11 # bond length C-O
             geom[2][4] = 115.1 # angle coreC-C=O
             geom[2][6] = 180.1 # dihedral with one of core
@@ -963,8 +873,6 @@ def substituter2(group,geom0,count):
                     ['H',5,'1.086',4,'119.9',3,'180.1'],
                     ['H',6,'1.086',5,'120.1',4,'180.1'],
                     ['H',7,'1.087',6,'119.7',5,'180.1'] ]
-            logging.debug('zma benzene:')
-            logging.debug(pprint.pformat(zma))
             if dihedral: zma[1][6]=dihedral
             geom=geomfiller(zma,geom,count)
             count += len(zma)
@@ -982,7 +890,7 @@ def substituter2(group,geom0,count):
             if dihedral: zma[1][6]=dihedral
             geom=geomfiller(zma,geom,count)
             count += len(zma)
-             
+
         else:
             # all the three hydrogens need to be removed
 
@@ -1008,6 +916,7 @@ def substituter2(group,geom0,count):
         del geom[2]
         del geom[1]
         del geom[0]
+        return None, count
     # so whole geom is deleted actualy
     # there will not appear any of this ones in the activemat so count is not changed
     return geom,count
@@ -1035,6 +944,6 @@ if __name__ == "__main__":
         del zmatnew
         del ind
         del hline
-        del item   
+        del item
     print "DONE"
 

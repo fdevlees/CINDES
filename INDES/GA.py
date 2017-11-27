@@ -3,7 +3,8 @@ debug=False
 # python modules
 import numpy as np
 random = np.random.random
-import pickle
+#import pickle
+import json
 from itertools import izip
 import pprint
 
@@ -52,10 +53,10 @@ def get_database():
     try:
         #with open('table_unbiased','rb') as f:
         with open('table_new3.dat','rb') as f:
-            table = pickle.load(f)
+            table = json.load(f)
     except IOError as e:
         print "NO TABLE ONLY VALID IF SKIPPER IS USED:,", e
-        table = []
+        table = dict()
     return table
 
 def get_input():
@@ -77,7 +78,7 @@ class Fitness_Function():
     and subsequently in each iteration
         evaluator.evaluate(population)
     '''
-    def __init__(self, run, array=None, table=[]):
+    def __init__(self, run, array=None, table=dict()):
         '''for evaluation i need at least to have the database and the core / active / passive (all in zmatrix)
         i probably should also already get a self.kernel here such that the evaluatefunction only should call predict
         '''
@@ -97,7 +98,7 @@ class Fitness_Function():
             self.initiate_ml_int(**options)
         return
 
-    def predict_via_submit_multi(self,confs):
+    def predict_via_submit_multi(self,confs, gen=0):
         ''' this function is used by my_GSimpleGA class.my_evaluate '''
         # 0. I have to deal with the fact that there can be similar configurations!
         pass
@@ -106,7 +107,7 @@ class Fitness_Function():
         individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
 
         # 2. check which molecules are already calculated and add them to data_nocal
-        mols_tocal, mols_nocal = INDES.construction.classmaker_GA( individuals, self.table )
+        mols_tocal, mols_nocal = INDES.construction.check_in_table( individuals, self.table, self.run.props )
 
         # 3. calculate configurations
         myrun = self.run
@@ -114,12 +115,18 @@ class Fitness_Function():
                                                          mols_nocal,
                                                          myrun,
                                                        **myrun.TZmat     ) # here call submitting procedure
-        newy = [ molecule.log() for molecule in mols_all ]
+        #newy = [ molecule.log() for molecule in mols_all ]
 
         # 4. log new results
         if debug: print "newy:", newy
         self.table = INDES.loggings.log_table( mols_all , table=self.table)
-        return newy
+        self.table = INDES.loggings.loggings(mols_all,
+                    self.table,
+                    gen,
+                    1,1,
+                    made_pred=False,
+                    tablename = myrun.tablename)
+        return mols_all
 
     @log_io()
     def evaluate_skip_multi(self,confs):
@@ -134,7 +141,7 @@ class Fitness_Function():
 
 class My_GSimpleGA(GSimpleGA.GSimpleGA):
 
-   def __init__(self,genome,run, precalculation=True, table=[], **kwargs):
+   def __init__(self,genome,run, precalculation=True, table=dict(), **kwargs):
        GSimpleGA.GSimpleGA.__init__(self,genome, **kwargs)
        self.FF = Fitness_Function(run, table=table)
        self.precalculation = precalculation
@@ -156,17 +163,19 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
       # 1.1. make confs hashable to make it a set and make it list again
       new_confs = tuple( tuple( map( tuple, item)) for item in populationlist )
       unique_confs = [ map(list,item) for item in set(new_confs) ]
-      print "unique_confs:", unique_confs, "len:", len(unique_confs)
+      print "n unique_confs:", len(unique_confs)
 
       # 2. call CINDES via FF to calculate the configurations
-      new_y = self.FF.predict_via_submit_multi(unique_confs)
+      mols = self.FF.predict_via_submit_multi(unique_confs, gen=self.currentGeneration)
 
       # 3. set the calculations to the correct indivual score
-      y_dict = dict( [item[0], item[1:]] for item in new_y )
+      y_dict = { mol.index:mol.Pvalue for mol in mols }
       for ind in population:
           index = INDES.procedures.zcon.contoind(ind.genomeList)
           print "individual:", ind.genomeList, "y:", y_dict[index], index
-          ind.score = y_dict[index][1]
+          #ind.score = y_dict[index][1]
+          ind.score = y_dict[index]
+          ind.index = index
       return
 
    def step(self):
@@ -409,6 +418,8 @@ def run_pyevolve(array,table, options):
         options.
 
     '''
+    #raise SystemExit('new JSON table not yet implemented')
+
     # 0. 
     print "options:", options
 
@@ -493,7 +504,7 @@ def run_pyevolve(array,table, options):
     pop.scaleMethod.set(Scaling.SigmaTruncScaling)
 
     # 17. for plotting / logging
-    sqlite_adapter = DBAdapters.DBSQLite(identify=options.genalg['db_identify'], resetDB=False, resetIdentify=True )
+    sqlite_adapter = DBAdapters.DBSQLite(identify=options.genalg['db_identify'], resetDB=False, resetIdentify=True, commit_freq=1)
     ga.setDBAdapter(sqlite_adapter)
 
     print "GenAlg:", ga

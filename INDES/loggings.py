@@ -3,7 +3,8 @@ debug=False
 from CINDES4.utils.writings import log_io, print_title, sprint
 from CINDES4.utils.utils import run_once
 from copy import deepcopy
-import pickle
+#import pickle
+import json
 import pprint
 import time
 
@@ -11,10 +12,26 @@ import numpy as np
 from scipy import stats
 import pandas as pd
 
-def formatitem(item):
-    index = '{:50s}'.format(item[0])
-    abin  = ' {} '.format(str(item[1]))
-    datas = ' '.join(( '{:15.8f}'.format(datatje) for datatje in item[2:] ) )
+def formatitem(opt, item, maxlenconf=49):
+    def formatter(item):
+        try: #float
+            return '{:15.8f}'.format(item)
+        except ValueError: #str
+            try:
+                return item.rjust(15)
+            except AttributeError:
+                return "{}None".format(11*" ")
+            #return "      {}".format(item)
+
+    index = '{opt} {conf:{width}s}'.format(opt=opt, conf=item[0], width=maxlenconf+1)
+    abin  = ' {:5s} '.format(str(item[1]))
+    try:
+        #datas = ' '.join(( fmt.format('{:15.8f}', (datatje for datatje in item[2:] ))))
+        datar = [ formatter(datatje) for datatje in item[2:] ]
+        datas = ' '.join(datar) + "  |"
+    except ValueError:
+        print item[2:]
+        raise
     itemstring = index + abin + datas
     return itemstring
 
@@ -24,59 +41,129 @@ def log_cyclesinfo(mols, count, k, l):
         for molecule in mols:
             item = [ molecule.index ]
             item.append( int(not molecule.predicted) ) # 1 if really calculated 0 if only predicted 
-            item.append( molecule.Pvalue)
-            item.extend( molecule.boundaries )
-            item.extend( molecule.infoline )
+
+            # new json style:
+            #print "molecule.props:", molecule.props
+            item.extend( molecule.props.values() )
+
+            # old pickle style:
+            #item.append( molecule.Pvalue)
+            #item.extend( molecule.boundaries )
+            #item.extend( molecule.infoline )
+
             item.extend([count,k,l])
             cfid.write(' '.join(pprint.pformat(i) for i in item)+'\n')
     #del filedata
     return
 
 def log_table( mols, table, tablename='tablebin'):
-    if debug:
-        print "in log_table: mols:", mols
-        print "table:", table
-    # here move the new data to table except duplicates
+    ''' this function updates the table-dictionary used inside the program
+    and updates the database.json file.
+    '''
+    def update_json(table, filename):
+        # filename has to end in .json. else .json is added.
+        # this prevents overwriting an pickle style formatted inputtable
+        if not filename[-5:]=='.json':
+            filename='{}.json'.format(filename)
+
+        #1 read json object:
+        try:
+            with open(filename) as f:
+                json_table=json.load(f)
+        except ValueError:
+            print "JSON file empty."
+            json_table = dict()
+
+        #2 update (nested)
+        for key, value in table.iteritems():
+            if key in json_table:
+                json_table[key].update(value)
+            else:
+                json_table[key]=value
+
+        #3 write updated json object
+        with open(filename,'w') as f:
+            json.dump(json_table, f, indent=-1)
+        print "dumped table in {} with {} of the {} molecules".format(filename, len(table), len(json_table))
+        return
+    # -------------
+
+    # move the new data to table except duplicates
     for molecule in mols:
         if molecule.predicted == False:
-            if not molecule.index in [ item[0] for item in table ]:
-                tableitem = [ molecule.index ]
-                tableitem.append( molecule.Pvalue     )
-                tableitem.extend( molecule.boundaries )
-                tableitem.extend( molecule.infoline   )
-                if debug: print "tableitem:", tableitem
-                table.append(tableitem)
-    # OLD:
-    #for item in data:
-    #    if item[1]==1:
-    #        if not item[0] in [tja[0] for tja in table]:
-    #            tableitem = [item[0]] + item[2:]
-    #            table.append(tableitem)
-    #            if debug: print "tableitem:", tableitem
-    #    else:
-    #        assert item[1]==0, "item[1] has to be 1 or 0 but is %s" % str(item[1])
+            #if not molecule.index in [ item[0] for item in table ]:
+            if not molecule.index in table:
+                table[molecule.index]=molecule.props
+                #tableitem = [ molecule.index ]
+                #tableitem.append( molecule.Pvalue     )
+                #tableitem.extend( molecule.boundaries )
+                #tableitem.extend( molecule.infoline   )
+                #if debug: print "tableitem:", tableitem
+                #table.append(tableitem)
 
-    with open(tablename,'wb') as tfid: # write the table to a file
-        pickle.dump(table,tfid)
-        print "dumped table in {}".format(tablename)
+    update_json(table, tablename)
     return table
 
 
 def log_screen( mols ):
+    print "in log_screen:", mols[0].index, mols[0].props, mols[0].Pvalue
+    # get property line. 
+    # get all the props that possibly have to be printed
+    # NB there are predicted confs that only have a Pvalue so they have no props attribute
+    props = set()
+    for mol in mols:
+        try: props.update(mol.props.keys())
+        except AttributeError:pass
+    props = list(props)
+    # check if Pvalue is one of these singular props
+    if mols[0].Pvalue in mols[0].props.values():
+        # so yes. Pvalue is one of the propvalues. but which one?
+        # get index of prop
+        keys, values= zip(*mols[0].props.items())
+        i=values.index(mols[0].Pvalue)
+        p=keys[i]
+        # remove that one from props
+        props.remove(p)
+        print "property seems to be:", p
+    else:
+        p='function'
+        #props.insert(0,props.pop(i))
+
+    # print header line.
+    maxlenconf= max(map(lambda x:len(x.index),mols))
+    lenh = maxlenconf+28+len(props)*16
+    print "+{}+".format(lenh*"-")
+    print "| index"+(maxlenconf-4)*" "+" pred?     {:15s} ".format(p) + " ".join(('{:15s}'.format(prop) for prop in props)) +"|"
+    print "}}{}{{".format(lenh*"-")
+    # print data
     for molecule in mols:
-        item = [ molecule.index, molecule.Pvalue ]
-        item.extend( molecule.boundaries )
-        item.extend( molecule.infoline   )
-        print formatitem(item)
+        opt="|"
+        if molecule.opt: opt="+"
+        item = [ molecule.index, molecule.predicted, molecule.Pvalue ]
+        propvals = [ molecule.props.get(prop,'unknown') for prop in props ]
+        item.extend(propvals)
+        print formatitem(opt, item, maxlenconf)
+    print "+{}+".format(lenh*"-")
     return
 
 def log_screen_pred( mols ):
+    print
     preds = [ mol.predictions for mol in mols ]
     indices = [ mol.index for mol in mols ]
     pvalues = [ mol.Pvalue for mol in mols ]
     df = pd.DataFrame( preds, index = indices )
     df.insert(0,'pvalues', pvalues)
-    print df
+
+    #----- pretty print df -----
+    s = df.to_string().split('\n')
+    ls=len(s[0])
+    print "+{}+".format((ls+2)*"-")
+    print "| {} |".format(s[0])
+    print "+{}+".format((ls+2)*"-")
+    for item in s[1:]: print "| {} |".format(item)
+    print "+{}+".format((ls+2)*"-")
+    #----- end pretty print-----
+
     return df
     #for molecule in mols:
     #    #pd.DataFrame( [ a.p, b.p, c.p ], index = [ a.name, b.name, c.name ] )
@@ -126,13 +213,7 @@ def loggings(mols,table,count,k,l, made_pred=False, tablename='tablebin'):
     #---- LOGGINGS: TABLEBIN
     table = log_table( mols, table, tablename=tablename )
 
-    if debug:
-        print "mols.Pvalue:", mols[0].Pvalue
-        print "mols.index:", mols[0].index
-        print "mols.infoline:", mols[0].infoline
-
     #---- LOGGINGS: to screen
-
     log_screen( mols )
 
     #---- NEW LOGGINGS: PREDICTIONS

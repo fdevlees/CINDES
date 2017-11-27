@@ -26,9 +26,9 @@ def read_input(siteinput):
     param = readfile(subinp) #inputline is a tuple with all kind of input variables
     #here for a new link feature. nsites is len(line1) - nlinks
     if param['nlinks']:
-        param['nsites'] = len(param['line1']) - param['nlinks']
+        param['nsites'] = len(param['sites']) - param['nlinks']
     else:
-        param['nsites'] = len(param['line1'])
+        param['nsites'] = len(param['sites'])
     #param['nsites'] = len(param['line1'])
     #####################
     if param['procedure'] in [ 'genconf' ]:
@@ -37,8 +37,13 @@ def read_input(siteinput):
     else:
         array = substireader(param['nsites'],subinp)
         if not param['procedure'] in ['getrandom', 'genrandom','testpred']:
-            print "ARRAY:",
-            pprint(array)
+            print "ARRAY:"
+            for i,item in enumerate(array):
+                print "site{:>2d}:  |".format(i),
+                for sub in item:
+                    print " {} ".format("".join(sub)),
+                    print "|",
+                print
     if not param['procedure'] in ['getrandom', 'genrandom']:
         logging.info("INPUT PARAMETERS:")
         for key,value in param.iteritems():
@@ -186,6 +191,7 @@ def readfile(subinp):
            'gaussianlines':[],
            'identify':'unspecified_',
            'ip':0,
+           'jobs':[],
            'maxiter':10,
            'maxcycles':'100',
            'ml':0,
@@ -202,6 +208,7 @@ def readfile(subinp):
            'nprocs':2,
            'nrandsites':2,
            'optimum':'minimum',
+           'optga':False,
            'polar':0,
            'predictions':[],
            'procedure':'standard',
@@ -218,7 +225,7 @@ def readfile(subinp):
            'stab':0,
            'startind': '',
            'symlinks':[],
-           'tablename':'tablebin',
+           'tablename':'table.json',
            'tdregression':0,
            'test_ready':2,
            'timelimit':250000,
@@ -291,6 +298,19 @@ def readfile(subinp):
                 gaussianline = [ line[0], line[1], ' '.join(line[2:]) ]
                 lines.append(gaussianline)
             paras['gaussianlines'] = lines
+        elif 'jobs' in line:
+            njobs = int(line.split()[1])
+            jobs=[]
+            for _ in range(njobs):
+                job=dict()
+                # read propline
+                line = subinp.readline().split()
+                job['info']=set(line)
+                # read mult/charge/hotline
+                line = subinp.readline().split()
+                job['charge'], job['mult'], job['hotline'] = (line[0], line[1], ' '.join(line[2:]))
+                jobs.append(job)
+                paras['jobs']=jobs
         elif 'maxcycles' in line: paras['maxcycles']= str(int(line.split()[1]))
         elif 'maxiter' in line: paras['maxiter'] = int(line.split()[1])
         elif 'montecarlo' in line:
@@ -318,6 +338,7 @@ def readfile(subinp):
             if 'max' in line.split()[1]:
                 print "changed optimization to maximum instead of minimum!"
                 paras['optimum'] = 'maximum'
+	elif 'optga' in line: paras['optga']=True
         elif 'positions' in line: paras['positions'] = [ int(item) for item in line.split()[1:] ]
         elif any(item in line.split()[0] for item in ('program','ai','program','prog','programma')):
             if line.split()[1] in ['gaussian','g09']:
@@ -398,7 +419,7 @@ def readfile(subinp):
             paras['symlinks'] = links
             print "SYMMETRY ACTIVATED!"
         elif 'simple' in line: paras['simple'] = 1
-        elif 'sites' in line: paras['line1'] = [ int(item) for item in line.split()[1:] ]
+        elif 'sites' in line: paras['sites'] = [ int(item) for item in line.split()[1:] ]
         elif 'twodimreg' in line: paras['tdregression'] = 1
         elif 'try_ready' in line: paras['try_ready'] = 1
         elif 'test_ready' in line: paras['test_ready'] = int(line.split()[1])
@@ -435,14 +456,10 @@ def readfile(subinp):
     except KeyError:
         pass
     props.extend( paras['extra_props'] )
-    paras['props'] = props
-    if 'stab' in props: paras['stab'] = True
-    if 'polar' in props: paras['polar'] = True
-    if 'ip' in props: paras['ip'] = True
-    if 'ea' in props: paras['ea'] = True
-    if 'aip' in props: paras['aip'] = True
-    if 'aea' in props: paras['aea'] = True
-    if 'solv' in props: paras['solv'] = True
+    paras['props'] = set(props)
+    for prop in ['stab', 'polar', 'ip', 'aip', 'ea', 'aea', 'solv' ]:
+        if prop in paras['props']:
+            paras[prop]=True
 
     # extra sanity checks on input
     # sanity check 1: optimum in ga and bfs input similar

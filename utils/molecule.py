@@ -12,7 +12,8 @@ except:
 
 def contoind(conf):
     ''' to convert a configuration to an index-string '''
-    return '_'.join([''.join(item) for item in conf])
+    #return '_'.join([''.join(str(item)) for item in conf])
+    return '_'.join([ ''.join(filter(lambda x:str(x).isalpha(), item)) for item in conf ])
 
 class Population(MutableSequence):
     def __init__(self, population):
@@ -72,12 +73,16 @@ class Molecule(object):
         self.converter = Converter()
         self.conf = conf
         self.index= contoind(self.conf)
-        self.Pvalue = [] # for storing the principal properties
+        self.Pvalue = None # for storing the principal properties
         self.boundaries = [] # for storing the boundary condition properties
         self.infoline = [] # for storing additional properties
         self.predictions = {}
         self.predicted = None
         self.mat = None
+        self.opt = False
+
+        # for jsonification:
+        self.props = {}
         return
 
     def __getitem__(self,key):
@@ -95,12 +100,18 @@ class Molecule(object):
     def __str__(self):
         return "Molecule: " + self.index
 
+    def __eq__(self, other):
+        return self.index==other.index
+
+    def copy(self):
+        return Molecule(self.conf)
+
     def log(self):
         ret = [ self.index ]
         ret.append( int( not self.predicted ) )
         ret.append( self.Pvalue     )
         ret.extend( self.boundaries )
-        ret.extend( self.infoline   )
+        #ret.extend( self.infoline   )
         return ret
 
     def set_path(self, path, extension='.com'):

@@ -503,7 +503,7 @@ CDefMySQLDBTablePop = "population"
 CDefMySQLDBHost = "localhost"
 CDefMySQLDBPort = 3306
 CDefMySQLStatsGenFreq = 1
-CDefMySQLStatsCommitFreq = 300
+CDefMySQLStatsCommitFreq = 1
 
 # - DB Adapters URL Post defaults
 CDefURLPostStatsGenFreq = 100

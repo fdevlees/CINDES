@@ -16,7 +16,7 @@ from re import findall # now only needed in construction.py
 import sys # for getting command line input
 #import glob # for testing existence of files matching a pattern
 import random # for obtaining random geometry
-import pickle # for saving and getting the tablebin
+import json
 import logging # instead of the large amount of print statements not using it at the moment
 from copy import deepcopy # for keeping matrices while changing others
 
@@ -76,7 +76,7 @@ class Run(object):
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( dump( value ) )
-            elif key in ['TZmat','genalg', 'adj']:
+            elif key in ['TZmat','genalg', 'adj', 'jobs']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( pprint.pformat(value, width=150) )
             else:
@@ -97,7 +97,7 @@ class Run(object):
         else:
             #param['workdir'] = os.getcwd()
             self.workdir = os.getcwd()
-            path = self.workdir  + '/databc'
+            path = self.workdir  + '/CALC'
             param["path"]=str(path)
             logging.info("PATH:"+str(path))
             if not os.path.exists(path):
@@ -138,7 +138,7 @@ class Run(object):
         sites_adj = adj[sites][:,sites]
         if debug:
             print "adjacency matrix of core:", adj
-            print "self.sites:", self.line1
+            print "self.sites:", self.sites
             print "active: ", active
             print "sites: ", sites
             print "sites_adj:", sites_adj
@@ -241,8 +241,8 @@ class Run(object):
 # 3. site order
 # 4. table (database)
 # 5. optimum at the start of the run
-# 6. maximum configuration within run
-# 7. global maximum
+# 6. optimum configuration within run
+# 7. global optimum
 # 8. logging of output # loggings module
 
 # 1 startconfiguration
@@ -297,113 +297,187 @@ def get_sequence(count, myrun):
     return sequence
 
 # 4 table (database)
-def set_table(myrun, datacolumn=1):
+def set_table(myrun):
+    '''this function loads molecules from a given database it uses a few runattributes:
+        - tablename (str)
+        - restart (int)
+        - props (set)
+
+    '''
+    def try_oldstyle(tablename):
+        import pickle
+        print tablename
+        with open(tablename,'rb') as f:
+            pickle_db = pickle.load(f)
+        print "pickled table is loaded"
+        print "pickle_db:", pickle_db
+        json_db = dict()
+        #tableprops=['mw','solv', 'e0_solv', 'e1_solv', 'lumo', 'solv']
+        #tableprops=['omega']
+        tableprops=['gap','lumo','homo']
+        for item in pickle_db:
+            key=item[0]
+            value={prop:prop_value for prop,prop_value in zip(tableprops,item[1:])}
+            json_db[key]=value
+        print "an old_style formatted tablefile was loaded with props:", tableprops
+        # touch new json file
+        open('{}.json'.format(tablename),'w').close()
+        return json_db
+
+    #--------
+    print "------------"
+    # look if tablename given in INPUT otherwise default
     try:
         tablename = myrun.tablename
     except AttributeError:
-        tablename = 'tablebin'
+        tablename = 'table.json'
+    # look if extension is used otherwise set it automatically
+    if not tablename[-5:]=='.json': tablename='{}.json'.format(tablename)
+
     if myrun.restart>0:
-        with open(tablename,'rb') as f:
-            table = pickle.load(f)
-        if True:
-            # if all item[1] are ones:
-            if all( item[1]==1 for item in table ):
-                table = [[item[0]] + item[datacolumn+1:] for item in table ]
-            else:
-                table = [[item[0]] + item[datacolumn:] for item in table ]
+        try:
+            with open(tablename,'rb') as f:
+                db = json.load(f)
+        except (IOError,ValueError):
+            print "no json table"
+            print "try to load as pickle {}".format(tablename[:-5])
+            try:
+                db = try_oldstyle(tablename[:-5])
+            except IOError:
+                print "also no correct pickled table"
+                raise
+
+        print "loaded json database with {} molecules".format(len(db))
+        # myrun.props has to be a subset of value.viewkeys(): set operations <= means "is subset of"
+        table = { key:value for key,value in db.iteritems() if myrun.props <= value.viewkeys() }
+        print "made a table with {} molecules that have the required properties".format(len(table))
+
+        # should the function value be included in the table? otherwise here is the place ;)
 
     else:
-        table = []
+        table = dict()
         open(tablename,'wb').close()
     return table
 
 # 5 optimum at the start of the run
-def set_maximum(myrun,table):
+def set_optimum(myrun,table):
     if myrun.restart >= 3:
-        tabledict = dict( [ item[0:2] for item in table ] )
-        maximum = [ myrun.startconf, tabledict[myrun.startconf] ]
-        logging.info("maximum:"+ str(maximum))
+        raise SystemExit('deprecated functionality')
+        #tabledict = dict( [ item[0:2] for item in table ] )
+        optimum = molecule(conf=myrun.startconf)
+        optimum.props = table[molecule.index]
+        # set Pvalue?
+        #optimum = [ myrun.startconf, tabledict[myrun.startconf] ]
+        logging.info("optimum:"+ str(optimum))
     else:
-        maximum = 0
-    return maximum
+        optimum = None
+    return optimum
 
 # 6 optimum within the global iterations
 def testmax(myrun, mols, bcok):
-    param = myrun.__dict__
+    ''' sets optsite
+    multiple boundary conditions are not yet implemented
 
-    data = [ molecule.log() for molecule in mols if ( molecule.predicted == False and not molecule.Pvalue is None) ]
-    for item in data:
-        print item
+    '''
+    param = myrun.__dict__
+    # there are molecules that are predicted and are not calculated so they have molecule.Pvalue is None? 
+    # NOT: no they should have a Pvalue but just there predicted attribute is set to True
+    # so which molecule could possibly have a None Pvalue? 
+    # neglected molecules will have a None value so indeed filter them out 
+    # data = [ molecule.log() for molecule in mols if ( molecule.predicted == False and not molecule.Pvalue is None) ]
+    # data = [ molecule.log() for molecule in mols if not ( molecule.predicted == False or not molecule.Pvalue is None) ]
+    # INDEED mols that are only predicted are left out! Pred values are only used at the decision for tocal/nocal!
+    mols = [ mol for mol in mols if mol.predicted == False and not mol.Pvalue is None ]
 
     if 'bcprop' in param:
         if param['bcoptimum'] in ['min','Min','MIN']:
         #test if BC fullfilled. 
             try:
-                voldoende = [ it for it in data if float(it[3]) < float(param['bcval']) ]
-            except TypeError: pass
+                satisfactory = [ mol for mol in mols if mol.boundaries[0] < float(param['bcval']) ]
+            except TypeError as e:
+                print e
+                pass
         else:
             assert param['bcoptimum'] in ['max','Max','MAX']
             try:
-                voldoende = [ it for it in data if float(it[3]) > float(param['bcval']) ]
-            except TypeError: pass
+                satisfactory = [ mol for mol in mols if mol.boundaries[0] > float(param['bcval']) ]
+            except TypeError as e:
+                print e
+                pass
 
-        print "voldoende:\n", pprint.pformat(voldoende, width=100)
+        print "satisfactory:\n", pprint.pformat(satisfactory, width=100)
         print "the BC condition is bc<:", param['bcval']
-        if voldoende==[]: #so if there is at least one fullfilling BC
+        if satisfactory==[]: #so if there is at least one fullfilling BC
             bcok=0
             print "BC not fullfilled:"
-            #maxsite = min(data,key = lambda x:x[2])
-            maxsite = min(data,key = lambda x:abs( float(x[3]) - float(param['bcval']) ) )
-        else: #BC nog niet
+            #optsite = min(data,key = lambda x:x[2])
+            optsite = min(mols,key = lambda mol:abs( mol.boundaries[0] - float(param['bcval']) ) )
+        else: #BC not yet
             bcok=1
-            print "BC fullfilled; voldoende is not empty:", pprint.pformat(voldoende, width=100)
-            #maxsite = max(voldoende,key = lambda x:x[1])
+            print "BC fullfilled; satisfactory is not empty:", pprint.pformat(satisfactory, width=100)
+            #optsite = max(satisfactory,key = lambda x:x[1])
             if param['optimum'] in ['minimum', 'min']:
-                maxsite = min(voldoende,key = lambda x:x[2])
+                optsite = min(satisfactory,key = lambda x:x[2])
             else:
-                maxsite = max(voldoende,key = lambda x:x[2])
+                optsite = max(satisfactory,key = lambda x:x[2])
     else:
         bcok=1 #no BC but need this variable to test later on
-        # maximum of the list or MINIMUM
+        # optimum of the list or MINIMUM
         if param['optimum'] in ['minimum', 'min']:
             if param['cutoff'] == 0:
-                maxsite = min(data,key = lambda x:x[2])
+                optsite = min(mols,key = lambda x:x.Pvalue)
             else:
-                testdata = [ item for item in data if abs(item[2]) > param['cutoff'] ]
-                maxsite = min(testdata,key = lambda x:x[2])
+                testmols = [ mol for mol in mols if abs(mol.Pvalue) > param['cutoff'] ]
+                optsite = min(testmols, key = lambda mol:mol.Pvalue)
         else:
-            maxsite = max(data,key = lambda x:x[2])
-    logging.warning('maxisite:' + pprint.pformat(maxsite, width=100))
-    return maxsite,bcok
+            optsite = max(mols, key = lambda mol:mol.Pvalue)
+
+    optsite.opt=True
+    #logging.warning('optsite:' + pprint.pformat(optsite, width=100))
+    return optsite, bcok
 
 # 7 set global optimum and define convergence and redirect to Monte Carlo component
-def runtest(run, maximum, maxsite, count, bcok,mctable=[], array=[]):
+def runtest(run, optimum, optsite, count, bcok,mctable=[], array=[]):
     param = run.__dict__
     TZmat= run.TZmat
     converged=0
-    # test if this is same as previous maximum. if so then converged and break
     print
+
+    #raise SystemExit('optimum and optsite should be Molecule instances now')
     if (count > 1 and bcok) or param['restart']>=3: #BCOK is a test of the boundary condition is already fullfilled
-        if maximum[2] == maxsite[2]:  #test the property value! not 1 anymore!
+        if optimum==optsite:  #test the property value! not 1 anymore!
             print "optimum is the same!"
             print "converged to a optimum configuration!"
             if param['montecarlo'] == 0:
                converged = 1
             else:
                if param['ml']==0:
-                   maxsite = montecarloprocedure(run, array, maximum, mctable)
+                   optsite = montecarloprocedure(run, array, optimum, mctable)
                else:
-                   maxsite = montecarloprocedure(run, array, maximum, mctable, **TZmat)
-               print "optimal_after_this_site:", pprint.pformat( maxsite, width=100 )
+                   optsite = montecarloprocedure(run, array, optimum, mctable, **TZmat)
+               print "optimal_after_this_site:", pprint.pformat( optsite, width=100 )
         else:
             print "Global_Iteration_optimum and optimum_after_this_site are not the same yet"
-            print "gi_optimum:" ,maximum
-            print "current optimum:" ,maxsite
+            print "gi_optimum:" ,optimum
+            print "current optimum:" ,optsite
     else: #except NameError:
         print "NameError no optimal structure or BC not yet fullfilled."
         #pass
-    maximum = maxsite[:]
-    return maximum, maxsite, converged
+    optimum = optsite.copy()
+    return optimum, optsite, converged
+
+def get_property_table(table, myrun):
+    '''set a dict with {'index1':prop1, etc. } to use for montecarlo and prediction making '''
+    db=dict()
+    for key,value in table.iteritems():
+        if myrun.property=='func':
+            kwargs = { prop:value[prop] for prop in myrun.func_args }
+            Pvalue = myrun.function(**kwargs)
+            db[key]=Pvalue
+        else:
+            Pvalue = value[ myrun.property ]
+            db[key]=Pvalue
+    return db
 
 # DATA GETTING:
 # A: fake data for testing (skipper)
@@ -503,8 +577,9 @@ def BFS(param,array):
     print(myrun) #this should print all the class elements via the __str__ function
     # the table with all the results of all calculated configs
     table = set_table(myrun)
-    # set maximum
-    maximum = set_maximum(myrun,table)
+    property_table = get_property_table(table, myrun)
+    # set optimum
+    optimum = set_optimum(myrun,table)
     #set calculation properties
     #END MYRUN CLASS assignments. from now myrun should contain all the necessary information to work with during the whole program run.
 
@@ -525,11 +600,9 @@ def BFS(param,array):
             print_title("k(site)= " + str(k) + " l(nsite)= "+ str(l),outline='l',signator='=')
             if not l == 0 or count > 1: #define new startconfiguration if not first cycle
                 # define new starting geometry
-                print "maxsite[0]",maxsite[0]
+                print "optsite:",optsite
                 del startconf
-                startconf = zcon.indtocon(maxsite[0])
-                print "newconf: ", startconf
-
+                startconf = optsite.conf
 
             # STEP 1: INDEXMAKER
             #get indices_all and the indices that still need to be calculated
@@ -538,15 +611,26 @@ def BFS(param,array):
             mols_todo, mols_nodo = zcon.classmaker2(startconf,array,k,table, myrun )
             if 1 in myrun.restrictions:
                 mols_todo, mols_nodo = restriction1(mols_todo, mols_nodo, myrun )
-            print "----- END random start configurations -----"
-            print "indices_todo:",mols_todo
-            print "data_nodo:", mols_nodo #all item[1]==1 in data_nodo 
+            print "|      NEW POPULATION CONSTRUCTED:"
+            print "|   mols_todo:"
+            if mols_todo:
+                for mol in mols_todo: print "|      {}".format(mol)
+            else: print "|      -"
+            print "|   mols_nodo:"
+            if mols_nodo:
+                for mol in mols_nodo: print "|      {}".format(mol)
+            else: print "|      -"
 
             # STEP 2: PREDICTOR
-            # perform prescreaning in a predictions. 
-            mols_nocal, mols_tocal, made_pred = predictor(myrun, table, mols_todo,mols_nodo, count, array=array, nsite=l)
-
-
+            # perform prescreaning in a predictions.
+            mols_nocal, mols_tocal, made_pred = predictor(
+                    myrun,
+                    property_table,
+                    mols_todo,mols_nodo,
+                    count,
+                    array=array,
+                    nsite=l
+                    )
 
             # STEP 3: SUBMITTING PART
             if not myrun.nosub==1:
@@ -555,33 +639,33 @@ def BFS(param,array):
                                                myrun,
                                              **myrun.TZmat     ) # here call submitting procedure
             else: mols_all = skipper(mols_tocal,mols_nocal)
-            print "mols_all:",mols_all
 
-            # STEP 4: SORT
-            # sort data in same order as allindices:
-            # not necessary anymore in molsclass
-            #mols_all = sorted(mols_all, key=lambda x:x.Pvalue)
+            # STEP 4: UPDATE OPTIMUM STRUCTURE
+            # decide what the optimum site is and if the bc if fullfilled
+            print "BCOK:", bcok
+            optsite, bcok = testmax(myrun, mols_all, bcok)
 
             # STEP 5: UPDATE DATABASE and LOG results of microiteration
             # logs new elements in data to table and tablebin and whole data to cyclesinfo
-            table = loggings(mols_all,table,count,k,l, made_pred, tablename = myrun.tablename)
-
-            # STEP 6: UPDATE OPTIMUM STRUCTURE
-            # decide what the maximum site is and if the bc if fullfilled
-            print "BCOK:", bcok
-            maxsite, bcok = testmax(myrun, mols_all, bcok)
+            table = loggings(mols_all,
+                    table,
+                    count,
+                    k,l,
+                    made_pred,
+                    tablename = myrun.tablename)
+            property_table = get_property_table(table, myrun)
 
             print("--- %s seconds ---" % (time.time() - myrun.starttime))
             print(myrun.currenttime())
         # END LOOP OVER SITES
 
-        #get maximum and test convergence
-        maximum, maxsite,converged = runtest(myrun, maximum, maxsite, count, bcok, mctable=table, array = array)
+        #get optimum and test convergence
+        optimum, optsite,converged = runtest(myrun, optimum, optsite, count, bcok, mctable=property_table, array = array)
         if converged==1: break
         count +=1
         if count > param['maxiter']:
             print "maxiterations is reached"
-            print "maximum is: ", maximum
+            print "optimum is: ", optimum
             break
     # ---------------------------- #
     # ------ END OF LOOPING ------ # 
@@ -661,35 +745,19 @@ def generate_procedure(param,array):
         # $PBS_ARRAY_INDEX has to be used in the submitscript to submit each job. 
         # each number has to refer to a certain filename.
         # make file with all the filenames:
-        with open('./databc/filenames.txt','w') as fout:
+        with open('./CALC/filenames.txt','w') as fout:
             fout.write( '\n'.join([myrun.identify + mol.index for mol in mols_tocal]) )
         print "njobs:", len(mols_tocal)
 
         # generate all inputfiles
-        from gaussianfunctions import filemaker
-        filemaker(mols_tocal,myrun,**myrun.TZmat) #----------------------------------HERE IS THE FILEWRITER CALL
+        from gaussianfunctions import filemaker, geommaker
+        geommaker(mols_tocal,myrun,**myrun.TZmat)
+        filemaker(mols_tocal,myrun) #----------------------------------HERE IS THE FILEWRITER CALL
 
 
     print "mols_all:", mols_all
     table = loggings(mols_all,table,count,1,1, made_pred=made_pred )
 
-
-
-    #'''generate all structures and print in format'''
-    #from CINDES4.utils.converter import Converter
-    #from CINDES4.utils import writings
-    #from CINDES4.predictor import learning_skl as learning
-    #converter = Converter()
-    #get structure
-    #TZmat = r.geometry(**param)
-    #to get an xyz file with the data from tablebin do generate1()
-    #with open(param['tablename'],'rb') as f:
-    #    table = pickle.load(f)
-    #print table[508:510]
-    #learning.generate1(converter=converter,table=table,**TZmat)
-
-    #to get an xyz file with all the possible structures possible:
-    #generate2(core,active,passive,converter, **param)
     print "DONE"
     return
 
@@ -784,8 +852,8 @@ def SteepestDescent(param,array):
     print(myrun) #this should print all the class elements via the __str__ function
     # the table with all the results of all calculated configs
     table = set_table(myrun)
-    # set maximum
-    maximum = set_maximum(myrun,table)
+    # set optimum
+    optimum = set_optimum(myrun,table)
     #set calculation properties
     startconf = get_startconf(param,array)
     #END MYRUN CLASS assignments. from now myrun should contain all the necessary information to work with during the whole program run.
@@ -801,9 +869,9 @@ def SteepestDescent(param,array):
 
         if count > 1: #define new startconfiguration if not first cycle
             # define new starting geometry
-            print "maxsite[0]",maxsite[0]
+            print "optsite[0]",optsite[0]
             del startconf
-            startconf = zcon.indtocon(maxsite[0])
+            startconf = zcon.indtocon(optsite[0])
             print "newconf: ", startconf
 
         # STEP 1: INDEXMAKER
@@ -829,12 +897,12 @@ def SteepestDescent(param,array):
         table = loggings(mols_all,table,count,1,1, made_pred=made_pred )
 
         # STEP 6: UPDATE OPTIMUM STRUCTURE
-        # decide what the maximum site is and if the bc if fullfilled
+        # decide what the optimum site is and if the bc if fullfilled
         print "BCOK:", bcok
-        maxsite, bcok = testmax(myrun, mols_all, bcok)
+        optsite, bcok = testmax(myrun, mols_all, bcok)
 
         if myrun.procedure=='steepest2':
-            maxconf = zcon.indtocon(maxsite[0])
+            maxconf = zcon.indtocon(optsite[0])
             print "maxconf:", maxconf, 'while startconf:', startconf
             try:
                 changedsite = [ siteM == siteS for siteM,siteS in zip(maxconf,startconf) ].index(False)
@@ -851,13 +919,13 @@ def SteepestDescent(param,array):
         print(myrun.currenttime())
         # END LOOP OVER SITES
 
-        #get maximum and test convergence
-        maximum, maxsite,converged = runtest(myrun, maximum, maxsite, count, bcok, mctable=table, array = array)
+        #get optimum and test convergence
+        optimum, optsite,converged = runtest(myrun, optimum, optsite, count, bcok, mctable=table, array = array)
         if converged==1: break
         count +=1
         if count > param['maxiter']:
             print "maxiterations is reached"
-            print "maximum is: ", maximum
+            print "optimum is: ", optimum
             break
     # ---------------------------- #
     # ------ END OF LOOPING ------ # 
@@ -883,7 +951,7 @@ def database_construction(param,array):
         table = None #make initial calculation. get table with length 1.
 
     count=1
-    maxiter=10
+    maxiter=100
     while True: #later while True
         print_title("COUNT: " + str(count),outline='l',signator="-")
         print "len table:", len(table)
@@ -941,12 +1009,15 @@ def getdivers(array, table, myrun):
     from CINDES4.utils.table import Tablebin
     diversifier = Diversifier(index=index)
     mols = []
-    confs = [ item[0].split('_') for item in table ]
+    #confs = [ item[0].split('_') for item in table ]
+    #confs = [ item.conf for item in table ]
+    confs = table.keys()
     print "confs:", confs[:5]
     #seq = list(set([ group for conf in confs for group in conf ]))
     seq = [ 'CH','B','O','S','N','P',
                                'CNHH', 'CNOO','COH','CSH','CPh','CCHO','CSOOOH']
     print "seq:", seq
+    once = True
     for _ in range(batchsize):
         if index==1 or index==2:
             occupancy_sum, occupancy = diversifier.get_occupancy12(seq, confs, discardCH=discardCH)
@@ -954,7 +1025,9 @@ def getdivers(array, table, myrun):
             conf = make_molecule12(occupancy, seq, array, confs, index=myrun.divers_divindex)
         elif index==3:
             occupancy, occupancy_percentages = diversifier.get_occupancy3(seq, confs)
-            #print "in get divers: occupancy:", occupancy
+            if once:
+                print "in get divers: occupancy:", occupancy
+                once = False
             conf = make_molecule3(occupancy, seq, array, confs)
         elif index==30:
             occupancy, occupancy_percentages = diversifier.get_occupancy3(seq, confs)

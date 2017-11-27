@@ -26,13 +26,15 @@ def do_ml(indices, database, **TZmat):
 def get_experiment(prediction, table, run, retrain=True, array=[]):
     # each prediction element is a dictionary with a 'type' key. 
     ptype = prediction['type']
+    table = list(table.iteritems())
+    #print "table:", table
     kwargs = prediction # prediction is a dictonary with options specific for that experiment type
     kwargs['tableindex']=1
     if ptype == 'ml':
         #preds = do_ml(mols_todo, table, **TZmat)
         pass
     elif ptype=='1d':
-        print "kwargs:", kwargs
+        #print "kwargs:", kwargs
         from CINDES4.predictor.linreg import LinRegOneExperiment, LinRegOneWithPCAExperiment
         if prediction['pca']:
             regressor = LinRegOneWithPCAExperiment(table=table,
@@ -136,6 +138,11 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
 @log_io(print_time=True)
 def do_prediction(prediction, table, retrain, array, count, nsite, run, mols_todo):
     # prediction in: prediction, table, mols_todo, retrain, run, array, count, nsite
+
+    #raise SystemExit('predictions are not jet JSON implemented')
+    # table has changed format is dict and has not automatically the properties that 
+    # must be predicted (for example function values are not included in table
+    # so they must be calculated somewhere from the other items in table
 
     # 0. log prediction:
     made_pred=True
@@ -290,7 +297,7 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
        run_object = myrun with all param elements
     '''
     made_pred=False
-    print "mols_todo:", mols_todo
+    #print "mols_todo:", mols_todo
     TZmat = run.TZmat
     retrain = nsite==0
     retrain = False
@@ -301,7 +308,7 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
     #    - there should at least one prediction be made: not mols_todo==[] unless we are not interested in predictions: procedure testpred
     enoughdata = (
                     (
-                        len(table)>50 and (
+                        len(table)>1 and (
                                               count>1 or run.restart>0
                                           )
                     ) and
@@ -365,6 +372,7 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
             mols_nocal = mols_nodo
             mols_tocal = mols_todo
     else:
+        print "    no predictions will be made    "
         mols_nocal = mols_nodo
         mols_tocal = mols_todo
 
@@ -378,7 +386,6 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
     #return mols_nocal, mols_tocal, predict
     run.function = store_function
     return mols_nocal, mols_tocal, made_pred
-
 
     # Splitting part
     #if run_object.ml==2 and not mols_todo==[]: #prescrean calculate only the best 50 %
