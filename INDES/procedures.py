@@ -279,7 +279,7 @@ def get_sequence(count, myrun):
             sequence = param['sequences'][count-1] #accounting for the fact count starts counting at 1
         except IndexError:
             sequence=random.sample(range(nsites), nsites)
-	finally:
+        finally:
             print "SEQUENCE: " , str(sequence)
             return sequence
     if count==1 and param['restart']==4:
@@ -956,6 +956,10 @@ def getdivers(array, table, myrun):
             occupancy, occupancy_percentages = diversifier.get_occupancy3(seq, confs)
             #print "in get divers: occupancy:", occupancy
             conf = make_molecule3(occupancy, seq, array, confs)
+        elif index==30:
+            occupancy, occupancy_percentages = diversifier.get_occupancy3(seq, confs)
+            #print "in get divers: occupancy:", occupancy
+            conf = make_molecule3_nsites(occupancy, seq, array, confs)
         if discardCH:
             from numpy.random import binomial, shuffle
             # adjust conf and place CH groups in it via a binomial distribution
@@ -1030,29 +1034,6 @@ def make_molecule3(occupancy, seq, array, confs):
     #now still two places have to be filled.
     # for bond4:
     # bond4 neighbors 1 and 3 so the tert group has to be g1 or g3
-    #both_bonds_done=[False,False]
-    #for i,gbond in enumerate(occD.items()[4:]):
-    #    if gbond[0] in keys_visited:
-    #        print "already visited:", gbond[0]
-    #        continue
-    #    g3,g2= gbond[0].split('_')
-    #    if g3==new_conf[1] or g3==new_conf[3]:
-    #        new_conf[4]=g2
-    #        both_bonds_done[0]=True
-    #        keys_visited.append(gbond[0]) # i think this line is not necessary
-    #    elif g3==new_conf[2] or g3==new_conf[3]:
-    #        new_conf[8]=g2
-    #        both_bonds_done[1]=True
-    #        keys_visited.append(gbond[0]) # i think this line is not necessary
-    #    #else:
-    #    #    keys_visited.append(gbond[0]) # i think this line is not necessary
-    #    #    continue
-    #    print "i, both_bonds_done:", i, both_bonds_done
-    #    keys_visited.append(gbond[0]) # i think this line is not necessary
-    #    if all(both_bonds_done):
-    #        break
-    #else:
-    #    raise StandardError
     for gbond in occD.items():
         if gbond[0] in keys_visited:continue
         g3,g2= gbond[0].split('_')
@@ -1074,6 +1055,85 @@ def make_molecule3(occupancy, seq, array, confs):
     #print new_conf
     assert not '' in new_conf, "one group not defined!"
     # now the change that a group appears on 4 8 is different from appearing on the others? so randomly symmetry permutation:
+    Adasym = [
+             [ 1, 2, 3, 4, 5, 6, 7, 8, 9,10],
+             [ 1, 3, 4, 2, 7, 8, 9,10, 5, 6],
+             [ 1, 4, 2, 3, 9,10, 5, 6, 7, 8],
+             [ 3, 2, 4, 1, 6, 7, 5, 9,10, 8],
+             [ 4, 2, 1, 3, 7, 5, 6,10, 8, 9],
+             [ 4, 1, 3, 2, 6,10, 8, 9, 7, 5],
+             [ 2, 4, 3, 1,10, 5, 9, 7, 8, 6],
+             [ 3, 1, 2, 4,10, 8, 6, 7, 5, 9],
+             [ 2, 3, 1, 4, 9, 7, 8, 6,10, 5],
+             [ 4, 3, 2, 1, 8, 9, 7, 5, 6,10],
+             [ 3, 4, 1, 2, 5, 9,10, 8, 6, 7],
+             [ 2, 1, 4, 3, 8, 6,10, 5, 9, 7] ]
+    # randomly select one item from list
+    new_order = Adasym[np.random.choice(range(10))]
+    # permute new_conf according to new_order
+    randomized = np.array(new_conf)[np.array(new_order)-1]
+    return list(randomized)
+
+
+def make_molecule3_nsites(occupancy, seq, array, confs, nsites=3):
+    import numpy as np
+    from collections import OrderedDict
+    occD = dict()
+
+    # make a dictionary of occupancies with siteT_siteS as keys
+    for group1, occ1 in zip(seq,occupancy):
+        if group1 in ['S','O','CO']: continue #these are not possible so do not include
+        for group2, occ12 in zip(seq,occ1):
+            key = '{}_{}'.format(group1,group2)
+            occD[key]=occ12
+    # order the dict so we have the least present combinations first
+    occD = OrderedDict( sorted( occD.iteritems(), key=lambda x:x[1] ) )
+
+    # make a new basic conf
+    new_conf = ['CH']*len(confs[0])
+    keys_visited=[]
+    if nsites==3:
+        # choose between 2-3-2 and 3-2-3
+        # for adamantane ther are 4 2-3-2 possibilities and 6 3-2-3 possibilities so if we choose random:
+        do_tert = np.random.rand()<0.4
+        if do_tert:
+            # choose two neighboring bonds 2-3-2
+            bonds = ((0,5),(0,7))
+        else:
+            # choose two neighboring bonds 3-2-3
+            bonds = ((0,5),(1,5))
+        # take the first bond
+        g3_1, g2_1 = occD.items()[0][0].split('_')
+        i3_1, i2_1 = bonds[0]
+        new_conf[i3_1]=g3_1
+        new_conf[i2_1]=g2_1
+
+        # now we take the second bond but or the second group or the first group has to be similar to the bond
+        # that is already placed
+        i=1 # the one but least occuring bond
+        while True:
+            g3_2, g2_2 = occD.items()[i][0].split('_')
+            if do_tert:
+                # the tertiary group has to match
+                if g3_2==g3_1:
+                    _, i2_2=bonds[1]
+                    new_conf[i2_2]=g2_2
+                    break
+            else:
+                # the secondary group has to match
+                if g2_2==g2_1:
+                    i3_2, _=bonds[1]
+                    new_conf[i3_2]=g3_2
+                    break
+            i+=1
+            print "i:", i, g3_2, g2_2
+    else:
+        raise SystemExit('stop no of sites not supported')
+
+    print new_conf
+    assert not '' in new_conf, "one group not defined!"
+    # now we placed it on a specific 2-3-2 or 3-2-3 position after symmetry operations this is 
+    # corrected
     Adasym = [
              [ 1, 2, 3, 4, 5, 6, 7, 8, 9,10],
              [ 1, 3, 4, 2, 7, 8, 9,10, 5, 6],
