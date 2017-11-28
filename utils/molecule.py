@@ -165,8 +165,8 @@ class Molecule(object):
         OBxyz.append([self.index])
         for item in new_format_xyz:
             OBxyz.append(item)
-        if debug: 
-            print "OBxyz:", 
+        if debug:
+            print "OBxyz:",
             for item in OBxyz: print item
         OBxyz_str = '\n'.join([' '.join(item) for item in OBxyz])
         self.OBMol = pybel.readstring('xyz',OBxyz_str)
