@@ -38,7 +38,9 @@ def indtocon(index):
     #return  [ findall('[A-Z][^A-Z]*',item) for item in index.split('_') ]
 
 def contoind(conf):
-    return '_'.join([''.join(item) for item in conf])
+    #return '_'.join([''.join(item) for item in conf])
+    # without dihedrals:
+    return '_'.join([ ''.join(filter(lambda x:str(x).isalpha(), item)) for item in conf ])
 
 def contoint(conf,array):
     ''' makes an integer list representation of conf '''
@@ -52,8 +54,8 @@ def intocon(inconf,array):
 
 def demethyl(passive):
     """here is now a quite simple operations but i here have
-    an open option to fix some other groups later on 
-    now for each site the methyl group is changed for an H. 
+    an open option to fix some other groups later on
+    now for each site the methyl group is changed for an H.
     """
     for i in range(len(passive)):
         # remove the hydrogens from the methyl groups
@@ -82,13 +84,13 @@ def hydrogenizer(totalmat):
 def matrixmerger2(core,active,passive):
     ''' this has to be translated to numpy '''
     import numpy as np
-    V = np.vstack
+    V = np.vstack # is a tweaked form of concatenate
     C = np.concatenate
     try:
         actpas = C((V(active), V(passive)))
     except (UnboundLocalError, ValueError):
         if passive==[]:
-            print "passive is empty"
+            #print "passive is empty"
             actpas=V(active)
         else: raise
 
@@ -111,15 +113,6 @@ def matrixmerger2(core,active,passive):
 def get_configurations(startconf,array,k, run=[]):
     'select on site k all the configurations with the different functionalizations for that site present in array'
     configurations =  [ startconf[0:k] + [array[k][i]] + startconf[k+1:] for i in range(len(array[k]))]
-    #if hasattr(run,'nlinks'):
-    #    print "links:", run.symlinks
-    #    for link in run.symlinks:
-    #        (i,j) = (link[0]-1,link[1]-1)
-    #        print "link is:", i, " ",j
-    #        for conf in configurations:
-    #            print "conf:", conf
-    #            if not conf[i]==conf[j]:
-    #                conf[j]=conf[i]
     return configurations
 
 def classmaker2(startconf,array,k,table,run=[]):
@@ -152,7 +145,9 @@ def classmaker2_SD(startconf,array,table,run=[]):
 def check_in_table(individuals, table, props=set()):
     mols_todo = individuals[:]
     mols_nodo = []
+    neglect_dihedrals=True
     i=0
+    digits = '0123456789'
     if table:
         for individual in individuals:
             if individual.index in table:
@@ -254,6 +249,7 @@ def doper2(group, geom, core, passive):
 #@profile
 def geomfiller(zma,geom,count):
     ''' this function fills the zma of a functionalisation into the -methyl geometry of that site '''
+    #print "geom1:", geom
     nagroup = len(zma)
     nageom = len(geom)
     delta = nagroup - nageom

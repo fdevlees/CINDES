@@ -216,7 +216,8 @@ def extract_stab(file1 , molecule, fileparameters):
         EAH= gausread(file2,'energy',multiplejobs=0)['energy']
 
         #---- HERE THE electronegativity part of the stab a bit tricky
-        confje = construction.indtocon(index) # change index to conf list using the construction module
+        #confje = construction.indtocon(index) # change index to conf list using the construction module
+        confje = index.split('_')
         #corresp = {2:46,6:18,7:42,9:34,11:22,12:30} # map the alpha positions to methyl indices 
         try:
             siteindex = fileparameters['corresp'][pos] #find for each position the methyl index

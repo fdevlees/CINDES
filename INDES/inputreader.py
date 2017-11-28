@@ -175,6 +175,7 @@ def readfile(subinp):
     #default values
     randomseed = np.random.randint(0,100)
     paras={
+           'adjust_dihedrals':False,
            'aea':0,
            'aip':0,
            'basisset':'6-31G',
@@ -273,7 +274,8 @@ def readfile(subinp):
 
         # 2. capital insensitive keywords:
         line = line.split('#')[0].lower()
-        if 'bc' in line:
+	if 'adjust_dihedrals' in line: paras['adjust_dihedrals']=True
+        elif 'bc' in line:
             paras['bc'] = True
             paras['bcprop'] = line.split()[1]
             paras['bcval'] = line.split()[2]

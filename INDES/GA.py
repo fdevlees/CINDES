@@ -104,7 +104,9 @@ class Fitness_Function():
         pass
 
         # 1. convert configuration lists to molecule instances
+        print "confs:", confs
         individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
+        print "individuals:", individuals
 
         # 2. check which molecules are already calculated and add them to data_nocal
         mols_tocal, mols_nocal = INDES.construction.check_in_table( individuals, self.table, self.run.props )
@@ -119,7 +121,7 @@ class Fitness_Function():
 
         # 4. log new results
         if debug: print "newy:", newy
-        self.table = INDES.loggings.log_table( mols_all , table=self.table)
+        #self.table = INDES.loggings.log_table( mols_all , table=self.table)
         self.table = INDES.loggings.loggings(mols_all,
                     self.table,
                     gen,
@@ -158,12 +160,13 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
           pop = self.internalPop.internalPop
       for id in pop:
           populationlist.append( id.genomeList)
-      if debug: print "populationlist", populationlist, "len:", len(populationlist)
+      #print "populationlist", populationlist, "len:", len(populationlist)
 
       # 1.1. make confs hashable to make it a set and make it list again
       new_confs = tuple( tuple( map( tuple, item)) for item in populationlist )
       unique_confs = [ map(list,item) for item in set(new_confs) ]
       print "n unique_confs:", len(unique_confs)
+      #print "unique_confs:", unique_confs
 
       # 2. call CINDES via FF to calculate the configurations
       mols = self.FF.predict_via_submit_multi(unique_confs, gen=self.currentGeneration)
@@ -402,7 +405,7 @@ from CINDES4.INDES import procedures
 
 def main(param, array):
     GArun = procedures.Run(**param)
-    table = procedures.set_table(GArun)
+    table = procedures.set_table(GArun, array)
     #print "run object:\n", GArun
     final_genome = run_pyevolve(array, table, GArun)
     best = final_genome.bestIndividual()
@@ -504,7 +507,7 @@ def run_pyevolve(array,table, options):
     pop.scaleMethod.set(Scaling.SigmaTruncScaling)
 
     # 17. for plotting / logging
-    sqlite_adapter = DBAdapters.DBSQLite(identify=options.genalg['db_identify'], resetDB=False, resetIdentify=True, commit_freq=1)
+    sqlite_adapter = DBAdapters.DBSQLite(dbname='GAstats.db', identify=options.genalg['db_identify'], resetDB=False, resetIdentify=True, commit_freq=1)
     ga.setDBAdapter(sqlite_adapter)
 
     print "GenAlg:", ga
