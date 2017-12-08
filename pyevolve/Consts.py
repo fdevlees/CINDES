@@ -490,7 +490,7 @@ CDefG2DListInit      = Initializators.G2DListInitializatorInteger
 CDefG2DListCrossUniformProb = 0.5
 
 # - DB Adapters SQLite defaults
-CDefSQLiteDBName = "pyevolve.db"
+CDefSQLiteDBName = "pyevolvestats.db"
 CDefSQLiteDBTable = "statistics"
 CDefSQLiteDBTablePop = "population"
 CDefSQLiteStatsGenFreq = 1

@@ -640,25 +640,28 @@ class Gaussian(logfileparser.Logfile):
         #   hch        1.75406   0.09547   0.00000   0.24861   0.24861   2.00267
         #   hchh       2.09614   0.01261   0.00000   0.16875   0.16875   2.26489
         #         Item               Value     Threshold  Converged?
-        if line[37:43] == "Forces":
+        try:
+             if line[37:43] == "Forces":
+                 if not hasattr(self, "grads"):
+                     self.grads = []
+                 self.skip_lines(inputfile, ['header', 'd'])
+                 forces = []
+                 line = next(inputfile)
+                 while list(set(line.strip())) != ['-']:
+                     tmpforces = []
+                     for N in range(3): # Fx, Fy, Fz
+                         force = line[23+N*15:38+N*15]
+                         if force.startswith("*"):
+                             force = "NaN"
+                         tmpforces.append(float(force))
+                     forces.append(tmpforces)
+                     line = next(inputfile)
+                 self.grads.append(forces)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except Exception as exception:
+            print("forces are not parsed due to a problem: {}".format(str(type(exception).__name__)))
 
-            if not hasattr(self, "grads"):
-                self.grads = []
-
-            self.skip_lines(inputfile, ['header', 'd'])
-
-            forces = []
-            line = next(inputfile)
-            while list(set(line.strip())) != ['-']:
-                tmpforces = []
-                for N in range(3): # Fx, Fy, Fz
-                    force = line[23+N*15:38+N*15]
-                    if force.startswith("*"):
-                        force = "NaN"
-                    tmpforces.append(float(force))
-                forces.append(tmpforces)
-                line = next(inputfile)
-            self.grads.append(forces)
 
         #Extract PES scan data
         #Summary of the potential surface scan:

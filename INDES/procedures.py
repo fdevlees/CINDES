@@ -320,14 +320,16 @@ def set_table(myrun, array=[]):
         json_db = dict()
         #tableprops=['mw','solv', 'e0_solv', 'e1_solv', 'lumo', 'solv']
         #tableprops=['omega']
-        tableprops=['gap','lumo','homo']
+        tableprops=['lumo','homo']
         for item in pickle_db:
             key=item[0]
             value={prop:prop_value for prop,prop_value in zip(tableprops,item[1:])}
             json_db[key]=value
         print "an old_style formatted tablefile was loaded with props:", tableprops
         # touch new json file
-        open('{}.json'.format(tablename),'w').close()
+        with open('{}.json'.format(tablename),'w') as f2:
+            json.dump(json_db, f2, indent=-1)
+        raise SystemExit('stop')
         return json_db
     #-------- enclosed function 2:
     def adjust_dihedrals(table, array):

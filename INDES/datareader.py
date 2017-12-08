@@ -534,7 +534,7 @@ def normaltermination(filepaths,debug=False):
            time.sleep(300) # wait 5 minudtes
            extratime += 300
            print "extra waittime/h:", extratime/3600, "||",
-    return 
+    return
 
 def errortermination(path,debug=False):
     mymol=Logfile(path) #read outputfile

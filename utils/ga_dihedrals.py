@@ -6,7 +6,7 @@ import CINDES4.pyevolve as pyevolve
 
 # main function:
 def reduce_conflicts(molecule, core=[], active=[], passive=[]):
-    print "{0} {1} {0}".format("$"*20, molecule.index)
+    print "\n{0} {1} {0}".format("$"*20, molecule.index)
     conf = molecule.conf
     new_conf = []
     for group in conf:
@@ -16,7 +16,8 @@ def reduce_conflicts(molecule, core=[], active=[], passive=[]):
             group.append(1.0)
             new_conf.append(group)
         else:
-            print "no relevant dihedral for:", group
+            pass
+            # no relevant dihedral for:", group
     print "new_conf:", new_conf
     molecule.dihedrals = [item[-1] for item in new_conf]
     print "dihedrals:", molecule.dihedrals
@@ -104,7 +105,8 @@ class Fitness_Function():
             if len(group)>2 or group in [['C','Ph'], ['C','Th']]:
                 self.dihedralindices.append(i)
             else:
-                print "no relevant dihedral for:", group
+                #print "no relevant dihedral for:", group
+                pass
         return
 
     def eval_function(self, dihedrals):
@@ -219,7 +221,7 @@ def run_pyevolve(molecule, **kwargs):
 
     # 2. Set Genome instance using as allelles the sites with the different functionalisations.
     genome = G1DList.G1DList(len(molecule.dihedrals))
-    genome.setParams(rangemin=1, rangemax=360, gauss_mu=10, gauss_sigma=5)
+    genome.setParams(rangemin=1, rangemax=360, gauss_mu=20, gauss_sigma=5)
 
     # 3. Set evaluator function (objective function) or set precalculation is True! this circumvents serial evaluation
     genome.evaluator.set(function.eval_function)
@@ -231,7 +233,7 @@ def run_pyevolve(molecule, **kwargs):
     genome.initializator.set(Initializators.G1DListInitializatorReal)
     # 6. set Crossover function: types: G1DListCrossoverUniform, G1DListCrossoverSinglePoint, G1DListCrossoverTwoPoint
     genome.crossover.set( Crossovers.G1DListCrossoverUniform)
-    print "genome:\n", genome
+    #print "genome:\n", genome
 
     # 7. set Genetic Algorithm Instance using a defined random.seed()
     ga = GSimpleGA.GSimpleGA(genome)
@@ -249,16 +251,16 @@ def run_pyevolve(molecule, **kwargs):
     #ga.terminationCriteria.set(GSimpleGA.ConvergenceCriteria)
     ga.terminationCriteria.set(GoodEnoughDistance)
     # 14. set population size
-    ga.setPopulationSize(20)
+    ga.setPopulationSize(30)
     # 15. set elitism
     ga.setElitism(True)
     ga.nElitismReplacement = 1
 
     # 17. for plotting / logging
-    sqlite_adapter = DBAdapters.DBSQLite(identify=molecule.index, resetDB=False, resetIdentify=True, commit_freq=5)
+    sqlite_adapter = DBAdapters.DBSQLite(dbname='dihedralstats.db', identify=molecule.index, resetDB=False, resetIdentify=True, commit_freq=10)
     ga.setDBAdapter(sqlite_adapter)
 
-    print "GenAlg:", ga
+    #print "GenAlg:", ga
 
     # Do the evolution, with stats dump
     ga.evolve(freq_stats=5)

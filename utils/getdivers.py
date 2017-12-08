@@ -1,7 +1,6 @@
 from writings import print_title, log_io
 import pickle
-import construction as zcon
-
+from CINDES4.INDES import construction as zcon
 from CINDES4.INDES.procedures import Run, set_table, submittingprocedure
 from CINDES4.INDES.predictions import predictor
 from CINDES4.INDES.loggings import loggings
@@ -40,7 +39,7 @@ def database_construction(param,array):
             print "new confsall written"
         if debug: print mols
         #1b check already in database
-        mols_todo, mols_nodo = zcon.check_in_table(mols, table, myrun)
+        mols_todo, mols_nodo = zcon.check_in_table(mols, table, myrun.props)
         #1c eventueel predictions
         mols_nocal, mols_tocal, made_pred = predictor(myrun, table, mols_todo,mols_nodo, count, array=array)
         #2. run new structure
@@ -51,7 +50,7 @@ def database_construction(param,array):
         #3. add structure to table
         if debug: print "after calculation:"
         if debug: print mols_all
-        table = loggings(mols_all,table,count,1,1, made_pred=made_pred )
+        table = loggings(mols_all,table,count,1,1, made_pred=made_pred, tablename=myrun.tablename)
         if debug:
             for item in table: print item
         #4. stop if maxstructures is obtained. or other convergence criteria is met. 

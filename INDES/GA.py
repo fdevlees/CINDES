@@ -507,7 +507,7 @@ def run_pyevolve(array,table, options):
     pop.scaleMethod.set(Scaling.SigmaTruncScaling)
 
     # 17. for plotting / logging
-    sqlite_adapter = DBAdapters.DBSQLite(dbname='GAstats.db', identify=options.genalg['db_identify'], resetDB=False, resetIdentify=True, commit_freq=1)
+    sqlite_adapter = DBAdapters.DBSQLite(identify=options.genalg['db_identify'], resetDB=False, resetIdentify=True, commit_freq=1)
     ga.setDBAdapter(sqlite_adapter)
 
     print "GenAlg:", ga

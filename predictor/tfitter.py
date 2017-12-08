@@ -1,7 +1,10 @@
 #!/bin/env python
 ttert = False # keep a distinction between tert apical and termedial. this will give double amount of coefficients
 debug=True
-
+noch=True
+noch1=True
+if noch:print "CH is neglected in 2D"
+if noch1:print "CH is neglected in 1D"
 
 ########################
 #####   IMPORTS    #####
@@ -59,8 +62,8 @@ def slice_it(li, splits, ngps=None):
     if args.equalsites:
         #splits = (7,7,7)            ### HARD CODED!
         #splits = (4,4,6)
-        #splits=(11,13)
-        splits=(15,13)
+        splits=(11,13)
+        #splits=(15,13)
     nkinds = len(splits)
     for i in xrange(nkinds):
         stop = start+splits[i]
@@ -143,9 +146,9 @@ funcs = {'CCFFF': '$C-CF_3$',
 ####      CLASSES     #####
 ###########################
 
-class Dataset(): #abstract data class
+class Dataset(object): #abstract data class
     #__metaclass__ = ABCMeta
-    def __init__(self,name,*args,**kwargs):
+    def __init__(self,name):
         self.name = name
         return
 
@@ -153,8 +156,7 @@ class Dataset(): #abstract data class
         #if table==[]:
         if True:
             from CINDES4.utils.table import Tablebin
-            print "args.filename:", args.filename
-            table = Tablebin( filename=args.filename, column=args.column )
+            table = Tablebin( filename=self.name, column=args.column )
             self.confs = table.confs
             self.Y = table.Y
             self.confs, self.Y = zip(*[[conf, y] for conf,y in zip(self.confs, self.Y) if not any( group in conf for group in ['CCHHH','CCOOH','CF','CCl'])])
@@ -348,6 +350,11 @@ class Dataset(): #abstract data class
         if combined: X=self.X12
         else: X=self.X2
         if args.verbose>2: print clf.coef_ #also very large coefficients
+        Rscore = clf.score(X,self.Y)
+        print "total score {}:".format(model), Rscore
+        y_pred = clf.predict(X)
+        y_errors = self.Y - y_pred
+        print "total MAE:", np.sum(abs(y_errors))/float(len(y_errors))
 
         if combined:
             C = clf.coef_
@@ -360,48 +367,77 @@ class Dataset(): #abstract data class
             c2 = c2.reshape([11,13])
 
             #put together in a numpy array
-            C = np.full([14,13],np.nan)
+            if noch:
+                C = np.full([13,13],np.nan)
+                C[2:]=c2
+            else:
+                C = np.full([14,13],np.nan)
+                C[3:]=c2
             C[0][:11]=c1_t
             C[1]=c1_s
-            C[3:]=c2
             C[C == 0.00000] = np.nan
 
             # put them together in a dataframe?
             import pandas as pd
             columns= ['CH', 'CPh', 'CSH', 'CCHO', 'N', 'P', 'B', 'CSOOOH', 'COH', 'CNHH', 'CNOO', 'O', 'S']
-            indices= ['secondary','tertiary',''] + columns[:-2]
+            if noch:
+                indices= ['tertiary','secondary',''] + columns[1:-2]
+            else:
+                indices= ['tertiary','secondary',''] + columns[:-2]
             df = pd.DataFrame(C, columns=columns, index=indices)
             order =  ['CH', 'COH', 'CSOOOH', 'CNHH', 'CSH', 'CPh', 'CNOO', 'CCHO', 'N', 'P', 'B', 'O', 'S']
-            df=df[order]
+            if noch:
+                df=df[order].reindex(['tertiary','secondary','']+order[1:-2])
+
+            df.to_csv('coefs')
 
             import seaborn as sns
             sns.set(style="white")
             if True:
                 #cmap1 = sns.diverging_palette(230, 15, s=40, l=50, as_cmap=True, center='light')
-                cmap1 = "viridis_r"
+                cmap1 = "viridis"
                 #cmap2 = sns.diverging_palette(220, 10, s=40, l=50, as_cmap=True, center='light')
                 cmap2 = sns.diverging_palette(220, 10, as_cmap=True, center='dark')
                 fig, ax = plt.subplots()
                 mask1 = np.zeros_like(df).astype(np.bool)
-                mask1[0:2]=True
+                if noch1:
+                    mask1[0:2,1:]=True
+                else:
+                    mask1[0:1]=True
                 #print mask1
                 mask2 = np.zeros_like(df).astype(np.bool)
-                mask2[2:]=True
+                if noch:
+                    mask2[3:,1:]=True
+                else:
+                    mask2[3:]=True
                 #print mask2
                 vmax1= max(np.array(df.values.tolist())[mask1])
                 vmax2= max(np.array(df.values.tolist())[mask2])
+                print df.values.tolist()
                 #vmax2=
                 vmin1= min(np.array(df.values.tolist())[mask1])
                 vmin2= min(np.array(df.values.tolist())[mask2])
-                sns.heatmap(df, ax=ax, mask=mask1, vmin=vmin2, vmax=vmax2,
-                        square=True, annot=True, fmt="4.2f",
-                        cbar_kws={'label':'2nd order corrections'},
-                        annot_kws={'fontsize':9}, cmap=cmap2)
-                sns.heatmap(df, ax=ax, mask=mask2, vmin=vmin1, vmax=vmax1,
-                        square=True, annot=True, fmt="4.2f",
+                vcenter = .5*(vmin1+vmax1)
+                print "vmin1, vmax1, vmin2, vmax2:", vmin1, vmax1, vmin2, vmax2
+                if noch1:
+                    df=df.iloc[:,1:]
+                    mask1=mask1[:,1:]
+                    mask2=mask2[:,1:]
+                ax2 = sns.heatmap(df, ax=ax, mask=mask2, vmin=vmin1, vmax=vmax1,
+                        square=True, center=vcenter, annot=True, fmt="4.2f",
                         annot_kws={'fontsize':9},
                         cbar_kws={'label':'1st order coefficients'},
                         cmap=cmap1)
+                ax1 = sns.heatmap(df, ax=ax, mask=mask1, vmin=vmin2, vmax=vmax2,
+                        square=True, annot=True, fmt="4.2f",
+                        cbar_kws={'label':'2nd order corrections'},
+                        annot_kws={'fontsize':9}, cmap=cmap2)
+                # change fontcolor of a textlabel:
+                print ax1.texts[19].get_text()
+                #print ax2.texts[-20].get_text()
+                #print ax2.texts[-20].get_color()
+                #ax2.texts[19].set_color('k')
+                #ax2.texts[-20].set_color(.0)
                 plt.xticks(rotation=45)
                 plt.yticks(rotation=45)
                 plt.xlabel('secondary groups')
@@ -426,28 +462,9 @@ class Dataset(): #abstract data class
                 labels = [ funcs.get(func,func) for func in self.seq ]
                 from CINDES4.utils.plotters import heatmap_2d
                 heatmap_2d(C,hits,labels,args)
-        Rscore = clf.score(X,self.Y)
-        print "total score {}:".format(model), Rscore
 
         print "small test:"
         sprint(5,clf.predict(X), self.Y)
-        if args.verbose>0:
-            if args.fraction:
-                preds_train = clf.predict(self.X_train)
-                preds_test  = clf.predict(self.X_test)
-                rmse_train = metrics.mean_squared_error(preds_train, self.Y_train)
-                mae_train = metrics.mean_absolute_error(preds_train, self.Y_train)
-                rmse_test = metrics.mean_squared_error(preds_test, self.Y_test)
-                mae_test = metrics.mean_absolute_error(preds_test, self.Y_test)
-                print "small comparison prediction vs real target value (training):"
-                sprint(5,preds_train, self.Y_train)
-                print "small comparison prediction vs real target value (testing):"
-                sprint(5,preds_test, self.Y_test)
-                print "RMSE training:", rmse_train
-                print "MAE training:",  mae_train
-                print "RMSE test:", rmse_test
-
-        #plot the dataset vs the predictions. has to be straight line for good fit
         if args.xyplot and args.verbose>0:
             if args.fraction:
                 print "training red / test bleu"
@@ -457,24 +474,8 @@ class Dataset(): #abstract data class
                 plt.plot(clf.predict(X),self.Y,'ro')
             plt.show()
 
-        #maybe relevant here?
-        #if args.plot>2:
-        #    print coeft
-        #    smeans=[]
-        #    sstds=[]
-        #    for i in range(len(self.ngps)): # for al sites do:
-        #        total = [ item[i] for item in coeft ] #list of all for same site
-        #        smeans.append(np.mean(total))
-        #        sstds.append(np.std(total))
-        #    bar_plot2(smeans,std=sstds)
-        #    plt.show()
 
-
-
-        if args.fraction:
-            return rmse_train, mae_train, rmse_test, rmse_train, Rscore
-        else:
-            return Rscore
+        return Rscore
 
     def linreg_analyze(self,clf,model='OLS',**kwargs):
 
@@ -618,9 +619,9 @@ class Dataset(): #abstract data class
             print "size test set:", np.shape(self.Y_test)
             clf.fit(self.X_train, self.Y_train)
         else:
-            if True:
+            if False:
                 #
-                alpha = [ 1*10**i for i in [ -12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4 ] ]
+                alpha = [ 1*10**i for i in [ -16, -14, -12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4 ] ]
                 sprint(2, self.X)
                 sprint(2, self.X2)
 
@@ -640,7 +641,7 @@ class Dataset(): #abstract data class
 
                 # predict the differences. 
                 #alpha = [ 1*10**i for i in [ -12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4 ] ]
-                alpha = np.logspace(-15,-1,10)
+                alpha = np.logspace(-16,-1,16)
                 if True:
                     from sklearn.model_selection import StratifiedShuffleSplit
                     sss = StratifiedShuffleSplit(n_splits=2, test_size=0.5, random_state=0)
@@ -679,6 +680,67 @@ class Dataset(): #abstract data class
         self.clf = clf
         return clf
 
+    def linreg_combined(self, model='Ridge', **kwargs):
+        alpha=1.e-14
+        CV=True
+        intercept1=True
+        if noch1:
+            intercept1=False
+            self.Y = np.array(self.Y)-9.446704
+            #self.Y = np.array(self.Y)+7.426258753
+            #self.Y = np.array(self.Y)-2.020445247
+
+        if model in ['Ridge']:
+            if not CV:
+                clf1 = linear_model.Ridge(alpha=alpha,fit_intercept=False, solver='auto')
+            else:
+                alpha = [ 1*10**i for i in [ -12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4 ] ]
+                clf1 = linear_model.RidgeCV(alphas=alpha, fit_intercept=False)
+        else:
+            raise TypeError
+        clf1.fit(self.X, self.Y)
+        print "score 1D:", clf1.score(self.X, self.Y)
+
+        try:print "best 1D alpha:", clf1.alpha_
+        except AttributeError:clf1.alpha_=alpha
+
+        try:print "1D intercept:", clf1.intercept_
+        except AttributeError:clf1.intercept_=False
+
+        print "1D coefs:", clf1.coef_
+        # get the differences of real values and predicted values
+        y_pred1 = clf1.predict(self.X)
+        y_1D_errors = self.Y - y_pred1
+        print "MAE:", np.sum(abs(y_1D_errors))/float(len(y_1D_errors))
+        print "self.Y, y_pred1, error:"
+        for i in range(5): print self.Y[i], y_pred1[i], y_1D_errors[i]
+
+        if model in ['Ridge']:
+            if not CV:
+                alpha =1.e-12
+                clf2 = linear_model.Ridge(alpha=alpha,fit_intercept=False,tol=0.001,solver='auto')
+            else:
+                alpha = [ 1*10**i for i in [ -12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4 ] ]
+                clf2 = linear_model.RidgeCV(alphas=alpha, fit_intercept=False, cv=None)
+        else:
+            raise TypeError
+        clf2.fit(self.X2, y_1D_errors)
+        print "score 2D:", clf2.score(self.X2, y_1D_errors)
+
+        try:print "best 2D alpha:", clf2.alpha_
+        except AttributeError: clf2.alpha_=alpha
+
+        # get the real values of 1D+2D
+        y_pred_errors = clf2.predict(self.X2)
+        y_pred2 = y_pred1 + y_pred_errors
+        y_2D_errors = self.Y - y_pred2 # == y_1D_errors - y_pred_errors
+        print "MAE 2D:", np.sum(abs(y_2D_errors))/float(len(y_2D_errors))
+        print "self.Y, y_pred1, y_pred2"
+        for i in range(5): print self.Y[i], y_pred1[i], y_pred2[i], y_2D_errors[i]
+
+        clf = CLF(clf1, clf2)
+        return clf
+
     def predict(self,indices,clf):
         pre_confs = [ indtocon(item) for item in indices ]
         pre_Xs = self.extractX(pre_confs)
@@ -704,7 +766,7 @@ class Adamantane(Dataset):
     #specific adamantane parameters
     #ngps = (12,12,12,12,15,15,15,15,15,15) #for every instance this is same
 
-    def __init__(self,*rgs,**kwargs):
+    def __init__(self, name='ada'):
         #self.seq = ['CH','CCHHH','CCFFF','N','CF','CCl','CNHH','CNOO','CCN','CSH','COH','CCOOH','CO','O','S']
         self.bonds = ( (0,9),(0,5),(0,7),
                      (3,9),(3,4),(3,8),
@@ -725,6 +787,7 @@ class Adamantane(Dataset):
              [ 3, 4, 1, 2, 5, 9,10, 8, 6, 7],
              [ 2, 1, 4, 3, 8, 6,10, 5, 9, 7] ]
             self.syms = np.array(Adasym) -1
+        super(Adamantane, self).__init__(name)
         return
 
 
@@ -744,6 +807,8 @@ class Adamantane(Dataset):
         for k in range(len(confs)): # for all the configurations:
             for i in range(len(confs[k])): #for all the groups in the configuration
                 group = confs[k][i]
+                if noch1:
+                    if group=='CH':continue
                 if group=='CSO2OH':
                     cleangroup= 'CSO3H'
                 elif group=='CHNCH3':
@@ -777,6 +842,8 @@ class Adamantane(Dataset):
                 i1,i2 = combi
                 group1 = confs[k][i1]
                 group2 = confs[k][i2]
+                if noch:
+                    if any( group=='CH' for group in (group1, group2)):continue
                 if group1=='CNOO60':
                     group1='CNOO'
                 if group2=='CNOO60':
@@ -790,7 +857,7 @@ class Adamantane(Dataset):
                 X[k] = Bflatten
         #print "X2 constructed; shape X2:", np.shape(X)
 
-        if True: # analyse X2
+        if False: # analyse X2
             print "sum of all elements:"
             s = np.sum(X, axis=0)
             print s
@@ -801,7 +868,6 @@ class Adamantane(Dataset):
             sb.heatmap(hitsdf, annot=True)
             plt.show()
             raise SystemExit('stop in extract2')
-            
 
         return X
 
@@ -1092,7 +1158,7 @@ def main(args):
         raise SystemExit('no identify was identified')
 
     # step 2: extract data
-    myrun.extract(file=args.filename)
+    myrun.extract()
 
     # step 3: analyze data
     if args.analyze:
@@ -1163,13 +1229,18 @@ def main(args):
     if args.combined:
         myrun.extract12()
         # 4.2.2: do regressions
-        if False:
-            alpha=0.005
+        if True:
+            alpha=args.ridge
             print "args.ridge:", alpha
-            clf_Ridge2D = myrun.linreg(model='Ridge', alpha=alpha, combined=True)
+            #clf_Ridge2D = myrun.linreg(model='Ridge', alpha=alpha, combined=True)
+            clf_RidgeC = myrun.linreg_combined(model='Ridge')
             if args.analyze:
-                errors = myrun.linreg_analyze2(clf_Ridge2D, model='Ridge', combined=True)
+                errors = myrun.linreg_analyze2(clf_RidgeC, model='Ridge', combined=True)
                 allerrors.append(errors)
+            if True:#test another dataset
+                newset=Adamantane('tablebin_400')
+                newset.extract12()
+                print clf_RidgeC.score(newset.X12, newset.Y)
         else:
             alpha = [ 10**i for i in np.arange(-10,0,0.5) ]
             clf_RidgeCV = myrun.linreg(model='RidgeCV',alpha=alpha, combined=True)
