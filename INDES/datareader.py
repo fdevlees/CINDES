@@ -254,27 +254,14 @@ def extract_stab(file1 , molecule, fileparameters):
     propsA['H_pos'] = E_ah[1]
     return propsA
 
-def get_paths( mols, fileparameters):
-    ''' get all paths that need to be examined later '''
-    files=[]
-    path = fileparameters['path']
-    for molecule in mols:
-        files.append(path + '/' + fileparameters['identify'] + molecule.index + '.log')
-
-        if fileparameters['stab']==1:
-            for pos in fileparameters['positions']: #extract al AH energies and take the lowest
-                files.append(path + '/' + molecule.index + '/' + fileparameters['identify'] + molecule.index + '_' + str(pos) + '.log')
-
-    return files
 
 
 @log_io()
 def datareader( mols_tocal, fileparameters):
     # 1. get all paths
-    paths = get_paths( mols_tocal, fileparameters)
 
     # 2. test normal termination
-    normaltermination( paths, debug=fileparameters['debug'], mols=mols_tocal )
+    mols_tocal = normaltermination( mols_tocal, fileparameters)
 
     # 3. get a list of properties that need to be extracted for each molecule
     # THIS IS ALREADY DONE AT INPUTREADER > run.props
@@ -503,7 +490,27 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1, afile=True):
 
     return results
 
-def normaltermination(filepaths,debug=False, mols=None):
+def get_paths( mols, fileparameters):
+    ''' get all paths that need to be examined later '''
+    files=[]
+    #path = fileparameters['path']
+    for molecule in mols:
+        #files.append(path + '/' + fileparameters['identify'] + molecule.index + '.log')
+        #if fileparameters['stab']==1:
+        #    for pos in fileparameters['positions']: #extract al AH energies and take the lowest
+        #        files.append(path + '/' + molecule.index + '/' + fileparameters['identify'] + molecule.index + '_' + str(pos) + '.log')
+        files.extend(get_molpaths(molecule, fileparameters))
+    return files
+
+def get_molpaths(mol, fileparameters):
+    paths=[]
+    paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '.log')
+    if fileparameters['stab']==1:
+        for pos in fileparameters['positions']: #extract al AH energies and take the lowest
+            paths.append(fileparameters['path'] + '/' + molecule.index + '/' + fileparameters['identify'] + molecule.index + '_' + str(pos) + '.log')
+    return paths
+
+def normaltermination(mols_tocal, fileparameters):
     #-----
     def termination(filepath):
        with open(filepath,'r') as fid:
@@ -515,6 +522,8 @@ def normaltermination(filepaths,debug=False, mols=None):
                fid.close()
                return 2
     #-----
+    filepaths = get_paths( mols_tocal, fileparameters)
+    debug=fileparameters['debug']
     copyfilepaths = filepaths[:] #copy to be able to append to it while looping over it
     for path in copyfilepaths: #test all for information which jobs crashed
         if not termination(path)==1:
@@ -524,20 +533,53 @@ def normaltermination(filepaths,debug=False, mols=None):
             #    filepaths.append(path[:-4]+'zzz.com')
     extratime = 0
     once = 0
-    for path in filepaths: #test one by one waiting for normal termination
-        while True:
-           if termination(path)==1:
-               break
-           elif termination(path)==2:
-               print "\n    {} IGNORED!\n".format(path)
-               break
-           else:
-               print "no normal termination for: ",path
-           #time.sleep(300) # wait 5 minudtes
-           time.sleep(300) # wait 5 minudtes
-           extratime += 300
-           print "extra waittime/h:", extratime/3600, "||",
-    return
+
+    #--- new:
+    mols_toread=[]
+    for mol in mols_tocal:
+        # get path belonging to this particular mol
+        molpaths=get_molpaths(mol, fileparameters)
+        ignoremol=False
+        for path in molpaths: #test one by one waiting for normal termination
+            while True:
+                if termination(path)==1:
+                    break
+                elif termination(path)==2:
+                    print "\n\n{0}\n             INGORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, path)
+                    ignoremol=True
+                    break
+                else:
+                    print "no normal termination for: ",path
+                #time.sleep(300) # wait 5 minudtes
+                time.sleep(300) # wait 5 minudtes
+                extratime += 300
+                print "extra waittime/h:", extratime/3600, "||",
+            # when I'm here this path has normal termination
+            if ignoremol: break # this ignores the other paths belonging to this mol
+        # when I'm here every molpath of this mol should have normal termination
+        if not ignoremol:
+            mols_toread.append(mol)
+    # when I'm here every mol should have normal termination
+
+
+    #--- old:
+    #for path in filepaths: #test one by one waiting for normal termination
+    #    while True:
+    #       if termination(path)==1:
+    #           break
+    #       elif termination(path)==2:
+    #           print "\n    {} IGNORED!\n".format(path)
+    #           break
+    #       else:
+    #           print "no normal termination for: ",path
+    #       #time.sleep(300) # wait 5 minudtes
+    #       time.sleep(300) # wait 5 minudtes
+    #       extratime += 300
+    #       print "extra waittime/h:", extratime/3600, "||",
+    #mols_toread = mols_tocal
+    # ---
+    print "mols_toread:", mols_toread
+    return mols_toread
 
 def errortermination(path,debug=False):
     mymol=Logfile(path) #read outputfile

@@ -1,9 +1,0 @@
-
-subinp = ''
-nsequences = 4
-
-x = range(10)
-
-
-for _ in range(nsequences):
-    ine = subinp.readline().translate(None,'[,]') # that is: read line and replace the chars in '[,]' by None. 
