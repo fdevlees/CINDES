@@ -3,6 +3,7 @@ debug=0
 
 import construction as zcon
 from CINDES4.utils.writings import log_io, print_title, sprint, dump
+from CINDES4.utils.molecule import Molecule
 from CINDES4.predictor import learning_skl as learning
 import random
 from math import exp #exp(x) returns e^x
@@ -77,7 +78,7 @@ def ML_pred(regressor, conf, **kwargs):
     return mol.predictions[ regressor.name ]
 
 @log_io()
-def montecarloprocedure(run, subarray, maxi, table,**kwargs):
+def montecarloprocedure(run, subarray, maxi, Dtable,**kwargs):
     #version 4/10/2015
     #MONTE CARLO PROCEDURE. 
                #maxsite = montecarloprocedure(beta, array, maximum, table)
@@ -94,11 +95,8 @@ def montecarloprocedure(run, subarray, maxi, table,**kwargs):
     print "intial temperature is: ",T
 
     # 2. set additional initial parameters
-    cmaximum = zcon.indtocon(maxi[0]) # maximum is in index format. change to confformat
+    cmaximum = zcon.indtocon(maxi.index) # maximum is Molecule instance. get conf without dihedral angles
 
-    raise SystemExit('not implemented JSON style table')
-    # Dtable should be comming directly. similar as predictions.py as { index:Pvalue, index2:Pvalue2 }
-    #Dtable = dict([ (item[0],item[1]) for item in table] )
     Tcount = 0 #temperature counter. to zero after increased.
     Rcount = 0 #number of random confs tested
     Tcountmax = int ( 10** ( float( 1 + fileparameters['nrandsites'] ) ) )
@@ -108,10 +106,9 @@ def montecarloprocedure(run, subarray, maxi, table,**kwargs):
     if fileparameters['ml']==2 or fileparameters['predictions']:
         if not hasattr(run, 'best_pred'):
             run.best_pred = run.predictions[0]
-        ml_instance = ML_init(table=table, array=subarray, run=run, prediction= run.best_pred     , **kwargs)
+        ml_instance = ML_init(table=Dtable, array=subarray, run=run, prediction= run.best_pred     , **kwargs)
 
     # 4. select random configurations until one is accepted. 
-    print "Temperatures:",
     while True:
         # 4.1 select a random conf
         rconf = randomconf(subarray,cmaximum,fileparameters['nrandsites']) # make a total random configuration
@@ -126,14 +123,14 @@ def montecarloprocedure(run, subarray, maxi, table,**kwargs):
                     indje= zcon.contoind(confje)
                     #print "Dtable[indje]:", Dtable[indje]
                     try:
-                        deltaetje += Dtable[indje] - maxi[2]
+                        deltaetje += Dtable[indje] - maxi.Pvalue
                     except KeyError as e:
                         print "indje:", indje
                         print "error:", e
                         raise
                     #print "deltaetje:", deltaetje
-            erandom = float (maxi[2] + deltaetje)
-            
+            erandom = float(maxi.Pvalue + deltaetje)
+
             if debug:
                 print "random conf:", rconf
                 print "random ind:",  rind
@@ -141,7 +138,7 @@ def montecarloprocedure(run, subarray, maxi, table,**kwargs):
                 print "Dtable[indje]",Dtable[indje]
                 print "deltaetje:", deltaetje
                 print "erandom:", erandom
-            
+
         else:
         # 4.2b predict property via MACHINE LEARNING
             erandom = ML_pred(ml_instance, rconf,**kwargs)
@@ -152,16 +149,15 @@ def montecarloprocedure(run, subarray, maxi, table,**kwargs):
 
         # 4.3 determine acceptance based on Delta-P
         # calculate the gradient energy. > resulttry
-        p = exp(- beta * (abs( erandom - maxi[1] )))
+        p = exp(- beta * (abs( erandom - maxi.Pvalue )))
         acceptance = generate(p)
 
         # 4.4 
         Rcount +=1
-        if rind == maxi[0]:
+        if rind == maxi.index:
             print "rconf similar to maxconf. not accepted"
             acceptance = 0
         if acceptance == 1:
-            print maxi[0],'\n',rind
             print "configuration accepted"
             print Rcount, " configurations tested"
             print "Random Conf:" , rind
@@ -176,7 +172,10 @@ def montecarloprocedure(run, subarray, maxi, table,**kwargs):
                 Tcount = 0
                 T = T * 1.1
                 beta = 1.0 / ( kb * T )
-    return [ rind,0.0, erandom ]
+    mol = Molecule(conf=rconf)
+    mol.predicted=True
+    mol.Pvalue=erandom
+    return mol
 
 
 

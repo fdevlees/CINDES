@@ -274,7 +274,7 @@ def datareader( mols_tocal, fileparameters):
     paths = get_paths( mols_tocal, fileparameters)
 
     # 2. test normal termination
-    normaltermination( paths, fileparameters['debug'] )
+    normaltermination( paths, debug=fileparameters['debug'], mols=mols_tocal )
 
     # 3. get a list of properties that need to be extracted for each molecule
     # THIS IS ALREADY DONE AT INPUTREADER > run.props
@@ -503,7 +503,7 @@ def gausread(filename,props,multiplejobs=1,rdvindex=1, afile=True):
 
     return results
 
-def normaltermination(filepaths,debug=False):
+def normaltermination(filepaths,debug=False, mols=None):
     #-----
     def termination(filepath):
        with open(filepath,'r') as fid:
@@ -511,9 +511,9 @@ def normaltermination(filepaths,debug=False):
            if re.search('Normal termination',''.join(text)):
                fid.close()
                return 1
-           #elif re.search('IGNORE',''.join(text)):
-           #    fid.close()
-           #    return 2
+           elif re.search('IGNORE',''.join(text)):
+               fid.close()
+               return 2
     #-----
     copyfilepaths = filepaths[:] #copy to be able to append to it while looping over it
     for path in copyfilepaths: #test all for information which jobs crashed
@@ -527,6 +527,9 @@ def normaltermination(filepaths,debug=False):
     for path in filepaths: #test one by one waiting for normal termination
         while True:
            if termination(path)==1:
+               break
+           elif termination(path)==2:
+               print "\n    {} IGNORED!\n".format(path)
                break
            else:
                print "no normal termination for: ",path

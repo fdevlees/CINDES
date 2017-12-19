@@ -104,7 +104,11 @@ class Molecule(object):
         return self.index==other.index
 
     def copy(self):
-        return Molecule(self.conf)
+        new_mol = Molecule(self.conf)
+        new_mol.Pvalue = self.Pvalue
+        new_mol.props = self.props
+        new_mol.predicted = self.predicted
+        return new_mol
 
     def log(self):
         ret = [ self.index ]
