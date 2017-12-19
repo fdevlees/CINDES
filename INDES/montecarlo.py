@@ -110,6 +110,7 @@ def montecarloprocedure(run, subarray, maxi, Dtable,**kwargs):
 
     # 4. select random configurations until one is accepted. 
     while True:
+        TAKEOTHER=False
         # 4.1 select a random conf
         rconf = randomconf(subarray,cmaximum,fileparameters['nrandsites']) # make a total random configuration
         rind = zcon.contoind(rconf)
@@ -127,7 +128,12 @@ def montecarloprocedure(run, subarray, maxi, Dtable,**kwargs):
                     except KeyError as e:
                         print "indje:", indje
                         print "error:", e
-                        raise
+                        print "maybe an ignored structure is encountered"
+                        TAKEOTHER=True
+
+            if TAKEOTHER:
+                print "check other random structure"
+                continue
                     #print "deltaetje:", deltaetje
             erandom = float(maxi.Pvalue + deltaetje)
 
