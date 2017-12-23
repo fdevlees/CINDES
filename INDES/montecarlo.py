@@ -73,7 +73,7 @@ def ML_pred(regressor, conf, **kwargs):
     # 3. use model to predict
     from CINDES4.utils.molecule import Molecule
     mol = Molecule(conf)
-    regressor.predict([mol], rstd=True, MC=True)
+    regressor.do_predict([mol], rstd=True, MC=True)
     #print mol.predictions
     return mol.predictions[ regressor.name ]
 
@@ -115,7 +115,7 @@ def montecarloprocedure(run, subarray, maxi, Dtable,**kwargs):
         rind = zcon.contoind(rconf)
 
         # 4.2a predict property via difference algorithm
-        if True:
+        if False:
             deltaetje = 0
             for i in range(len(rconf)): # now we want to have a value erandom for this configuration and test it with a certain probability
                 if not rconf[i] == cmaximum[i]:

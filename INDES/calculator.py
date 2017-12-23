@@ -27,6 +27,7 @@ import time
 from CINDES4.utils.writings import log_io, print_title, sprint
 import logging
 import construction as zcon
+import gaussian as program
 import datareader
 
 # for stab:
@@ -100,6 +101,7 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
 #0. geom making
 @log_io()
 def geommaker(mols_tocal,myrun,passive, active, core):
+    e=None
     for molecule in mols_tocal:
         c = deepcopy(core)
         a = deepcopy(active)
@@ -110,11 +112,11 @@ def geommaker(mols_tocal,myrun,passive, active, core):
         try:
             smiles= molecule.get_format()
             print "smiles:", smiles,
-        except IndexError:
+        except IndexError as e:
             print "IndexError while trying to make smiles for molecule"
-        except NameError:
-            print "NameError while trying to make smiles for molecule"
-        except KeyError:
+        except NameError as e:
+            print "NameError while trying to make smiles for molecule:"
+        except KeyError as e:
             print "KeyError while trying to make smiles for molecule"
 
         if myrun.optga:
@@ -146,6 +148,7 @@ def geommaker(mols_tocal,myrun,passive, active, core):
         else:
             # no special action. the first assigned geometry is used as a start
             pass
+    print e
     return
 
 # 1. file making
@@ -156,10 +159,10 @@ def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pas
     fileparameters = myrun.__dict__
     for molecule in mols_tocal:
         if not myrun.stab==1:
-            zcon.filewriter2(molecule.zmat,molecule.index,**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
+            program.filewriter2(molecule.zmat,molecule.index,**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
         else:
             # 1. WRITE radical input with filewriterA
-            zcon.filewriterA(molecule.zmat,molecule.index,**fileparameters) #here we have to use makers to construct the AH files
+            program.filewriterA(molecule.zmat,molecule.index,**fileparameters) #here we have to use makers to construct the AH files
 
             # 2. make a folder with the indexname in /data/indices[i]
             if not os.path.exists(path + '/' + molecule.index): #path is $WORKDIR/data
@@ -167,88 +170,15 @@ def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pas
                 # and make sure ID_gauss is in the folder!
                 shutil.copy(path +'/ID_gauss',path+'/'+molecule.index)
 
-            # 3. reopen written A-file to extract Z-matrix to make the AH files
-            filename = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + ".com" #same line as in filewriter. open it again.
-            zmat = extract_zmat(filename)
-
             # 4. use zmat to make the AH files with the positions stored in fileparameters['positions']
             for pos in fileparameters['positions']:
-                zmat2 = deepcopy(zmat)
-                hornot = maker1(zmat2,pos,molecule.index,**fileparameters) #returns a value indicating if there is already a hydrogen (or a nitrogen)
+                zmat2 = deepcopy(molecule.zmat)
+                #program.filewriterAH returns a value indicating if there is already a hydrogen (or a nitrogen)
+                hornot = program.filewriterAH(zmat2,pos,molecule.index,**fileparameters)
                 # FOR NOW ONLY DO ONE POSSIBILITY THIS IS EASIER BECAUSE WE KNOW EXACTLY HOW MANY JOBS THERE HAVE TO BE SUBMITTED
                 #if not hornot == 1: #if not there are two ways to place the hydrogen.
                     #maker2(zmat,pos,indices[i],**fileparameters)
 
-    return
-
-def extract_zmat(filename):
-    """This function is used to make the A-H files for the stab property"""
-
-    logging.debug("filename: " + filename)
-    multcharge = re.compile('^\-?[0-9]\s[0-9]') #only set the compiler
-    with open(filename) as fid: #again open as fid
-        for line in fid:
-            if multcharge.match(line): #from where there is a match it reads the subsequant lines as the zmat
-                zmat=[]
-                line=next(fid)
-                while not line == '\n': #until empty line
-                    zmat.append(line.split())
-                    line=next(fid)
-                break #so that only the first match is used. after the other matches there is no zmat
-    return zmat
-
-def maker1(zmat,pos,index,**fileparameters):
-    """makes new file with hydrogen attached on first dihedral"""
-    zmatnew = deepcopy(zmat)
-    spos = str(pos) #spos is string of pos. pos = position
-    h=0
-    #print "zmat[spos-1]:",zmat[pos-1]
-    #print "pos:",spos
-    #print "fileparamters ncore:", fileparameters['ncore']
-    logging.debug(pprint.pformat(zmat))
-    #print "zmat[fileparameters['ncore']:]:"
-    #pp.pprint(zmat[fileparameters['ncore']:])
-    if zmat[pos-1][0] == 'N':
-        item = zmat[pos-1]
-        h=1
-        if len(item)==1: #when pos is 1 so first index of a zmat
-            hline = ['H',1,0.9,2,109.5,3,176.0]
-        elif len(item)==3: #when pos is 2 so second index of a zmat
-            hline = ['H',2,0.9,3,109.5,4,176.0]
-        else:
-            bondindex=item[1] #or if item only has length 1
-            dihedralindex=item[3]
-            hline= ['H',spos,0.9,bondindex,109.5,item[3],176.0]#LOOK AT THIS
-    else:
-        for item in zmatnew[fileparameters['ncore']:]:
-            #print "in loop", "spos:",spos,"str(item[1]",str(item[1])
-            if str(item[1]) == spos:
-                if item[0] == 'H': h=1
-                hline=item[:]
-                item[6] = '126.0'
-                hline[6] = '234.0'
-                hline[0] = 'H'
-                #print "hline:",hline
-    zmatnew.append(hline)
-    zcon.filewriterAH(zmatnew,spos,index,**fileparameters) #now it is important where this will be written.
-    return h
-
-def maker2(zmat,pos,index,**fileparameters):
-    '''makes new file with hydrogen attached on second dihedral.
-    this is only necessary when there is not already another hydrogen on the compound
-    or that the site is nitrogen or possibly sulfur doped. '''
-    zmatnew = zmat[:]
-    spos = str(pos)
-    h=0
-    #print "pos:",spos
-    for item in zmatnew[fileparameters['ncore']:]:
-        if str(item[1]) == spos:
-            hline=item[:]
-            item[6] = '234.0'
-            hline[6] = '126.0'
-            hline[0] = 'H'
-    zmatnew.append(hline)
-    zcon.filewriterAH(zmatnew,spos + '_2',index,**fileparameters)
     return
 
 # 2. submission

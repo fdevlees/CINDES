@@ -44,6 +44,7 @@ def log_cyclesinfo(mols, count, k, l):
 
             # new json style:
             #print "molecule.props:", molecule.props
+            item.append( molecule.Pvalue)  #predictions have only this one?
             item.extend( molecule.props.values() )
 
             # old pickle style:
@@ -144,7 +145,7 @@ def log_screen( mols ):
         item.extend(propvals)
         print formatitem(opt, item, maxlenconf)
     print "+{}+".format(lenh*"-")
-    return
+    return p
 
 def log_screen_pred( mols ):
     print

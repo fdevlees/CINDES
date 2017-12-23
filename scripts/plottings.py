@@ -15,7 +15,7 @@ def read_line(line):
                 pass
             row.append(item)
     return np.asarray(row)
-                
+
 def read_input(inputfile):
     with open(inputfile,'r') as f:
         datar = [ read_line(line) for line in f.read().splitlines() ]
@@ -56,7 +56,7 @@ def plot3(data, ycolumns, xcolumn=None): # plot some data columns vs another col
         a.plot(x, data[:,column], label=str(column))
         a.legend()
     plt.show()
-        
+
 def main(inputfile, ycolumns, plottypes, xcolumn, **kwargs):
 
     # read input

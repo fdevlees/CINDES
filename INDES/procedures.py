@@ -329,7 +329,7 @@ def set_table(myrun, array=[]):
         # touch new json file
         with open('{}.json'.format(tablename),'w') as f2:
             json.dump(json_db, f2, indent=-1)
-        #raise SystemExit('stop')
+        raise SystemExit('stop')
         return json_db
     #-------- enclosed function 2:
     def adjust_dihedrals(table, array):
@@ -602,20 +602,9 @@ def restriction1(mols_todo, mols_nodo, run):
 
 # B: getting the real data by submitting 
 def submittingprocedure(mols_tocal,mols_nocal,myrun,**kwargs):
-    global once
-    # here submitting thing knows at least the path
     fileparameters = myrun.__dict__
-    if myrun.program in ['ORCA','orca','Orca']:
-        import orcafunctions
-        data = orcafunctions.submittingprocedure(confs,mols_tocal,mols_nocal,fileparameters,**self.TZmat)
-    elif myrun.program in ['Gaussian','gaussian']:
-        import gaussianfunctions as gausf
-        data = gausf.procedure(myrun,mols_tocal,mols_nocal,kwargs)
-    elif myrun.program == 'molpro':
-        raise SystemExit('molpro not implemented')
-    else:
-        print "program not recognized!:", myrun.program
-        raise SystemExit('no program recognized')
+    import calculator
+    data = calculator.procedure(myrun,mols_tocal,mols_nocal,kwargs)
     return data
 
 # THERE ARE DIFFERENT GLOBAL PROGRAM FLOW PROCEDURES:
@@ -811,7 +800,7 @@ def generate_procedure(param,array):
         print "njobs:", len(mols_tocal)
 
         # generate all inputfiles
-        from gaussianfunctions import filemaker, geommaker
+        from calculator import filemaker, geommaker
         geommaker(mols_tocal,myrun,**myrun.TZmat)
         filemaker(mols_tocal,myrun) #----------------------------------HERE IS THE FILEWRITER CALL
 
