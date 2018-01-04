@@ -64,15 +64,11 @@ class Run(object):
         # for self.setup_filesystem one needs to have: self.(-nosub / -program)
         self.setup_filesystem()
 
-        #zmatrix reading and splitting needs: self.-ncore / -line1 / -nch3
-        #self.TZmat = r.geometry(param)
         self.TZmat = r.geometry(**entries)
 
         self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
         self.corresp = self.set_corresp( self.TZmat['active'], self.TZmat['passive'])
 
-        #sets Gaussian09 input lines
-        self.set_calculation_properties()
         return
 
     def __str__(self):
@@ -116,15 +112,6 @@ class Run(object):
         self.path = path
         return param, path
 
-    def set_calculation_properties(self):
-        if self.program in ['Gaussian','gaussian']:
-            self.runspecs_gaussian()
-        elif self.program in ['ORCA','orca','Orca']:
-            runspecs_orca(param)
-        else:
-            raise SystemExit('PROGRAM NOT RECOGNIZED')
-        return
-
     def set_adj(self, core, active):
         debug=0
         from CINDES4.utils.converter import Converter
@@ -153,89 +140,11 @@ class Run(object):
         '''makes a dictionary that gives the correspondance of sites with position in core matrix'''
         corresp = dict()
         for site in active:
-            corresp[ site[0][1] ] = site[1][1]
+            corresp[ int(site[0][1]) ] = int(site[1][1])
         for site in passive:
-            corresp[ site[0][1] ] = site[1][1]
+            corresp[ int(site[0][1]) ] = int(site[1][1])
         return corresp
 
-    def runspecs_gaussian(self):
-        param=self.__dict__
-        if param['gaussianlines']:
-            pass
-        elif param['stab']==1:
-            # extra parameters needed:
-            #param['positions'] = (2,6,7,9,11,12) # HARD CODING positions to add a Hydrogen
-            self.gasconstant = 8.3144621
-            self.bde_a = -12.68 #kJ/mol/eV^2
-            self.bde_b = -218.1 #kJ/mol
-            self.stab_h = 235.8 #kJ/mol
-            self.Dw_h = 0.063 #eV
-            self.chi_h = 2.20 
-            self.chi_c = 2.60
-            self.chi_n = 3.05
-            self.H_h = -0.516817233 #a.u.
-            self.avtc = -28.1290706 #kJ/mol #average thermal correction for 5 random structures kJ/mol
-            if param['semiempirical'] == 1:
-                self.gaussianline1 =  '# opt am1 \n'
-                self.gaussianline2 =  '# geom=check am1\n' #also for 456
-                self.gaussianline3 =  param['gausline2']
-            else:
-                self.gaussianline1 =  '# opt ub3lyp/6-31g(d) pop=npa \n'
-                self.gaussianline2 =  '# geom=check guess=read b3lyp/6-311+G(d,p) scf=xqc\n' #also for 456
-                self.gaussianline3 =  '# geom=check guess=read b3p86/6-311+G(d,p) scf=xqc\n' #also for 7
-        elif param['polar']==1:
-            if param['volume']==1:
-                self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                self.gaussianline2 = '#p geom=allcheck guess=read polar volume=tight '+param['functional']+'/'+param['basisset']+'\n'
-            else:
-                self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                self.gaussianline2 = '#p geom=allcheck guess=read polar '+param['functional']+'/'+param['basisset']+'\n'
-        elif param['aip']==1 or param['aea']==1:
-            self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-            param['twojob']=1
-            self.gaussianline2 = '# geom=check guess=read opt scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-        elif param['ip']==1 or param['ea']==1:
-            self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-            param['twojob']=1
-            self.gaussianline2 = '# geom=check guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-        else:
-            if param['property']=='dipole':
-                logging.warning('NO Geometry optimization will be performed!!!')
-                self.gaussianline = '# ' + param['functional'] +'/'+ param['basisset'] +'\n'
-            else:
-                if param['basisset'] in [ None, 0, '0', 'none', 'nalse', False, 'off' , 'n', 'na' ]:
-      
-                    self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'\n'
-                else:
-                    self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-            if param['twojob'] == 1:
-                self.gaussianline2 = '# geom=check guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-            elif param['twojob'] == 2:
-                self.multiplejobs = 2
-                if param['semiempirical'] == 1:
-                    self.gaussianline  = '# opt=(maxcycle=' + param['maxcycles'] + ') ' + 'pm6' +'\n'
-                else:
-                    self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                self.gaussianline2 = '# geom=allcheck guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-            elif param['twojob'] == 4:
-                self.multiplejobs = 4
-                if param['semiempirical'] == 1:
-                    self.gaussianline  = '# opt=(maxcycle=' + param['maxcycles'] + ') ' + 'pm6' +'\n'
-                else:
-                    self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                self.gaussianline2 = '# geom=check scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                if param['solv']:
-                    if True:
-                        self.gaussianline_solv0 = '# geom=allcheck guess=read pm6\n'
-                        self.gaussianline_solv1 = '# geom=allcheck guess=read pm6 scrf=(smd, solvent=aceticacid)\n'
-                    else:
-                        self.gaussianline_solv0 = '# geom=allcheck guess=read scf=xqc b3lyp/6-31G(d,p)\n'
-                        self.gaussianline_solv1 = '# geom=allcheck scf=xqc scrf=(smd, solvent=aceticacid) b3lyp/6-31G(d,p)\n'
-
-        for key in ['ip','ea','polar']:
-            if param[key]==1:
-                self.multiplejobs +=1
-        return
 #END CLASS RUN -----------------------------------------
 
 

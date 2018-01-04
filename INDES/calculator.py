@@ -27,7 +27,6 @@ import time
 from CINDES4.utils.writings import log_io, print_title, sprint
 import logging
 import construction as zcon
-import gaussian as program
 import datareader
 
 # for stab:
@@ -155,6 +154,7 @@ def geommaker(mols_tocal,myrun,passive, active, core):
 @log_io()
 def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pass here)
     ''' jkl'''
+    import gaussian as program
     path = myrun.path
     fileparameters = myrun.__dict__
     for molecule in mols_tocal:
@@ -169,13 +169,63 @@ def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pas
             # 2. use zmat to make the AH files with the positions stored in fileparameters['positions']
             for pos in fileparameters['positions']:
                 zmat2 = deepcopy(molecule.zmat)
-                #program.filewriterAH returns a value indicating if there is already a hydrogen (or a nitrogen)
-                hornot = program.filewriterAH(zmat2,pos,molecule.index,**fileparameters)
+                zmat2, h = add_hydrogen(zmat2, pos, fileparameters['ncore'])
+                program.filewriterAH(zmat2,pos,molecule.index,**fileparameters)
                 # FOR NOW ONLY DO ONE POSSIBILITY THIS IS EASIER BECAUSE WE KNOW EXACTLY HOW MANY JOBS THERE HAVE TO BE SUBMITTED
                 #if not hornot == 1: #if not there are two ways to place the hydrogen.
                     #maker2(zmat,pos,indices[i],**fileparameters)
 
     return
+
+def add_hydrogen(zmat, pos, ncore):
+    """makes new file with hydrogen attached on first dihedral"""
+    zmatnew = deepcopy(zmat)
+    spos = str(pos) #spos is string of pos. pos = position
+    h=0
+    logging.debug(pprint.pformat(zmat))
+    if zmat[pos-1][0] == 'N':
+        item = zmat[pos-1]
+        h=1
+        if len(item)==1: #when pos is 1 so first index of a zmat
+            hline = ['H',1,0.9,2,109.5,3,176.0]
+        elif len(item)==3: #when pos is 2 so second index of a zmat
+            hline = ['H',2,0.9,3,109.5,4,176.0]
+        else:
+            bondindex=item[1] #or if item only has length 1
+            dihedralindex=item[3]
+            hline= ['H',spos,0.9,bondindex,109.5,item[3],176.0]#LOOK AT THIS
+    else:
+        for item in zmatnew[ncore:]:
+            if str(item[1]) == spos:
+                if item[0] == 'H': h=1
+                hline=item.copy()
+                item[6] = '126.0'
+                hline[6] = '234.0'
+                hline[2] = 0.9
+                hline[0] = 'H'
+                #print "hline:",hline
+    zmatnew.append(hline)
+    return zmatnew, h
+
+#    IF I ever want to make the structures with H on the other side attached I need something like this:
+#def maker2(zmat,pos,index,**fileparameters):
+#    '''makes new file with hydrogen attached on second dihedral.
+#    this is only necessary when there is not already another hydrogen on the compound
+#    or that the site is nitrogen or possibly sulfur doped. '''
+#    zmatnew = zmat[:]
+#    spos = str(pos)
+#    h=0
+#    #print "pos:",spos
+#    for item in zmatnew[fileparameters['ncore']:]:
+#        if str(item[1]) == spos:
+#            hline=item[:]
+#            item[6] = '234.0'
+#            hline[6] = '126.0'
+#            hline[0] = 'H'
+#    zmatnew.append(hline)
+#    filewriterAH(zmatnew,spos + '_2',index,**fileparameters)
+#    return
+
 
 # 2. submission
 @log_io()
@@ -228,7 +278,10 @@ def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
         paths.append(path1)
         if fileparameters['stab']==1: #property is global variable
             for pos in fileparameters['positions']:
-                path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.com.o[0-9][0-9][0-9][0-9][0-9]*'
+                if arrayjob:
+                    path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.log'
+                else:
+                    path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.com.o[0-9][0-9][0-9][0-9][0-9]*'
                 paths.append(path2)
 
     newpaths = paths[:]

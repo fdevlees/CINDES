@@ -189,7 +189,6 @@ def readfile(subinp):
            'extrawaittime': 2,
            'functional':'b3lyp',
            'function': lambda x:x,
-           'gaussianlines':[],
            'identify':'unspecified_',
            'ip':0,
            'jobs':[],
@@ -293,14 +292,6 @@ def readfile(subinp):
         elif 'extra_props' in line: paras['extra_props'] = line.split()[1:]
         elif 'extrawaittime' in line: paras['extrawaittime'] = float(line.split()[1])
         elif 'functional' in line: paras['functional'] = line.split()[1]
-        elif 'gaussianlines' in line:
-            nlines = int(line.split()[1])
-            lines = []
-            for _ in range(nlines):
-                line = subinp.readline().split(' ')
-                gaussianline = [ line[0], line[1], ' '.join(line[2:]) ]
-                lines.append(gaussianline)
-            paras['gaussianlines'] = lines
 	elif 'stabjobs' in line:
             # this code has to come before 'jobs' because also 'jobs' in 'stabjobs'
             njobs = int(line.split()[1])
