@@ -38,187 +38,18 @@ class prettyfloat(float):
     def __repr__(self):
         return "%-0.4f" % self
 
-class Logfile():
-
-    def __init__(self,name, afile=True):
-        self.data = []
-
-        # here a trick. later i will remove the afile part but for now i want to keep 
-        # both functionalities. so in the new version. afile=False and self.name is just a longstring.
-        if afile:
-            self.fid = open(name) # + '.log')
-        else:
-            self.fid = self.name.split('\n')
-        self.name = name
-        return
-
-    def extract(self,coords=0):
-      for line in self.fid:
-        if line[1:23] == "Optimization completed":
-            if not hasattr(self, 'optdone'):
-                self.optdone = True
-
-        # Catch message about stopped optimization (not converged).
-        if line[1:21] == "Optimization stopped":
-            if not hasattr(self, "optdone"):
-                self.optdone = False
-
-        # THERMAL CORRECTION TO ENTHALPY
-        if line[1:32] == "Thermal correction to Enthalpy=":
-            self.Hcorr = float(line.split()[4])
-
-        # SPIN DENSITIES
-        if line[1:32] ==  "Mulliken atomic spin densities:":
-            if not hasattr(self, "spindensities"):
-                self.spindensities = []
-            spinstance = []
-            line = next(self.fid)
-            line = next(self.fid)
-            while line[1:4] != "Sum":
-                broken = line.split()
-                spinstance.append((int(broken[0]),broken[1],float(broken[2])))
-                line = next(self.fid)
-            self.spindensities.append(spinstance)
-        if line[1:37] == "Mulliken charges and spin densities:":
-            if not hasattr(self, "spindensities"):
-                self.spindensities = []
-            spinstance = []
-            line = next(self.fid)
-            line = next(self.fid)
-            while line[1:4] != "Sum":
-                broken = line.split()
-                spinstance.append((int(broken[0]),broken[1],float(broken[3])))
-                line = next(self.fid)
-            self.spindensities.append(spinstance)
-
-        # Note: this needs to follow the section where 'SCF Done' is used
-        #   to terminate a loop when extracting SCF convergence information.
-        if line[1:9] == 'SCF Done':
-            if not hasattr(self, "scfenergies"):
-                self.scfenergies = []
-            self.scfenergies.append(float(line.split()[4]))
-        # gmagoon 5/27/09: added scfenergies reading for PM3 case
-        # Example line: " Energy=   -0.077520562724 NIter=  14."
-        # See regression Gaussian03/QVGXLLKOCUKJST-UHFFFAOYAJmult3Fixed.out
-        if line[1:8] == 'Energy=':
-            if not hasattr(self, "scfenergies"):
-                self.scfenergies = []
-            self.scfenergies.append(float(line.split()[1]))
-
-        if line.strip('* \n') == 'Alpha spin orbitals':
-            line = next(self.fid)
-            while not line.strip() == 'Summary of Natural Population Analysis:':
-                line = next(self.fid)
-            for _ in xrange(6):
-                line= next(self.fid)
-            if not hasattr(self, "npa"):
-                self.npa = []
-            while not '=' in line:
-                self.npa.append(float(line.split()[2]))
-                line = next(self.fid)
-        if line.strip('* \n') == 'Beta  spin orbitals': #note 2 spaces!
-            line = next(self.fid)
-            while not line.strip() == 'Summary of Natural Population Analysis:':
-                line = next(self.fid)
-            for _ in xrange(6):
-                line= next(self.fid)
-            if not hasattr(self, "npab"):
-                self.npab = []
-            while not '=' in line:
-                self.npab.append(float(line.split()[2]))
-                line = next(self.fid)
-
-        if coords==1:#only extract the molecular coordinates when asked for
-            if line.strip() == "Standard orientation:":
-                if not hasattr(self, "atomcoords"):
-                    self.atomcoords = []
-                for _ in range(4): line=next(self.fid)
-                atomnos = []
-                atomcoords = []
-                line = next(self.fid)
-                while list(set(line.strip())) != ["-"]:
-                    broken = line.split()
-                    atomnos.append(int(broken[1]))
-                    atomcoords.append(list(map(float, broken[-3:])))
-                    line = next(self.fid)
-                self.atomcoords.append(atomcoords)
-                self.natom=len(atomnos)
-                self.atomnos=atomnos
-
-# Summary of Natural Population Analysis:                  
-#                                                          
-#                                       Natural Population 
-#                Natural  -----------------------------------------------
-#    Atom  No    Charge         Core      Valence    Rydberg      Total
-# -----------------------------------------------------------------------
-#      C    1    0.18075      0.99939     1.80808    0.01177     2.81925
-#
-        if line[2:22] == 'Exact polarizability':
-            if not hasattr(self,'polex'):
-                self.polex = [] 
-            regel = line.split()
-            for item in line.split()[2:8]:
-                self.polex.append(float(item))
-        if line[1:22] == 'Approx polarizability':
-            if not hasattr(self,'polprox'):
-                self.polprox = [] 
-            regel = line.split()
-            for item in line.split()[2:8]:
-                self.polprox.append(float(item))
-#  Exact polarizability:  11.170   0.000  11.170   0.000   0.000  11.170
-# Approx polarizability:   8.585   0.000   8.585   0.000   0.000   8.585
-        if line.strip('* :\n') == 'Diagonal vibrational polarizability':
-            line = next(self.fid)
-            self.polvibr = [ float(item) for item in line.split() ]
-        if line.strip('* :\n') == 'Diagonal vibrational hyperpolarizability':
-            line = next(self.fid)
-            self.hypolvibr = [ float(item) for item in line.split() if not float(item)==0.0 ]
-# Diagonal vibrational polarizability:
-#        0.3451187       0.3451187       0.3451187
-# Diagonal vibrational hyperpolarizability:
-#        0.0000000       0.0000000       0.0000000
-        if line[1:13] == 'Molar volume':
-            self.volume = float(line.split()[3])
-# Molar volume =  230.840 bohr**3/mol ( 20.600 cm**3/mol)
-# Recommended a0 for SCRF calculation =  2.72 angstrom (  5.13 bohr)
-# Dipole moment
-#    X=             -1.4604    Y=             -0.1878    Z=              1.4210  Tot=              2.0462
-        if line[1:14] == 'Dipole moment':
-            line = next(self.fid)
-            self.dipole = float(line.split()[7])
-      self.fid.close()
-
-
-def extract_stab(file1 , molecule, fileparameters):
+def extract_eahs(molecule, fileparameters):
     index = molecule.index
-    #---- some parameters needed
-    bde_a = -12.68 #kJ/mol/eV^2
-    bde_b = -218.1 #kJ/mol
-    stab_h = 235.8 #kJ/mol
-    Dw_h = 0.063 #eV
-    chi_h = 2.20
-    chi_c = 2.60
-    chi_n = 3.05
-    H_h = -0.516817233 #a.u.
-    kJmol = 2625.5
-    eV = 27.2113838
-    avtc = -28.1290706 #kJ/mol #average thermal correction for 5 random structures kJ/mol
-    chi_term = bde_b*(chi_h-3)*(chi_n-3) #term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
-
-    propsA =gausread(file1,'stabA')
-    # propsA = { Eopt:..., E0:..., IP:..., EA:... }
-
     EAHs=[] #all EAHs from all different positions in here
     Npos=[] #positions with a nitrogen in here
     for pos in fileparameters['positions']: #extract al AH energies and take the lowest
         file2= fileparameters['path'] + '/' + index + '/' + fileparameters['identify'] + index + '_' + str(pos) + '.log'
 
-        EAH= gausread(file2,'energy',multiplejobs=0)['energy']
+        datadict_file2 = read_file(file2, fileparameters['stabjobs'])
+        # returns something like: '{'e':638.8, 'eAH':392.389 }
 
         #---- HERE THE electronegativity part of the stab a bit tricky
-        #confje = construction.indtocon(index) # change index to conf list using the construction module
         confje = index.split('_')
-        #corresp = {2:46,6:18,7:42,9:34,11:22,12:30} # map the alpha positions to methyl indices 
         try:
             siteindex = fileparameters['corresp'][pos] #find for each position the methyl index
         except KeyError:
@@ -236,25 +67,37 @@ def extract_stab(file1 , molecule, fileparameters):
     pprint(EAHs)
     print "min EAHs:", min(EAHs)
     print "Npos:",Npos
+    return EAHs
+
+def calculate_stab(results, EAHs):
+    #---- some parameters needed
+    bde_a = -12.68 #kJ/mol/eV^2
+    bde_b = -218.1 #kJ/mol
+    stab_h = 235.8 #kJ/mol
+    Dw_h = 0.063 #eV
+    chi_h = 2.20
+    chi_c = 2.60
+    chi_n = 3.05
+    H_h = -0.516817233 #a.u.
+    kJmol = 2625.5
+    eV = 27.2113838
+    avtc = -28.1290706 #kJ/mol #average thermal correction for 5 random structures kJ/mol
+    chi_term = bde_b*(chi_h-3)*(chi_n-3) #term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
+
     #gasconstant = 8.3144621
     E_ah =min(EAHs)
-
-    I = propsA['IP']
-    A = propsA['EA']
-    propsA['omega'] = ( ((I+A)**2 )/(8*(I-A)) )*eV #in eV
-    Domega = propsA['omega'] - 2
-    propsA['BDE_ah']  = ( propsA['Eopt'] + H_h - E_ah[0])*kJmol + avtc #avtc is AVerage Thermal Correction. 
-    #----
-    propsA.update(gausread(file1,'rdv',2) )
-    #----
+    I = results['IP']
+    A = results['EA']
+    #propsA['omega'] = ( ((I+A)**2 )/(8*(I-A)) )*eV #in eV
+    Domega = results['omega'] - 2
+    results['BDE_ah']  = ( results['Eopt'] + H_h - E_ah[0])*kJmol + avtc #avtc is AVerage Thermal Correction. 
     if E_ah[1] in Npos:
-        propsA['stab'] = propsA['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
+        stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
     else:
-        propsA['stab'] = propsA['BDE_ah'] - stab_h - bde_a * Domega * Dw_h
-    propsA['H_pos'] = E_ah[1]
-    return propsA
-
-
+        stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h
+    results['H_pos'] = E_ah[1]
+    results['stab'] = stab
+    return results
 
 @log_io()
 def datareader( mols_tocal, fileparameters):
@@ -272,45 +115,32 @@ def datareader( mols_tocal, fileparameters):
         print "><"*10, molecule, "><"*10
         # make a copy of props_dict
         props_set = uni_props_set.copy()
-
         file1 = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + '.log'
 
         # start by looking if stab is one of the crucial properties because it contains many others
         if 'stab' in props_set:
-            X_stab_props = extract_stab( file1, molecule, fileparameters )
-            # expect to get something like: { 'stab': value, 'I':..., 'A':...,'omega':...,'RDV'....}
-
-            # fill props_dict
-            #props_dict.update(X_stab_props)
-            molecule.props.update(X_stab_props)
-
-        # check which properties are still necessary to obtain:
-        #to_read_props = [ key for key, value in props_dict.iteritems() if value==None ]
-        # new: test which in fileparameters['props'] but not in molecule.props.viewkeys()
-        # NB: - is here a set operator! returns a set!
-        to_read_props = props_set - molecule.props.viewkeys()
-        print "to read props:", to_read_props
+            # read EAHs for the stabfiles
+            EAHs = extract_eahs(molecule, fileparameters)
+            # expect to get something like: { 2:EAH2, 4:EAH4, 12:EAH12 }
+        else:
+            EAHs = None
 
         # extract them
-        # assume all properties can be easily obtained by gausread
         if to_read_props:
-            if fileparameters['jobs']: # new JSON / cclib style
-                readings = new_style_reader( file1, to_read_props, fileparameters )
-            else: # old pickle. Logfile-gausread style
-                readings = gausread( file1, to_read_props, multiplejobs=fileparameters['multiplejobs'])
+            readings = new_style_reader( file1, to_read_props, fileparameters, EAHs )
             molecule.props.update( readings )
 
         molecule.predicted = False
 
     return mols_tocal
 
-def new_style_reader( file1, to_read_props, fileparameters ):
+def read_file(filename, jobs):
     # for every jobfile do a cclib extraction. faking the separate jobs as if it were single files
-    jobslines = open(file1).read().split('termination')[:-1]
+    jobslines = open(filename).read().split('termination')[:-1]
     from cStringIO import StringIO
     jobfiles = map(StringIO, jobslines)
     datadict = dict()
-    for jobfile, job in zip(jobfiles, fileparameters['jobs']):
+    for jobfile, job in zip(jobfiles, jobs):
         from CINDES4.cclib.parser.gaussianparser import Gaussian
         job_data = Gaussian(jobfile).parse()
         for inf in job['info']:
@@ -327,8 +157,11 @@ def new_style_reader( file1, to_read_props, fileparameters ):
                 datadict['mw'] = float( sum( job_data.atomnos) )
             else:
                 print "value not recognized:", inf
-
     print "datadict:", datadict
+    return datadict
+
+def new_style_reader( file1, to_read_props, fileparameters, EAHs=None ):
+    datadict = read_file(file1, fileparameters['jobs'])
 
     # so now datadict should have all energy keys + homo/lumo + dipole
     # but not yet omega/solv/gap so:
@@ -337,13 +170,16 @@ def new_style_reader( file1, to_read_props, fileparameters ):
         results['gap']=datadict['lumo']-datadict['homo']
     if 'solv' in to_read_props:
         results['solv']= (datadict['e1_solv']-datadict['e0_solv'])*627.5
-    if any(i in to_read_props for i in ['IP','omega']):
+    if any(i in to_read_props for i in ['IP','omega','stab']):
         results['IP']= (datadict['eIP']-datadict['e0'])
         print "results:IP", results['IP']
-    if any(i in to_read_props for i in ['EA','omega']):
+    if any(i in to_read_props for i in ['EA','omega','stab']):
         results['EA']= (datadict['e0']-datadict['eEA'])
-    if 'omega' in to_read_props:
+    if any(i in to_read_props for i in ['omega', 'stab']):
         results['omega'] = ( ( results['IP'] + results['EA'] )**2 ) / ( 8 * ( results['IP'] - results['EA'] ))
+    if 'stab' in to_read_props:
+        # 
+        results = calc_stab(results, EAHs)
 
     print "results:", results
     return results

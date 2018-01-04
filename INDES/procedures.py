@@ -81,7 +81,7 @@ class Run(object):
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( dump( value ) )
-            elif key in ['TZmat','genalg', 'adj', 'jobs']:
+            elif key in ['TZmat','genalg', 'adj', 'jobs', 'stabjobs']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( pprint.pformat(value, width=150) )
             else:
@@ -647,7 +647,7 @@ def BFS(param,array):
         ### for each site in sequence:
         for l in range(len(sequence)):
             k = sequence[l]
-            print_title("k(site)= " + str(k) + " l(nsite)= "+ str(l),outline='l',signator='=')
+            print_title("k(site)= {} l(nsite)= {} (c={})".format(k,l,count),outline='l',signator='=')
             if not l == 0 or count > 1: #define new startconfiguration if not first cycle
                 # define new starting geometry
                 print "optsite:",optsite

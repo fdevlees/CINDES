@@ -158,19 +158,15 @@ def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pas
     path = myrun.path
     fileparameters = myrun.__dict__
     for molecule in mols_tocal:
-        if not myrun.stab==1:
-            program.filewriter2(molecule.zmat,molecule.index,**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
-        else:
-            # 1. WRITE radical input with filewriterA
-            program.filewriterA(molecule.zmat,molecule.index,**fileparameters) #here we have to use makers to construct the AH files
-
-            # 2. make a folder with the indexname in /data/indices[i]
+        program.filewriter(molecule.zmat,molecule.index,**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
+        if myrun.stab==1:
+            # 1. make a folder with the indexname in /data/indices[i]
             if not os.path.exists(path + '/' + molecule.index): #path is $WORKDIR/data
                 os.makedirs(path + '/' + molecule.index)
                 # and make sure ID_gauss is in the folder!
                 shutil.copy(path +'/ID_gauss',path+'/'+molecule.index)
 
-            # 4. use zmat to make the AH files with the positions stored in fileparameters['positions']
+            # 2. use zmat to make the AH files with the positions stored in fileparameters['positions']
             for pos in fileparameters['positions']:
                 zmat2 = deepcopy(molecule.zmat)
                 #program.filewriterAH returns a value indicating if there is already a hydrogen (or a nitrogen)

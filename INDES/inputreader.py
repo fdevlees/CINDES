@@ -224,6 +224,7 @@ def readfile(subinp):
            'sequence':[],
            'solv':False,
            'stab':0,
+           'stabjobs':[],
            'startind': '',
            'symlinks':[],
            'tablename':'table.json',
@@ -300,6 +301,20 @@ def readfile(subinp):
                 gaussianline = [ line[0], line[1], ' '.join(line[2:]) ]
                 lines.append(gaussianline)
             paras['gaussianlines'] = lines
+	elif 'stabjobs' in line:
+            # this code has to come before 'jobs' because also 'jobs' in 'stabjobs'
+            njobs = int(line.split()[1])
+            jobs=[]
+            for _ in range(njobs):
+                job=dict()
+                # read propline
+                line = subinp.readline().split()
+                job['info']=set(line)
+                # read mult/charge/hotline
+                line = subinp.readline().split()
+                job['charge'], job['mult'], job['hotline'] = (line[0], line[1], ' '.join(line[2:]))
+                jobs.append(job)
+                paras['stabjobs']=jobs
         elif 'jobs' in line:
             njobs = int(line.split()[1])
             jobs=[]
