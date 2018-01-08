@@ -112,7 +112,16 @@ def calculate_stab(results, EAHs):
 @log_io()
 def datareader( mols_tocal, fileparameters):
     # 1. test normal termination
-    mols_tocal = normaltermination( mols_tocal, fileparameters)
+    program=fileparameters['program']
+    if program=='gaussian':
+        import gaussian as program
+    elif program=='orca':
+        import orca as program
+    elif program=='nwchem':
+        import nwchem as program
+    else:
+        raise SystemExit('not implemented')
+    mols_tocal = program.normaltermination( mols_tocal, fileparameters)
 
     # 2. get a list of properties that need to be extracted for each molecule
     uni_props_set = fileparameters['props']
@@ -143,22 +152,27 @@ def datareader( mols_tocal, fileparameters):
     return mols_tocal
 
 def read_file(filename, jobs, program='gaussian'):
+    if program=='gaussian':
+        from CINDES4.cclib.parser.gaussianparser import Gaussian as Logfile
+        key='termination'
+        jobslines = open(filename).read().split(key)[:-1]
+    elif program=='orca':
+        from CINDES4.cclib.parser.orcaparser import ORCA as Logfile
+        raise SystemExit('not implemented')
+    elif program=='nwchem':
+        from CINDES4.cclib.parser.nwchemparser import NWChem as Logfile
+        key='NWChem Input Module'
+        jobslines = open(filename).read().split(key)[1:-1]
+    else:
+        raise SystemExit('not implemented')
     # for every jobfile do a cclib extraction. faking the separate jobs as if it were single files
-    jobslines = open(filename).read().split('termination')[:-1]
+    print "len(jobslines):", len(jobslines)
     from cStringIO import StringIO
     jobfiles = map(StringIO, jobslines)
     datadict = dict()
     for jobfile, job in zip(jobfiles, jobs):
-
-        if program=='gaussian':
-            from CINDES4.cclib.parser.gaussianparser import Gaussian
-            job_data = Gaussian(jobfile).parse()
-        elif program=='orca':
-            from CINDES4.cclib.parser.orcaparser import ORCA
-            job_data = ORCA(jobfile).parse()
-        else:
-            raise SystemExit('not implemented')
-
+        job_data = Logfile(jobfile).parse()
+        print "job_data:", job_data
 
         for inf in job['info']:
             if inf=='_':continue
@@ -198,174 +212,17 @@ def new_style_reader( file1, to_read_props, fileparameters, EAHs=None ):
         results['gap']=datadict['lumo']-datadict['homo']
     if 'solv' in to_read_props:
         results['solv']= (datadict['e1_solv']-datadict['e0_solv'])*627.5
-    if any(i in to_read_props for i in ['IP','omega','stab']):
-        results['IP']= (datadict['eIP']-datadict['e0'])*27.2113838
-    if any(i in to_read_props for i in ['EA','omega','stab']):
-        results['EA']= (datadict['e0']-datadict['eEA'])*27.2113838
+    if any(i in to_read_props for i in ['ip','omega','stab']):
+        results['ip']= (datadict['eIP']-datadict['e0'])*27.2113838
+    if any(i in to_read_props for i in ['ea','omega','stab']):
+        results['ea']= (datadict['e0']-datadict['eEA'])*27.2113838
     if any(i in to_read_props for i in ['omega', 'stab']):
-        results['omega'] = ( ( results['IP'] + results['EA'] )**2 ) / ( 8 * ( results['IP'] - results['EA'] ))
+        results['omega'] = ( ( results['ip'] + results['ea'] )**2 ) / ( 8 * ( results['ip'] - results['ea'] ))
     if 'stab' in to_read_props:
         results = calculate_stab(results, EAHs)
 
     print "results:", results
     return results
-
-def get_paths( mols, fileparameters):
-    ''' get all paths that need to be examined later '''
-    files=[]
-    #path = fileparameters['path']
-    for molecule in mols:
-        #files.append(path + '/' + fileparameters['identify'] + molecule.index + '.log')
-        #if fileparameters['stab']==1:
-        #    for pos in fileparameters['positions']: #extract al AH energies and take the lowest
-        #        files.append(path + '/' + molecule.index + '/' + fileparameters['identify'] + molecule.index + '_' + str(pos) + '.log')
-        files.extend(get_molpaths(molecule, fileparameters))
-    return files
-
-def get_molpaths(mol, fileparameters):
-    paths=[]
-    paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '.log')
-    if fileparameters['stab']==1:
-        for pos in fileparameters['positions']: #extract al AH energies and take the lowest
-            paths.append(fileparameters['path'] + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.log')
-    return paths
-
-def normaltermination(mols_tocal, fileparameters):
-    #-----
-    def termination(filepath):
-       with open(filepath,'r') as fid:
-           text = fid.readlines()[-3:]
-           if re.search('Normal termination',''.join(text)):
-               fid.close()
-               return 1
-           elif re.search('IGNORE',''.join(text)):
-               fid.close()
-               return 2
-    #-----
-    filepaths = get_paths( mols_tocal, fileparameters)
-    debug=fileparameters['debug']
-    copyfilepaths = filepaths[:] #copy to be able to append to it while looping over it
-    for path in copyfilepaths: #test all for information which jobs crashed
-        if not termination(path)==1:
-            print "Error termination:",path
-            bnewfile = errortermination(path,debug)
-            #if bnewfile and debug:
-            #    filepaths.append(path[:-4]+'zzz.com')
-    extratime = 0
-    once = 0
-
-    #--- new:
-    mols_toread=[]
-    for mol in mols_tocal:
-        # get path belonging to this particular mol
-        molpaths=get_molpaths(mol, fileparameters)
-        ignoremol=False
-        for path in molpaths: #test one by one waiting for normal termination
-            while True:
-                if termination(path)==1:
-                    break
-                elif termination(path)==2:
-                    print "\n\n{0}\n             INGORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, path)
-                    ignoremol=True
-                    break
-                else:
-                    print "no normal termination for: ",path
-                #time.sleep(300) # wait 5 minudtes
-                time.sleep(300) # wait 5 minudtes
-                extratime += 300
-                print "extra waittime/h:", extratime/3600, "||",
-            # when I'm here this path has normal termination
-            if ignoremol: break # this ignores the other paths belonging to this mol
-        # when I'm here every molpath of this mol should have normal termination
-        if not ignoremol:
-            mols_toread.append(mol)
-    # when I'm here every mol should have normal termination
-
-
-    #--- old:
-    #for path in filepaths: #test one by one waiting for normal termination
-    #    while True:
-    #       if termination(path)==1:
-    #           break
-    #       elif termination(path)==2:
-    #           print "\n    {} IGNORED!\n".format(path)
-    #           break
-    #       else:
-    #           print "no normal termination for: ",path
-    #       #time.sleep(300) # wait 5 minudtes
-    #       time.sleep(300) # wait 5 minudtes
-    #       extratime += 300
-    #       print "extra waittime/h:", extratime/3600, "||",
-    #mols_toread = mols_tocal
-    # ---
-    print "mols_toread:", mols_toread
-    return mols_toread
-
-def errortermination(path,debug=False):
-    mymol=Logfile(path) #read outputfile
-    mymol.extract(coords=1) #extract file with also the coordinates
-    from CINDES4.utils import utils
-    t=utils.PeriodicTable()
-    if hasattr(mymol,'atomcoords'): 
-        for sym,xyz in zip(mymol.atomnos,mymol.atomcoords[-1]):
-            xyz.insert(0,t.element[sym]) 
-        print "atomcoords and added elements:"
-        for item in mymol.atomcoords[-1]:
-            print ' '.join(map(str,item)) 
-        if debug==True:
-            import submitter
-            if hasattr(mymol,'optdone'):
-                if mymol.optdone==False:
-                    print "Optimizations not converged!"
-                elif mymol.optdone==True:
-                    print "Optimization is converged!"
-            fid = open(path[:-3]+'com','r') #change .log in .com extension and read input file
-            multcharge = re.compile('^\-?[01]\s[12]') #a regex for the mult charge line
-            newfile=[]
-            once=0 #only find that line once
-            for line in fid: #copy file exept for the zmat found in the inputfile
-                if multcharge.match(line) and once==0: #when found 
-                    once+=1
-                    newfile.append(line) #the line with the match itself has to be included in the newfile
-                    while True:
-                        line= next(fid) #take al new lines
-                        if line=='\n': #end of zmat
-                            #now instead of this zmat that is now completely skipped place in newfile
-                            #the last coordinates of the crashed run
-                            #newfile.extend([' '.join( map("{12.6f}".format, item))+'\n' for item in mymol.atomcoords[-1]])
-                            xyz = mymol.atomcoords[-1]
-                            xyz_f = [ item[0] + ' '.join( map( "{:12.6f}".format, item[1:])) + '\n' for item in xyz ]
-                            #xyz_f = [ item[0] + ' '.join(
-                            #                              map(
-                            #                                   str, item[1:]
-                            #                                 )
-                            #                            ) + '\n' for item in xyz ]
-                            print xyz_f
-                            newfile.extend(xyz_f)
-                            newfile.extend(['\n'])
-                            break
-                else:
-                    newfile.append(line) #copy that line because it is not the zmat found in the inputfile
-            print "="*20
-            #for line in newfile: print line,
-            #print newfile
-            open(path[:-4]+'zzz.com','w').writelines(newfile)
-            print "newfile written in: ", path[:-4] + 'zzz.com'
-
-            #---- preparation for submit command ---
-            splitpath = path.split('/')
-            filename = splitpath[-1]
-            folder = '/'.join(splitpath[:-1])
-            filenamesplit = filename[:-4].split('_')
-            identify= filenamesplit[0]+'_'
-            index = '_'.join(filenamesplit[1:])+'zzz.com'
-            print "folder", folder
-            print "index:", index
-            print "identi", identify
-            #----- keywords constructed so:
-            submitter.submit(folder,index,identify)
-            return True
-    return False
 
 if __name__ == "__main__":
     if hasattr(mymol,'spindensities'):

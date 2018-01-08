@@ -104,9 +104,16 @@ class Run(object):
             if not os.path.exists(path):
                 os.makedirs(path)
             if param['program'] == 'gaussian':
+                self.script='ID_gauss'
+                self.extension='.com'
                 shutil.copy(os.getcwd()+'/ID_gauss',path)
             elif param['program'] == 'orca':
+                self.script='ID_orca'
                 shutil.copy(os.getcwd() + '/ID_orca',path)
+            elif param['program'] == 'nwchem':
+                self.script='ID_NWChem'
+                self.extension=''
+                shutil.copy(os.getcwd()+'/ID_NWChem',path)
             else:
                 raise SystemExit('ERROR: No valid program specified')
         self.path = path
@@ -647,7 +654,13 @@ def genconf(param):
     a = deepcopy(TZmat['active'])
     p = deepcopy(TZmat['passive'])
     mat = zcon.constructor2(conf,c,a,p, links=myrun.symlinks)
-    zcon.filewriter2(mat,param['startind'],**param)
+    if myrun.program=='gaussian':
+        import gaussian as program
+    elif myrun.program=='nwchem':
+        import nwchem as program
+    else:
+        raise SystemExit('program not recognized')
+    program.filewriter(mat,param['startind'],**param)
     return
 
 # 3: generate
@@ -671,7 +684,7 @@ def generate_procedure(param,array):
     #print_title("COUNT: " + str(count),outline='l',signator="-")
 
     count=0
-    if True:
+    if False:
         if not myrun.nosub==1:
             mols_all = submittingprocedure(mols_tocal,
                                            mols_nocal,
@@ -735,7 +748,7 @@ def get_all_molecules(array):
         C=D
     print "molecules:"
     for i, item in enumerate(C): print i, item
-    mols = [ Molecule(conf=conf) for conf in C ]
+    mols = [ Molecule(conf=conf, dihedral=True) for conf in C ]
 
     print mols
     return mols

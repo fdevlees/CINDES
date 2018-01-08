@@ -27,9 +27,9 @@ def nosubmit_orca(path,index,identify):
         p.wait()
     return 123456
 
-def nosubmit(path,index,identify): # not tested
+def nosubmit(path,index,identify, extension='.com'): # not tested
     #print "path", path
-    inputname = path + '/' + identify + index + '.com'
+    inputname = path + '/' + identify + index + extension
     outname =   path + '/' + identify + index + '.log'
     fakename =  path + '/' + identify + index + '.com.o123456'
     with open(inputname,'r') as inp, open(outname,'w') as out, open(fakename,'w') as err:

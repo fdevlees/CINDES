@@ -15,6 +15,11 @@ def contoind(conf):
     #return '_'.join([''.join(str(item)) for item in conf])
     return '_'.join([ ''.join(filter(lambda x:str(x).isalpha(), item)) for item in conf ])
 
+def contoindD(conf):
+    ''' to convert a configuration to an index-string '''
+    #return '_'.join([''.join(str(item)) for item in conf])
+    return '_'.join([ ''.join(item) for item in conf ])
+
 class Population(MutableSequence):
     def __init__(self, population):
         self.population = population
@@ -69,10 +74,13 @@ class Population(MutableSequence):
 
 
 class Molecule(object):
-    def __init__(self,conf):
+    def __init__(self,conf, dihedral=False):
         self.converter = Converter()
         self.conf = conf
-        self.index= contoind(self.conf)
+        if dihedral:
+            self.index=contoindD(self.conf)
+        else:
+            self.index= contoind(self.conf)
         self.Pvalue = None # for storing the principal properties
         self.boundaries = [] # for storing the boundary condition properties
         self.infoline = [] # for storing additional properties
@@ -213,8 +221,12 @@ class Molecule(object):
             xyzs.append([splitted[0],xyztje,self.converter.masses[splitted[0]]])
         return xyzs
 
-from qml import compound
-class my_Compound(compound.Compound):
+try:
+    from qml import compound
+except ImportError:
+    print "QML not imported!"
+else:
+  class my_Compound(compound.Compound):
     '''an inherited class of Compound which is different only in the fact that it reads from list input instead of filename input'''
 
     def read_xyz(self, lines):

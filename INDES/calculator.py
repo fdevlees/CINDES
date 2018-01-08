@@ -154,7 +154,12 @@ def geommaker(mols_tocal,myrun,passive, active, core):
 @log_io()
 def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pass here)
     ''' jkl'''
-    import gaussian as program
+    if myrun.program=='gaussian':
+        import gaussian as program
+    elif myrun.program=='nwchem':
+        import nwchem as program
+    else:
+        raise SystemExit('program not recognized')
     path = myrun.path
     fileparameters = myrun.__dict__
     for molecule in mols_tocal:
@@ -320,16 +325,13 @@ def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
 def submit_normal(mols_tocal,myrun):
     jobids = []
     for molecule in mols_tocal:
-        name = molecule.index + '.com'
+        name = molecule.index + myrun.extension
         if myrun.nosub ==2:
             time.sleep(1)
             jobid = subm.nosubmit(myrun.path,molecule.index ,myrun.identify)
             print molecule.index + 'submitted'
         else:
-            #print "name:", name
-            #print "myrun.path:", myrun.path
-            #print "myrun.identify:", myrun.identify
-            jobid = subm.submit(myrun.path,name,myrun.identify).strip()
+            jobid = subm.submit(myrun.path, name, myrun.identify, myrun.script).strip()
         jobids.append(jobid)
     return jobids
 
@@ -337,12 +339,12 @@ def submit_stab(mol_submit,myrun,jobids=[]):
     path = myrun.path
     for molecule in mol_submit:
         name1 = molecule.index + '.com'
-        jobid = subm.submit(path,name1,myrun.identify).strip()
+        jobid = subm.submit(path,name1,myrun.identify, myrun.script).strip()
         jobids.append(jobid)
         for pos in myrun.positions:
             path2 = path + '/' + molecule.index
             name2 = molecule.index + '_' + str(pos) + '.com'
-            jobid = subm.submit(path2,name2,myrun.identify).strip()
+            jobid = subm.submit(path2,name2,myrun.identify, myrun.script).strip()
             jobids.append(jobid)
     return jobids
 

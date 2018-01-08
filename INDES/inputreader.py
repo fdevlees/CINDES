@@ -356,6 +356,8 @@ def readfile(subinp):
             elif line.split()[1] in ['molpro']:
                 paras['program'] = 'molpro'
                 raise SystemExit('Molpro not yet implemented')
+            elif line.split()[1] in ['nwchem']:
+                paras['program'] = 'nwchem'
             else:
                 raise SystemExit('program not recognized')
         elif 'predictions' in line:

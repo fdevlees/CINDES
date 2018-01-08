@@ -92,7 +92,12 @@ def matrixmerger2(core,active,passive):
         if passive==[]:
             #print "passive is empty"
             actpas=V(active)
-        else: raise
+        elif active==[]:
+            actpas=V(passive)
+        else:
+            print "passive:", passive
+            print "active:", active
+            raise
 
     core.extend( actpas )
 
