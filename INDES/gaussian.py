@@ -123,11 +123,18 @@ def normaltermination(mols_tocal, fileparameters):
     debug=fileparameters['debug']
     copyfilepaths = filepaths[:] #copy to be able to append to it while looping over it
     for path in copyfilepaths: #test all for information which jobs crashed
-        if not termination(path)==1:
-            print "Error termination:",path
-            bnewfile = errortermination(path,debug)
-            #if bnewfile and debug:
-            #    filepaths.append(path[:-4]+'zzz.com')
+        for attempt in range(3):
+            try:
+                if not termination(path)==1:
+                    print "Error termination:",path
+                    bnewfile = errortermination(path,debug)
+            except IOError as e:
+                time.sleep(10)
+            else:
+                break
+        else:
+            raise e
+
     extratime = 0
     once = 0
 
