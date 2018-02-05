@@ -23,6 +23,7 @@ def write_subjob(fid, job):
         fid.write('scf\n {}\n maxiter 50\n {}\nend\n'.format(multiplicity[int(job['mult'])],func))
     if theory=='dft':
         fid.write('dft\n')
+        fid.write(' iterations 100\n')
         if odft: fid.write(' odft\n') #makes it an open-shell unrestricted calculation
         # for quadratic convergence:
         if 'scf=xqc' in hotline: fid.write(' cgmin\n')

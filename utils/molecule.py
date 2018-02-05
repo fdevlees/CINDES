@@ -6,7 +6,8 @@ from collections import MutableSequence
 debug=0
 
 try:
-    import pybel
+    pass
+    #import pybel
 except:
     print "pybel not installed"
 
