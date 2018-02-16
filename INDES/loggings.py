@@ -57,7 +57,7 @@ def log_cyclesinfo(mols, count, k, l):
     #del filedata
     return
 
-def log_table( mols, table, tablename='tablebin'):
+def log_table( mols, table, tablename='table'):
     ''' this function updates the table-dictionary used inside the program
     and updates the database.json file.
     '''
@@ -107,7 +107,10 @@ def log_table( mols, table, tablename='tablebin'):
 
 
 def log_screen( mols ):
-    print "in log_screen:", mols[0].index, mols[0].props, mols[0].Pvalue
+    try:
+        print "in log_screen:", mols[0].index, mols[0].props, mols[0].Pvalue
+    except IndexError:
+        return
     # get property line. 
     # get all the props that possibly have to be printed
     # NB there are predicted confs that only have a Pvalue so they have no props attribute
@@ -211,7 +214,7 @@ def loggings(mols,table,count,k,l, made_pred=False, tablename='tablebin'):
     #--- LOGGINGS: CYCLESINFO
     log_cyclesinfo(mols, count,k,l)
 
-    #---- LOGGINGS: TABLEBIN
+    #---- LOGGINGS: TABLE.JSON
     table = log_table( mols, table, tablename=tablename )
 
     #---- LOGGINGS: to screen

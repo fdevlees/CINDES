@@ -2,15 +2,32 @@
 ''' this module contains all functions related to the Gaussian09 program '''
 import re
 
+def writegeom(mol, fid):
+    if hasattr(mol, 'zmat'):
+        # here the zmat
+        for i in range(len(zmat)):
+            for item in zmat[i]:
+                fid.writelines("%s " % item)
+            fid.write("\n")
+        fid.write("\n")
+    elif hasattr(mol, 'xyz'):
+        fid.write(mol.xyz)
+        fid.write("\n")
+    else:
+        raise AttributeError
+    return
+
+
 
 #---- START FILEWRITER2 THIS ONLY FOR MAKERS TRY TO MAKE THIS ONE UNIVERSAL ----#
-def filewriter(zmat,index,**paras): #paras is short for fileparameters
+def filewriter(mol, **paras): #paras is short for fileparameters
     '''    This function creates a file with the geometry contained in zmat
     The name of the file contains the index in the name
     '''
     #------------
     # this function uses globals: identify, path
     #------------
+    index = mol.index
     filename = paras['identify'] + str(index) + ".com"
     fid=open(paras['path'] + '/' + filename,'w')
 
@@ -22,14 +39,11 @@ def filewriter(zmat,index,**paras): #paras is short for fileparameters
         fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
     fid.write(job1['hotline']) # first gaussianline
     fid.write("\n\n")
-    fid.write(paras['identify'] + str(index) + "\n\n")
+    fid.write(str(mol) + "\n\n")
     fid.write("{} {}\n".format(job1['charge'], job1['mult']))
-    # here the zmat
-    for i in range(len(zmat)):
-        for item in zmat[i]:
-            fid.writelines("%s " % item)
-        fid.write("\n")
-    fid.write("\n")
+
+    # write geom:
+    writegeom(mol, fid)
 
     # THE OTHER JOBS
     #for i, (charge, mult, line) in enumerate(paras['gaussianlines'][1:]):

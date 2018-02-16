@@ -78,7 +78,7 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
         # 1. Make the files
         filemaker(mols_tocal,myrun) #----------------------------------HERE IS THE FILEWRITER CALL
 
-        # 2. now the jobs have to be submitted 
+        # 2. now the jobs have to be submitted (this function contains a try_ready test)
         jobids = submission(mols_tocal,myrun)
 
         # 3. test of all jobs are ready
@@ -163,7 +163,7 @@ def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pas
     path = myrun.path
     fileparameters = myrun.__dict__
     for molecule in mols_tocal:
-        program.filewriter(molecule.zmat,molecule.index,**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
+        program.filewriter(molecule, **fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
         if myrun.stab==1:
             # 1. make a folder with the indexname in /data/indices[i]
             if not os.path.exists(path + '/' + molecule.index): #path is $WORKDIR/data

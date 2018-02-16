@@ -16,6 +16,7 @@ def submit(path,index,identify,script='ID_gauss'):
         jobid = subprocess.check_output([command,filename],cwd=path)
     except subprocess.CalledProcessError as e:
         print "submitting error:", repr(e)
+    time.sleep(1)
     return jobid
 
 def nosubmit_orca(path,index,identify):
@@ -28,12 +29,13 @@ def nosubmit_orca(path,index,identify):
     return 123456
 
 def nosubmit(path,index,identify, extension='.com'): # not tested
-    #print "path", path
+    #gaussiancmd='g09'
+    gaussiancmd='g16'
     inputname = path + '/' + identify + index + extension
     outname =   path + '/' + identify + index + '.log'
     fakename =  path + '/' + identify + index + '.com.o123456'
     with open(inputname,'r') as inp, open(outname,'w') as out, open(fakename,'w') as err:
-        p = subprocess.Popen('g09',stdin=inp,stdout=out,stderr=err,cwd=path)
+        p = subprocess.Popen(gaussiancmd, stdin=inp, stdout=out, stderr=err, cwd=path)
         p.wait()
     return 123456
 

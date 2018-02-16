@@ -128,7 +128,7 @@ def datareader( mols_tocal, fileparameters):
 
     # 3. obtain data for each molecule
     for molecule in mols_tocal:
-        print "><"*10, molecule, "><"*10
+        print "><"*15, molecule
         # make a copy of props_dict
         props_set = uni_props_set.copy()
         file1 = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + '.log'
@@ -166,13 +166,13 @@ def read_file(filename, jobs, program='gaussian'):
     else:
         raise SystemExit('not implemented')
     # for every jobfile do a cclib extraction. faking the separate jobs as if it were single files
-    print "len(jobslines):", len(jobslines)
+    print "njobs:", len(jobslines)
     from cStringIO import StringIO
     jobfiles = map(StringIO, jobslines)
     datadict = dict()
     for jobfile, job in zip(jobfiles, jobs):
         job_data = Logfile(jobfile).parse()
-        print "job_data:", job_data
+        #print "job_data:", job_data
 
         for inf in job['info']:
             if inf=='_':continue
@@ -199,7 +199,7 @@ def read_file(filename, jobs, program='gaussian'):
                 raise SystemExit('rdv not tested yet')
             else:
                 print "value not recognized:", inf
-    print "datadict:", datadict
+    #print "datadict:", datadict
     return datadict
 
 def new_style_reader( file1, to_read_props, fileparameters, EAHs=None ):

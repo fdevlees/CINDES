@@ -58,13 +58,15 @@ def write_subjob(fid, job):
 
 
 #---- START FILEWRITER2 THIS ONLY FOR MAKERS TRY TO MAKE THIS ONE UNIVERSAL ----#
-def filewriter(zmat,index,**paras): #paras is short for fileparameters
+def filewriter(mol, **paras): #paras is short for fileparameters
     '''    This function creates a file with the geometry contained in zmat
     The name of the file contains the index in the name
     '''
     #------------
     # this function uses globals: identify, path
     #------------
+    zmat = mol.zmat
+    index= mol.index
     filename = paras['identify'] + str(index)
     fid=open(paras['path'] + '/' + filename,'w')
 

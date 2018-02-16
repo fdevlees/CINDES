@@ -48,12 +48,11 @@ def is_float(s):
     except ValueError:
         return False
 
-class Run(object):
-    ''' This is the main object for all the parameters used during the process
+class BaseRun(object):
+    ''' This is the main object for all the parameters used during any process
     this object is initiated with a dictionary from the inputreader '''
-    def __init__(self,**entries):
+    def __init__(self, **entries):
         self.__dict__.update(entries) #here all the key/value pairs in entries are converted to attributes.
-
         # set system variables 
         self.script = stack()[0][1]
         self.node = node()
@@ -63,16 +62,10 @@ class Run(object):
         self.ppid = os.getppid()
         # for self.setup_filesystem one needs to have: self.(-nosub / -program)
         self.setup_filesystem()
-
-        self.TZmat = r.geometry(**entries)
-
-        self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
-        self.corresp = self.set_corresp( self.TZmat['active'], self.TZmat['passive'])
-
         return
 
     def __str__(self):
-        sb=['Run object with the following attributes:']
+        sb=['BaseRun object with the following attributes:']
         for key,value in sorted(self.__dict__.items()):
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
@@ -83,14 +76,10 @@ class Run(object):
             else:
                 sb.append("{key:20}='{value}'".format(key=key, value=value))
         return '\n'.join(sb)
-
+    
     def __repr__(self):
         return self.__str__()
 
-    def currenttime(self):
-        return "Current time %s" % str(time.time() - self.starttime)
-
-    @log_io()
     def setup_filesystem(self):
         param = self.__dict__
         if self.nosub==1:
@@ -100,7 +89,6 @@ class Run(object):
             self.workdir = os.getcwd()
             path = self.workdir  + '/CALC'
             param["path"]=str(path)
-            logging.info("PATH:"+str(path))
             if not os.path.exists(path):
                 os.makedirs(path)
             if param['program'] == 'gaussian':
@@ -118,6 +106,21 @@ class Run(object):
                 raise SystemExit('ERROR: No valid program specified')
         self.path = path
         return param, path
+
+    def currenttime(self):
+        return "Current time %s" % str(time.time() - self.starttime)
+
+class FrameRun(BaseRun):
+    ''' This inherites from BaseRun and is the main object for all BFS/SD molecular frame based 
+    procedures.
+    '''
+    def __init__(self,**entries):
+        super(FrameRun, self).__init__(**entries)
+        # specific for FrameRun:
+        self.TZmat = r.geometry(**entries)
+        self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
+        self.corresp = self.set_corresp( self.TZmat['active'], self.TZmat['passive'])
+        return
 
     def set_adj(self, core, active):
         debug=0
@@ -153,8 +156,6 @@ class Run(object):
         return corresp
 
 #END CLASS RUN -----------------------------------------
-
-
 
 # during the RUN one has to set different variables based on current state and input:
 # 1. startconfiguration
@@ -539,7 +540,7 @@ def BFS(param,array):
     startconf = get_startconf(param,array)
 
     #SET MYRUN CLASS and assign all necessary attributes
-    myrun = Run(**param)
+    myrun = FrameRun(**param)
     print(myrun) #this should print all the class elements via the __str__ function
     # the table with all the results of all calculated configs
     table = set_table(myrun, array)
@@ -641,7 +642,7 @@ def BFS(param,array):
 
 # 2: genconf
 def genconf(param):
-    myrun = Run(**param)
+    myrun = FrameRun(**param)
     param = myrun.__dict__
     TZmat = r.geometry(**param)
     conf = zcon.indtocon(param['startind'])
@@ -660,14 +661,17 @@ def genconf(param):
         import nwchem as program
     else:
         raise SystemExit('program not recognized')
-    program.filewriter(mat,param['startind'],**param)
+    from CINDES4.utils.molecule import Molecule
+    mol = Molecule(index=param['startind'])
+    mol.zmat = mat
+    program.filewriter(mol, **param)
     return
 
 # 3: generate
 def generate_procedure(param,array):
     ''' calculate all possible structures '''
 
-    myrun = Run(**param)
+    myrun = FrameRun(**param)
     table = set_table(myrun)
     print myrun
 
@@ -806,7 +810,7 @@ def testpred(param,array):
         def __init__(self):
             self.predictions = {}
         def __repr__(self): return "<empty molecule object>"
-    myrun = Run(**param)
+    myrun = FrameRun(**param)
     print myrun
     table = set_table(myrun, datacolumn=param['datacolumn'])
     sprint(10,table)
@@ -820,7 +824,7 @@ def SteepestDescent(param,array):
     param['bcok']=0
 
     #SET MYRUN CLASS and assign all necessary attributes
-    myrun = Run(**param)
+    myrun = FrameRun(**param)
     print(myrun) #this should print all the class elements via the __str__ function
     # the table with all the results of all calculated configs
     table = set_table(myrun)

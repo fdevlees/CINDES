@@ -116,7 +116,7 @@ def get_prop_function(subinp, line):
     import re
 
     # we need to find the properties going into the function. properties only contain [a-zA-Z]
-    word = re.compile('(^[a-zA-Z]*$)')
+    word = re.compile('(^[a-zA-Z_]*$)')
 
     # the properties in that line are: #set because one property can occur multiple times in function
     props = { item for item in splitted if word.match(item) and not item in ['if', 'else' ] }
@@ -128,6 +128,20 @@ def get_prop_function(subinp, line):
     func = eval('lambda {}:{}'.format(arguments, line))
 
     return subinp, func, props
+
+def get_jobs(subinp, line)
+    njobs = int(line.split()[1])
+    jobs=[]
+    for _ in range(njobs):
+        job=dict()
+        # read propline
+        line = subinp.readline().split()
+        job['info']=set(line)
+        # read mult/charge/hotline
+        line = subinp.readline().split()
+        job['charge'], job['mult'], job['hotline'] = (line[0], line[1], ' '.join(line[2:]))
+        jobs.append(job)
+    return jobs
 
 def get_genalg_params(subinp, line):
     defaults = { 'ngenerations' : 20,
@@ -176,28 +190,29 @@ def readfile(subinp):
     randomseed = np.random.randint(0,100)
     paras={
            'adjust_dihedrals':False,
-           'aea':0,
-           'aip':0,
-           'basisset':'6-31G',
+           #'aea':0,
+           #'aip':0,
+           #'basisset':'6-31G',
            'bc': False,
            'charge':0,
            'cutoff':0,
            'debug':False,
            'difmodel':0,
-           'ea':0,
+           #'ea':0,
+           'extrajobs':[],
            'extra_props': [],
            'extrawaittime': 2,
-           'functional':'b3lyp',
+           #'functional':'b3lyp',
            'function': lambda x:x,
            'identify':'unspecified_',
-           'ip':0,
+           #'ip':0,
            'jobs':[],
            'maxiter':10,
            'maxcycles':'100',
-           'ml':0,
+           #'ml':0,
            'montecarlo':0,   #Temperature at start
            'mult':1,
-           'multiplejobs':0,
+           #'multiplejobs':0,
            'nch3':16,
            'ncore':10,
            'nlinks':False,
@@ -209,19 +224,18 @@ def readfile(subinp):
            'nrandsites':2,
            'optimum':'minimum',
            'optga':False,
-           'polar':0,
+           #'polar':0,
            'predictions':[],
            'procedure':'standard',
            'program':'gaussian',
            'property':'gap',
            'regression':0,
            'restart':0,
-           'restrictions': [],
            'restrictions':[],
            'seed':randomseed,
-           'semiempirical':0,
+           #'semiempirical':0,
            'sequence':[],
-           'solv':False,
+           #'solv':False,
            'stab':0,
            'stabjobs':[],
            'startind': '',
@@ -231,9 +245,9 @@ def readfile(subinp):
            'test_ready':2,
            'timelimit':250000,
            'timestep':300,
-           'try_ready':0,
-           'twojob':0,
-           'volume':False
+           'try_ready':0
+           #'twojob':0,
+           #'volume':False
            }   #n random sites changed. for all choose 0
     #scans all the lines until if will find the END keyword
     #this is a bit tricky because keywords can appear everywere in the file before END 
@@ -290,6 +304,8 @@ def readfile(subinp):
         elif 'debug' in line: paras['debug'] = True
         elif 'difmodel' in line: paras['difmodel'] = 1
         elif 'extra_props' in line: paras['extra_props'] = line.split()[1:]
+        elif 'extrajobs' in line:
+            paras['extrajobs']=get_jobs(subinp, line)
         elif 'extrawaittime' in line: paras['extrawaittime'] = float(line.split()[1])
         elif 'functional' in line: paras['functional'] = line.split()[1]
 	elif 'stabjobs' in line:
@@ -307,18 +323,7 @@ def readfile(subinp):
                 jobs.append(job)
                 paras['stabjobs']=jobs
         elif 'jobs' in line:
-            njobs = int(line.split()[1])
-            jobs=[]
-            for _ in range(njobs):
-                job=dict()
-                # read propline
-                line = subinp.readline().split()
-                job['info']=set(line)
-                # read mult/charge/hotline
-                line = subinp.readline().split()
-                job['charge'], job['mult'], job['hotline'] = (line[0], line[1], ' '.join(line[2:]))
-                jobs.append(job)
-                paras['jobs']=jobs
+            paras['jobs']=get_jobs(subinp, line)
         elif 'maxcycles' in line: paras['maxcycles']= str(int(line.split()[1]))
         elif 'maxiter' in line: paras['maxiter'] = int(line.split()[1])
         elif 'montecarlo' in line:
@@ -467,7 +472,8 @@ def readfile(subinp):
         pass
     props.extend( paras['extra_props'] )
     paras['props'] = set(props)
-    for prop in ['stab', 'polar', 'ip', 'aip', 'ea', 'aea', 'solv' ]:
+    #for prop in ['stab', 'polar', 'ip', 'aip', 'ea', 'aea', 'solv' ]:
+    for prop in ['stab']:
         if prop in paras['props']:
             paras[prop]=True
 
