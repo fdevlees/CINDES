@@ -46,7 +46,7 @@ def extract_eahs(molecule, fileparameters):
         print "pos:", pos,
         file2= fileparameters['path'] + '/' + index + '/' + fileparameters['identify'] + index + '_' + str(pos) + '.log'
 
-        datadict_file2 = read_file(file2, fileparameters['stabjobs'])
+        datadict_file2 = read_file(file2, fileparameters['stabjobs'], program=fileparameters['program'])
         # returns something like: '{'e':638.8, 'eAH':392.389 }
 
         #---- a bit tricky: get the pos-positions that correspond to a nitrogen-X (X=H,CH3) bond.
@@ -162,7 +162,8 @@ def read_file(filename, jobs, program='gaussian'):
     elif program=='nwchem':
         from CINDES4.cclib.parser.nwchemparser import NWChem as Logfile
         key='NWChem Input Module'
-        jobslines = open(filename).read().split(key)[1:-1]
+        splitted = open(filename).read().split(key)
+        jobslines = splitted[1:-1]
     else:
         raise SystemExit('not implemented')
     # for every jobfile do a cclib extraction. faking the separate jobs as if it were single files

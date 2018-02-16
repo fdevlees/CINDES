@@ -22,7 +22,7 @@ import random as rrandom
 from CINDES4.utils.writings import log_io, sprint, print_title
 from CINDES4.utils.molecule import Molecule
 from CINDES4 import INDES
-from CINDES4.predictor import learning_skl
+from predictions import predictor
 from CINDES4.predictor import learning_int as ml_i
 
 from CINDES4.pyevolve import G1DList , GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters, Crossovers
@@ -82,25 +82,15 @@ class Fitness_Function():
         '''for evaluation i need at least to have the database and the core / active / passive (all in zmatrix)
         i probably should also already get a self.kernel here such that the evaluatefunction only should call predict
         '''
-        #self.zmatrix    = get_geometry(options)
         self.run = run
         self.table = table
-        options = run.__dict__
-        if options['ml']==1:  # depending on a not yet implemented option... 
-            self.table      = get_database()
-            from CINDES4.utils.converter import Converter
-            self.converter = Converter()
-            #kwargs['converter'] = self.converter
-            self.initiate_machine_learning() #sets self.my_ML
-        elif options['ml']==2:
-            self.array      = array
-            assert array!=None, "Give Array!"
-            self.initiate_ml_int(**options)
+        self.array=array
         return
 
     def predict_via_submit_multi(self,confs, gen=0):
         ''' this function is used by my_GSimpleGA class.my_evaluate '''
         # 0. I have to deal with the fact that there can be similar configurations!
+        # it does that before calling this function
         pass
 
         # 1. convert configuration lists to molecule instances
@@ -109,9 +99,21 @@ class Fitness_Function():
         print "individuals:", individuals
 
         # 2. check which molecules are already calculated and add them to data_nocal
-        mols_tocal, mols_nocal = INDES.construction.check_in_table( individuals, self.table, self.run.props )
+        mols_todo, mols_nodo = INDES.construction.check_in_table( individuals, self.table, self.run.props )
 
-        # 3. calculate configurations
+        # STEP 2: PREDICTOR
+        # perform prescreaning in a predictions.
+        property_table = INDES.procedures.get_property_table(self.table, self.run)
+        mols_nocal, mols_tocal, made_pred = predictor(
+                self.run,
+                property_table,
+                mols_todo,mols_nodo,
+                gen,
+                array=self.array,
+                nsite=0
+                )
+
+        # 4. calculate configurations
         myrun = self.run
         mols_all = INDES.procedures.submittingprocedure( mols_tocal,
                                                          mols_nocal,
@@ -143,9 +145,9 @@ class Fitness_Function():
 
 class My_GSimpleGA(GSimpleGA.GSimpleGA):
 
-   def __init__(self,genome,run, precalculation=True, table=dict(), **kwargs):
+   def __init__(self,genome,run, precalculation=True, table=dict(), array=[], **kwargs):
        GSimpleGA.GSimpleGA.__init__(self,genome, **kwargs)
-       self.FF = Fitness_Function(run, table=table)
+       self.FF = Fitness_Function(run, table=table, array=array)
        self.precalculation = precalculation
        return
 
@@ -169,6 +171,8 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
       #print "unique_confs:", unique_confs
 
       # 2. call CINDES via FF to calculate the configurations
+      print "self.bestIndividual:", self.bestIndividual()
+      print self.bestIndividual().score
       mols = self.FF.predict_via_submit_multi(unique_confs, gen=self.currentGeneration)
 
       # 3. set the calculations to the correct indivual score
@@ -462,7 +466,8 @@ def run_pyevolve(array,table, options):
     if not options.genalg['seed']:
         options.genalg['seed'] = np.random.randint(1,9999)
     print "seed to generate randomness:", options.genalg['seed']
-    ga = My_GSimpleGA(run = options, genome=genome, precalculation=precalculation, table=table, seed=options.genalg['seed'])
+    ga = My_GSimpleGA(run = options, genome=genome, precalculation=precalculation, table=table, seed=options.genalg['seed'],
+            array=array)
 
     # 8. set Selector
     if options.genalg['selector'] == 'RouletteWheel':  # Default = GRouletteWheel

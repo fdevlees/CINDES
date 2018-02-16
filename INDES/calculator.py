@@ -169,7 +169,7 @@ def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pas
             if not os.path.exists(path + '/' + molecule.index): #path is $WORKDIR/data
                 os.makedirs(path + '/' + molecule.index)
                 # and make sure ID_gauss is in the folder!
-                shutil.copy(path +'/ID_gauss',path+'/'+molecule.index)
+                shutil.copy(path + '/' + myrun.script,path+'/'+molecule.index)
 
             # 2. use zmat to make the AH files with the positions stored in fileparameters['positions']
             for pos in fileparameters['positions']:
@@ -270,6 +270,7 @@ def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
     """
 
     arrayjob=True
+    extension=fileparameters['extension']
 
     # 1. make a list of paths that need to exist when job is ready
     paths = [] #here we are going to make a list of paths of the jobs
@@ -279,14 +280,14 @@ def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
         if arrayjob:
             path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.log'
         else:
-            path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.com.o[0-9][0-9][0-9][0-9][0-9]*'
+            path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + extension + '.o[0-9][0-9][0-9][0-9][0-9]*'
         paths.append(path1)
         if fileparameters['stab']==1: #property is global variable
             for pos in fileparameters['positions']:
                 if arrayjob:
                     path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.log'
                 else:
-                    path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.com.o[0-9][0-9][0-9][0-9][0-9]*'
+                    path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + extension + '.o[0-9][0-9][0-9][0-9][0-9]*'
                 paths.append(path2)
 
     newpaths = paths[:]
@@ -338,12 +339,12 @@ def submit_normal(mols_tocal,myrun):
 def submit_stab(mol_submit,myrun,jobids=[]):
     path = myrun.path
     for molecule in mol_submit:
-        name1 = molecule.index + '.com'
+        name1 = molecule.index + myrun.extension
         jobid = subm.submit(path,name1,myrun.identify, myrun.script).strip()
         jobids.append(jobid)
         for pos in myrun.positions:
             path2 = path + '/' + molecule.index
-            name2 = molecule.index + '_' + str(pos) + '.com'
+            name2 = molecule.index + '_' + str(pos) + myrun.extension
             jobid = subm.submit(path2,name2,myrun.identify, myrun.script).strip()
             jobids.append(jobid)
     return jobids
@@ -351,7 +352,7 @@ def submit_stab(mol_submit,myrun,jobids=[]):
 # 3. testing
 @log_io(signator='=')
 def jobtester(mols_tocal,myrun,jobids=[]):
-    """ this tester tests if the jobs are ready by looking for a file <name>.com.o<6digits>.
+    """ this tester tests if the jobs are ready by looking for a file <name><.extension>.o<6digits>.
 
         - even if try_ready is activated all indices are used. And the already ready ones are immediately recognized as ready. 
         - they are just not submitted again.
@@ -377,11 +378,11 @@ def test_ready1(indices,myrun):
     tijdje = 0
     paths = [] #here we are going to make a list of paths of the jobs
     for i in range(len(indices)):
-        path1 = path + '/' + fileparameters['identify'] + indices[i] + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+        path1 = path + '/' + fileparameters['identify'] + indices[i] + myrun.extension + '.o[0-9][0-9][0-9][0-9][0-9][0-9]'
         paths.append(path1)
         if fileparameters['stab']==1: #property is global variable
             for pos in fileparameters['positions']:
-                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + myrun.extension + '.o[0-9][0-9][0-9][0-9][0-9][0-9]'
                 paths.append(path2)
     while True: # then we remove each item of the paths that exists. If every path exists, all jobs are ready
         if tijdje>fileparameters['timelimit']:
@@ -408,11 +409,11 @@ def test_ready2(mols_tocal,myrun):
     tijdje = 0
     files = [] #here we are going to make a list of filenames of the jobs
     for i in range(len(indices)):
-        file1 = fileparameters['identify'] + indices[i] + '.com'
+        file1 = fileparameters['identify'] + indices[i] + myrun.extension
         files.append(file1)
         if fileparameters['stab']==1: #property is global variable
             for pos in fileparameters['positions']:
-                file2 = fileparameters['identify'] + indices[i] + '_' + str(pos) + '.com'
+                file2 = fileparameters['identify'] + indices[i] + '_' + str(pos) + myrun.extension
                 files.append(file2)
     while True:
         count=0
@@ -423,8 +424,9 @@ def test_ready2(mols_tocal,myrun):
         njobs = len(filescopy)
         qsta_raw = subm.qsta()
         if qsta_raw==False:
-            print "No jobs!"
-            break
+            print "qsta not working!"
+            time.sleep(fileparameters['timestep'])
+            continue
         qsta_out = [ item.split() for item in subm.qsta().split('\n') ]
         #states,jobs = zip(*[ (item[2],item[4]) for item in qsta_out if len(item)>4 ])
         states = []
