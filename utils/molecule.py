@@ -6,7 +6,8 @@ from collections import MutableSequence
 debug=0
 
 try:
-    import pybel
+    pass
+    #import pybel
 except:
     print "pybel not installed"
 
@@ -14,6 +15,22 @@ def contoind(conf):
     ''' to convert a configuration to an index-string '''
     #return '_'.join([''.join(str(item)) for item in conf])
     return '_'.join([ ''.join(filter(lambda x:str(x).isalpha(), item)) for item in conf ])
+
+def contoindD(conf):
+    ''' to convert a configuration to an index-string '''
+    #return '_'.join([''.join(str(item)) for item in conf])
+    return '_'.join([ ''.join(item) for item in conf ])
+
+def indtocon(index):
+    conf = []
+    for item in index.split('_'):
+        splitted = re.findall(r"[a-zA-Z]+|\d+", item)
+        site = findall('[A-Z0-9][^A-Z1-9]*', splitted[0] )
+        if len(splitted)==2:
+            dihedral=splitted[1]
+            site.append(dihedral)
+        conf.append(site)
+    return conf
 
 class Population(MutableSequence):
     def __init__(self, population):
@@ -67,22 +84,57 @@ class Population(MutableSequence):
             self.population.append(ind)
         return self
 
-
-class Molecule(object):
-    def __init__(self,conf):
+class BaseMolecule(object):
+    def __init__(self):
         self.converter = Converter()
-        self.conf = conf
-        self.index= contoind(self.conf)
         self.Pvalue = None # for storing the principal properties
         self.boundaries = [] # for storing the boundary condition properties
         self.infoline = [] # for storing additional properties
         self.predictions = {}
         self.predicted = None
-        self.mat = None
         self.opt = False
-
         # for jsonification:
         self.props = {}
+        return
+
+class SmiMolecule(BaseMolecule):
+    def __init__(self, smiles):
+        super(SmiMolecule, self).__init__()
+        self.smiles=smiles
+        self.set_index()
+        return
+
+    def __str__(self):
+        return "Molecule: " + self.smiles
+
+    def set_index(self):
+        replacements = {
+                '=':'a',
+                '(':'d', ')':'e',
+                '[':'g', ']':'i',
+                '\\':'j','/':'k',
+                '@':'m'
+                }
+        #ireplacements = {v: k for k, v in replacements.iteritems()}
+        index = "".join([replacements.get(c, c) for c in self.smiles])
+        self.index = index
+        return
+
+class Molecule(BaseMolecule):
+    def __init__(self, conf, dihedral=False):
+        super(Molecule, self).__init__()
+
+        # Molecule instances can be initiated with both their index or conf but conf is preferred
+        if type(conf)==list:
+            self.conf = conf
+            if dihedral:
+                self.index=contoindD(self.conf)
+            else:
+                self.index= contoind(self.conf)
+        elif type(conf)==str:
+            self.conf = indtocon(conf)
+            self.index= conf
+        self.mat = None
         return
 
     def __getitem__(self,key):
@@ -213,8 +265,12 @@ class Molecule(object):
             xyzs.append([splitted[0],xyztje,self.converter.masses[splitted[0]]])
         return xyzs
 
-from qml import compound
-class my_Compound(compound.Compound):
+try:
+    from qml import compound
+except ImportError:
+    print "QML not imported!"
+else:
+  class my_Compound(compound.Compound):
     '''an inherited class of Compound which is different only in the fact that it reads from list input instead of filename input'''
 
     def read_xyz(self, lines):

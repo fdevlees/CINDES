@@ -48,12 +48,11 @@ def is_float(s):
     except ValueError:
         return False
 
-class Run(object):
-    ''' This is the main object for all the parameters used during the process
+class BaseRun(object):
+    ''' This is the main object for all the parameters used during any process
     this object is initiated with a dictionary from the inputreader '''
-    def __init__(self,**entries):
+    def __init__(self, **entries):
         self.__dict__.update(entries) #here all the key/value pairs in entries are converted to attributes.
-
         # set system variables 
         self.script = stack()[0][1]
         self.node = node()
@@ -63,38 +62,24 @@ class Run(object):
         self.ppid = os.getppid()
         # for self.setup_filesystem one needs to have: self.(-nosub / -program)
         self.setup_filesystem()
-
-        #zmatrix reading and splitting needs: self.-ncore / -line1 / -nch3
-        #self.TZmat = r.geometry(param)
-        self.TZmat = r.geometry(**entries)
-
-        self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
-        self.corresp = self.set_corresp( self.TZmat['active'], self.TZmat['passive'])
-
-        #sets Gaussian09 input lines
-        self.set_calculation_properties()
         return
 
     def __str__(self):
-        sb=['Run object with the following attributes:']
+        sb=['BaseRun object with the following attributes:']
         for key,value in sorted(self.__dict__.items()):
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( dump( value ) )
-            elif key in ['TZmat','genalg', 'adj', 'jobs']:
+            elif key in ['TZmat','genalg', 'adj', 'jobs', 'stabjobs']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( pprint.pformat(value, width=150) )
             else:
                 sb.append("{key:20}='{value}'".format(key=key, value=value))
         return '\n'.join(sb)
-
+    
     def __repr__(self):
         return self.__str__()
 
-    def currenttime(self):
-        return "Current time %s" % str(time.time() - self.starttime)
-
-    @log_io()
     def setup_filesystem(self):
         param = self.__dict__
         if self.nosub==1:
@@ -104,25 +89,37 @@ class Run(object):
             self.workdir = os.getcwd()
             path = self.workdir  + '/CALC'
             param["path"]=str(path)
-            logging.info("PATH:"+str(path))
             if not os.path.exists(path):
                 os.makedirs(path)
             if param['program'] == 'gaussian':
+                self.script='ID_gauss'
+                self.extension='.com'
                 shutil.copy(os.getcwd()+'/ID_gauss',path)
             elif param['program'] == 'orca':
+                self.script='ID_orca'
                 shutil.copy(os.getcwd() + '/ID_orca',path)
+            elif param['program'] == 'nwchem':
+                self.script='ID_NWChem'
+                self.extension=''
+                shutil.copy(os.getcwd()+'/ID_NWChem',path)
             else:
                 raise SystemExit('ERROR: No valid program specified')
         self.path = path
         return param, path
 
-    def set_calculation_properties(self):
-        if self.program in ['Gaussian','gaussian']:
-            self.runspecs_gaussian()
-        elif self.program in ['ORCA','orca','Orca']:
-            runspecs_orca(param)
-        else:
-            raise SystemExit('PROGRAM NOT RECOGNIZED')
+    def currenttime(self):
+        return "Current time %s" % str(time.time() - self.starttime)
+
+class FrameRun(BaseRun):
+    ''' This inherites from BaseRun and is the main object for all BFS/SD molecular frame based 
+    procedures.
+    '''
+    def __init__(self,**entries):
+        super(FrameRun, self).__init__(**entries)
+        # specific for FrameRun:
+        self.TZmat = r.geometry(**entries)
+        self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
+        self.corresp = self.set_corresp( self.TZmat['active'], self.TZmat['passive'])
         return
 
     def set_adj(self, core, active):
@@ -153,92 +150,12 @@ class Run(object):
         '''makes a dictionary that gives the correspondance of sites with position in core matrix'''
         corresp = dict()
         for site in active:
-            corresp[ site[0][1] ] = site[1][1]
+            corresp[ int(site[0][1]) ] = int(site[1][1])
         for site in passive:
-            corresp[ site[0][1] ] = site[1][1]
+            corresp[ int(site[0][1]) ] = int(site[1][1])
         return corresp
 
-    def runspecs_gaussian(self):
-        param=self.__dict__
-        if param['gaussianlines']:
-            pass
-        elif param['stab']==1:
-            # extra parameters needed:
-            #param['positions'] = (2,6,7,9,11,12) # HARD CODING positions to add a Hydrogen
-            self.gasconstant = 8.3144621
-            self.bde_a = -12.68 #kJ/mol/eV^2
-            self.bde_b = -218.1 #kJ/mol
-            self.stab_h = 235.8 #kJ/mol
-            self.Dw_h = 0.063 #eV
-            self.chi_h = 2.20 
-            self.chi_c = 2.60
-            self.chi_n = 3.05
-            self.H_h = -0.516817233 #a.u.
-            self.avtc = -28.1290706 #kJ/mol #average thermal correction for 5 random structures kJ/mol
-            if param['semiempirical'] == 1:
-                self.gaussianline1 =  '# opt am1 \n'
-                self.gaussianline2 =  '# geom=check am1\n' #also for 456
-                self.gaussianline3 =  param['gausline2']
-            else:
-                self.gaussianline1 =  '# opt ub3lyp/6-31g(d) pop=npa \n'
-                self.gaussianline2 =  '# geom=check guess=read b3lyp/6-311+G(d,p) scf=xqc\n' #also for 456
-                self.gaussianline3 =  '# geom=check guess=read b3p86/6-311+G(d,p) scf=xqc\n' #also for 7
-        elif param['polar']==1:
-            if param['volume']==1:
-                self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                self.gaussianline2 = '#p geom=allcheck guess=read polar volume=tight '+param['functional']+'/'+param['basisset']+'\n'
-            else:
-                self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                self.gaussianline2 = '#p geom=allcheck guess=read polar '+param['functional']+'/'+param['basisset']+'\n'
-        elif param['aip']==1 or param['aea']==1:
-            self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-            param['twojob']=1
-            self.gaussianline2 = '# geom=check guess=read opt scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-        elif param['ip']==1 or param['ea']==1:
-            self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-            param['twojob']=1
-            self.gaussianline2 = '# geom=check guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-        else:
-            if param['property']=='dipole':
-                logging.warning('NO Geometry optimization will be performed!!!')
-                self.gaussianline = '# ' + param['functional'] +'/'+ param['basisset'] +'\n'
-            else:
-                if param['basisset'] in [ None, 0, '0', 'none', 'nalse', False, 'off' , 'n', 'na' ]:
-      
-                    self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'\n'
-                else:
-                    self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-            if param['twojob'] == 1:
-                self.gaussianline2 = '# geom=check guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-            elif param['twojob'] == 2:
-                self.multiplejobs = 2
-                if param['semiempirical'] == 1:
-                    self.gaussianline  = '# opt=(maxcycle=' + param['maxcycles'] + ') ' + 'pm6' +'\n'
-                else:
-                    self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                self.gaussianline2 = '# geom=allcheck guess=read scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-            elif param['twojob'] == 4:
-                self.multiplejobs = 4
-                if param['semiempirical'] == 1:
-                    self.gaussianline  = '# opt=(maxcycle=' + param['maxcycles'] + ') ' + 'pm6' +'\n'
-                else:
-                    self.gaussianline = '# opt=(maxcycle=' + param['maxcycles'] + ') scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                self.gaussianline2 = '# geom=check scf=xqc ' + param['functional'] +'/'+ param['basisset'] +'\n'
-                if param['solv']:
-                    if True:
-                        self.gaussianline_solv0 = '# geom=allcheck guess=read pm6\n'
-                        self.gaussianline_solv1 = '# geom=allcheck guess=read pm6 scrf=(smd, solvent=aceticacid)\n'
-                    else:
-                        self.gaussianline_solv0 = '# geom=allcheck guess=read scf=xqc b3lyp/6-31G(d,p)\n'
-                        self.gaussianline_solv1 = '# geom=allcheck scf=xqc scrf=(smd, solvent=aceticacid) b3lyp/6-31G(d,p)\n'
-
-        for key in ['ip','ea','polar']:
-            if param[key]==1:
-                self.multiplejobs +=1
-        return
 #END CLASS RUN -----------------------------------------
-
-
 
 # during the RUN one has to set different variables based on current state and input:
 # 1. startconfiguration
@@ -329,7 +246,7 @@ def set_table(myrun, array=[]):
         # touch new json file
         with open('{}.json'.format(tablename),'w') as f2:
             json.dump(json_db, f2, indent=-1)
-        #raise SystemExit('stop')
+        raise SystemExit('stop')
         return json_db
     #-------- enclosed function 2:
     def adjust_dihedrals(table, array):
@@ -602,20 +519,9 @@ def restriction1(mols_todo, mols_nodo, run):
 
 # B: getting the real data by submitting 
 def submittingprocedure(mols_tocal,mols_nocal,myrun,**kwargs):
-    global once
-    # here submitting thing knows at least the path
     fileparameters = myrun.__dict__
-    if myrun.program in ['ORCA','orca','Orca']:
-        import orcafunctions
-        data = orcafunctions.submittingprocedure(confs,mols_tocal,mols_nocal,fileparameters,**self.TZmat)
-    elif myrun.program in ['Gaussian','gaussian']:
-        import gaussianfunctions as gausf
-        data = gausf.procedure(myrun,mols_tocal,mols_nocal,kwargs)
-    elif myrun.program == 'molpro':
-        raise SystemExit('molpro not implemented')
-    else:
-        print "program not recognized!:", myrun.program
-        raise SystemExit('no program recognized')
+    import calculator
+    data = calculator.procedure(myrun,mols_tocal,mols_nocal,kwargs)
     return data
 
 # THERE ARE DIFFERENT GLOBAL PROGRAM FLOW PROCEDURES:
@@ -634,7 +540,7 @@ def BFS(param,array):
     startconf = get_startconf(param,array)
 
     #SET MYRUN CLASS and assign all necessary attributes
-    myrun = Run(**param)
+    myrun = FrameRun(**param)
     print(myrun) #this should print all the class elements via the __str__ function
     # the table with all the results of all calculated configs
     table = set_table(myrun, array)
@@ -658,7 +564,7 @@ def BFS(param,array):
         ### for each site in sequence:
         for l in range(len(sequence)):
             k = sequence[l]
-            print_title("k(site)= " + str(k) + " l(nsite)= "+ str(l),outline='l',signator='=')
+            print_title("k(site)= {} l(nsite)= {} (c={})".format(k,l,count),outline='l',signator='=')
             if not l == 0 or count > 1: #define new startconfiguration if not first cycle
                 # define new starting geometry
                 print "optsite:",optsite
@@ -736,7 +642,7 @@ def BFS(param,array):
 
 # 2: genconf
 def genconf(param):
-    myrun = Run(**param)
+    myrun = FrameRun(**param)
     param = myrun.__dict__
     TZmat = r.geometry(**param)
     conf = zcon.indtocon(param['startind'])
@@ -749,14 +655,23 @@ def genconf(param):
     a = deepcopy(TZmat['active'])
     p = deepcopy(TZmat['passive'])
     mat = zcon.constructor2(conf,c,a,p, links=myrun.symlinks)
-    zcon.filewriter2(mat,param['startind'],**param)
+    if myrun.program=='gaussian':
+        import gaussian as program
+    elif myrun.program=='nwchem':
+        import nwchem as program
+    else:
+        raise SystemExit('program not recognized')
+    from CINDES4.utils.molecule import Molecule
+    mol = Molecule(index=param['startind'])
+    mol.zmat = mat
+    program.filewriter(mol, **param)
     return
 
 # 3: generate
 def generate_procedure(param,array):
     ''' calculate all possible structures '''
 
-    myrun = Run(**param)
+    myrun = FrameRun(**param)
     table = set_table(myrun)
     print myrun
 
@@ -773,7 +688,7 @@ def generate_procedure(param,array):
     #print_title("COUNT: " + str(count),outline='l',signator="-")
 
     count=0
-    if True:
+    if False:
         if not myrun.nosub==1:
             mols_all = submittingprocedure(mols_tocal,
                                            mols_nocal,
@@ -811,7 +726,7 @@ def generate_procedure(param,array):
         print "njobs:", len(mols_tocal)
 
         # generate all inputfiles
-        from gaussianfunctions import filemaker, geommaker
+        from calculator import filemaker, geommaker
         geommaker(mols_tocal,myrun,**myrun.TZmat)
         filemaker(mols_tocal,myrun) #----------------------------------HERE IS THE FILEWRITER CALL
 
@@ -837,7 +752,7 @@ def get_all_molecules(array):
         C=D
     print "molecules:"
     for i, item in enumerate(C): print i, item
-    mols = [ Molecule(conf=conf) for conf in C ]
+    mols = [ Molecule(conf=conf, dihedral=True) for conf in C ]
 
     print mols
     return mols
@@ -895,7 +810,7 @@ def testpred(param,array):
         def __init__(self):
             self.predictions = {}
         def __repr__(self): return "<empty molecule object>"
-    myrun = Run(**param)
+    myrun = FrameRun(**param)
     print myrun
     table = set_table(myrun, datacolumn=param['datacolumn'])
     sprint(10,table)
@@ -909,7 +824,7 @@ def SteepestDescent(param,array):
     param['bcok']=0
 
     #SET MYRUN CLASS and assign all necessary attributes
-    myrun = Run(**param)
+    myrun = FrameRun(**param)
     print(myrun) #this should print all the class elements via the __str__ function
     # the table with all the results of all calculated configs
     table = set_table(myrun)

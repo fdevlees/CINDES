@@ -292,7 +292,7 @@ def set_nxy(n):
 
 
 @log_io()
-def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
+def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[], optimum=None):
     '''makes the predictions using KRR(ML) / RR(LS) / DIF(MC)
        run_object = myrun with all param elements
     '''
@@ -301,6 +301,7 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
     TZmat = run.TZmat
     retrain = nsite==0
     retrain = False
+    GA = False
 
     # there is enough data to do predictive analytics when:
     #    - there are at least 50 samples
@@ -308,7 +309,7 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
     #    - there should at least one prediction be made: not mols_todo==[] unless we are not interested in predictions: procedure testpred
     enoughdata = (
                     (
-                        len(table)>1 and (
+                        len(table)>30 and (
                                               count>1 or run.restart>0
                                           )
                     ) and
@@ -340,7 +341,14 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
         #plot_predictions(run.predictions)
 
         # 4. decide which molecules to calculate and which not
-
+        if run.procedure=='ga':
+            GA=True
+            # raise NotImplementedError('yet todo')
+            # what it should do:
+            # if pred>0.75. take all structures performing better than the current optimum. 
+            # if that number is smaller than the ntake. take the n other best structures
+            #
+            #
         if best_pred['R'] > 0.75 and run.ml:
             def get_ntake(R, n):
                 fraction = 4. - 4. * R
@@ -348,16 +356,12 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[]):
                 print "I will calculate only {:d} of the {:d} structures ;)".format( ntake, n)
                 return ntake
             ntake = get_ntake( best_pred['R'], len( mols_todo ) )
-            #if best_pred['R'] > 0.95: # if R-value is between 0.95 - 1.00 take 3
-            #    ntake = 3
-            #else: # if R-value is between 0.90 - 0.95 take 6
-            #    ntake = 6
             print "prediction is good enough"
             mols_nocal, mols_tocal = (mols_nodo,[])
-            #for mol in mols_todo:
-            #    print mol.predictions.get(best_pred['name'],"empty")
-            # sort mols based on prediction value
             mols_sorted = sorted( mols_todo, key=lambda x:x.predictions.get(best_pred['name']), reverse=(not run.optimum=='minimum') )
+            if GA:
+                print 'there could be a problem in the GA when there are predicted values below the actual calculated ones!'
+                #take here the ones better than optimum?
             for i,mol in enumerate(mols_sorted):
                 print mol, mol.predictions.get(best_pred['name'],"empty")
                 if i< ntake:

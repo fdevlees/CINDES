@@ -78,7 +78,7 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
         # 1. Make the files
         filemaker(mols_tocal,myrun) #----------------------------------HERE IS THE FILEWRITER CALL
 
-        # 2. now the jobs have to be submitted 
+        # 2. now the jobs have to be submitted (this function contains a try_ready test)
         jobids = submission(mols_tocal,myrun)
 
         # 3. test of all jobs are ready
@@ -100,6 +100,7 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
 #0. geom making
 @log_io()
 def geommaker(mols_tocal,myrun,passive, active, core):
+    e=None
     for molecule in mols_tocal:
         c = deepcopy(core)
         a = deepcopy(active)
@@ -110,11 +111,11 @@ def geommaker(mols_tocal,myrun,passive, active, core):
         try:
             smiles= molecule.get_format()
             print "smiles:", smiles,
-        except IndexError:
+        except IndexError as e:
             print "IndexError while trying to make smiles for molecule"
-        except NameError:
-            print "NameError while trying to make smiles for molecule"
-        except KeyError:
+        except NameError as e:
+            print "NameError while trying to make smiles for molecule:"
+        except KeyError as e:
             print "KeyError while trying to make smiles for molecule"
 
         if myrun.optga:
@@ -146,68 +147,47 @@ def geommaker(mols_tocal,myrun,passive, active, core):
         else:
             # no special action. the first assigned geometry is used as a start
             pass
+    print e
     return
 
 # 1. file making
 @log_io()
 def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pass here)
     ''' jkl'''
+    if myrun.program=='gaussian':
+        import gaussian as program
+    elif myrun.program=='nwchem':
+        import nwchem as program
+    else:
+        raise SystemExit('program not recognized')
     path = myrun.path
     fileparameters = myrun.__dict__
     for molecule in mols_tocal:
-        if not myrun.stab==1:
-            zcon.filewriter2(molecule.zmat,molecule.index,**fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
-        else:
-            # 1. WRITE radical input with filewriterA
-            zcon.filewriterA(molecule.zmat,molecule.index,**fileparameters) #here we have to use makers to construct the AH files
-
-            # 2. make a folder with the indexname in /data/indices[i]
+        program.filewriter(molecule, **fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
+        if myrun.stab==1:
+            # 1. make a folder with the indexname in /data/indices[i]
             if not os.path.exists(path + '/' + molecule.index): #path is $WORKDIR/data
                 os.makedirs(path + '/' + molecule.index)
                 # and make sure ID_gauss is in the folder!
-                shutil.copy(path +'/ID_gauss',path+'/'+molecule.index)
+                shutil.copy(path + '/' + myrun.script,path+'/'+molecule.index)
 
-            # 3. reopen written A-file to extract Z-matrix to make the AH files
-            filename = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + ".com" #same line as in filewriter. open it again.
-            zmat = extract_zmat(filename)
-
-            # 4. use zmat to make the AH files with the positions stored in fileparameters['positions']
+            # 2. use zmat to make the AH files with the positions stored in fileparameters['positions']
             for pos in fileparameters['positions']:
-                zmat2 = deepcopy(zmat)
-                hornot = maker1(zmat2,pos,molecule.index,**fileparameters) #returns a value indicating if there is already a hydrogen (or a nitrogen)
+                zmat2 = deepcopy(molecule.zmat)
+                zmat2, h = add_hydrogen(zmat2, pos, fileparameters['ncore'])
+                program.filewriterAH(zmat2,pos,molecule.index,**fileparameters)
                 # FOR NOW ONLY DO ONE POSSIBILITY THIS IS EASIER BECAUSE WE KNOW EXACTLY HOW MANY JOBS THERE HAVE TO BE SUBMITTED
                 #if not hornot == 1: #if not there are two ways to place the hydrogen.
                     #maker2(zmat,pos,indices[i],**fileparameters)
 
     return
 
-def extract_zmat(filename):
-    """This function is used to make the A-H files for the stab property"""
-
-    logging.debug("filename: " + filename)
-    multcharge = re.compile('^\-?[0-9]\s[0-9]') #only set the compiler
-    with open(filename) as fid: #again open as fid
-        for line in fid:
-            if multcharge.match(line): #from where there is a match it reads the subsequant lines as the zmat
-                zmat=[]
-                line=next(fid)
-                while not line == '\n': #until empty line
-                    zmat.append(line.split())
-                    line=next(fid)
-                break #so that only the first match is used. after the other matches there is no zmat
-    return zmat
-
-def maker1(zmat,pos,index,**fileparameters):
+def add_hydrogen(zmat, pos, ncore):
     """makes new file with hydrogen attached on first dihedral"""
     zmatnew = deepcopy(zmat)
     spos = str(pos) #spos is string of pos. pos = position
     h=0
-    #print "zmat[spos-1]:",zmat[pos-1]
-    #print "pos:",spos
-    #print "fileparamters ncore:", fileparameters['ncore']
     logging.debug(pprint.pformat(zmat))
-    #print "zmat[fileparameters['ncore']:]:"
-    #pp.pprint(zmat[fileparameters['ncore']:])
     if zmat[pos-1][0] == 'N':
         item = zmat[pos-1]
         h=1
@@ -220,36 +200,37 @@ def maker1(zmat,pos,index,**fileparameters):
             dihedralindex=item[3]
             hline= ['H',spos,0.9,bondindex,109.5,item[3],176.0]#LOOK AT THIS
     else:
-        for item in zmatnew[fileparameters['ncore']:]:
-            #print "in loop", "spos:",spos,"str(item[1]",str(item[1])
+        for item in zmatnew[ncore:]:
             if str(item[1]) == spos:
                 if item[0] == 'H': h=1
-                hline=item[:]
+                hline=item.copy()
                 item[6] = '126.0'
                 hline[6] = '234.0'
+                hline[2] = 0.9
                 hline[0] = 'H'
                 #print "hline:",hline
     zmatnew.append(hline)
-    zcon.filewriterAH(zmatnew,spos,index,**fileparameters) #now it is important where this will be written.
-    return h
+    return zmatnew, h
 
-def maker2(zmat,pos,index,**fileparameters):
-    '''makes new file with hydrogen attached on second dihedral.
-    this is only necessary when there is not already another hydrogen on the compound
-    or that the site is nitrogen or possibly sulfur doped. '''
-    zmatnew = zmat[:]
-    spos = str(pos)
-    h=0
-    #print "pos:",spos
-    for item in zmatnew[fileparameters['ncore']:]:
-        if str(item[1]) == spos:
-            hline=item[:]
-            item[6] = '234.0'
-            hline[6] = '126.0'
-            hline[0] = 'H'
-    zmatnew.append(hline)
-    zcon.filewriterAH(zmatnew,spos + '_2',index,**fileparameters)
-    return
+#    IF I ever want to make the structures with H on the other side attached I need something like this:
+#def maker2(zmat,pos,index,**fileparameters):
+#    '''makes new file with hydrogen attached on second dihedral.
+#    this is only necessary when there is not already another hydrogen on the compound
+#    or that the site is nitrogen or possibly sulfur doped. '''
+#    zmatnew = zmat[:]
+#    spos = str(pos)
+#    h=0
+#    #print "pos:",spos
+#    for item in zmatnew[fileparameters['ncore']:]:
+#        if str(item[1]) == spos:
+#            hline=item[:]
+#            item[6] = '234.0'
+#            hline[6] = '126.0'
+#            hline[0] = 'H'
+#    zmatnew.append(hline)
+#    filewriterAH(zmatnew,spos + '_2',index,**fileparameters)
+#    return
+
 
 # 2. submission
 @log_io()
@@ -289,6 +270,7 @@ def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
     """
 
     arrayjob=True
+    extension=fileparameters['extension']
 
     # 1. make a list of paths that need to exist when job is ready
     paths = [] #here we are going to make a list of paths of the jobs
@@ -298,11 +280,14 @@ def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
         if arrayjob:
             path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.log'
         else:
-            path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.com.o[0-9][0-9][0-9][0-9][0-9]*'
+            path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + extension + '.o[0-9][0-9][0-9][0-9][0-9]*'
         paths.append(path1)
         if fileparameters['stab']==1: #property is global variable
             for pos in fileparameters['positions']:
-                path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.com.o[0-9][0-9][0-9][0-9][0-9]*'
+                if arrayjob:
+                    path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.log'
+                else:
+                    path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + extension + '.o[0-9][0-9][0-9][0-9][0-9]*'
                 paths.append(path2)
 
     newpaths = paths[:]
@@ -341,36 +326,33 @@ def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
 def submit_normal(mols_tocal,myrun):
     jobids = []
     for molecule in mols_tocal:
-        name = molecule.index + '.com'
+        name = molecule.index + myrun.extension
         if myrun.nosub ==2:
             time.sleep(1)
             jobid = subm.nosubmit(myrun.path,molecule.index ,myrun.identify)
             print molecule.index + 'submitted'
         else:
-            #print "name:", name
-            #print "myrun.path:", myrun.path
-            #print "myrun.identify:", myrun.identify
-            jobid = subm.submit(myrun.path,name,myrun.identify).strip()
+            jobid = subm.submit(myrun.path, name, myrun.identify, myrun.script).strip()
         jobids.append(jobid)
     return jobids
 
 def submit_stab(mol_submit,myrun,jobids=[]):
     path = myrun.path
     for molecule in mol_submit:
-        name1 = molecule.index + '.com'
-        jobid = subm.submit(path,name1,myrun.identify).strip()
+        name1 = molecule.index + myrun.extension
+        jobid = subm.submit(path,name1,myrun.identify, myrun.script).strip()
         jobids.append(jobid)
         for pos in myrun.positions:
             path2 = path + '/' + molecule.index
-            name2 = molecule.index + '_' + str(pos) + '.com'
-            jobid = subm.submit(path2,name2,myrun.identify).strip()
+            name2 = molecule.index + '_' + str(pos) + myrun.extension
+            jobid = subm.submit(path2,name2,myrun.identify, myrun.script).strip()
             jobids.append(jobid)
     return jobids
 
 # 3. testing
 @log_io(signator='=')
 def jobtester(mols_tocal,myrun,jobids=[]):
-    """ this tester tests if the jobs are ready by looking for a file <name>.com.o<6digits>.
+    """ this tester tests if the jobs are ready by looking for a file <name><.extension>.o<6digits>.
 
         - even if try_ready is activated all indices are used. And the already ready ones are immediately recognized as ready. 
         - they are just not submitted again.
@@ -396,11 +378,11 @@ def test_ready1(indices,myrun):
     tijdje = 0
     paths = [] #here we are going to make a list of paths of the jobs
     for i in range(len(indices)):
-        path1 = path + '/' + fileparameters['identify'] + indices[i] + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+        path1 = path + '/' + fileparameters['identify'] + indices[i] + myrun.extension + '.o[0-9][0-9][0-9][0-9][0-9][0-9]'
         paths.append(path1)
         if fileparameters['stab']==1: #property is global variable
             for pos in fileparameters['positions']:
-                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + '.com.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + myrun.extension + '.o[0-9][0-9][0-9][0-9][0-9][0-9]'
                 paths.append(path2)
     while True: # then we remove each item of the paths that exists. If every path exists, all jobs are ready
         if tijdje>fileparameters['timelimit']:
@@ -427,11 +409,11 @@ def test_ready2(mols_tocal,myrun):
     tijdje = 0
     files = [] #here we are going to make a list of filenames of the jobs
     for i in range(len(indices)):
-        file1 = fileparameters['identify'] + indices[i] + '.com'
+        file1 = fileparameters['identify'] + indices[i] + myrun.extension
         files.append(file1)
         if fileparameters['stab']==1: #property is global variable
             for pos in fileparameters['positions']:
-                file2 = fileparameters['identify'] + indices[i] + '_' + str(pos) + '.com'
+                file2 = fileparameters['identify'] + indices[i] + '_' + str(pos) + myrun.extension
                 files.append(file2)
     while True:
         count=0
@@ -442,8 +424,9 @@ def test_ready2(mols_tocal,myrun):
         njobs = len(filescopy)
         qsta_raw = subm.qsta()
         if qsta_raw==False:
-            print "No jobs!"
-            break
+            print "qsta not working!"
+            time.sleep(fileparameters['timestep'])
+            continue
         qsta_out = [ item.split() for item in subm.qsta().split('\n') ]
         #states,jobs = zip(*[ (item[2],item[4]) for item in qsta_out if len(item)>4 ])
         states = []

@@ -122,21 +122,21 @@ def contoind(conf):
 eV=27.2113838
 
 matplotlib.rcParams['mathtext.default']='regular'
-funcs = {'CCFFF': '$C-CF_3$',
-         'CCHHH': '$C-CH_3$',
-         'CCN': '$C-C\\equiv N$',
+funcs = {'CCHHH': '$C-CH_3$',
          'CCl': '$C-Cl$',
          'CF': '$C-F$',
          'CH': '$C-H$',
          'CNHH': '$C-NH_2$',
          'CNOO': '$C-NO_2$',
          'CCOOH': '$C-COOH$',
-         'CO': '$C=O$',
+         'CSOOOH':'$C-SO_3H$',
          'COH': '$C-OH$',
          'CSH': '$C-SH$',
-         'N': '$N$',
-         'O': '$O$',
-         'S': '$S$'}
+         'CPh':'$C-Ph$',
+         'CCHO':'$C-CHO$',
+         '':'' }
+funcf = lambda x:funcs.get(x,'${}$'.format(x))
+
 #seq = ['CH','CCHHH','CCFFF','N','CF','CCl','CNHH','CNOO','CCN','CSH','COH','CCOOH','CO','O','S','CCHO','CPh', 'CSOOOH']
 #seq = ['CH','CNHH','CNOO','CSH','COH','CCHO','CPh', 'CSOOOH']  # for substituent study of eline
 #seq = ['CH','N','B','O','S','P']  # for substituent study of eline
@@ -388,8 +388,11 @@ class Dataset(object): #abstract data class
             order =  ['CH', 'COH', 'CSOOOH', 'CNHH', 'CSH', 'CPh', 'CNOO', 'CCHO', 'N', 'P', 'B', 'O', 'S']
             if noch:
                 df=df[order].reindex(['tertiary','secondary','']+order[1:-2])
-
             df.to_csv('coefs')
+            print df.index
+            print df.columns
+            df.index=map(funcf,df.index)
+            df.columns=map(funcf, df.columns)
 
             import seaborn as sns
             sns.set(style="white")

@@ -623,7 +623,7 @@ def supermain(args):
 
 def main(args):
     identify = args.identify
-    if 'ada' in identify:
+    if 'ada' in identify or any( prop in identify for prop in ['GAP', 'HOMO', 'LUMO']):
         myrun = Adamantane(args.file)
     elif any(item in identify for item in ['dia','dilu','diho','dimi','dima','dilumi']):
         myrun = Diamantane(args.file)
@@ -637,7 +637,9 @@ def main(args):
         pass
         #myrun = Naphtol(args.file)
     else:
-        raise SystemExit('no identify was identified')
+        print "no identify identified but I take adamantane as default!"
+        myrun = Adamantane(args.file)
+        #raise SystemExit('no identify was identified')
     myrun.extract(file=args.file)
     return myrun
 
@@ -670,7 +672,7 @@ def get_X_1D(indices, identify, descriptor='1DL',column=2, **kwargs):
     global args
     args.column=column
 
-    if any(item in identify for item in ['ada', 'adhoma','apm6']):
+    if any(item in identify for item in ['GAP', 'HOMO', 'LUMO', 'ada', 'adhoma','apm6']):
         myrun = Adamantane('ada')
     elif any(item in identify for item in ['dia','dilu','diho','dimi','dima','dilumi']):
         myrun = Diamantane('dia')

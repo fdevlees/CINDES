@@ -38,159 +38,45 @@ class prettyfloat(float):
     def __repr__(self):
         return "%-0.4f" % self
 
-class Logfile():
-
-    def __init__(self,name, afile=True):
-        self.data = []
-
-        # here a trick. later i will remove the afile part but for now i want to keep 
-        # both functionalities. so in the new version. afile=False and self.name is just a longstring.
-        if afile:
-            self.fid = open(name) # + '.log')
-        else:
-            self.fid = self.name.split('\n')
-        self.name = name
-        return
-
-    def extract(self,coords=0):
-      for line in self.fid:
-        if line[1:23] == "Optimization completed":
-            if not hasattr(self, 'optdone'):
-                self.optdone = True
-
-        # Catch message about stopped optimization (not converged).
-        if line[1:21] == "Optimization stopped":
-            if not hasattr(self, "optdone"):
-                self.optdone = False
-
-        # THERMAL CORRECTION TO ENTHALPY
-        if line[1:32] == "Thermal correction to Enthalpy=":
-            self.Hcorr = float(line.split()[4])
-
-        # SPIN DENSITIES
-        if line[1:32] ==  "Mulliken atomic spin densities:":
-            if not hasattr(self, "spindensities"):
-                self.spindensities = []
-            spinstance = []
-            line = next(self.fid)
-            line = next(self.fid)
-            while line[1:4] != "Sum":
-                broken = line.split()
-                spinstance.append((int(broken[0]),broken[1],float(broken[2])))
-                line = next(self.fid)
-            self.spindensities.append(spinstance)
-        if line[1:37] == "Mulliken charges and spin densities:":
-            if not hasattr(self, "spindensities"):
-                self.spindensities = []
-            spinstance = []
-            line = next(self.fid)
-            line = next(self.fid)
-            while line[1:4] != "Sum":
-                broken = line.split()
-                spinstance.append((int(broken[0]),broken[1],float(broken[3])))
-                line = next(self.fid)
-            self.spindensities.append(spinstance)
-
-        # Note: this needs to follow the section where 'SCF Done' is used
-        #   to terminate a loop when extracting SCF convergence information.
-        if line[1:9] == 'SCF Done':
-            if not hasattr(self, "scfenergies"):
-                self.scfenergies = []
-            self.scfenergies.append(float(line.split()[4]))
-        # gmagoon 5/27/09: added scfenergies reading for PM3 case
-        # Example line: " Energy=   -0.077520562724 NIter=  14."
-        # See regression Gaussian03/QVGXLLKOCUKJST-UHFFFAOYAJmult3Fixed.out
-        if line[1:8] == 'Energy=':
-            if not hasattr(self, "scfenergies"):
-                self.scfenergies = []
-            self.scfenergies.append(float(line.split()[1]))
-
-        if line.strip('* \n') == 'Alpha spin orbitals':
-            line = next(self.fid)
-            while not line.strip() == 'Summary of Natural Population Analysis:':
-                line = next(self.fid)
-            for _ in xrange(6):
-                line= next(self.fid)
-            if not hasattr(self, "npa"):
-                self.npa = []
-            while not '=' in line:
-                self.npa.append(float(line.split()[2]))
-                line = next(self.fid)
-        if line.strip('* \n') == 'Beta  spin orbitals': #note 2 spaces!
-            line = next(self.fid)
-            while not line.strip() == 'Summary of Natural Population Analysis:':
-                line = next(self.fid)
-            for _ in xrange(6):
-                line= next(self.fid)
-            if not hasattr(self, "npab"):
-                self.npab = []
-            while not '=' in line:
-                self.npab.append(float(line.split()[2]))
-                line = next(self.fid)
-
-        if coords==1:#only extract the molecular coordinates when asked for
-            if line.strip() == "Standard orientation:":
-                if not hasattr(self, "atomcoords"):
-                    self.atomcoords = []
-                for _ in range(4): line=next(self.fid)
-                atomnos = []
-                atomcoords = []
-                line = next(self.fid)
-                while list(set(line.strip())) != ["-"]:
-                    broken = line.split()
-                    atomnos.append(int(broken[1]))
-                    atomcoords.append(list(map(float, broken[-3:])))
-                    line = next(self.fid)
-                self.atomcoords.append(atomcoords)
-                self.natom=len(atomnos)
-                self.atomnos=atomnos
-
-# Summary of Natural Population Analysis:                  
-#                                                          
-#                                       Natural Population 
-#                Natural  -----------------------------------------------
-#    Atom  No    Charge         Core      Valence    Rydberg      Total
-# -----------------------------------------------------------------------
-#      C    1    0.18075      0.99939     1.80808    0.01177     2.81925
-#
-        if line[2:22] == 'Exact polarizability':
-            if not hasattr(self,'polex'):
-                self.polex = [] 
-            regel = line.split()
-            for item in line.split()[2:8]:
-                self.polex.append(float(item))
-        if line[1:22] == 'Approx polarizability':
-            if not hasattr(self,'polprox'):
-                self.polprox = [] 
-            regel = line.split()
-            for item in line.split()[2:8]:
-                self.polprox.append(float(item))
-#  Exact polarizability:  11.170   0.000  11.170   0.000   0.000  11.170
-# Approx polarizability:   8.585   0.000   8.585   0.000   0.000   8.585
-        if line.strip('* :\n') == 'Diagonal vibrational polarizability':
-            line = next(self.fid)
-            self.polvibr = [ float(item) for item in line.split() ]
-        if line.strip('* :\n') == 'Diagonal vibrational hyperpolarizability':
-            line = next(self.fid)
-            self.hypolvibr = [ float(item) for item in line.split() if not float(item)==0.0 ]
-# Diagonal vibrational polarizability:
-#        0.3451187       0.3451187       0.3451187
-# Diagonal vibrational hyperpolarizability:
-#        0.0000000       0.0000000       0.0000000
-        if line[1:13] == 'Molar volume':
-            self.volume = float(line.split()[3])
-# Molar volume =  230.840 bohr**3/mol ( 20.600 cm**3/mol)
-# Recommended a0 for SCRF calculation =  2.72 angstrom (  5.13 bohr)
-# Dipole moment
-#    X=             -1.4604    Y=             -0.1878    Z=              1.4210  Tot=              2.0462
-        if line[1:14] == 'Dipole moment':
-            line = next(self.fid)
-            self.dipole = float(line.split()[7])
-      self.fid.close()
-
-
-def extract_stab(file1 , molecule, fileparameters):
+def extract_eahs(molecule, fileparameters):
     index = molecule.index
+    EAHs=dict() #all EAHs from all different positions in here
+    Npos=[] #positions with a nitrogen in here
+    for pos in fileparameters['positions']: #extract al AH energies and take the lowest
+        print "pos:", pos,
+        file2= fileparameters['path'] + '/' + index + '/' + fileparameters['identify'] + index + '_' + str(pos) + '.log'
+
+        datadict_file2 = read_file(file2, fileparameters['stabjobs'], program=fileparameters['program'])
+        # returns something like: '{'e':638.8, 'eAH':392.389 }
+
+        #---- a bit tricky: get the pos-positions that correspond to a nitrogen-X (X=H,CH3) bond.
+        confje = index.split('_')
+        N=False #set initially to False
+        try:
+            siteindex = fileparameters['corresp'][pos] #find for each position the methyl index
+        except KeyError:
+            # there is theoretically a possibility that the position to add a A-X, (X=H,CH3) group is not an active or passive site
+            # in this case the fileparameters['corresp'] does not contain the pos this is only possible when te possible reactive center
+            # has no hydrogen for the case of phenenalenyl. for thiadiazinyl this is automatically an sp2 nitrogen position
+            print "position of H atom is not a possible site. Therefore the program assumes H is attached to a nitrogen atom!"
+            N=True
+        else:
+            # this is only executed when no Error is raised!
+            if siteindex in fileparameters['sites']:# look if that index is used as a site
+                if any(confje[ fileparameters['sites'].index(siteindex) ]==n for n in [['N'],'N']):
+                    print "    there is a nitrogen on this position!    "
+                    N=True
+
+        if N:
+            Npos.append(pos)
+        EAHs[pos]={'eAH':datadict_file2['eAH'], 'N':N}
+
+    print "EAHs:"
+    pprint(EAHs)
+    print "Npos:",Npos
+    return EAHs
+
+def calculate_stab(results, EAHs):
     #---- some parameters needed
     bde_a = -12.68 #kJ/mol/eV^2
     bde_b = -218.1 #kJ/mol
@@ -204,119 +90,95 @@ def extract_stab(file1 , molecule, fileparameters):
     eV = 27.2113838
     avtc = -28.1290706 #kJ/mol #average thermal correction for 5 random structures kJ/mol
     chi_term = bde_b*(chi_h-3)*(chi_n-3) #term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
-
-    propsA =gausread(file1,'stabA')
-    # propsA = { Eopt:..., E0:..., IP:..., EA:... }
-
-    EAHs=[] #all EAHs from all different positions in here
-    Npos=[] #positions with a nitrogen in here
-    for pos in fileparameters['positions']: #extract al AH energies and take the lowest
-        file2= fileparameters['path'] + '/' + index + '/' + fileparameters['identify'] + index + '_' + str(pos) + '.log'
-
-        EAH= gausread(file2,'energy',multiplejobs=0)['energy']
-
-        #---- HERE THE electronegativity part of the stab a bit tricky
-        #confje = construction.indtocon(index) # change index to conf list using the construction module
-        confje = index.split('_')
-        #corresp = {2:46,6:18,7:42,9:34,11:22,12:30} # map the alpha positions to methyl indices 
-        try:
-            siteindex = fileparameters['corresp'][pos] #find for each position the methyl index
-        except KeyError:
-            print "position of H atom is not a possible site. Therefore the program assumes H is attached to a nitrogen atom!"
-            print "electronegativity correction for nitrogen: ", chi_term
-            Npos.append(pos)
-        else:
-            if siteindex in fileparameters['sites']:# look if that index is used as a site
-                if confje[ fileparameters['sites'].index(siteindex) ]==['N']:
-                    print "electronegativity correction for nitrogen: ", chi_term
-                    Npos.append(pos)
-        #-----
-        EAHs.append([EAH,pos])
-    print "EAHs:"
-    pprint(EAHs)
-    print "min EAHs:", min(EAHs)
-    print "Npos:",Npos
     #gasconstant = 8.3144621
-    E_ah =min(EAHs)
+    #----- end of parameters
 
-    I = propsA['IP']
-    A = propsA['EA']
-    propsA['omega'] = ( ((I+A)**2 )/(8*(I-A)) )*eV #in eV
-    Domega = propsA['omega'] - 2
-    propsA['BDE_ah']  = ( propsA['Eopt'] + H_h - E_ah[0])*kJmol + avtc #avtc is AVerage Thermal Correction. 
-    #----
-    propsA.update(gausread(file1,'rdv',2) )
-    #----
-    if E_ah[1] in Npos:
-        propsA['stab'] = propsA['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
+    minpos = min(EAHs, key=lambda x:EAHs[x]['eAH'])
+    E_ah = EAHs[minpos]['eAH']
+
+    Domega = results['omega'] - 2.
+    print "Domega:", Domega
+    results['BDE_ah']  = ( results['eA'] + H_h - E_ah)*kJmol + avtc #avtc is AVerage Thermal Correction. 
+    #if E_ah[1] in Npos:
+    if EAHs[minpos]['N']:
+        print "electronegativity correction for nitrogen is used"
+        stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
     else:
-        propsA['stab'] = propsA['BDE_ah'] - stab_h - bde_a * Domega * Dw_h
-    propsA['H_pos'] = E_ah[1]
-    return propsA
-
-
+        stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h
+    results['H_pos'] = minpos
+    results['stab'] = stab
+    return results
 
 @log_io()
 def datareader( mols_tocal, fileparameters):
-    # 1. get all paths
+    # 1. test normal termination
+    program=fileparameters['program']
+    if program=='gaussian':
+        import gaussian as program
+    elif program=='orca':
+        import orca as program
+    elif program=='nwchem':
+        import nwchem as program
+    else:
+        raise SystemExit('not implemented')
+    mols_tocal = program.normaltermination( mols_tocal, fileparameters)
 
-    # 2. test normal termination
-    mols_tocal = normaltermination( mols_tocal, fileparameters)
-
-    # 3. get a list of properties that need to be extracted for each molecule
-    # THIS IS ALREADY DONE AT INPUTREADER > run.props
+    # 2. get a list of properties that need to be extracted for each molecule
     uni_props_set = fileparameters['props']
 
-    # 4. obtain data for each molecule
+    # 3. obtain data for each molecule
     for molecule in mols_tocal:
-        print "><"*10, molecule, "><"*10
+        print "><"*15, molecule
         # make a copy of props_dict
         props_set = uni_props_set.copy()
-
         file1 = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + '.log'
 
         # start by looking if stab is one of the crucial properties because it contains many others
         if 'stab' in props_set:
-            X_stab_props = extract_stab( file1, molecule, fileparameters )
-            # expect to get something like: { 'stab': value, 'I':..., 'A':...,'omega':...,'RDV'....}
-
-            # fill props_dict
-            #props_dict.update(X_stab_props)
-            molecule.props.update(X_stab_props)
-
-        # check which properties are still necessary to obtain:
-        #to_read_props = [ key for key, value in props_dict.iteritems() if value==None ]
-        # new: test which in fileparameters['props'] but not in molecule.props.viewkeys()
-        # NB: - is here a set operator! returns a set!
-        to_read_props = props_set - molecule.props.viewkeys()
-        print "to read props:", to_read_props
+            # read EAHs for the stabfiles
+            EAHs = extract_eahs(molecule, fileparameters)
+            # expect to get something like: { 2:EAH2, 4:EAH4, 12:EAH12 }
+        elif 'aromaticity' in props_set:
+            pass
+        else:
+            EAHs = None
 
         # extract them
-        # assume all properties can be easily obtained by gausread
-        if to_read_props:
-            if fileparameters['jobs']: # new JSON / cclib style
-                readings = new_style_reader( file1, to_read_props, fileparameters )
-            else: # old pickle. Logfile-gausread style
-                readings = gausread( file1, to_read_props, multiplejobs=fileparameters['multiplejobs'])
-            molecule.props.update( readings )
+        readings = new_style_reader( file1, props_set, fileparameters, EAHs )
+        molecule.props.update( readings )
 
         molecule.predicted = False
 
     return mols_tocal
 
-def new_style_reader( file1, to_read_props, fileparameters ):
+def read_file(filename, jobs, program='gaussian'):
+    if program=='gaussian':
+        from CINDES4.cclib.parser.gaussianparser import Gaussian as Logfile
+        key='termination'
+        jobslines = open(filename).read().split(key)[:-1]
+    elif program=='orca':
+        from CINDES4.cclib.parser.orcaparser import ORCA as Logfile
+        raise SystemExit('not implemented')
+    elif program=='nwchem':
+        from CINDES4.cclib.parser.nwchemparser import NWChem as Logfile
+        key='NWChem Input Module'
+        splitted = open(filename).read().split(key)
+        jobslines = splitted[1:-1]
+    else:
+        raise SystemExit('not implemented')
     # for every jobfile do a cclib extraction. faking the separate jobs as if it were single files
-    jobslines = open(file1).read().split('termination')[:-1]
+    print "njobs:", len(jobslines)
     from cStringIO import StringIO
     jobfiles = map(StringIO, jobslines)
     datadict = dict()
-    for jobfile, job in zip(jobfiles, fileparameters['jobs']):
-        from CINDES4.cclib.parser.gaussianparser import Gaussian
-        job_data = Gaussian(jobfile).parse()
+    for jobfile, job in zip(jobfiles, jobs):
+        job_data = Logfile(jobfile).parse()
+        #print "job_data:", job_data
+
         for inf in job['info']:
-            if inf[0]=='e': # so it concerns an energy!:
-                print inf, "scfenergies:", job_data.scfenergies
-                datadict[inf]=job_data.scfenergies[-1]
+            if inf=='_':continue
+            elif inf[0]=='e': # so it concerns an energy!:
+                datadict[inf]=job_data.scfenergies[-1]/27.21138505 # this value is used in cclib
             elif inf in ['homo','lumo']:
                 datadict['homo']=job_data.moenergies[-1][job_data.homos[0]]
                 datadict['lumo']=job_data.moenergies[-1][job_data.homos[0]+1]
@@ -325,10 +187,24 @@ def new_style_reader( file1, to_read_props, fileparameters ):
                 datadict['polar'] = sum([job_data.polex[i]/3 for i in [0,2,5]]) # = 1/3*(axx+ayy+azz)
             elif inf=='mw':
                 datadict['mw'] = float( sum( job_data.atomnos) )
+            elif inf=='rdv':
+                print "job_data.atomcharges:", job_data.atomcharges
+                spiden=job_data.atomcharges['natural']
+                datadict['rdv'] = sum([ float(item[2])**2 for item in spiden if abs(item[2])>0.05 ])
+                print datadict['rdv']
+                print job_data.atomcharges
+                try:
+                    print job_data.atomspins
+                except AttributeError:
+                    pass
+                raise SystemExit('rdv not tested yet')
             else:
                 print "value not recognized:", inf
+    #print "datadict:", datadict
+    return datadict
 
-    print "datadict:", datadict
+def new_style_reader( file1, to_read_props, fileparameters, EAHs=None ):
+    datadict = read_file(file1, fileparameters['jobs'], program=fileparameters['program'])
 
     # so now datadict should have all energy keys + homo/lumo + dipole
     # but not yet omega/solv/gap so:
@@ -337,336 +213,19 @@ def new_style_reader( file1, to_read_props, fileparameters ):
         results['gap']=datadict['lumo']-datadict['homo']
     if 'solv' in to_read_props:
         results['solv']= (datadict['e1_solv']-datadict['e0_solv'])*627.5
-    if any(i in to_read_props for i in ['IP','omega']):
-        results['IP']= (datadict['eIP']-datadict['e0'])
-        print "results:IP", results['IP']
-    if any(i in to_read_props for i in ['EA','omega']):
-        results['EA']= (datadict['e0']-datadict['eEA'])
-    if 'omega' in to_read_props:
-        results['omega'] = ( ( results['IP'] + results['EA'] )**2 ) / ( 8 * ( results['IP'] - results['EA'] ))
+    if any(i in to_read_props for i in ['ip','omega','stab']):
+        results['ip']= (datadict['eIP']-datadict['e0'])*27.2113838
+    if any(i in to_read_props for i in ['ea','omega','stab']):
+        results['ea']= (datadict['e0']-datadict['eEA'])*27.2113838
+    if any(i in to_read_props for i in ['omega', 'stab']):
+        results['omega'] = ( ( results['ip'] + results['ea'] )**2 ) / ( 8 * ( results['ip'] - results['ea'] ))
+    if 'stab' in to_read_props:
+        results = calculate_stab(results, EAHs)
 
     print "results:", results
     return results
 
-def gausread(filename,props,multiplejobs=1,rdvindex=1, afile=True):
-    ''' props is a set of props to extract '''
-    if afile:
-        mymol = Logfile(filename)
-    else:
-        mymol = Logfile(filename, afile=False)
-    results = {}
-
-    # extract
-    if any( prop in ['natom','natoms'] for prop in props ):
-        mymol.extract(coords=1)
-    else:
-        mymol.extract()
-
-    # check opt 
-    if not hasattr(mymol,'optdone'):
-        print "program did not do optimization or crashed"
-
-    # set props
-    if 'polar' in props:
-        if hasattr(mymol,'polex'):
-            print "polar exact densities:"
-            pprint(mymol.polex)
-            pola = sum([ mymol.polex[i]/3 for i in [0,2,5]]) # = 1/3*(axx+ayy+azz)
-            # next line calculates in one line the Radical delocalisation value
-            # RDV = sum([ float(item[2])**2 for item in spiden if abs(item[2])>0.05 ])
-            print "polarisability value is: ", pola
-            results['polar']=pola
-        else:
-            print "NO POLAR DATA FOUND IN FILE!"
-    if 'stabA' in props:
-        pprint(mymol.scfenergies[-5:])
-        #try to remove duplicates from list
-        if True:
-            mymol.scfenergies = rm_duplicates(mymol.scfenergies)
-        results['Eopt'] = mymol.scfenergies[-4]
-        results['E0']   = mymol.scfenergies[-3]
-        results['IP']   = mymol.scfenergies[-2] - results['E0']
-        results['EA']   = results['E0'] - mymol.scfenergies[-1]
-    if 'omega' in props:
-        pprint(mymol.scfenergies[-5:])
-
-        #try to remove duplicates from list
-        if True:
-            mymol.scfenergies = rm_duplicates(mymol.scfenergies)
-
-        if multiplejobs > 1:
-            print 'i am here'
-            scfenergies = mymol.scfenergies[:-(multiplejobs-1)]
-        else:
-            scfenergies = mymol.scfenergies[:]
-
-        results['Eopt'] = scfenergies[-4]
-        results['E0']   = scfenergies[-3]
-        results['IP']   = scfenergies[-2] - results['E0']
-        results['EA']   = results['E0'] - scfenergies[-1]
-        #omega = lambda I,A: ( (I+A)**2 ) / ( 8 * (I-A) )
-        #results['omega']= omega(results['IP'], results['EA'])
-        results['omega'] = ( ( results['IP'] + results['EA'] )**2 ) / ( 8 * ( results['IP'] - results['EA'] ) ) * 27.2113838
-        if results['omega']<0.0:
-            print "    FAULTY VALUE FOR ELECTROPHILICITY: cannot be a negative value:"
-            print "    VALUE is set to None"
-            results['omega']=None
-    if 'energy' in props:
-        ESCFs = mymol.scfenergies
-        results['energy'] = ESCFs[-(multiplejobs+1)]
-    if any( prop in ['homo','lumo'] for prop in props):
-        from CINDES4.cclib.parser import ccopen
-        myfile=ccopen(filename).parse()
-        results['homo'] = myfile.moenergies[0][myfile.homos[0]] #NOT IMPLEMENTED NEED CCLIB
-        results['lumo'] = myfile.moenergies[0][myfile.homos[0]+1] #NOT IMPLEMENTED NEED CCLIB
-    if 'gap' in props:
-        from CINDES4.cclib.parser import ccopen
-        myfile=ccopen(filename).parse()
-        results['homo'] = myfile.moenergies[0][myfile.homos[0]]
-        results['lumo'] = myfile.moenergies[0][myfile.homos[0]+1]
-        results['gap']  = results['lumo'] - results['homo']
-    if 'ip' in props:
-        ESCFs = mymol.scfenergies
-
-        #try to remove duplicates from list
-        if True:
-            mymol.scfenergies = rm_duplicates(mymol.scfenergies)
-
-        results['energy']  = ESCFs[-(multiplejobs+1)]
-        results['ecation'] = ESCFs[-multiplejobs]
-        ip                 = results['ecation'] - results['energy']
-
-        # now i want to test if it is not too small.
-        if True:
-            if ip < 0.001:
-                print "Ionization Potentential smaller than expected range!."
-                print "Program will take one scfenergy earlier!"
-                results['energy']  = ESCFs[-(multiplejobs+2)]
-                ip                 = results['ecation'] - results['energy']
-
-        results['ip']      = ip
-    if 'ea' in props:
-        ESCFs = mymol.scfenergies
-
-        #try to remove duplicates from list
-        if True:
-            mymol.scfenergies = rm_duplicates(mymol.scfenergies)
-
-        results['energy'] = ESCFs[-(1+multiplejobs)]
-        results['eanion'] = ESCFs[-1]
-        results['ea']     = results['energy'] - results['eanion']
-    if 'natoms' in props:
-        results['natoms'] = len(mymol.atomnos)
-    if 'volume' in props:
-        results['volume'] = mymol.volume
-    if 'poldens' in props:
-        pola = sum([ mymol.polex[i]/3 for i in [0,2,5]]) # = 1/3*(axx+ayy+azz)
-        results['polar']   = pola
-        results['poldens'] = pola/mymol.volume
-    if 'rdv' in props:
-        print "Mulliken spin densities:"
-        pprint(mymol.spindensities[rdvindex])
-        spiden= mymol.spindensities[rdvindex]
-        # next line calculates in one line the Radical delocalisation value
-        results['rdv'] = sum([ float(item[2])**2 for item in spiden if abs(item[2])>0.05 ])
-    if 'dipole' in props:
-        results['dipole'] = mymol.dipole
-    if 'solv' in props:
-        ESCFs = mymol.scfenergies
-        print "ESCFs:", ESCFs
-        results['e0_solv'] = ESCFs[-3]
-        results['e1_solv'] = ESCFs[-2]
-        results['solv']    = - ( results['e0_solv'] - results['e1_solv'] ) * 627.5
-    if 'mw' in props:
-        from CINDES4.cclib.parser import ccopen
-        myfile=ccopen(filename).parse()
-        results['mw'] = float( sum( myfile.atomnos) )
-
-    # assert that all props are filled
-    #print 'results:', results
-    #print "props:", props
-    #if not 'stabA' in props:
-    #    assert all( prop in results for prop in props), 'not all properties calculated '
-
-    return results
-
-def get_paths( mols, fileparameters):
-    ''' get all paths that need to be examined later '''
-    files=[]
-    #path = fileparameters['path']
-    for molecule in mols:
-        #files.append(path + '/' + fileparameters['identify'] + molecule.index + '.log')
-        #if fileparameters['stab']==1:
-        #    for pos in fileparameters['positions']: #extract al AH energies and take the lowest
-        #        files.append(path + '/' + molecule.index + '/' + fileparameters['identify'] + molecule.index + '_' + str(pos) + '.log')
-        files.extend(get_molpaths(molecule, fileparameters))
-    return files
-
-def get_molpaths(mol, fileparameters):
-    paths=[]
-    paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '.log')
-    if fileparameters['stab']==1:
-        for pos in fileparameters['positions']: #extract al AH energies and take the lowest
-            paths.append(fileparameters['path'] + '/' + molecule.index + '/' + fileparameters['identify'] + molecule.index + '_' + str(pos) + '.log')
-    return paths
-
-def normaltermination(mols_tocal, fileparameters):
-    #-----
-    def termination(filepath):
-       with open(filepath,'r') as fid:
-           text = fid.readlines()[-3:]
-           if re.search('Normal termination',''.join(text)):
-               fid.close()
-               return 1
-           elif re.search('IGNORE',''.join(text)):
-               fid.close()
-               return 2
-    #-----
-    filepaths = get_paths( mols_tocal, fileparameters)
-    debug=fileparameters['debug']
-    copyfilepaths = filepaths[:] #copy to be able to append to it while looping over it
-    for path in copyfilepaths: #test all for information which jobs crashed
-        if not termination(path)==1:
-            print "Error termination:",path
-            bnewfile = errortermination(path,debug)
-            #if bnewfile and debug:
-            #    filepaths.append(path[:-4]+'zzz.com')
-    extratime = 0
-    once = 0
-
-    #--- new:
-    mols_toread=[]
-    for mol in mols_tocal:
-        # get path belonging to this particular mol
-        molpaths=get_molpaths(mol, fileparameters)
-        ignoremol=False
-        for path in molpaths: #test one by one waiting for normal termination
-            while True:
-                if termination(path)==1:
-                    break
-                elif termination(path)==2:
-                    print "\n\n{0}\n             INGORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, path)
-                    ignoremol=True
-                    break
-                else:
-                    print "no normal termination for: ",path
-                #time.sleep(300) # wait 5 minudtes
-                time.sleep(300) # wait 5 minudtes
-                extratime += 300
-                print "extra waittime/h:", extratime/3600, "||",
-            # when I'm here this path has normal termination
-            if ignoremol: break # this ignores the other paths belonging to this mol
-        # when I'm here every molpath of this mol should have normal termination
-        if not ignoremol:
-            mols_toread.append(mol)
-    # when I'm here every mol should have normal termination
-
-
-    #--- old:
-    #for path in filepaths: #test one by one waiting for normal termination
-    #    while True:
-    #       if termination(path)==1:
-    #           break
-    #       elif termination(path)==2:
-    #           print "\n    {} IGNORED!\n".format(path)
-    #           break
-    #       else:
-    #           print "no normal termination for: ",path
-    #       #time.sleep(300) # wait 5 minudtes
-    #       time.sleep(300) # wait 5 minudtes
-    #       extratime += 300
-    #       print "extra waittime/h:", extratime/3600, "||",
-    #mols_toread = mols_tocal
-    # ---
-    print "mols_toread:", mols_toread
-    return mols_toread
-
-def errortermination(path,debug=False):
-    mymol=Logfile(path) #read outputfile
-    mymol.extract(coords=1) #extract file with also the coordinates
-    from CINDES4.utils import utils
-    t=utils.PeriodicTable()
-    if hasattr(mymol,'atomcoords'): 
-        for sym,xyz in zip(mymol.atomnos,mymol.atomcoords[-1]):
-            xyz.insert(0,t.element[sym]) 
-        print "atomcoords and added elements:"
-        for item in mymol.atomcoords[-1]:
-            print ' '.join(map(str,item)) 
-        if debug==True:
-            import submitter
-            if hasattr(mymol,'optdone'):
-                if mymol.optdone==False:
-                    print "Optimizations not converged!"
-                elif mymol.optdone==True:
-                    print "Optimization is converged!"
-            fid = open(path[:-3]+'com','r') #change .log in .com extension and read input file
-            multcharge = re.compile('^\-?[01]\s[12]') #a regex for the mult charge line
-            newfile=[]
-            once=0 #only find that line once
-            for line in fid: #copy file exept for the zmat found in the inputfile
-                if multcharge.match(line) and once==0: #when found 
-                    once+=1
-                    newfile.append(line) #the line with the match itself has to be included in the newfile
-                    while True:
-                        line= next(fid) #take al new lines
-                        if line=='\n': #end of zmat
-                            #now instead of this zmat that is now completely skipped place in newfile
-                            #the last coordinates of the crashed run
-                            #newfile.extend([' '.join( map("{12.6f}".format, item))+'\n' for item in mymol.atomcoords[-1]])
-                            xyz = mymol.atomcoords[-1]
-                            xyz_f = [ item[0] + ' '.join( map( "{:12.6f}".format, item[1:])) + '\n' for item in xyz ]
-                            #xyz_f = [ item[0] + ' '.join(
-                            #                              map(
-                            #                                   str, item[1:]
-                            #                                 )
-                            #                            ) + '\n' for item in xyz ]
-                            print xyz_f
-                            newfile.extend(xyz_f)
-                            newfile.extend(['\n'])
-                            break
-                else:
-                    newfile.append(line) #copy that line because it is not the zmat found in the inputfile
-            print "="*20
-            #for line in newfile: print line,
-            #print newfile
-            open(path[:-4]+'zzz.com','w').writelines(newfile)
-            print "newfile written in: ", path[:-4] + 'zzz.com'
-
-            #---- preparation for submit command ---
-            splitpath = path.split('/')
-            filename = splitpath[-1]
-            folder = '/'.join(splitpath[:-1])
-            filenamesplit = filename[:-4].split('_')
-            identify= filenamesplit[0]+'_'
-            index = '_'.join(filenamesplit[1:])+'zzz.com'
-            print "folder", folder
-            print "index:", index
-            print "identi", identify
-            #----- keywords constructed so:
-            submitter.submit(folder,index,identify)
-            return True
-    return False
-
 if __name__ == "__main__":
-    import sys
-    filename = sys.argv[1]
-    try:
-        index = sys.argv[2]
-    except IndexError:
-        index = 1
-    mymol = Logfile(filename)
-    print mymol , "mymol"
-    print mymol.name , "mymol.name"
-    print mymol.fid ,'mymol.fid'
-    mymol.extract()
-    print "extract done" 
-    if hasattr(mymol,'optdone'):
-        print "opt done?:" , mymol.optdone
-    if hasattr(mymol,'scfenergies'):
-        print "last two of scfenergies"
-        pprint(mymol.scfenergies[-3:])
-    
-    if hasattr(mymol,"Hcorr"): print "Thermalcorrectionenthalpy:", mymol.Hcorr
     if hasattr(mymol,'spindensities'):
         print "Mulliken spin densities:"
         pprint(mymol.spindensities)
@@ -683,15 +242,10 @@ if __name__ == "__main__":
         snpa = [ a-b for a,b in zip(mymol.npa,mymol.npab) ]
         print "----- npa spin densities -----"
         for item in snpa: print '{:>8.5f}'.format(float(item))
-    if hasattr(mymol,'polex'):
-        print " Exact polarisability:", mymol.polex
-    if hasattr(mymol,'polprox'):
-        print "Approx polarisability:", mymol.polprox
     if hasattr(mymol,'polvibr'):
         print "Diagonal vibrational polarisability:", mymol.polvibr
     if hasattr(mymol,'hypolvibr'):
         if not mymol.hypolvibr==[]: print "Diagonal vibrational hyperpolarisability:", mymol.hypolvibr
-     
     if True:
         from CINDES4.cclib.parser import ccopen
         myfile=ccopen(filename).parse()
@@ -704,8 +258,3 @@ if __name__ == "__main__":
         print "E-LUMO :", Elumo, Elumo/27.2113838
         print "BANDGAP:", Egap
         print Ehomo, Elumo, Egap
-    if True:
-        I = mymol.scfenergies[-1] - mymol.scfenergies[-2]
-        #A = mymol.scfenergies[-1] - mymol.scfenergies[-3]
-        print "I:", I, I*27.2113838
-        #print "A:", A 

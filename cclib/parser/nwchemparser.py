@@ -91,10 +91,38 @@ class NWChem(logfileparser.Logfile):
 
         # If the geometry is printed in XYZ format, it will have the number of atoms.
         if line[12:31] == "XYZ format geometry":
-
             self.skip_line(inputfile, 'dashes')
             natom = int(next(inputfile).strip())
             self.set_attribute('natom', natom)
+
+        #if line[2:19] =='atoms           =':
+        #if line[:7]=='  atoms':
+        #if 'atoms' in line:
+        #    print line
+            #print "I am here!"
+            #natom=int(line.split()[2])
+            #self.set_attribute('natom', natom)
+
+
+        # This section contains general parameters for Hartree-Fock calculations,
+        # which do not contain the 'General Information' section like most jobs.
+        if line.strip() == "NWChem SCF Module":
+            self.skip_lines(inputfile, ['d', 'b', 'b', 'title', 'b', 'b', 'b'])
+            line = next(inputfile)
+            while line.strip():
+                if line[2:8] == "charge":
+                    charge = int(float(line.split()[-1]))
+                    self.set_attribute('charge', charge)
+                if line[2:13] == "open shells":
+                    unpaired = int(line.split()[-1])
+                    self.set_attribute('mult', 2*unpaired + 1)
+                if line[2:7] == "atoms":
+                    natom = int(line.split()[-1])
+                    self.set_attribute('natom', natom)
+                if line[2:11] == "functions":
+                    nfuncs = int(line.split()[-1])
+                    self.set_attribute("nbasis", nfuncs)
+                line = next(inputfile)
 
         if line.strip() == "NWChem Geometry Optimization":
             self.skip_lines(inputfile, ['d', 'b', 'b', 'b', 'b', 'title', 'b', 'b'])
@@ -177,11 +205,16 @@ class NWChem(logfileparser.Logfile):
                 gbasis_dict[atomelement].extend(shells)
 
             gbasis = []
-            for i in range(self.natom):
-                atomtype = utils.PeriodicTable().element[self.atomnos[i]]
-                gbasis.append(gbasis_dict[atomtype])
-
-            self.set_attribute('gbasis', gbasis)
+            try:
+                for i in range(self.natom):
+                    atomtype = utils.PeriodicTable().element[self.atomnos[i]]
+                    try:
+                        gbasis.append(gbasis_dict[atomtype])
+                    except KeyError:
+                        pass
+                self.set_attribute('gbasis', gbasis)
+            except AttributeError:
+                print "natoms not yet known"
 
         # Normally the indexes of AOs assigned to specific atoms are also not printed,
         # so we need to infer that. We could do that from the previous section,
@@ -205,33 +238,19 @@ class NWChem(logfileparser.Logfile):
 
             last = 0
             atombasis = []
-            for i in range(self.natom):
-                atomelement = utils.PeriodicTable().element[self.atomnos[i]]
-                nfuncs = atombasis_dict[atomelement]
-                atombasis.append(list(range(last,last+nfuncs)))
-                last = atombasis[-1][-1] + 1
+            try:
+                 for i in range(self.natom):
+                     atomelement = utils.PeriodicTable().element[self.atomnos[i]]
+                     try:
+                         nfuncs = atombasis_dict[atomelement]
+                     except KeyError:
+                         continue
+                     atombasis.append(list(range(last,last+nfuncs)))
+                     last = atombasis[-1][-1] + 1
+                 self.set_attribute('atombasis', atombasis)
+            except AttributeError:
+                print "natoms not yet known"
 
-            self.set_attribute('atombasis', atombasis)
-
-        # This section contains general parameters for Hartree-Fock calculations,
-        # which do not contain the 'General Information' section like most jobs.
-        if line.strip() == "NWChem SCF Module":
-            self.skip_lines(inputfile, ['d', 'b', 'b', 'title', 'b', 'b', 'b'])
-            line = next(inputfile)
-            while line.strip():
-                if line[2:8] == "charge":
-                    charge = int(float(line.split()[-1]))
-                    self.set_attribute('charge', charge)
-                if line[2:13] == "open shells":
-                    unpaired = int(line.split()[-1])
-                    self.set_attribute('mult', 2*unpaired + 1)
-                if line[2:7] == "atoms":
-                    natom = int(line.split()[-1])
-                    self.set_attribute('natom', natom)
-                if line[2:11] == "functions":
-                    nfuncs = int(line.split()[-1])
-                    self.set_attribute("nbasis", nfuncs)
-                line = next(inputfile)
 
         # This section contains general parameters for DFT calculations, as well as
         # for the many-electron theory module.
@@ -274,8 +293,11 @@ class NWChem(logfileparser.Logfile):
         if line.strip() in ("The SCF is already converged", "The DFT is already converged"):
             if self.linesearch:
                 return
-            self.scftargets.append(self.scftargets[-1])
-            self.scfvalues.append(self.scfvalues[-1])
+            try:
+                self.scftargets.append(self.scftargets[-1])
+                self.scfvalues.append(self.scfvalues[-1])
+            except AttributeError:
+                pass
 
         # The default (only?) SCF algorithm for Hartree-Fock is a preconditioned conjugate
         # gradient method that apparently "always" converges, so this header should reliably
