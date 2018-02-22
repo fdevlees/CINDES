@@ -57,6 +57,23 @@ def get_secret_data(tablefilename,mols_tocal, mols_nocal, myrun):
         mols_nocal.append(mol)
     return mols_tocal, mols_nocal
 
+def runjobs(mols_tocal, myrun, TZMat, index=0):
+    # 1. Make the files
+    jobmaker(mols_tocal,myrun, index) #----------------------------------HERE IS THE FILEWRITER CALL
+ 
+    # 2. now the jobs have to be submitted (this function contains a try_ready test)
+    if jobids: jobtester(mols_tocal,myrun,jobids)
+    else: print "no jobids so assume no jobs submitted"
+ 
+    # 3. test of all jobs are ready
+    jobtester(mols_tocal,myrun,jobids)
+ 
+    # 4. test normal termination and read jobs 
+    mols_calc = datareader.datareader(mols_tocal,myrun.__dict__)
+    return mols_calc
+
+
+
 # PROCEDURE
 def procedure(myrun, mols_tocal, mols_nocal, TZmat):
     global once
@@ -66,28 +83,20 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
     if myrun.no1sub==1 and once==0:
         once = 1
         print " "
-    elif myrun.nosub==3:
-        print "SECRET DATA activated:", myrun.nosub_file
-        tablefilename = myrun.nosub_file
+    elif myrun.secret_file:
+        print "SECRET DATA activated:", myrun.secret_file
+        tablefilename = myrun.secret_file
         mols_tocal , mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun)
 
     if not mols_tocal==[]:
+        # before any calculations the initial geometry has to be set
         # 0. Set the molecular geometries
         geommaker(mols_tocal,myrun,**TZmat)
-
-        # 1. Make the files
-        filemaker(mols_tocal,myrun) #----------------------------------HERE IS THE FILEWRITER CALL
-
-        # 2. now the jobs have to be submitted (this function contains a try_ready test)
-        jobids = submission(mols_tocal,myrun)
-
-        # 3. test of all jobs are ready
-        print "jobids:", jobids
-        if jobids: jobtester(mols_tocal,myrun,jobids)
-        else: print "no jobids so assume no jobs submitted"
-
-        # 4. test normal termination and read jobs 
-        mols_calc = datareader.datareader(mols_tocal,myrun.__dict__)
+        for i, calculation in enumerate(['prejobs', ['jobs', 'extrajobs'])]:
+            if getattr(myrun, 'prejobs'):
+                raise NotImplementedError
+            else: continue
+            mols_calc = runjobs(mols_tocal, myrun, TZMat, index=i)
 
     else: mols_calc = []
 
@@ -157,8 +166,8 @@ def geommaker(mols_tocal,myrun,passive, active, core):
 
 # 1. file making
 @log_io()
-def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pass here)
-    ''' jkl'''
+def jobmaker(mols_tocal,myrun, index=0): #----- dict with info for filewriter has to pass here)
+    '''jkl'''
     if myrun.program=='gaussian':
         import gaussian as program
     elif myrun.program=='nwchem':
@@ -166,7 +175,7 @@ def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pas
     else:
         raise SystemExit('program not recognized')
     path = myrun.path
-    fileparameters = myrun.__dict__
+    fileparameters=myrun.__dict__
     for molecule in mols_tocal:
         program.filewriter(molecule, fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
         if myrun.extrajobs:
@@ -179,10 +188,10 @@ def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pas
                 shutil.copy(path + '/' + myrun.script,path+'/'+molecule.index)
 
             # 2. use zmat to make the AH files with the positions stored in fileparameters['positions']
-            for pos in fileparameters['positions']:
+            for pos in myrun.positions:
                 zmat2 = deepcopy(molecule.zmat)
-                zmat2, h = add_hydrogen(zmat2, pos, fileparameters['ncore'])
-                program.filewriterAH(zmat2,pos,molecule.index,**fileparameters)
+                zmat2, h = add_hydrogen(zmat2, pos, myrun.ncore)
+                program.filewriterAH(zmat2,pos,molecule.index, myrun)
                 # FOR NOW ONLY DO ONE POSSIBILITY THIS IS EASIER BECAUSE WE KNOW EXACTLY HOW MANY JOBS THERE HAVE TO BE SUBMITTED
                 #if not hornot == 1: #if not there are two ways to place the hydrogen.
                     #maker2(zmat,pos,indices[i],**fileparameters)

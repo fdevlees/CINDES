@@ -190,56 +190,37 @@ def readfile(subinp):
     #default values
     randomseed = np.random.randint(0,100)
     paras={
+
+#          GLOBAL RUN PARAMETERS
            'adjust_dihedrals':False,
-           #'aea':0,
-           #'aip':0,
-           #'basisset':'6-31G',
            'bc': False,
-           'charge':0,
-           'cutoff':0,
+           'cutoff':0, # this cutoff has to apply to the final target property value only
            'debug':False,
            'difmodel':0,
-           #'ea':0,
            'extrajobs':[],
            'extra_props': [],
            'extrawaittime': 2,
-           #'functional':'b3lyp',
            'function': lambda x:x,
-           'geom2':None,
-           'identify':'unspecified_',
-           #'ip':0,
            'jobs':[],
            'maxiter':10,
-           'maxcycles':'100',
-           #'ml':0,
            'montecarlo':0,   #Temperature at start
-           'mult':1,
-           #'multiplejobs':0,
            'nch3':16,
            'ncore':10,
            'nlinks':False,
            'no1sub':0,
            'norandom':0,
-           'nosub':0,
-           'nosub_file:':'',
-           'nprocs':2,
            'nrandsites':2,
            'optimum':'minimum',
            'optga':False,
-           #'polar':0,
            'predictions':[],
+           'prejobs':None,
            'procedure':'standard',
-           'program':'gaussian',
            'property':'gap',
            'regression':0,
            'restart':0,
            'restrictions':[],
            'seed':randomseed,
-           #'semiempirical':0,
            'sequence':[],
-           #'solv':False,
-           'stab':0,
-           'stabjobs':[],
            'startind': '',
            'symlinks':[],
            'tablename':'table.json',
@@ -247,9 +228,17 @@ def readfile(subinp):
            'test_ready':2,
            'timelimit':250000,
            'timestep':300,
-           'try_ready':0
-           #'twojob':0,
-           #'volume':False
+           'try_ready':0,
+           'secret_file:':'',
+
+#          LOCAL JOB PARAMETERS
+           'geom2':None,
+           'identify':'unspecified_',
+           'nprocs':2,
+           'program':'gaussian',
+           'stab':0,
+           'stabjobs':[],
+           'nosub':0
            }   #n random sites changed. for all choose 0
     #scans all the lines until if will find the END keyword
     #this is a bit tricky because keywords can appear everywere in the file before END 
@@ -260,6 +249,7 @@ def readfile(subinp):
     # if 'mystr' in line.split()[0]:
     while True:
         line = subinp.readline()
+        splitted=line.split()
         if line == '\n':continue
         if line[0]=='#':continue
         # 1. some capital sensitive keywords:
@@ -269,24 +259,20 @@ def readfile(subinp):
         elif 'startind' in line:
             paras['startind'] = line.split()[1]
             continue
-        elif 'identify' in line:
-            paras['identify'] = line.split()[1]
-            continue
         elif 'nosub' in line:
-            splitted = line.split()
             try:
                 paras['nosub'] = int( splitted[1] )
             except IndexError:
                 paras['nosub'] = 1
-            if paras['nosub']==3:
-                try:
-                    paras['nosub_file'] = splitted[2]
-                    logging.info( "nosub3. external file is used for data!: " + paras['nosub_file'])
-                except IndexError:
-                    logging.warning( "no file found. nosub downgraded to 1" )
-                    paras['nosub'] = 1
+            if paras['nosub']==3: raise SyntaxError('this functionality is renamed to: secret_file <filename>')
+            continue
+        elif 'secret_file' in line:
+            paras['secret_file'] = splitted[2]
+            logging.info( "nosub3. external file is used for data!: " + paras['nosub_file'])
             continue
         elif 'END' in line: break
+
+        
 
         # 2. capital insensitive keywords:
         line = line.split('#')[0].lower()
@@ -300,18 +286,15 @@ def readfile(subinp):
             except IndexError:
                 paras['bcoptimum'] = 'min'
             assert paras['bcoptimum'] in ['min','max']
-        elif 'basisset' in line: paras['basisset'] = line.split()[1]
+        #elif 'basisset' in line: paras['basisset'] = line.split()[1]
         elif 'cutoff' in line: paras['cutoff'] = float(line.split()[1])
-        elif 'charge' in line: paras['charge'] = int(line.split()[1])
+        #elif 'charge' in line: paras['charge'] = int(line.split()[1])
         elif 'debug' in line: paras['debug'] = True
         elif 'difmodel' in line: paras['difmodel'] = 1
         elif 'extra_props' in line: paras['extra_props'] = line.split()[1:]
         elif 'extrajobs' in line:
             paras['extrajobs']=get_jobs(subinp, line)
         elif 'extrawaittime' in line: paras['extrawaittime'] = float(line.split()[1])
-        elif 'functional' in line: paras['functional'] = line.split()[1]
-        elif 'geom2' in line:
-            paras['geom2'] = line.split()[1]
 	elif 'stabjobs' in line:
             # this code has to come before 'jobs' because also 'jobs' in 'stabjobs'
             njobs = int(line.split()[1])
@@ -326,7 +309,7 @@ def readfile(subinp):
                 job['charge'], job['mult'], job['hotline'] = (line[0], line[1], ' '.join(line[2:]))
                 jobs.append(job)
                 paras['stabjobs']=jobs
-        elif 'jobs' in line:
+        elif splitted[0]=='jobs':
             paras['jobs']=get_jobs(subinp, line)
         elif 'maxcycles' in line: paras['maxcycles']= str(int(line.split()[1]))
         elif 'maxiter' in line: paras['maxiter'] = int(line.split()[1])
@@ -357,20 +340,10 @@ def readfile(subinp):
                 paras['optimum'] = 'maximum'
 	elif 'optga' in line: paras['optga']=True
         elif 'positions' in line: paras['positions'] = [ int(item) for item in line.split()[1:] ]
-        elif any(item in line.split()[0] for item in ('program','ai','program','prog','programma')):
-            if line.split()[1] in ['gaussian','g09']:
-                paras['program']= 'gaussian'
-            elif line.split()[1] in ['orca']:
-                paras['program'] = 'orca'
-            elif line.split()[1] in ['molpro']:
-                paras['program'] = 'molpro'
-                raise SystemExit('Molpro not yet implemented')
-            elif line.split()[1] in ['nwchem']:
-                paras['program'] = 'nwchem'
-            else:
-                raise SystemExit('program not recognized')
         elif 'predictions' in line:
             subinp, paras['predictions'] = get_preds( subinp, line)
+        elif 'prejobs' in line:
+            paras['prejobs']=get_jobs(subinp, line)
         elif 'property' in line:
             prop = line.split()[1]
             if 'func' in prop:
@@ -416,7 +389,7 @@ def readfile(subinp):
         # 3 4 5
         elif 'restrictions'  in line: paras['restrictions'] = [ int(item) for item in line.split()[1:] ]
         elif 'seed' in line: paras['seed'] = int(line.split()[1])
-        elif 'semiempirical' in line: paras['semiempirical'] = 1
+        #elif 'semiempirical' in line: paras['semiempirical'] = 1
         elif 'sequence' in line:
             nsequences = int(line.split()[1])
             sequences = []
@@ -439,14 +412,14 @@ def readfile(subinp):
             print "SYMMETRY ACTIVATED!"
         elif 'simple' in line: paras['simple'] = 1
         elif 'sites' in line: paras['sites'] = [ int(item) for item in line.split()[1:] ]
-        elif 'twodimreg' in line: paras['tdregression'] = 1
+        #elif 'twodimreg' in line: paras['tdregression'] = 1
         elif 'try_ready' in line: paras['try_ready'] = 1
         elif 'test_ready' in line: paras['test_ready'] = int(line.split()[1])
-        elif 'twojob' in line:
-            try:
-                paras['twojob'] = int(line.split()[1])
-            except IndexError:
-                paras['twojob'] = 1
+        #elif 'twojob' in line:
+        #    try:
+        #        paras['twojob'] = int(line.split()[1])
+        #    except IndexError:
+        #        paras['twojob'] = 1
         elif 'procedure' in line:
                 paras['procedure'] = line.split()[1]
                 if paras['procedure'] in ['genrandom', 'getrandom']:
@@ -459,10 +432,38 @@ def readfile(subinp):
                     pass
         elif 'timelimit' in line: paras['timelimit'] = int(line.split()[1])
         elif 'timestep' in line: paras['timestep'] = int(line.split()[1])
+
+        # LOCAL FUTURE JOB KEYWORDS:
+        elif 'geom2' in line:
+            paras['geom2'] = line.split()[1]
+        elif 'identify' in line:
+            paras['identify'] = line.split()[1]
+            continue
+        elif any(item in line.split()[0] for item in ('program','ai','program','prog','programma')):
+            if line.split()[1] in ['gaussian','g09']:
+                paras['program']= 'gaussian'
+            elif line.split()[1] in ['orca']:
+                paras['program'] = 'orca'
+            elif line.split()[1] in ['molpro']:
+                paras['program'] = 'molpro'
+                raise SystemExit('Molpro not yet implemented')
+            elif line.split()[1] in ['nwchem']:
+                paras['program'] = 'nwchem'
+            else:
+                raise SystemExit('program not recognized')
+
+
+
+
+
+
+
+
         else:
             if line.strip(): # so if not just an empty line:
                 print "line: \"{}\" is not interpreted".format(line.strip('\n')),
                 raise SystemExit('program stopped')
+
 
     # get a list of all properties that need to be calculated:
     if paras['property']=='func':

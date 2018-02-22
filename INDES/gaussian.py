@@ -44,6 +44,12 @@ def filewriter(mol, paras, geom=1): #paras is short for fileparameters
     '''
     #------------
     # this function uses globals: identify, path
+
+    # and paras:
+    # -path
+    # -identify
+    # -nprocs
+    # -jobs
     #------------
     if geom==1:
         index = mol.index

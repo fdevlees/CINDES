@@ -62,6 +62,7 @@ class BaseRun(object):
         self.ppid = os.getppid()
         # for self.setup_filesystem one needs to have: self.(-nosub / -program)
         self.setup_filesystem()
+        self.set_calcs()
         return
 
     def __str__(self):
@@ -73,7 +74,7 @@ class BaseRun(object):
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( dump( value ) )
-            elif key in ['TZmat','genalg', 'adj', 'jobs', 'stabjobs', 'extrajobs']:
+            elif key in ['TZmat','genalg', 'adj', 'jobs', 'stabjobs', 'prejobs', 'extrajobs', 'calcs']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( pprint.pformat(value, width=150) )
             elif key='property' and callable(value): #i.e. the value is a lambda function
@@ -88,6 +89,22 @@ class BaseRun(object):
     
     def __repr__(self):
         return self.__str__()
+
+    # the the calculationskeyword:
+    def set_calcs(self):
+        def tocalc(paras, job):
+            calc={'jobs':paras[job]}
+            # path only set after setup_filesystem!
+            keys=['program', 'nprocs', 'identify', 'path']
+            for key in keys: calc[key]=paras[key]
+            return calc
+        paras=self.__dict__
+        calcs=[tocalc(paras, 'jobs')]
+        if paras['prejobs']: calcs.insert(0, tocalc(paras, 'prejobs'))
+        for key in ['stabjobs', 'extrajobs']:
+            if paras[key]: calcs[-1] = [calcs[-1], tocalc(paras, key)]
+        self.calcs=calcs
+        return
 
     def setup_filesystem(self):
         param = self.__dict__
