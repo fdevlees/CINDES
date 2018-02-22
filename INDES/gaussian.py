@@ -1,38 +1,62 @@
 #!/bin/env python
 ''' this module contains all functions related to the Gaussian09 program '''
 import re
+from job import BaseJob
 
-def writegeom(mol, fid):
-    if hasattr(mol, 'zmat'):
+class GaussianJob(BaseJob):
+    def write(self):
+        ''' overwrites the standard BaseJob write method '''
+        pass
+
+def writegeom(mol, fid, geom=1):
+    # set attributes
+    if geom==1:
+        Azmat='zmat'
+        Axyz='xyz'
+    else:
+        Azmat='zmat{}'.format(str(geom))
+        Axyz='xyz{}'.format(str(geom))
+
+    #write geom. zmat has priority over xyz!
+    if hasattr(mol, Azmat):
+        zmat=getattr(mol, Azmat)
         # here the zmat
         for i in range(len(zmat)):
             for item in zmat[i]:
                 fid.writelines("%s " % item)
             fid.write("\n")
         fid.write("\n")
-    elif hasattr(mol, 'xyz'):
-        fid.write(mol.xyz)
+    elif hasattr(mol, Axyz):
+        xyz=getattr(mol, Axyz)
+        fid.write(xyz)
         fid.write("\n")
     else:
+        print "attribute not found:", Axyz
         raise AttributeError
     return
 
 
 
 #---- START FILEWRITER2 THIS ONLY FOR MAKERS TRY TO MAKE THIS ONE UNIVERSAL ----#
-def filewriter(mol, **paras): #paras is short for fileparameters
+def filewriter(mol, paras, geom=1): #paras is short for fileparameters
     '''    This function creates a file with the geometry contained in zmat
     The name of the file contains the index in the name
     '''
     #------------
     # this function uses globals: identify, path
     #------------
-    index = mol.index
+    if geom==1:
+        index = mol.index
+        jobs = paras['jobs']
+    else:
+        index = "{}_{}".format(mol.index, str(geom))
+        jobs = paras['extrajobs']
+
     filename = paras['identify'] + str(index) + ".com"
     fid=open(paras['path'] + '/' + filename,'w')
 
     # JOB 1
-    job1 = paras['jobs'][0]
+    job1 = jobs[0]
     fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
     fid.write("%mem=1500MB\n")
     if not paras['nprocs']==1:
@@ -43,11 +67,11 @@ def filewriter(mol, **paras): #paras is short for fileparameters
     fid.write("{} {}\n".format(job1['charge'], job1['mult']))
 
     # write geom:
-    writegeom(mol, fid)
+    writegeom(mol, fid, geom)
 
     # THE OTHER JOBS
     #for i, (charge, mult, line) in enumerate(paras['gaussianlines'][1:]):
-    for i, job in enumerate(paras['jobs'][1:]):
+    for i, job in enumerate(jobs[1:]):
         fid.write("--link1--\n")
         fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
         fid.write("%mem=1500MB\n")
@@ -117,6 +141,8 @@ def get_molpaths(mol, fileparameters):
     if fileparameters['stab']==1:
         for pos in fileparameters['positions']: #extract al AH energies and take the lowest
             paths.append(fileparameters['path'] + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.log')
+    if fileparameters['extrajobs']:
+        paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '_2.log')
     return paths
 
 def normaltermination(mols_tocal, fileparameters):

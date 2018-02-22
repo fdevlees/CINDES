@@ -126,10 +126,11 @@ def get_prop_function(subinp, line):
     arguments = ','.join(props)
     #print "arguments:", arguments
     func = eval('lambda {}:{}'.format(arguments, line))
+    func.__doc__='lambda function {}'.format(line.strip())
 
     return subinp, func, props
 
-def get_jobs(subinp, line)
+def get_jobs(subinp, line):
     njobs = int(line.split()[1])
     jobs=[]
     for _ in range(njobs):
@@ -204,6 +205,7 @@ def readfile(subinp):
            'extrawaittime': 2,
            #'functional':'b3lyp',
            'function': lambda x:x,
+           'geom2':None,
            'identify':'unspecified_',
            #'ip':0,
            'jobs':[],
@@ -308,6 +310,8 @@ def readfile(subinp):
             paras['extrajobs']=get_jobs(subinp, line)
         elif 'extrawaittime' in line: paras['extrawaittime'] = float(line.split()[1])
         elif 'functional' in line: paras['functional'] = line.split()[1]
+        elif 'geom2' in line:
+            paras['geom2'] = line.split()[1]
 	elif 'stabjobs' in line:
             # this code has to come before 'jobs' because also 'jobs' in 'stabjobs'
             njobs = int(line.split()[1])

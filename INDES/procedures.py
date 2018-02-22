@@ -66,15 +66,24 @@ class BaseRun(object):
 
     def __str__(self):
         sb=['BaseRun object with the following attributes:']
+        empty_attributes=[]
         for key,value in sorted(self.__dict__.items()):
+            if not value: # i.e. value is either None, False, zero, empty list/string
+                empty_attributes.append(key)
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( dump( value ) )
-            elif key in ['TZmat','genalg', 'adj', 'jobs', 'stabjobs']:
+            elif key in ['TZmat','genalg', 'adj', 'jobs', 'stabjobs', 'extrajobs']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( pprint.pformat(value, width=150) )
+            elif key='property' and callable(value): #i.e. the value is a lambda function
+                if value.__doc__:
+                    sb.append("{key:20}={value}".format(key=key, value=value.__doc__))
+                else:
+                    sb.append("{key:20}= lambda function")
             else:
                 sb.append("{key:20}='{value}'".format(key=key, value=value))
+        sb.append("    empty attributes={}".format(" ".join(empty_attributes)))
         return '\n'.join(sb)
     
     def __repr__(self):

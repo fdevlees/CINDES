@@ -82,7 +82,9 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
         jobids = submission(mols_tocal,myrun)
 
         # 3. test of all jobs are ready
-        jobtester(mols_tocal,myrun,jobids)
+        print "jobids:", jobids
+        if jobids: jobtester(mols_tocal,myrun,jobids)
+        else: print "no jobids so assume no jobs submitted"
 
         # 4. test normal termination and read jobs 
         mols_calc = datareader.datareader(mols_tocal,myrun.__dict__)
@@ -106,6 +108,9 @@ def geommaker(mols_tocal,myrun,passive, active, core):
         a = deepcopy(active)
         p = deepcopy(passive)
         molecule.set_zmat( zcon.constructor2(molecule.conf,c,a,p, links=myrun.symlinks) )
+        if myrun.extrajobs:
+            if True: # i.e. give second geom similar geometry as default geom
+                molecule.zmat2=molecule.zmat
 
         # Try to print SMILES
         try:
@@ -163,7 +168,9 @@ def filemaker(mols_tocal,myrun): #----- dict with info for filewriter has to pas
     path = myrun.path
     fileparameters = myrun.__dict__
     for molecule in mols_tocal:
-        program.filewriter(molecule, **fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
+        program.filewriter(molecule, fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
+        if myrun.extrajobs:
+            program.filewriter(molecule, fileparameters, geom=2)
         if myrun.stab==1:
             # 1. make a folder with the indexname in /data/indices[i]
             if not os.path.exists(path + '/' + molecule.index): #path is $WORKDIR/data
@@ -280,8 +287,13 @@ def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
         if arrayjob:
             path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.log'
         else:
-            path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + extension + '.o[0-9][0-9][0-9][0-9][0-9]*'
+            path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.o[0-9][0-9][0-9][0-9][0-9]*'
         paths.append(path1)
+        if fileparameters['extrajobs']:
+            if arrayjob: path2 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '_2.log'
+            else: path2 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '_2' + '.o[0-9][0-9][0-9][0-9][0-9]*'
+            print "path:", path2
+            paths.append(path2)
         if fileparameters['stab']==1: #property is global variable
             for pos in fileparameters['positions']:
                 if arrayjob:
@@ -312,6 +324,12 @@ def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
             if l == len(positions) + 1: #if all AH and A then remove from indices
                 mol_submit.remove(mol)
             k+=1
+    elif fileparameters['extrajobs']:
+        for i, mol in enumerate(mol_tocal):
+            print mol
+            if glob.glob(paths[2*i]) and glob.glob(paths[2*i+1]):
+                print "already calculated:", mol
+                mol_submit.remove(mol)
     else:
         #for i in range(len(paths)):
         for mol, path in zip(mol_tocal, paths):
@@ -325,15 +343,21 @@ def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
 
 def submit_normal(mols_tocal,myrun):
     jobids = []
-    for molecule in mols_tocal:
-        name = molecule.index + myrun.extension
-        if myrun.nosub ==2:
-            time.sleep(1)
-            jobid = subm.nosubmit(myrun.path,molecule.index ,myrun.identify)
-            print molecule.index + 'submitted'
-        else:
-            jobid = subm.submit(myrun.path, name, myrun.identify, myrun.script).strip()
-        jobids.append(jobid)
+    def submit(geom=1):
+        for molecule in mols_tocal:
+            if geom==1: index = molecule.index
+            else: index = "{}_{}".format(molecule.index, str(geom))
+            name = index + myrun.extension
+            if myrun.nosub ==2:
+                time.sleep(1)
+                jobid = subm.nosubmit(myrun.path, index ,myrun.identify)
+                print index + 'submitted'
+            else:
+                jobid = subm.submit(myrun.path, name, myrun.identify, myrun.script).strip()
+            jobids.append(jobid)
+    submit()
+    if myrun.extrajobs:
+        submit(geom=2)
     return jobids
 
 def submit_stab(mol_submit,myrun,jobids=[]):
@@ -359,6 +383,10 @@ def jobtester(mols_tocal,myrun,jobids=[]):
         - note that jobids are not used!
         - function returns nothing but returns when all jobs are ready! this function therefore can take very long!
     """
+    if myrun.nosub==2 or len(mols_tocal)==0:
+        print "Job tester skipped because jobs are evaluated on login node or no jobs to be calculated"
+        return
+    print "len(mols_tocal):", len(mols_tocal)
     test_ready = myrun.test_ready
     path = myrun.path
     fileparameters = myrun.__dict__
@@ -411,6 +439,10 @@ def test_ready2(mols_tocal,myrun):
     for i in range(len(indices)):
         file1 = fileparameters['identify'] + indices[i] + myrun.extension
         files.append(file1)
+        if myrun.extrajobs:
+            file2 = fileparameters['identify'] + indices[i] + "_2" + myrun.extension
+            files.append(file2)
+            
         if fileparameters['stab']==1: #property is global variable
             for pos in fileparameters['positions']:
                 file2 = fileparameters['identify'] + indices[i] + '_' + str(pos) + myrun.extension

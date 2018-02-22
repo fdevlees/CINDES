@@ -55,9 +55,6 @@ class Population(MutableSequence):
             ret += '\n'
         return "Population class with:\n" + ret +  "####### END POPULATION #######"
 
-    def __str__(self):
-        return self.__repr__()
-
     def __getitem__(self,value):
         '''this gives the class dict and list behavior calling it like:
             Population['index'] or Population[i] both will work '''
@@ -97,6 +94,12 @@ class BaseMolecule(object):
         self.props = {}
         return
 
+    def __str__(self):
+        return "BaseMolecule"
+
+    def __repr__(self):
+        return self.__str__()
+
 class SmiMolecule(BaseMolecule):
     def __init__(self, smiles):
         super(SmiMolecule, self).__init__()
@@ -105,7 +108,7 @@ class SmiMolecule(BaseMolecule):
         return
 
     def __str__(self):
-        return "Molecule: " + self.smiles
+        return "SmiMolecule: " + self.smiles
 
     def set_index(self):
         replacements = {
@@ -113,7 +116,8 @@ class SmiMolecule(BaseMolecule):
                 '(':'d', ')':'e',
                 '[':'g', ']':'i',
                 '\\':'j','/':'k',
-                '@':'m'
+                '@':'m','-':'q', '+':'r',
+                '.':'t'
                 }
         #ireplacements = {v: k for k, v in replacements.iteritems()}
         index = "".join([replacements.get(c, c) for c in self.smiles])
@@ -145,9 +149,6 @@ class Molecule(BaseMolecule):
 
     def __len__(self):
         return len(self.conf)
-
-    def __repr__(self):
-        return self.__str__()
 
     def __str__(self):
         return "Molecule: " + self.index

@@ -131,22 +131,24 @@ def datareader( mols_tocal, fileparameters):
         print "><"*15, molecule
         # make a copy of props_dict
         props_set = uni_props_set.copy()
-        file1 = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + '.log'
 
         # start by looking if stab is one of the crucial properties because it contains many others
         if 'stab' in props_set:
             # read EAHs for the stabfiles
             EAHs = extract_eahs(molecule, fileparameters)
             # expect to get something like: { 2:EAH2, 4:EAH4, 12:EAH12 }
-        elif 'aromaticity' in props_set:
-            pass
-        else:
-            EAHs = None
+        else: EAHs = None
 
         # extract them
-        readings = new_style_reader( file1, props_set, fileparameters, EAHs )
-        molecule.props.update( readings )
+        file1 = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + '.log'
+        readings = read_file(file1, fileparameters['jobs'], program=fileparameters['program'])
+        if fileparameters['extrajobs']:
+            file2 = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + '_2.log'
+            readings.update( read_file( file2, fileparameters['extrajobs'], program=fileparameters['program']))
 
+        # set molecular properties
+        readings = set_combined_variables( readings, props_set, EAHs )
+        molecule.props.update( readings )
         molecule.predicted = False
 
     return mols_tocal
@@ -155,7 +157,15 @@ def read_file(filename, jobs, program='gaussian'):
     if program=='gaussian':
         from CINDES4.cclib.parser.gaussianparser import Gaussian as Logfile
         key='termination'
-        jobslines = open(filename).read().split(key)[:-1]
+        # if keyword freq in line than there is an extra internal job!
+        jobslines_v1 = open(filename).read().split(key)[:-1]
+        jobslines = []
+        for joblines_v1 in jobslines_v1:
+            if 'roceeding to internal job step number' in joblines_v1.split('\n',2)[1]:
+                print "freq job appended to main job"
+                jobslines[-1]+= joblines_v1
+            else:
+                jobslines.append(joblines_v1)
     elif program=='orca':
         from CINDES4.cclib.parser.orcaparser import ORCA as Logfile
         raise SystemExit('not implemented')
@@ -179,6 +189,10 @@ def read_file(filename, jobs, program='gaussian'):
             if inf=='_':continue
             elif inf[0]=='e': # so it concerns an energy!:
                 datadict[inf]=job_data.scfenergies[-1]/27.21138505 # this value is used in cclib
+            elif inf[0]=='g' and not inf=='gap':
+                # note that scfenergies are given in eV by cclib but free energy in hartree
+                datadict[inf]=job_data.freeenergy
+                print "free energy found:", job_data.freeenergy
             elif inf in ['homo','lumo']:
                 datadict['homo']=job_data.moenergies[-1][job_data.homos[0]]
                 datadict['lumo']=job_data.moenergies[-1][job_data.homos[0]+1]
@@ -203,8 +217,7 @@ def read_file(filename, jobs, program='gaussian'):
     #print "datadict:", datadict
     return datadict
 
-def new_style_reader( file1, to_read_props, fileparameters, EAHs=None ):
-    datadict = read_file(file1, fileparameters['jobs'], program=fileparameters['program'])
+def set_combined_variables( datadict, to_read_props, EAHs=None ):
 
     # so now datadict should have all energy keys + homo/lumo + dipole
     # but not yet omega/solv/gap so:
