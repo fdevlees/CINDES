@@ -38,7 +38,7 @@ def writegeom(mol, fid, geom=1):
 
 
 #---- START FILEWRITER2 THIS ONLY FOR MAKERS TRY TO MAKE THIS ONE UNIVERSAL ----#
-def filewriter(mol, paras, geom=1): #paras is short for fileparameters
+def filewriter(mol, calc): #paras is short for fileparameters
     '''    This function creates a file with the geometry contained in zmat
     The name of the file contains the index in the name
     '''
@@ -51,6 +51,9 @@ def filewriter(mol, paras, geom=1): #paras is short for fileparameters
     # -nprocs
     # -jobs
     #------------
+    try: geom=calc['geom']
+    except KeyError: geom=1
+    paras=calc
     if geom==1:
         index = mol.index
         jobs = paras['jobs']
@@ -59,7 +62,9 @@ def filewriter(mol, paras, geom=1): #paras is short for fileparameters
         jobs = paras['extrajobs']
 
     filename = paras['identify'] + str(index) + ".com"
-    fid=open(paras['path'] + '/' + filename,'w')
+    filepath = paras['path'] + '/' + filename
+    mol.addjob(filepath)
+    fid=open(filepath,'w')
 
     # JOB 1
     job1 = jobs[0]
@@ -134,24 +139,31 @@ def filewriterAH(zmat, pos, index,**paras): #paras is short for fileparameters
     fid.close()
     return
 
-def get_paths( mols, fileparameters):
-    ''' get all paths that need to be examined later '''
+def get_paths(mols):
+    ''' get all paths that need to be examined later 
+    this could be a population method '''
     files=[]
     for molecule in mols:
-        files.extend(get_molpaths(molecule, fileparameters))
+        files.extend( get_molpaths(molecule) )
     return files
 
-def get_molpaths(mol, fileparameters):
+def get_molpaths(mol):
     paths=[]
-    paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '.log')
-    if fileparameters['stab']==1:
-        for pos in fileparameters['positions']: #extract al AH energies and take the lowest
-            paths.append(fileparameters['path'] + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.log')
-    if fileparameters['extrajobs']:
-        paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '_2.log')
+    for job in mol.jobs:
+        log = job.rsplit('.')[0] + '.log'
+        paths.append(log)
     return paths
+#    paths=[]
+#    for mol in 
+#    #paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '.log')
+#    #if fileparameters['stab']==1:
+#    #    for pos in fileparameters['positions']: #extract al AH energies and take the lowest
+#    #        paths.append(fileparameters['path'] + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.log')
+#    #if fileparameters['extrajobs']:
+#    #    paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '_2.log')
+#    return paths
 
-def normaltermination(mols_tocal, fileparameters):
+def normaltermination(mols_tocal, debug=True):
     import re
     import time
     #-----
@@ -165,15 +177,14 @@ def normaltermination(mols_tocal, fileparameters):
                fid.close()
                return 2
     #-----
-    filepaths = get_paths( mols_tocal, fileparameters)
-    debug=fileparameters['debug']
+    filepaths = get_paths(mols_tocal)
     copyfilepaths = filepaths[:] #copy to be able to append to it while looping over it
     for path in copyfilepaths: #test all for information which jobs crashed
         for attempt in range(3):
             try:
                 if not termination(path)==1:
                     print "Error termination:",path
-                    bnewfile = errortermination(path,debug)
+                    errortermination(path,debug)
             except IOError as e:
                 time.sleep(10)
             else:
@@ -188,7 +199,7 @@ def normaltermination(mols_tocal, fileparameters):
     mols_toread=[]
     for mol in mols_tocal:
         # get path belonging to this particular mol
-        molpaths=get_molpaths(mol, fileparameters)
+        molpaths=get_molpaths(mol)
         ignoremol=False
         for path in molpaths: #test one by one waiting for normal termination
             while True:
@@ -210,14 +221,12 @@ def normaltermination(mols_tocal, fileparameters):
         if not ignoremol:
             mols_toread.append(mol)
     # when I'm here every mol should have normal termination
-
     print "mols_toread:", mols_toread
     return mols_toread
 
 def errortermination(path,debug=False):
     import re
     import time
-
     from CINDES4.cclib.parser.gaussianparser import Gaussian
     mymol = Gaussian(path).parse()
     from CINDES4.utils import utils

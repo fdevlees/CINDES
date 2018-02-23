@@ -69,22 +69,24 @@ class BaseRun(object):
         sb=['BaseRun object with the following attributes:']
         empty_attributes=[]
         for key,value in sorted(self.__dict__.items()):
-            if not value: # i.e. value is either None, False, zero, empty list/string
-                empty_attributes.append(key)
+            try:
+                if not value: # i.e. value is either None, False, zero, empty list/string
+                    empty_attributes.append(key)
+            except ValueError: pass
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( dump( value ) )
             elif key in ['TZmat','genalg', 'adj', 'jobs', 'stabjobs', 'prejobs', 'extrajobs', 'calcs']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( pprint.pformat(value, width=150) )
-            elif key='property' and callable(value): #i.e. the value is a lambda function
+            elif key=='function' and callable(value): #i.e. the value is a lambda function
                 if value.__doc__:
                     sb.append("{key:20}={value}".format(key=key, value=value.__doc__))
                 else:
                     sb.append("{key:20}= lambda function")
             else:
                 sb.append("{key:20}='{value}'".format(key=key, value=value))
-        sb.append("    empty attributes={}".format(" ".join(empty_attributes)))
+        sb.append("empty attributes    ={}".format(" ".join(empty_attributes)))
         return '\n'.join(sb)
     
     def __repr__(self):
@@ -93,16 +95,35 @@ class BaseRun(object):
     # the the calculationskeyword:
     def set_calcs(self):
         def tocalc(paras, job):
-            calc={'jobs':paras[job]}
             # path only set after setup_filesystem!
-            keys=['program', 'nprocs', 'identify', 'path']
-            for key in keys: calc[key]=paras[key]
+            calc=paras[job]
+            tohavekeys=['program', 'nprocs', 'identify', 'path', 'nosub']
+            for key in tohavekeys:
+                if not key in calc:
+                    calc[key]=paras[key]
             return calc
+        def check(cal, i):
+            if cal['identify'] in identifiers:
+                cal['identify']="{}{}_".format(cal['identify'],str(i))
+                assert not cal['identify'] in identifiers
+                i+=1
+            identifiers.append(cal['identify'])
+            return cal, i
+
         paras=self.__dict__
         calcs=[tocalc(paras, 'jobs')]
         if paras['prejobs']: calcs.insert(0, tocalc(paras, 'prejobs'))
         for key in ['stabjobs', 'extrajobs']:
             if paras[key]: calcs[-1] = [calcs[-1], tocalc(paras, key)]
+
+        # verify that there are not similar identifiers
+        identifiers=[]
+        i=1
+        for calc in calcs:
+            if isinstance(calc, list):
+                for cal in calc:cal, i=check(cal, i)
+            else: calc, i=check(calc, i)
+        print "calcs:", pprint.pprint(calcs)
         self.calcs=calcs
         return
 

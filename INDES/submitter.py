@@ -7,10 +7,10 @@ import string
 import tempfile
 import subprocess
 
-def submit(path,index,identify,script='ID_gauss'):
-    filename = identify + index
+def submit(filepath,script='ID_gauss'):
     print( 'filename:'),
-    print( filename)
+    print( filepath)
+    path, filename=filepath.rsplit('/',1)
     command = './' + script
     try:
         jobid = subprocess.check_output([command,filename],cwd=path)

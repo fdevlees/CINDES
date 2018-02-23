@@ -100,6 +100,17 @@ class BaseMolecule(object):
     def __repr__(self):
         return self.__str__()
 
+    def addjob(self, jobname):
+        if hasattr(self, 'jobs'): self.jobs.append(jobname)
+        else: self.jobs=[jobname]
+
+    def deletejobs(self):
+        try: delattr(self, 'jobs')
+        except AttributeError: pass
+
+    def submit_jobs(self):
+        pass
+
 class SmiMolecule(BaseMolecule):
     def __init__(self, smiles):
         super(SmiMolecule, self).__init__()

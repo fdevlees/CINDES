@@ -57,25 +57,38 @@ def get_secret_data(tablefilename,mols_tocal, mols_nocal, myrun):
         mols_nocal.append(mol)
     return mols_tocal, mols_nocal
 
-def runjobs(mols_tocal, myrun, TZMat, index=0):
+def runjobs(mols_tocal, myrun, calc):
+    def call( function, calc, *args, **kwargs):
+        if isinstance(calc, list) or isinstance(calc, tuple):
+            for cal in calc: function(calc=cal, *args, **kwargs)
+        else: function(calc=calc, *args, **kwargs)
+
     # 1. Make the files
-    jobmaker(mols_tocal,myrun, index) #----------------------------------HERE IS THE FILEWRITER CALL
+    # this could connect the jobs as attributes of the molecules!
+    #jobmaker(mols_tocal,myrun, calc) #----------------------------------HERE IS THE FILEWRITER CALL
+    call(jobmaker, mols=mols_tocal, myrun=myrun, calc=calc)
  
     # 2. now the jobs have to be submitted (this function contains a try_ready test)
+    # then the submit functions of the jobs of the molecules are calculated
+    jobids = submission(mols_tocal, myrun)
+ 
+    # 3. test of all jobs are ready
     if jobids: jobtester(mols_tocal,myrun,jobids)
     else: print "no jobids so assume no jobs submitted"
  
-    # 3. test of all jobs are ready
-    jobtester(mols_tocal,myrun,jobids)
- 
     # 4. test normal termination and read jobs 
-    mols_calc = datareader.datareader(mols_tocal,myrun.__dict__)
+    # this also has to be done for different calcs:
+    mols_calc = datareader.datareader(mols_tocal, myrun, calc=calc)
+    #call(datareader.datareader, mols=mols_tocal, run=myrun, calc=calc)
+
+    # 5. delete jobs such that new jobs can be set up.
+    for mol in mols_tocal: mol.deletejobs()
     return mols_calc
 
 
 
 # PROCEDURE
-def procedure(myrun, mols_tocal, mols_nocal, TZmat):
+def procedure(myrun, mols_tocal, mols_nocal, TZMat):
     global once
     #print "nconfs:", len(population)
     print "| n_indices_tocal:", len(mols_tocal)
@@ -91,13 +104,17 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
     if not mols_tocal==[]:
         # before any calculations the initial geometry has to be set
         # 0. Set the molecular geometries
-        geommaker(mols_tocal,myrun,**TZmat)
-        for i, calculation in enumerate(['prejobs', ['jobs', 'extrajobs'])]:
-            if getattr(myrun, 'prejobs'):
-                raise NotImplementedError
-            else: continue
-            mols_calc = runjobs(mols_tocal, myrun, TZMat, index=i)
+        geommaker(mols_tocal,myrun,**TZMat)
+        #for i, calculation in enumerate(['prejobs', ['jobs', 'extrajobs']]):
+        for i, calc in enumerate(myrun.calcs):
+            mols_calc = runjobs(mols_tocal, myrun, calc=myrun.calcs[i])
 
+            # if there need to be set some new geometries for new calculation.
+            pass
+
+        # after every calculation is performed:
+        for mol in mols_tocal: datareader.set_combined_variables(mol, myrun.props)
+        
     else: mols_calc = []
 
     # 5. merge data_calc and data_nocal to data_all
@@ -105,6 +122,7 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
 
     # 6. set target property i.e. mol.Pvalue and mol.boundaries
     set_target_properties( mols_all, myrun)
+    raise NotImplementedError
 
     return mols_all
 
@@ -166,21 +184,19 @@ def geommaker(mols_tocal,myrun,passive, active, core):
 
 # 1. file making
 @log_io()
-def jobmaker(mols_tocal,myrun, index=0): #----- dict with info for filewriter has to pass here)
+def jobmaker(mols,myrun, calc): #----- dict with info for filewriter has to pass here)
     '''jkl'''
-    if myrun.program=='gaussian':
+    if calc['program']=='gaussian':
         import gaussian as program
-    elif myrun.program=='nwchem':
+    elif calc['program']=='nwchem':
         import nwchem as program
     else:
         raise SystemExit('program not recognized')
-    path = myrun.path
-    fileparameters=myrun.__dict__
-    for molecule in mols_tocal:
-        program.filewriter(molecule, fileparameters) #------------------------------------------------HERE IS THE FILEWRITER CALL
-        if myrun.extrajobs:
-            program.filewriter(molecule, fileparameters, geom=2)
-        if myrun.stab==1:
+    for molecule in mols:
+        program.filewriter(molecule, calc) #------------------------------------------------HERE IS THE FILEWRITER CALL
+        #if myrun.extrajobs:
+        #    program.filewriter(molecule, fileparameters, geom=2)
+        if hasattr(calc, 'geom') and calc['geom']=='H':
             # 1. make a folder with the indexname in /data/indices[i]
             if not os.path.exists(path + '/' + molecule.index): #path is $WORKDIR/data
                 os.makedirs(path + '/' + molecule.index)
@@ -252,121 +268,52 @@ def add_hydrogen(zmat, pos, ncore):
 @log_io()
 def submission(mol_tocal,myrun):
     global once
-    fileparameters = myrun.__dict__
     #mol_tocal_all = deepcopy(mol_tocal) #here i copy the indices. The indices are submitted. The indicesall are not all submitted but are all read out.
-    if once==1 and fileparameters['no1sub']==1:
+    if once==1 and myrun.no1sub==1:
         print "submit skipped"
         once = 2
         jobids = None
-    elif myrun.stab==1: #then submit also the jobs in folders
-        if fileparameters['try_ready']==1:
-            print "try_ready activated"
-            mol_submit = try_ready_test(mol_tocal,myrun.path,fileparameters,returnpath=False)
-            print "mol_submit:", mol_submit
-            jobids = submit_stab(mol_submit,myrun)
-        else:
-            jobids = submit_stab(mol_tocal,myrun)
     else:
         #MOST IMPORTANT PART
         if myrun.try_ready==1:
             print "try_ready activated"
-            mol_submit = try_ready_test(mol_tocal,myrun.path,fileparameters)
-            jobids = submit_normal(mol_submit, myrun)
-        else:
-            jobids = submit_normal(mol_tocal,myrun) #In here is decided to run on shell or to really submit!
+            mol_tocal = try_ready_test(mol_tocal, myrun.__dict__)
+        jobids = submit_normal(mol_tocal, myrun) #In here is decided to run on shell or to really submit!
     logging.info("----- END all jobs are submitted ----------")
     if safe: time.sleep(15) # wait 15 seconds. to be sure that the jobs appear in the qstat command
     return jobids
 
-def try_ready_test(mol_tocal,path,fileparameters,returnpath=False):
+def try_ready_test(mol_tocal, fileparameters):
     """ Jobtester 3 looks which files shouldn't be submitted anymore. These are removed from the indices list and this list is returned
 
         - It tested if the .com.o123899 file already exists. Actually it should test if the logfile ends in normal termination.?
         - Note that this function does return new indices and no jobids
     """
-
     arrayjob=True
     extension=fileparameters['extension']
-
-    # 1. make a list of paths that need to exist when job is ready
-    paths = [] #here we are going to make a list of paths of the jobs
-    if 'positions' in fileparameters: positions = fileparameters['positions']
-    #for i in range(len(indices)):
-    for mol in mol_tocal:
-        if arrayjob:
-            path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.log'
-        else:
-            path1 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '.o[0-9][0-9][0-9][0-9][0-9]*'
-        paths.append(path1)
-        if fileparameters['extrajobs']:
-            if arrayjob: path2 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '_2.log'
-            else: path2 = path + '/' + fileparameters['identify'][:-1] + '*_' + mol.index + '_2' + '.o[0-9][0-9][0-9][0-9][0-9]*'
-            print "path:", path2
-            paths.append(path2)
-        if fileparameters['stab']==1: #property is global variable
-            for pos in fileparameters['positions']:
-                if arrayjob:
-                    path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.log'
-                else:
-                    path2 = path + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + extension + '.o[0-9][0-9][0-9][0-9][0-9]*'
-                paths.append(path2)
-
-    newpaths = paths[:]
     mol_submit = mol_tocal[:]
-    if fileparameters['stab']==1: #test if all necessary A and AH calculations are performed
-        k=0
-        #for i in range(len(indices)): # all indices
-        for mol in mol_tocal:
-            l=0
-            if glob.glob(paths[k]): # test A
-                print "already calculated:", paths[k]
-                newpaths.remove(paths[k])
-                l+=1
-            for j in range(len(positions)): # test all AH
-                k +=1
-                if glob.glob(paths[k]):
-                    print "already calculated:", paths[k]
-                    newpaths.remove(paths[k])
-                    l+=1
-            print "len(positions):", len(positions)
-            print "l:", l
-            if l == len(positions) + 1: #if all AH and A then remove from indices
-                mol_submit.remove(mol)
-            k+=1
-    elif fileparameters['extrajobs']:
-        for i, mol in enumerate(mol_tocal):
-            print mol
-            if glob.glob(paths[2*i]) and glob.glob(paths[2*i+1]):
-                print "already calculated:", mol
-                mol_submit.remove(mol)
-    else:
-        #for i in range(len(paths)):
-        for mol, path in zip(mol_tocal, paths):
-            if glob.glob(path):
-                print "already calculated:", mol
-                mol_submit.remove(mol)
-    if returnpath:
-        return mol_submit,newpaths
-    else:
-        return mol_submit
+    for mol in mol_tocal:
+        for job in mol.jobs:
+            if arrayjob:name="{}.{}".format(job.rsplit('.',1), extension)
+            else:name=job.rsplit('.',1)[0] + '.o[0-9][0-9][0-9][0-9][0-9]*'
+            if glob.glob(name): # test A
+                print "already calculated:", name
+                mol.jobs.remove(job)
+        if not mol.jobs: #so if it is an empty list
+            mol_submit.remove(mol)
+    return mol_submit
 
-def submit_normal(mols_tocal,myrun):
+def submit_normal(mols_tocal, myrun):
     jobids = []
-    def submit(geom=1):
-        for molecule in mols_tocal:
-            if geom==1: index = molecule.index
-            else: index = "{}_{}".format(molecule.index, str(geom))
-            name = index + myrun.extension
+    for molecule in mols_tocal:
+        for job in molecule.jobs:
             if myrun.nosub ==2:
                 time.sleep(1)
                 jobid = subm.nosubmit(myrun.path, index ,myrun.identify)
                 print index + 'submitted'
             else:
-                jobid = subm.submit(myrun.path, name, myrun.identify, myrun.script).strip()
+                jobid = subm.submit(job, myrun.script).strip()
             jobids.append(jobid)
-    submit()
-    if myrun.extrajobs:
-        submit(geom=2)
     return jobids
 
 def submit_stab(mol_submit,myrun,jobids=[]):
@@ -440,22 +387,24 @@ def test_ready1(indices,myrun):
     return
 
 def test_ready2(mols_tocal,myrun):
-    indices = [ mol.index for mol in mols_tocal ]
+    """
+    this function tests if the jobs are still queing or running based on the output of the 'qsta' command
+    function needs:
+    mols:
+    -jobs
+    myrun:
+    -timelimit
+    -timestep
+    -extrawaittime
+    """
     completedjobs = []
-    fileparameters = myrun.__dict__
+    files=[]
+    fileparameters=myrun.__dict__
+    for mol in mols_tocal:
+        jobnames = [ job.rsplit('/',1)[1] for job in mol.jobs ]
+        files.extend(jobnames)
+    print "files:", files
     tijdje = 0
-    files = [] #here we are going to make a list of filenames of the jobs
-    for i in range(len(indices)):
-        file1 = fileparameters['identify'] + indices[i] + myrun.extension
-        files.append(file1)
-        if myrun.extrajobs:
-            file2 = fileparameters['identify'] + indices[i] + "_2" + myrun.extension
-            files.append(file2)
-            
-        if fileparameters['stab']==1: #property is global variable
-            for pos in fileparameters['positions']:
-                file2 = fileparameters['identify'] + indices[i] + '_' + str(pos) + myrun.extension
-                files.append(file2)
     while True:
         count=0
         if tijdje>fileparameters['timelimit']:

@@ -110,9 +110,9 @@ def calculate_stab(results, EAHs):
     return results
 
 @log_io()
-def datareader( mols_tocal, fileparameters):
+def datareader( mols, run, calc):
     # 1. test normal termination
-    program=fileparameters['program']
+    program=calc['program']
     if program=='gaussian':
         import gaussian as program
     elif program=='orca':
@@ -121,39 +121,29 @@ def datareader( mols_tocal, fileparameters):
         import nwchem as program
     else:
         raise SystemExit('not implemented')
-    mols_tocal = program.normaltermination( mols_tocal, fileparameters)
+    mols_toread = program.normaltermination( mols, debug=run.debug) #i.e. some can be ignored
 
-    # 2. get a list of properties that need to be extracted for each molecule
-    uni_props_set = fileparameters['props']
-
-    # 3. obtain data for each molecule
-    for molecule in mols_tocal:
+    # 2. obtain data for each molecule
+    for molecule in mols_toread:
         print "><"*15, molecule
-        # make a copy of props_dict
-        props_set = uni_props_set.copy()
-
-        # start by looking if stab is one of the crucial properties because it contains many others
-        if 'stab' in props_set:
-            # read EAHs for the stabfiles
-            EAHs = extract_eahs(molecule, fileparameters)
-            # expect to get something like: { 2:EAH2, 4:EAH4, 12:EAH12 }
-        else: EAHs = None
-
-        # extract them
-        file1 = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + '.log'
-        readings = read_file(file1, fileparameters['jobs'], program=fileparameters['program'])
-        if fileparameters['extrajobs']:
-            file2 = fileparameters['path'] + '/' + fileparameters['identify'] + molecule.index + '_2.log'
-            readings.update( read_file( file2, fileparameters['extrajobs'], program=fileparameters['program']))
-
-        # set molecular properties
-        readings = set_combined_variables( readings, props_set, EAHs )
-        molecule.props.update( readings )
+        for logfile in program.get_molpaths(molecule):
+            readings = read_file(logfile, calcs)
+            molecule.props.update(readings)
         molecule.predicted = False
 
     return mols_tocal
 
-def read_file(filename, jobs, program='gaussian'):
+def read_file(filename, calc):
+    # 1. look to which calc the logfile belongs when there were simultaneous calculations:
+    if isinstance(calc, list):
+        for cal in calc[::-1]:
+            if cal['identify'] in filename:
+                calc=cal
+                break
+    program=calc['program']
+    jobs=calc['jobs']
+
+    # 2. split logfile in different jobs
     if program=='gaussian':
         from CINDES4.cclib.parser.gaussianparser import Gaussian as Logfile
         key='termination'
@@ -176,8 +166,9 @@ def read_file(filename, jobs, program='gaussian'):
         jobslines = splitted[1:-1]
     else:
         raise SystemExit('not implemented')
-    # for every jobfile do a cclib extraction. faking the separate jobs as if it were single files
     print "njobs:", len(jobslines)
+
+    # 3. handle every subjob as a different logfile and read the needed job['info'] from it
     from cStringIO import StringIO
     jobfiles = map(StringIO, jobslines)
     datadict = dict()
@@ -217,11 +208,11 @@ def read_file(filename, jobs, program='gaussian'):
     #print "datadict:", datadict
     return datadict
 
-def set_combined_variables( datadict, to_read_props, EAHs=None ):
+def set_combined_variables(mol, to_read_props):
 
     # so now datadict should have all energy keys + homo/lumo + dipole
     # but not yet omega/solv/gap so:
-    results=datadict.copy()
+    results=mol.props
     if 'gap' in to_read_props:
         results['gap']=datadict['lumo']-datadict['homo']
     if 'solv' in to_read_props:
@@ -233,7 +224,7 @@ def set_combined_variables( datadict, to_read_props, EAHs=None ):
     if any(i in to_read_props for i in ['omega', 'stab']):
         results['omega'] = ( ( results['ip'] + results['ea'] )**2 ) / ( 8 * ( results['ip'] - results['ea'] ))
     if 'stab' in to_read_props:
-        results = calculate_stab(results, EAHs)
+        results = calculate_stab(results)
 
     print "results:", results
     return results

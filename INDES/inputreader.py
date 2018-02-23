@@ -131,7 +131,20 @@ def get_prop_function(subinp, line):
     return subinp, func, props
 
 def get_jobs(subinp, line):
-    njobs = int(line.split()[1])
+    def get_extra_line(line):
+        key, value=line.split()
+        assert key in ['identify', 'nosub', 'program', 'nprocs', 'geom']
+        if key in ['nosub', 'nprocs']: value=int(value)
+        calc[key]=value
+        return
+    calc=dict()
+    splitted = line.split()
+    njobs = int(splitted[1])
+    if len(splitted)==3:
+        n_extra_lines=int(splitted[2])
+        for _ in range(n_extra_lines):
+            line = subinp.readline()
+            get_extra_line(line)
     jobs=[]
     for _ in range(njobs):
         job=dict()
@@ -142,7 +155,8 @@ def get_jobs(subinp, line):
         line = subinp.readline().split()
         job['charge'], job['mult'], job['hotline'] = (line[0], line[1], ' '.join(line[2:]))
         jobs.append(job)
-    return jobs
+    calc['jobs']=jobs
+    return calc
 
 def get_genalg_params(subinp, line):
     defaults = { 'ngenerations' : 20,
@@ -229,7 +243,7 @@ def readfile(subinp):
            'timelimit':250000,
            'timestep':300,
            'try_ready':0,
-           'secret_file:':'',
+           'secret_file':'',
 
 #          LOCAL JOB PARAMETERS
            'geom2':None,
@@ -296,6 +310,7 @@ def readfile(subinp):
             paras['extrajobs']=get_jobs(subinp, line)
         elif 'extrawaittime' in line: paras['extrawaittime'] = float(line.split()[1])
 	elif 'stabjobs' in line:
+            raise NotImplementedError('this is not updated to the multiprogram scheme')
             # this code has to come before 'jobs' because also 'jobs' in 'stabjobs'
             njobs = int(line.split()[1])
             jobs=[]
@@ -451,12 +466,6 @@ def readfile(subinp):
                 paras['program'] = 'nwchem'
             else:
                 raise SystemExit('program not recognized')
-
-
-
-
-
-
 
 
         else:
