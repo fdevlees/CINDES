@@ -150,9 +150,14 @@ def get_paths(mols):
 def get_molpaths(mol):
     paths=[]
     for job in mol.jobs:
-        log = job.rsplit('.')[0] + '.log'
+        log=get_logpath(job)
         paths.append(log)
     return paths
+
+def get_logpath(job):
+    log = job.rsplit('.')[0] + '.log'
+    return log
+
 #    paths=[]
 #    for mol in 
 #    #paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '.log')
@@ -280,17 +285,17 @@ def errortermination(path,debug=False):
             print "newfile written in: ", path[:-4] + 'zzz.com'
 
             #---- preparation for submit command ---
-            splitpath = path.split('/')
-            filename = splitpath[-1]
-            folder = '/'.join(splitpath[:-1])
-            filenamesplit = filename[:-4].split('_')
-            identify= filenamesplit[0]+'_'
-            index = '_'.join(filenamesplit[1:])+'zzz.com'
-            print "folder", folder
-            print "index:", index
-            print "identi", identify
+            #splitpath = path.split('/')
+            #filename = splitpath[-1]
+            #folder = '/'.join(splitpath[:-1])
+            #filenamesplit = filename[:-4].split('_')
+            #identify= filenamesplit[0]+'_'
+            #index = '_'.join(filenamesplit[1:])+'zzz.com'
+            #print "folder", folder
+            #print "index:", index
+            #print "identi", identify
             #----- keywords constructed so:
-            submitter.submit(folder,index,identify)
+            submitter.submit(path[:-4]+'zzz.com')
             return True
     return False
 

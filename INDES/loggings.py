@@ -20,7 +20,7 @@ def formatitem(opt, item, maxlenconf=49):
             try:
                 return item.rjust(15)
             except AttributeError:
-                return "{}None".format(11*" ")
+                return "No single value"
             #return "      {}".format(item)
 
     index = '{opt} {conf:{width}s}'.format(opt=opt, conf=item[0], width=maxlenconf+1)
@@ -45,7 +45,8 @@ def log_cyclesinfo(mols, count, k, l):
             # new json style:
             #print "molecule.props:", molecule.props
             item.append( molecule.Pvalue)  #predictions have only this one?
-            item.extend( molecule.props.values() )
+            isSingleValue = lambda x:isinstance(x, int) or isinstance(x, float) or isinstance(x, str)
+            item.extend( filter(isSingleValue, xmolecule.props.values() ))
 
             # old pickle style:
             #item.append( molecule.Pvalue)
@@ -84,7 +85,7 @@ def log_table( mols, table, tablename='table'):
 
         #3 write updated json object
         with open(filename,'w') as f:
-            json.dump(json_table, f, indent=-1)
+            json.dump(json_table, f, indent=1)
         print "dumped table in {} with {} of the {} molecules".format(filename, len(table), len(json_table))
         return
     # -------------

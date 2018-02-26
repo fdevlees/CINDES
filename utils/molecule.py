@@ -100,6 +100,13 @@ class BaseMolecule(object):
     def __repr__(self):
         return self.__str__()
 
+    def log(self):
+        ret = [ self.index ]
+        ret.append( int( not self.predicted ) )
+        ret.append( self.Pvalue     )
+        ret.extend( self.boundaries )
+        return ret
+
     def addjob(self, jobname):
         if hasattr(self, 'jobs'): self.jobs.append(jobname)
         else: self.jobs=[jobname]
@@ -120,6 +127,14 @@ class SmiMolecule(BaseMolecule):
 
     def __str__(self):
         return "SmiMolecule: " + self.smiles
+
+    def copy(self):
+        new_mol = SmiMolecule(self.conf)
+        new_mol.Pvalue = self.Pvalue
+        new_mol.props = self.props
+        new_mol.predicted = self.predicted
+        new_mol.jobs = self.jobs[:]
+        return new_mol
 
     def set_index(self):
         replacements = {
@@ -172,15 +187,8 @@ class Molecule(BaseMolecule):
         new_mol.Pvalue = self.Pvalue
         new_mol.props = self.props
         new_mol.predicted = self.predicted
+        new_mol.jobs = self.jobs[:]
         return new_mol
-
-    def log(self):
-        ret = [ self.index ]
-        ret.append( int( not self.predicted ) )
-        ret.append( self.Pvalue     )
-        ret.extend( self.boundaries )
-        #ret.extend( self.infoline   )
-        return ret
 
     def set_path(self, path, extension='.com'):
         pass

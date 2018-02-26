@@ -14,7 +14,7 @@ The output:
 J.L. Teunissen, 20th June 2016
 
 """
-debug=0
+debug=False
 safe=False
 
 import submitter as subm
@@ -34,6 +34,12 @@ import re
 import os
 import shutil
 once=0
+
+def invoke_script(scriptname, namespace):
+    print "in invoke script:):"
+    module_obj=__import__(scriptname)
+    module_obj.main(namespace)
+    return
 
 def get_secret_data(tablefilename,mols_tocal, mols_nocal, myrun):
     '''checks for confs already calculated:
@@ -81,8 +87,6 @@ def runjobs(mols_tocal, myrun, calc):
     mols_calc = datareader.datareader(mols_tocal, myrun, calc=calc)
     #call(datareader.datareader, mols=mols_tocal, run=myrun, calc=calc)
 
-    # 5. delete jobs such that new jobs can be set up.
-    for mol in mols_tocal: mol.deletejobs()
     return mols_calc
 
 
@@ -110,7 +114,10 @@ def procedure(myrun, mols_tocal, mols_nocal, TZMat):
             mols_calc = runjobs(mols_tocal, myrun, calc=myrun.calcs[i])
 
             # if there need to be set some new geometries for new calculation.
-            pass
+            invoke_script('set_geom_qh2', locals())
+            
+            # 5. delete jobs such that new jobs can be set up.
+            for mol in mols_tocal: mol.deletejobs()
 
         # after every calculation is performed:
         for mol in mols_tocal: datareader.set_combined_variables(mol, myrun.props)
@@ -122,7 +129,6 @@ def procedure(myrun, mols_tocal, mols_nocal, TZMat):
 
     # 6. set target property i.e. mol.Pvalue and mol.boundaries
     set_target_properties( mols_all, myrun)
-    raise NotImplementedError
 
     return mols_all
 
@@ -268,7 +274,6 @@ def add_hydrogen(zmat, pos, ncore):
 @log_io()
 def submission(mol_tocal,myrun):
     global once
-    #mol_tocal_all = deepcopy(mol_tocal) #here i copy the indices. The indices are submitted. The indicesall are not all submitted but are all read out.
     if once==1 and myrun.no1sub==1:
         print "submit skipped"
         once = 2
@@ -277,8 +282,9 @@ def submission(mol_tocal,myrun):
         #MOST IMPORTANT PART
         if myrun.try_ready==1:
             print "try_ready activated"
-            mol_tocal = try_ready_test(mol_tocal, myrun.__dict__)
-        jobids = submit_normal(mol_tocal, myrun) #In here is decided to run on shell or to really submit!
+            mol_tosubmit = try_ready_test(mol_tocal, myrun.__dict__)
+        else: mol_tosubmit=mol_tocal
+        jobids = submit_normal(mol_tosubmit, myrun) #In here is decided to run on shell or to really submit!
     logging.info("----- END all jobs are submitted ----------")
     if safe: time.sleep(15) # wait 15 seconds. to be sure that the jobs appear in the qstat command
     return jobids
@@ -289,13 +295,14 @@ def try_ready_test(mol_tocal, fileparameters):
         - It tested if the .com.o123899 file already exists. Actually it should test if the logfile ends in normal termination.?
         - Note that this function does return new indices and no jobids
     """
-    arrayjob=True
+    arrayjob=False
     extension=fileparameters['extension']
-    mol_submit = mol_tocal[:]
-    for mol in mol_tocal:
+    mol_submit = [ mol.copy() for mol in mol_tocal ] 
+    for mol in mol_submit:
         for job in mol.jobs:
-            if arrayjob:name="{}.{}".format(job.rsplit('.',1), extension)
-            else:name=job.rsplit('.',1)[0] + '.o[0-9][0-9][0-9][0-9][0-9]*'
+            if arrayjob:name="{}.{}".format(job.rsplit('.',1)[0], extension)
+            else:name=job.rsplit('.',1)[0] + '.o[0-9][0-9][0-9][0-9]*'
+            print "name=:", name
             if glob.glob(name): # test A
                 print "already calculated:", name
                 mol.jobs.remove(job)

@@ -109,39 +109,54 @@ def calculate_stab(results, EAHs):
     results['stab'] = stab
     return results
 
+def import_program(program_name):
+    if program_name=='gaussian':
+        import gaussian as program
+    elif program_name=='orca':
+        import orca as program
+    elif program_name=='nwchem':
+        import nwchem as program
+    else:
+        print "program_name:", program_name
+        raise SystemExit('not implemented')
+    return program
+
+
+def normaltermination(mols, calcs, debug=True):
+    if isinstance(calcs, list):
+        print "WARNING assuming simultaneous calculations are done by the same program!"
+        program=calcs[0]['program']
+    else:program=calcs['program']
+    program=import_program(program)
+    mols_toread = program.normaltermination( mols, debug=debug) #i.e. some can be ignored
+    return mols_toread
+
 @log_io()
 def datareader( mols, run, calc):
     # 1. test normal termination
-    program=calc['program']
-    if program=='gaussian':
-        import gaussian as program
-    elif program=='orca':
-        import orca as program
-    elif program=='nwchem':
-        import nwchem as program
-    else:
-        raise SystemExit('not implemented')
-    mols_toread = program.normaltermination( mols, debug=run.debug) #i.e. some can be ignored
+    mols_toread = normaltermination(mols, calc, debug=run.debug)
 
     # 2. obtain data for each molecule
     for molecule in mols_toread:
         print "><"*15, molecule
-        for logfile in program.get_molpaths(molecule):
-            readings = read_file(logfile, calcs)
+        for job in molecule.jobs:
+            readings = read_file(job, calc)
             molecule.props.update(readings)
         molecule.predicted = False
 
-    return mols_tocal
+    return mols_toread
 
-def read_file(filename, calc):
+def read_file(jobname, calc):
     # 1. look to which calc the logfile belongs when there were simultaneous calculations:
     if isinstance(calc, list):
         for cal in calc[::-1]:
-            if cal['identify'] in filename:
+            if cal['identify'] in jobname:
                 calc=cal
                 break
     program=calc['program']
+    program_mod=import_program(program)
     jobs=calc['jobs']
+    filename=program_mod.get_logpath(jobname)
 
     # 2. split logfile in different jobs
     if program=='gaussian':
@@ -203,6 +218,10 @@ def read_file(filename, calc):
                 except AttributeError:
                     pass
                 raise SystemExit('rdv not tested yet')
+            elif inf in ['pcharges','partialcharges']:
+                print "partial charges"
+                pcharges = zip(map(int, job_data.atomnos), map(float, job_data.atomcharges['mulliken']))
+                datadict['pcharges']=pcharges
             else:
                 print "value not recognized:", inf
     #print "datadict:", datadict
@@ -214,13 +233,13 @@ def set_combined_variables(mol, to_read_props):
     # but not yet omega/solv/gap so:
     results=mol.props
     if 'gap' in to_read_props:
-        results['gap']=datadict['lumo']-datadict['homo']
+        results['gap']=results['lumo']-results['homo']
     if 'solv' in to_read_props:
-        results['solv']= (datadict['e1_solv']-datadict['e0_solv'])*627.5
+        results['solv']= (results['e1_solv']-results['e0_solv'])*627.5
     if any(i in to_read_props for i in ['ip','omega','stab']):
-        results['ip']= (datadict['eIP']-datadict['e0'])*27.2113838
+        results['ip']= (results['eIP']-results['e0'])*27.2113838
     if any(i in to_read_props for i in ['ea','omega','stab']):
-        results['ea']= (datadict['e0']-datadict['eEA'])*27.2113838
+        results['ea']= (results['e0']-results['eEA'])*27.2113838
     if any(i in to_read_props for i in ['omega', 'stab']):
         results['omega'] = ( ( results['ip'] + results['ea'] )**2 ) / ( 8 * ( results['ip'] - results['ea'] ))
     if 'stab' in to_read_props:
