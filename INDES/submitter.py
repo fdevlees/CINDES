@@ -7,13 +7,12 @@ import string
 import tempfile
 import subprocess
 
-def submit(filepath,script='ID_gauss'):
+def submit(job,script='ID_gauss'):
     print( 'filename:'),
-    print( filepath)
-    path, filename=filepath.rsplit('/',1)
+    print( job.filename)
     command = './' + script
     try:
-        jobid = subprocess.check_output([command,filename],cwd=path)
+        jobid = subprocess.check_output([command,job.filename],cwd=job.path)
     except subprocess.CalledProcessError as e:
         print "submitting error:", repr(e)
     time.sleep(1)
@@ -28,12 +27,17 @@ def nosubmit_orca(path,index,identify):
         p.wait()
     return 123456
 
-def nosubmit(path,index,identify, extension='.com'): # not tested
+def nosubmit(job, extension='.com'): # not tested
     #gaussiancmd='g09'
     gaussiancmd='g16'
-    inputname = path + '/' + identify + index + extension
-    outname =   path + '/' + identify + index + '.log'
-    fakename =  path + '/' + identify + index + '.com.o123456'
+    path=job.path
+    inputname = job.filepath
+    print "inputname:", inputname
+    outname =   job.logpath
+    print "outname:", outname
+    #fakename =  job.filepath + '.o123456'
+    fakename = job.filepath[:-4] + '.o12345'
+    print "fakename:", fakename
     with open(inputname,'r') as inp, open(outname,'w') as out, open(fakename,'w') as err:
         p = subprocess.Popen(gaussiancmd, stdin=inp, stdout=out, stderr=err, cwd=path)
         p.wait()

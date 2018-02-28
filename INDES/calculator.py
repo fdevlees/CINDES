@@ -69,27 +69,20 @@ def runjobs(mols_tocal, myrun, calc):
             for cal in calc: function(calc=cal, *args, **kwargs)
         else: function(calc=calc, *args, **kwargs)
 
-    # 1. Make the files
-    # this could connect the jobs as attributes of the molecules!
-    #jobmaker(mols_tocal,myrun, calc) #----------------------------------HERE IS THE FILEWRITER CALL
+    # 1. Make the jobs and add them to the molecules:
     call(jobmaker, mols=mols_tocal, myrun=myrun, calc=calc)
  
     # 2. now the jobs have to be submitted (this function contains a try_ready test)
-    # then the submit functions of the jobs of the molecules are calculated
     jobids = submission(mols_tocal, myrun)
  
     # 3. test of all jobs are ready
     if jobids: jobtester(mols_tocal,myrun,jobids)
     else: print "no jobids so assume no jobs submitted"
  
-    # 4. test normal termination and read jobs 
-    # this also has to be done for different calcs:
-    mols_calc = datareader.datareader(mols_tocal, myrun, calc=calc)
-    #call(datareader.datareader, mols=mols_tocal, run=myrun, calc=calc)
+    # 4. test normal termination and read jobs (only myrun variable used is actually debug)
+    mols_calc = datareader.datareader(mols_tocal, myrun)
 
     return mols_calc
-
-
 
 # PROCEDURE
 def procedure(myrun, mols_tocal, mols_nocal, TZMat):
@@ -296,12 +289,12 @@ def try_ready_test(mol_tocal, fileparameters):
         - Note that this function does return new indices and no jobids
     """
     arrayjob=False
-    extension=fileparameters['extension']
+    #extension=fileparameters['extension']
     mol_submit = [ mol.copy() for mol in mol_tocal ] 
     for mol in mol_submit:
         for job in mol.jobs:
-            if arrayjob:name="{}.{}".format(job.rsplit('.',1)[0], extension)
-            else:name=job.rsplit('.',1)[0] + '.o[0-9][0-9][0-9][0-9]*'
+            if arrayjob:name=job.logpath
+            else:name=job.filepath[:-4] + '.o[0-9][0-9][0-9][0-9]*'
             print "name=:", name
             if glob.glob(name): # test A
                 print "already calculated:", name
@@ -314,13 +307,13 @@ def submit_normal(mols_tocal, myrun):
     jobids = []
     for molecule in mols_tocal:
         for job in molecule.jobs:
-            if myrun.nosub ==2:
+            if job.calc['nosub'] ==2:
                 time.sleep(1)
-                jobid = subm.nosubmit(myrun.path, index ,myrun.identify)
-                print index + 'submitted'
+                subm.nosubmit(job)
+                print '{} submitted'.format(job)
             else:
                 jobid = subm.submit(job, myrun.script).strip()
-            jobids.append(jobid)
+                jobids.append(jobid)
     return jobids
 
 def submit_stab(mol_submit,myrun,jobids=[]):
@@ -408,7 +401,7 @@ def test_ready2(mols_tocal,myrun):
     files=[]
     fileparameters=myrun.__dict__
     for mol in mols_tocal:
-        jobnames = [ job.rsplit('/',1)[1] for job in mol.jobs ]
+        jobnames = [ job.filename for job in mol.jobs ]
         files.extend(jobnames)
     print "files:", files
     tijdje = 0
@@ -531,7 +524,7 @@ def set_target_properties(molecules, myrun):
 
         if myrun.bc:
             try:
-                print "I'm here: myrun.bcprop", myrun.bcprop, "mol.props?:", mol.props
+                #print "I'm here: myrun.bcprop", myrun.bcprop, "mol.props?:", mol.props
                 mol.boundaries = [ mol.props[bcp] for bcp in [myrun.bcprop] ]
             except KeyError as e:
                 print e

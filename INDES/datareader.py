@@ -122,41 +122,39 @@ def import_program(program_name):
     return program
 
 
-def normaltermination(mols, calcs, debug=True):
-    if isinstance(calcs, list):
-        print "WARNING assuming simultaneous calculations are done by the same program!"
-        program=calcs[0]['program']
-    else:program=calcs['program']
-    program=import_program(program)
-    mols_toread = program.normaltermination( mols, debug=debug) #i.e. some can be ignored
+def normaltermination(mols, debug=True):
+    mols_toread=[]
+    for mol in mols:
+        for job in mol.jobs:
+            program=import_program(job.calc['program'])
+            ignore = program.normaltermination(job, debug=debug) #i.e. some can be ignored
+            if ignore: break
+        else:
+            print "no ignores"
+            mols_toread.append(mol)
     return mols_toread
 
 @log_io()
-def datareader( mols, run, calc):
+def datareader( mols, run):
     # 1. test normal termination
-    mols_toread = normaltermination(mols, calc, debug=run.debug)
+    mols_toread = normaltermination(mols, debug=run.debug)
 
     # 2. obtain data for each molecule
     for molecule in mols_toread:
         print "><"*15, molecule
         for job in molecule.jobs:
-            readings = read_file(job, calc)
+            readings = read_file(job)
             molecule.props.update(readings)
         molecule.predicted = False
 
     return mols_toread
 
-def read_file(jobname, calc):
+def read_file(job):
     # 1. look to which calc the logfile belongs when there were simultaneous calculations:
-    if isinstance(calc, list):
-        for cal in calc[::-1]:
-            if cal['identify'] in jobname:
-                calc=cal
-                break
-    program=calc['program']
+    program=job.calc['program']
     program_mod=import_program(program)
-    jobs=calc['jobs']
-    filename=program_mod.get_logpath(jobname)
+    jobs=job.calc['jobs']
+    filename=job.logpath
 
     # 2. split logfile in different jobs
     if program=='gaussian':

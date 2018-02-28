@@ -623,7 +623,7 @@ def BFS(param,array):
             # if table is correctly formatted all second element item[1]==1. meaning they are ab-initio calculated
             #indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker2(startconf,array,k,table )
             mols_todo, mols_nodo = zcon.classmaker2(startconf,array,k,table, myrun )
-            if 1 in myrun.restrictions:
+            if 1 in myrun.restrictions: # this are actually filters!
                 mols_todo, mols_nodo = restriction1(mols_todo, mols_nodo, myrun )
             print "|      NEW POPULATION CONSTRUCTED:"
             print "|   mols_todo:"

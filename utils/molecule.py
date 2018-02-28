@@ -187,7 +187,7 @@ class Molecule(BaseMolecule):
         new_mol.Pvalue = self.Pvalue
         new_mol.props = self.props
         new_mol.predicted = self.predicted
-        new_mol.jobs = self.jobs[:]
+        if hasattr(self, 'jobs'): new_mol.jobs = self.jobs[:]
         return new_mol
 
     def set_path(self, path, extension='.com'):

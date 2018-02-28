@@ -4,9 +4,12 @@ import re
 from job import BaseJob
 
 class GaussianJob(BaseJob):
+    extension='.log'
     def write(self):
         ''' overwrites the standard BaseJob write method '''
         pass
+    def getlog(self):
+        return self.name + '.log'
 
 def writegeom(mol, fid, geom=1):
     # set attributes
@@ -63,7 +66,7 @@ def filewriter(mol, calc): #paras is short for fileparameters
 
     filename = paras['identify'] + str(index) + ".com"
     filepath = paras['path'] + '/' + filename
-    mol.addjob(filepath)
+    mol.addjob(GaussianJob(filepath, calc))
     fid=open(filepath,'w')
 
     # JOB 1
@@ -155,7 +158,7 @@ def get_molpaths(mol):
     return paths
 
 def get_logpath(job):
-    log = job.rsplit('.')[0] + '.log'
+    log = job.name + '.log'
     return log
 
 #    paths=[]
@@ -168,7 +171,7 @@ def get_logpath(job):
 #    #    paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '_2.log')
 #    return paths
 
-def normaltermination(mols_tocal, debug=True):
+def normaltermination(job, debug=True):
     import re
     import time
     #-----
@@ -182,52 +185,35 @@ def normaltermination(mols_tocal, debug=True):
                fid.close()
                return 2
     #-----
-    filepaths = get_paths(mols_tocal)
-    copyfilepaths = filepaths[:] #copy to be able to append to it while looping over it
-    for path in copyfilepaths: #test all for information which jobs crashed
-        for attempt in range(3):
-            try:
-                if not termination(path)==1:
-                    print "Error termination:",path
-                    errortermination(path,debug)
-            except IOError as e:
-                time.sleep(10)
-            else:
-                break
+    path=job.logpath
+    for attempt in range(3):
+        try:
+            if not termination(path)==1:
+                print "Error termination:",path
+                errortermination(path,debug)
+        except IOError as e:
+            time.sleep(10)
         else:
-            raise e
-
+            break
+    else:
+        raise e
     extratime = 0
     once = 0
-
-    #--- new:
-    mols_toread=[]
-    for mol in mols_tocal:
-        # get path belonging to this particular mol
-        molpaths=get_molpaths(mol)
-        ignoremol=False
-        for path in molpaths: #test one by one waiting for normal termination
-            while True:
-                if termination(path)==1:
-                    break
-                elif termination(path)==2:
-                    print "\n\n{0}\n             INGORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, path)
-                    ignoremol=True
-                    break
-                else:
-                    print "no normal termination for: ",path
-                #time.sleep(300) # wait 5 minudtes
-                time.sleep(300) # wait 5 minudtes
-                extratime += 300
-                print "extra waittime/h:", extratime/3600, "||",
-            # when I'm here this path has normal termination
-            if ignoremol: break # this ignores the other paths belonging to this mol
-        # when I'm here every molpath of this mol should have normal termination
-        if not ignoremol:
-            mols_toread.append(mol)
-    # when I'm here every mol should have normal termination
-    print "mols_toread:", mols_toread
-    return mols_toread
+    ignoremol=False
+    #for path in molpaths: #test one by one waiting for normal termination
+    while True:
+        if termination(path)==1:
+            break
+        elif termination(path)==2:
+            print "\n\n{0}\n             INGORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, path)
+            ignoremol=True
+            break
+        else:
+            print "no normal termination for: ",path
+        time.sleep(300) # wait 5 minudtes
+        extratime += 300
+        print "extra waittime/h:", extratime/3600, "||",
+    return ignoremol
 
 def errortermination(path,debug=False):
     import re
@@ -283,6 +269,7 @@ def errortermination(path,debug=False):
             #print newfile
             open(path[:-4]+'zzz.com','w').writelines(newfile)
             print "newfile written in: ", path[:-4] + 'zzz.com'
+            errorjob = GaussianJob(path[:-4]+'zzz.com')
 
             #---- preparation for submit command ---
             #splitpath = path.split('/')
@@ -295,7 +282,7 @@ def errortermination(path,debug=False):
             #print "index:", index
             #print "identi", identify
             #----- keywords constructed so:
-            submitter.submit(path[:-4]+'zzz.com')
+            submitter.submit(errorjob)
             return True
     return False
 

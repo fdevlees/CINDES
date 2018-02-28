@@ -46,7 +46,7 @@ def log_cyclesinfo(mols, count, k, l):
             #print "molecule.props:", molecule.props
             item.append( molecule.Pvalue)  #predictions have only this one?
             isSingleValue = lambda x:isinstance(x, int) or isinstance(x, float) or isinstance(x, str)
-            item.extend( filter(isSingleValue, xmolecule.props.values() ))
+            item.extend( filter(isSingleValue, molecule.props.values() ))
 
             # old pickle style:
             #item.append( molecule.Pvalue)
@@ -85,7 +85,7 @@ def log_table( mols, table, tablename='table'):
 
         #3 write updated json object
         with open(filename,'w') as f:
-            json.dump(json_table, f, indent=1)
+            json.dump(json_table, f, indent=0)
         print "dumped table in {} with {} of the {} molecules".format(filename, len(table), len(json_table))
         return
     # -------------
