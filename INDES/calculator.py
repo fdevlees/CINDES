@@ -24,7 +24,7 @@ from pprint import pprint
 import pprint
 import time
 #from writings import log_io, sprint
-from CINDES4.utils.writings import log_io, print_title, sprint
+from CINDES.utils.writings import log_io, print_title, sprint
 import logging
 import construction as zcon
 import datareader
@@ -35,9 +35,13 @@ import os
 import shutil
 once=0
 
-def invoke_script(scriptname, namespace):
+def invoke_script(calc, namespace):
+    if not isinstance(calc, dict): return
+    if not 'script' in calc: 
+        print "no script invocation"
+        return
     print "in invoke script:):"
-    module_obj=__import__(scriptname)
+    module_obj=__import__(calc['script'])
     module_obj.main(namespace)
     return
 
@@ -68,10 +72,11 @@ def runjobs(mols_tocal, myrun, calc):
         if isinstance(calc, list) or isinstance(calc, tuple):
             for cal in calc: function(calc=cal, *args, **kwargs)
         else: function(calc=calc, *args, **kwargs)
+    # 0. filter off ignored molecules
+    mols_calc = filter(lambda x:not x.ignore, mols_tocal)
 
     # 1. Make the jobs and add them to the molecules:
     call(jobmaker, mols=mols_tocal, myrun=myrun, calc=calc)
- 
     # 2. now the jobs have to be submitted (this function contains a try_ready test)
     jobids = submission(mols_tocal, myrun)
  
@@ -83,6 +88,22 @@ def runjobs(mols_tocal, myrun, calc):
     mols_calc = datareader.datareader(mols_tocal, myrun)
 
     return mols_calc
+
+def do_calcs(mols_tocal, myrun):
+    for i, calc in enumerate(myrun.calcs):
+        runjobs(mols_tocal, myrun, calc=myrun.calcs[i])
+
+        # if there need to be set some new geometries for new calculation.
+        invoke_script(calc, locals())
+        
+        # 5. delete jobs such that new jobs can be set up.
+        for mol in mols_tocal: mol.deletejobs()
+
+    # after every calculation is performed:
+    for mol in mols_tocal: 
+        if not mol.ignore: datareader.set_combined_variables(mol, myrun.props)
+        
+    return mols_tocal
 
 # PROCEDURE
 def procedure(myrun, mols_tocal, mols_nocal, TZMat):
@@ -99,26 +120,13 @@ def procedure(myrun, mols_tocal, mols_nocal, TZMat):
         mols_tocal , mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun)
 
     if not mols_tocal==[]:
-        # before any calculations the initial geometry has to be set
         # 0. Set the molecular geometries
         geommaker(mols_tocal,myrun,**TZMat)
-        #for i, calculation in enumerate(['prejobs', ['jobs', 'extrajobs']]):
-        for i, calc in enumerate(myrun.calcs):
-            mols_calc = runjobs(mols_tocal, myrun, calc=myrun.calcs[i])
-
-            # if there need to be set some new geometries for new calculation.
-            invoke_script('set_geom_qh2', locals())
-            
-            # 5. delete jobs such that new jobs can be set up.
-            for mol in mols_tocal: mol.deletejobs()
-
-        # after every calculation is performed:
-        for mol in mols_tocal: datareader.set_combined_variables(mol, myrun.props)
-        
-    else: mols_calc = []
+        # 1. And perform the calculations
+        do_calcs(mols_tocal, myrun)
 
     # 5. merge data_calc and data_nocal to data_all
-    mols_all = mols_calc + mols_nocal
+    mols_all = mols_tocal + mols_nocal
 
     # 6. set target property i.e. mol.Pvalue and mol.boundaries
     set_target_properties( mols_all, myrun)
@@ -150,7 +158,7 @@ def geommaker(mols_tocal,myrun,passive, active, core):
             print "KeyError while trying to make smiles for molecule"
 
         if myrun.optga:
-            from CINDES4.utils.ga_dihedrals import reduce_conflicts
+            from CINDES.utils.ga_dihedrals import reduce_conflicts
             # this function sets molecule.conf with optimized dihedrals in the conf attribute
             c = deepcopy(core)
             a = deepcopy(active)
@@ -185,32 +193,35 @@ def geommaker(mols_tocal,myrun,passive, active, core):
 @log_io()
 def jobmaker(mols,myrun, calc): #----- dict with info for filewriter has to pass here)
     '''jkl'''
+
+    # 1. Decide program
     if calc['program']=='gaussian':
         import gaussian as program
     elif calc['program']=='nwchem':
         import nwchem as program
     else:
         raise SystemExit('program not recognized')
+
+    # 2. Write inputfile(s)
     for molecule in mols:
-        program.filewriter(molecule, calc) #------------------------------------------------HERE IS THE FILEWRITER CALL
-        #if myrun.extrajobs:
-        #    program.filewriter(molecule, fileparameters, geom=2)
-        if hasattr(calc, 'geom') and calc['geom']=='H':
-            # 1. make a folder with the indexname in /data/indices[i]
-            if not os.path.exists(path + '/' + molecule.index): #path is $WORKDIR/data
-                os.makedirs(path + '/' + molecule.index)
-                # and make sure ID_gauss is in the folder!
-                shutil.copy(path + '/' + myrun.script,path+'/'+molecule.index)
-
-            # 2. use zmat to make the AH files with the positions stored in fileparameters['positions']
-            for pos in myrun.positions:
-                zmat2 = deepcopy(molecule.zmat)
-                zmat2, h = add_hydrogen(zmat2, pos, myrun.ncore)
-                program.filewriterAH(zmat2,pos,molecule.index, myrun)
-                # FOR NOW ONLY DO ONE POSSIBILITY THIS IS EASIER BECAUSE WE KNOW EXACTLY HOW MANY JOBS THERE HAVE TO BE SUBMITTED
-                #if not hornot == 1: #if not there are two ways to place the hydrogen.
-                    #maker2(zmat,pos,indices[i],**fileparameters)
-
+        if 'positions' in calc: # so multiple jobs
+            if 'geom' in calc and (calc['geom'] in ['H', 'AH']):
+                # 1. make a folder with the indexname in /data/indices[i]
+                if not os.path.exists(calc['path'] + '/' + molecule.index): #path is $WORKDIR/data
+                    os.makedirs(calc['path'] + '/' + molecule.index)
+                    # and make sure ID_gauss is in the folder!
+                    shutil.copy(calc['path'] + '/' + myrun.script, calc['path']+'/'+molecule.index)
+                # 2. use zmat to make the AH files with the positions stored in fileparameters['positions']
+                for pos in calc['positions']:
+                    zmat2 = deepcopy(molecule.zmat)
+                    zmat2, h, N = add_hydrogen(zmat2, pos, myrun.ncore)
+                    setattr(molecule, 'zmat{}'.format(pos), zmat2)
+                    job = program.filewriter(molecule, calc, pos)
+                    job.N=N
+                    # here set somehow if the pos belongs to nitrogen
+                    raise NotImplementedError('here implement Npos')
+        else: # so single job
+            program.filewriter(molecule, calc) #------------------------------------------------HERE IS THE FILEWRITER CALL
     return
 
 def add_hydrogen(zmat, pos, ncore):
@@ -220,6 +231,7 @@ def add_hydrogen(zmat, pos, ncore):
     h=0
     logging.debug(pprint.pformat(zmat))
     if zmat[pos-1][0] == 'N':
+        N=True
         item = zmat[pos-1]
         h=1
         if len(item)==1: #when pos is 1 so first index of a zmat
@@ -231,6 +243,7 @@ def add_hydrogen(zmat, pos, ncore):
             dihedralindex=item[3]
             hline= ['H',spos,0.9,bondindex,109.5,item[3],176.0]#LOOK AT THIS
     else:
+        N=False
         for item in zmatnew[ncore:]:
             if str(item[1]) == spos:
                 if item[0] == 'H': h=1
@@ -241,7 +254,7 @@ def add_hydrogen(zmat, pos, ncore):
                 hline[0] = 'H'
                 #print "hline:",hline
     zmatnew.append(hline)
-    return zmatnew, h
+    return zmatnew, h, N
 
 #    IF I ever want to make the structures with H on the other side attached I need something like this:
 #def maker2(zmat,pos,index,**fileparameters):
@@ -273,25 +286,27 @@ def submission(mol_tocal,myrun):
         jobids = None
     else:
         #MOST IMPORTANT PART
-        if myrun.try_ready==1:
-            print "try_ready activated"
-            mol_tosubmit = try_ready_test(mol_tocal, myrun.__dict__)
-        else: mol_tosubmit=mol_tocal
-        jobids = submit_normal(mol_tosubmit, myrun) #In here is decided to run on shell or to really submit!
+        #if myrun.try_ready==1:
+        #    print "try_ready activated"
+        #    mol_tosubmit = try_ready_test(mol_tocal, myrun.__dict__)
+        #else: mol_tosubmit=mol_tocal
+        #jobids = submit_normal(mol_tosubmit, myrun) #In here is decided to run on shell or to really submit!
+        jobids = submit_normal(mol_tocal, myrun) #In here is decided to run on shell or to really submit!
     logging.info("----- END all jobs are submitted ----------")
     if safe: time.sleep(15) # wait 15 seconds. to be sure that the jobs appear in the qstat command
     return jobids
 
+'''
 def try_ready_test(mol_tocal, fileparameters):
     """ Jobtester 3 looks which files shouldn't be submitted anymore. These are removed from the indices list and this list is returned
 
         - It tested if the .com.o123899 file already exists. Actually it should test if the logfile ends in normal termination.?
         - Note that this function does return new indices and no jobids
     """
-    arrayjob=False
     #extension=fileparameters['extension']
-    mol_submit = [ mol.copy() for mol in mol_tocal ] 
-    for mol in mol_submit:
+    #mol_submit = [ mol.copy() for mol in mol_tocal ] 
+    arrayjob=False
+    for mol in mol_tocal:
         for job in mol.jobs:
             if arrayjob:name=job.logpath
             else:name=job.filepath[:-4] + '.o[0-9][0-9][0-9][0-9]*'
@@ -299,14 +314,27 @@ def try_ready_test(mol_tocal, fileparameters):
             if glob.glob(name): # test A
                 print "already calculated:", name
                 mol.jobs.remove(job)
-        if not mol.jobs: #so if it is an empty list
-            mol_submit.remove(mol)
-    return mol_submit
+        #if not mol.jobs: #so if it is an empty list
+        #    mol_submit.remove(mol)
+    return mol_tocal
+'''
 
 def submit_normal(mols_tocal, myrun):
     jobids = []
+    arrayjob=False
     for molecule in mols_tocal:
         for job in molecule.jobs:
+
+            # 1. try ready part
+            if myrun.try_ready:
+                if arrayjob:name=job.logpath
+                else:name=job.filepath[:-4] + '.o[0-9][0-9][0-9][0-9]*'
+                #print "name=:", name
+                if glob.glob(name): # test A
+                    print "already calculated:", name
+                    continue
+
+            # 2. submit part
             if job.calc['nosub'] ==2:
                 time.sleep(1)
                 subm.nosubmit(job)
@@ -314,19 +342,6 @@ def submit_normal(mols_tocal, myrun):
             else:
                 jobid = subm.submit(job, myrun.script).strip()
                 jobids.append(jobid)
-    return jobids
-
-def submit_stab(mol_submit,myrun,jobids=[]):
-    path = myrun.path
-    for molecule in mol_submit:
-        name1 = molecule.index + myrun.extension
-        jobid = subm.submit(path,name1,myrun.identify, myrun.script).strip()
-        jobids.append(jobid)
-        for pos in myrun.positions:
-            path2 = path + '/' + molecule.index
-            name2 = molecule.index + '_' + str(pos) + myrun.extension
-            jobid = subm.submit(path2,name2,myrun.identify, myrun.script).strip()
-            jobids.append(jobid)
     return jobids
 
 # 3. testing
@@ -507,6 +522,11 @@ def set_target_properties(molecules, myrun):
     '''
     #print "I'm here: molecules:", molecules,
     for mol in molecules:
+        if mol.ignore:
+            print mol, 'ignored'
+            if myrun.optimum=='maximum':mol.Pvalue=float("inf")
+            else: mol.Pvalue=-float("inf")
+            continue
         if mol.Pvalue:
             print "molecular target property already set. Predicted?", mol
             if myrun.bc: print "boundary condition cannot be set"
@@ -515,7 +535,7 @@ def set_target_properties(molecules, myrun):
         if myrun.property=='func':
             kwargs = { prop:mol.props[prop] for prop in myrun.func_args }
             mol.Pvalue = myrun.function(**kwargs)
-            print "function value:", mol.Pvalue
+            #print "function value:", mol.Pvalue
         else:
             #print "I'm here too:", mol.props
             #print "myrun.property:", myrun.property

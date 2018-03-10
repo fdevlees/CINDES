@@ -27,8 +27,8 @@ class BaseJob(object):
         self.logpath=self.path + '/' + self.logfile
 
         self.calc=calc
-        print "self.path:", self.path
-        print "self.filename:", self.filename
+        #print "self.path:", self.path
+        #print "self.filename:", self.filename
         return
 
     def __str__(self):

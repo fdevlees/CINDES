@@ -14,7 +14,7 @@ from sklearn import linear_model, metrics
 from sklearn.model_selection import train_test_split
 from abc import ABCMeta, abstractmethod
 import pandas as pd
-from CINDES4.utils.writings import log_io, sprint
+from CINDES.utils.writings import log_io, sprint
 
 from itertools import islice
 
@@ -35,7 +35,7 @@ def contoind(conf):
     return '_'.join([''.join(item) for item in conf])
 
 def indtoint(index, array):
-    import CINDES4.INDES.construction as zcon
+    import CINDES.INDES.construction as zcon
     conf = zcon.indtocon(index)
     intl = contoint(conf,array)
     return intl

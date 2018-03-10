@@ -23,7 +23,7 @@ from sklearn import linear_model, metrics
 from sklearn.model_selection import train_test_split
 from abc import ABCMeta, abstractmethod
 import pandas as pd
-from CINDES4.utils.writings import log_io, sprint
+from CINDES.utils.writings import log_io, sprint
 
 from itertools import islice
 

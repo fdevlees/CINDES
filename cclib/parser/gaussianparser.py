@@ -1251,6 +1251,31 @@ class Gaussian(logfileparser.Logfile):
                 self.nocoeffs = nocoeffs
                 self.nooccnos = nooccnos
 
+        if 'Alpha spin orbitals' in line:
+            line = next(inputfile)
+            while not line.strip() == 'Summary of Natural Population Analysis:':
+                line = next(inputfile)
+            for _ in xrange(6):
+                line= next(inputfile)
+            if not hasattr(self, "npaa"):
+                self.npaa = []
+            while not '=' in line:
+                self.npaa.append(float(line.split()[2]))
+                line = next(inputfile)
+        if 'Beta  spin orbitals' in line: #note 2 spaces!
+            line = next(inputfile)
+            while not line.strip() == 'Summary of Natural Population Analysis:':
+                line = next(inputfile)
+            for _ in xrange(6):
+                line= next(inputfile)
+            if not hasattr(self, "npab"):
+                self.npab = []
+            while not '=' in line:
+                self.npab.append(float(line.split()[2]))
+                line = next(inputfile)
+
+
+
         # For FREQ=Anharm, extract anharmonicity constants
         if line[1:40] == "X matrix of Anharmonic Constants (cm-1)":
             Nvibs = len(self.vibfreqs)

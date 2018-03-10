@@ -1,7 +1,7 @@
 debug=False
 #from writings import log_io, sprint
-from CINDES4.utils.writings import log_io, print_title, sprint
-from CINDES4.utils.utils import run_once
+from CINDES.utils.writings import log_io, print_title, sprint
+from CINDES.utils.utils import run_once
 from copy import deepcopy
 #import pickle
 import json
@@ -109,7 +109,8 @@ def log_table( mols, table, tablename='table'):
 
 def log_screen( mols ):
     try:
-        print "in log_screen:", mols[0].index, mols[0].props, mols[0].Pvalue
+        print "print first molecule:", mols[0].index, mols[0].Pvalue
+        for k, v in mols[0].props.iteritems(): print "{:15s}:{}".format(k,v)
     except IndexError:
         return
     # get property line. 
@@ -120,11 +121,13 @@ def log_screen( mols ):
         try: props.update(mol.props.keys())
         except AttributeError:pass
     props = list(props)
+    issinglevalued=lambda x:any([ isinstance(x[1],t) for t in (str,int,float)])
+    keys, values = zip(*filter(issinglevalued, mols[0].props.items()))
     # check if Pvalue is one of these singular props
-    if mols[0].Pvalue in mols[0].props.values():
+    if mols[0].Pvalue in values:
         # so yes. Pvalue is one of the propvalues. but which one?
         # get index of prop
-        keys, values= zip(*mols[0].props.items())
+        #keys, values= zip(*mols[0].props.items())
         i=values.index(mols[0].Pvalue)
         p=keys[i]
         # remove that one from props
@@ -191,7 +194,7 @@ def log_pred_info(pred_info, count, k, l):
     return
 
 def pstats(predinfo):
-    from CINDES4.utils import statistics
+    from CINDES.utils import statistics
     import pprint
     #import statistics
     #print "predinfo:\n", pprint.pformat(predinfo)

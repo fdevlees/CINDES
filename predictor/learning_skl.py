@@ -20,9 +20,9 @@ import time
 from copy import deepcopy
 from pprint import pprint
 
-from CINDES4.utils.writings import log_io, sprint, print_title
-from CINDES4.utils.converter import Converter
-from CINDES4.INDES import construction as zcon
+from CINDES.utils.writings import log_io, sprint, print_title
+from CINDES.utils.converter import Converter
+from CINDES.INDES import construction as zcon
 #from converter import Converter
 #import construction as zcon
 
@@ -114,7 +114,7 @@ class MachineLearning(object):
             if debug: print "self.converter:", self.converter
             self.xyzs = [ zmatoxyz(self.converter,item) for item in mats ]
             if False:
-                from CINDES4.utils.molecule import Molecule
+                from CINDES.utils.molecule import Molecule
                 #from molecule import Molecule
                 for i in range(len(self.xyzs)):
                     mol = Molecule()
@@ -892,7 +892,7 @@ def machinelearning3(*args,**kwargs):
 def machinelearning2(indices=[],table=[],sigma=1e5, labda= 1e-5, printlevel=1,**kwargs):
     ''' or this function will be called by CINDES'''
     #from converter import Converter
-    from CINDES4.utils.converter import Converter
+    from CINDES.utils.converter import Converter
     converter = Converter()
     kwargs['converter'] = converter
 
@@ -921,7 +921,7 @@ def machinelearning2(indices=[],table=[],sigma=1e5, labda= 1e-5, printlevel=1,**
 @log_io()
 def normal_machinelearning(indices=[], table=[], sigma=1e6, labda= 1e-6, printlevel=1, **kwargs):
     ''' function to do ML without sklearn '''
-    from CINDES4.utils.converter import Converter
+    from CINDES.utils.converter import Converter
     #from converter import Converter
     converter = Converter()
     kwargs['converter'] = converter
@@ -960,7 +960,7 @@ def normal_machinelearning(indices=[], table=[], sigma=1e6, labda= 1e-6, printle
 def ANN(indices=[],table=[],sigma=1e4, labda= 1., printlevel=1,fraction=0.5, kernel='gaussian', descriptor='norm4', **kwargs):
     ''' or this function will be called by CINDES'''
     #from converter import Converter
-    from CINDES4.utils.converter import Converter
+    from CINDES.utils.converter import Converter
     converter = Converter()
     kwargs['converter'] = converter
     my_ML = MachineLearning(type=descriptor,table=table,kerneltype= kernel, **kwargs)
@@ -979,7 +979,7 @@ def Amachinelearning2(indices=[],table=[],sigma=1e4, labda= 1., printlevel=1,fra
     ''' or this function will be called by CINDES'''
     #from converter import Converter
     globals()['args'] = args
-    from CINDES4.utils.converter import Converter
+    from CINDES.utils.converter import Converter
     converter = Converter()
     kwargs['converter'] = converter
     if descriptor in ['bob','BoB']:

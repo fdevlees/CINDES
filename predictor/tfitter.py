@@ -26,7 +26,7 @@ from sklearn import linear_model, metrics
 from sklearn.model_selection import train_test_split
 from abc import ABCMeta, abstractmethod
 import pandas as pd
-from CINDES4.utils.writings import log_io, sprint
+from CINDES.utils.writings import log_io, sprint
 
 from itertools import islice
 
@@ -155,7 +155,7 @@ class Dataset(object): #abstract data class
     def extract(self,**kwargs):
         #if table==[]:
         if True:
-            from CINDES4.utils.table import Tablebin
+            from CINDES.utils.table import Tablebin
             table = Tablebin( filename=self.name, column=args.column )
             self.confs = table.confs
             self.Y = table.Y
@@ -463,7 +463,7 @@ class Dataset(object): #abstract data class
 
             if args.verbose>1 and args.plot:
                 labels = [ funcs.get(func,func) for func in self.seq ]
-                from CINDES4.utils.plotters import heatmap_2d
+                from CINDES.utils.plotters import heatmap_2d
                 heatmap_2d(C,hits,labels,args)
 
         print "small test:"
@@ -561,12 +561,12 @@ class Dataset(object): #abstract data class
 
         labels = [ funcs.get(func,func) for func in self.seq ]
         if args.plot>1:
-            from CINDES4.utils.plotters import bar_plot
+            from CINDES.utils.plotters import bar_plot
             fig,ax = bar_plot(means,labels,std=stds)
             plt.show()
             #plt.xticks(range(len(seq)),seq)
         if args.plot>0:
-            from CINDES4.utils.plotters import multibar_plot, heatmap_1d
+            from CINDES.utils.plotters import multibar_plot, heatmap_1d
             if True:
                 print "coeft:", coeft
                 if args.equalsites:

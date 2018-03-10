@@ -31,8 +31,8 @@ from loggings import loggings
 # import datareader
 
 # import utils 
-# from CINDES4.utils.molecule import Molecule
-from CINDES4.utils.writings import log_io, print_title, sprint, dump
+# from CINDES.utils.molecule import Molecule
+from CINDES.utils.writings import log_io, print_title, sprint, dump
 
 # initial global variables
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
@@ -72,6 +72,7 @@ class BaseRun(object):
             try:
                 if not value: # i.e. value is either None, False, zero, empty list/string
                     empty_attributes.append(key)
+                    continue
             except ValueError: pass
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
@@ -123,7 +124,7 @@ class BaseRun(object):
             if isinstance(calc, list):
                 for cal in calc:cal, i=check(cal, i)
             else: calc, i=check(calc, i)
-        print "calcs:", pprint.pprint(calcs)
+        #print "calcs:", pprint.pprint(calcs)
         self.calcs=calcs
         return
 
@@ -171,7 +172,7 @@ class FrameRun(BaseRun):
 
     def set_adj(self, core, active):
         debug=0
-        from CINDES4.utils.converter import Converter
+        from CINDES.utils.converter import Converter
         import numpy as np
         conv = Converter()
         conv.read_zmalist(core)
@@ -708,7 +709,7 @@ def genconf(param):
         import nwchem as program
     else:
         raise SystemExit('program not recognized')
-    from CINDES4.utils.molecule import Molecule
+    from CINDES.utils.molecule import Molecule
     mol = Molecule(index=param['startind'])
     mol.zmat = mat
     program.filewriter(mol, **param)
@@ -785,7 +786,7 @@ def generate_procedure(param,array):
     return
 
 def get_all_molecules(array):
-    from CINDES4.utils.molecule import Molecule
+    from CINDES.utils.molecule import Molecule
     print "in get_all_molecules"
     #A = [ map(''.join,item) for item in array ]
     A = array

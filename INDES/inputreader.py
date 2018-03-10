@@ -17,7 +17,7 @@ formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 inrlog.addHandler(ch)
 
-from CINDES4.utils.writings import log_io
+from CINDES.utils.writings import log_io
 
 # MAIN FUNCTION
 @log_io()
@@ -132,9 +132,10 @@ def get_prop_function(subinp, line):
 
 def get_jobs(subinp, line):
     def get_extra_line(line):
-        key, value=line.split()
-        assert key in ['identify', 'nosub', 'program', 'nprocs', 'geom']
+        key, value=line.strip().split(None,1)
+        assert key in ['identify', 'nosub', 'program', 'nprocs', 'geom', 'script', 'positions']
         if key in ['nosub', 'nprocs']: value=int(value)
+        elif key in ['positions']: value=map(int,value.split())
         calc[key]=value
         return
     calc=dict()
@@ -215,6 +216,7 @@ def readfile(subinp):
            'extra_props': [],
            'extrawaittime': 2,
            'function': lambda x:x,
+           'ignore':0,
            'jobs':[],
            'maxiter':10,
            'montecarlo':0,   #Temperature at start
@@ -244,6 +246,7 @@ def readfile(subinp):
            'timestep':300,
            'try_ready':0,
            'secret_file':'',
+           'TZmat':{},
 
 #          LOCAL JOB PARAMETERS
            'geom2':None,
@@ -309,8 +312,11 @@ def readfile(subinp):
         elif 'extrajobs' in line:
             paras['extrajobs']=get_jobs(subinp, line)
         elif 'extrawaittime' in line: paras['extrawaittime'] = float(line.split()[1])
+        elif 'ignore' in line: 
+            try: paras['ignore'] is int(line.split()[1])
+            except IndexError: paras['ignore']=3600
 	elif 'stabjobs' in line:
-            raise NotImplementedError('this is not updated to the multiprogram scheme')
+            #raise NotImplementedError('this is not updated to the multiprogram scheme')
             # this code has to come before 'jobs' because also 'jobs' in 'stabjobs'
             njobs = int(line.split()[1])
             jobs=[]

@@ -1,6 +1,6 @@
 from pprint import pprint
 #from writings import log_io
-from CINDES4.utils.writings import log_io, print_title, sprint
+from CINDES.utils.writings import log_io, print_title, sprint
 import re
 import numpy
 import time
@@ -38,45 +38,7 @@ class prettyfloat(float):
     def __repr__(self):
         return "%-0.4f" % self
 
-def extract_eahs(molecule, fileparameters):
-    index = molecule.index
-    EAHs=dict() #all EAHs from all different positions in here
-    Npos=[] #positions with a nitrogen in here
-    for pos in fileparameters['positions']: #extract al AH energies and take the lowest
-        print "pos:", pos,
-        file2= fileparameters['path'] + '/' + index + '/' + fileparameters['identify'] + index + '_' + str(pos) + '.log'
-
-        datadict_file2 = read_file(file2, fileparameters['stabjobs'], program=fileparameters['program'])
-        # returns something like: '{'e':638.8, 'eAH':392.389 }
-
-        #---- a bit tricky: get the pos-positions that correspond to a nitrogen-X (X=H,CH3) bond.
-        confje = index.split('_')
-        N=False #set initially to False
-        try:
-            siteindex = fileparameters['corresp'][pos] #find for each position the methyl index
-        except KeyError:
-            # there is theoretically a possibility that the position to add a A-X, (X=H,CH3) group is not an active or passive site
-            # in this case the fileparameters['corresp'] does not contain the pos this is only possible when te possible reactive center
-            # has no hydrogen for the case of phenenalenyl. for thiadiazinyl this is automatically an sp2 nitrogen position
-            print "position of H atom is not a possible site. Therefore the program assumes H is attached to a nitrogen atom!"
-            N=True
-        else:
-            # this is only executed when no Error is raised!
-            if siteindex in fileparameters['sites']:# look if that index is used as a site
-                if any(confje[ fileparameters['sites'].index(siteindex) ]==n for n in [['N'],'N']):
-                    print "    there is a nitrogen on this position!    "
-                    N=True
-
-        if N:
-            Npos.append(pos)
-        EAHs[pos]={'eAH':datadict_file2['eAH'], 'N':N}
-
-    print "EAHs:"
-    pprint(EAHs)
-    print "Npos:",Npos
-    return EAHs
-
-def calculate_stab(results, EAHs):
+def calculate_stab(results, molecule):
     #---- some parameters needed
     bde_a = -12.68 #kJ/mol/eV^2
     bde_b = -218.1 #kJ/mol
@@ -92,6 +54,43 @@ def calculate_stab(results, EAHs):
     chi_term = bde_b*(chi_h-3)*(chi_n-3) #term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
     #gasconstant = 8.3144621
     #----- end of parameters
+
+    #----- make the EAHs list. = {pos:{'eAH':value, 'N':bool}, pos:{...}, ... }
+    # index = molecule.index
+    # pos   = molecule.job.position ?
+    # N     = molecule.job.N?
+    # I need positions here so I need more information probably:
+    #     - positions
+    #     - index
+    #     - fileparameters['corresp']
+    #     - fileparameters['sites']
+    EAHs=dict()
+    Npos=[] #positions with a nitrogen in here
+    for job in molecules.jobs:
+        """
+        confje = index.split('_')
+        N=False #set initially to False
+        try:
+            siteindex = fileparameters['corresp'][pos] #find for each position the methyl index
+        except KeyError:
+            # there is theoretically a possibility that the position to add a A-X, (X=H,CH3) group is not an active or passive site
+            # in this case the fileparameters['corresp'] does not contain the pos this is only possible when te possible reactive center
+            # has no hydrogen for the case of phenenalenyl. for thiadiazinyl this is automatically an sp2 nitrogen position
+            print 'position of H atom is not a possible site. Therefore the program assumes H is attached to a nitrogen atom!'
+            N=True
+        else:
+            # this is only executed when no Error is raised!
+            if siteindex in fileparameters['sites']:# look if that index is used as a site
+                if any(confje[ fileparameters['sites'].index(siteindex) ]==n for n in [['N'],'N']):
+                    print '    there is a nitrogen on this position!    '
+                    N=True
+        if N:
+            Npos.append(pos)
+        """
+        if hasattr(job, 'pos'):
+            EAHs[pos]={'eAH':getattr(mol.props,'eAH_P{}'.format(str(pos)), 'N':job.N}
+    print "EAHs:"
+    pprint(EAHs)
 
     minpos = min(EAHs, key=lambda x:EAHs[x]['eAH'])
     E_ah = EAHs[minpos]['eAH']
@@ -121,33 +120,35 @@ def import_program(program_name):
         raise SystemExit('not implemented')
     return program
 
-
-def normaltermination(mols, debug=True):
+def normaltermination(mols, **kwargs):
+    """ kwargs can be either ignore / or debug """
     mols_toread=[]
     for mol in mols:
         for job in mol.jobs:
             program=import_program(job.calc['program'])
-            ignore = program.normaltermination(job, debug=debug) #i.e. some can be ignored
-            if ignore: break
+            ignoremol = program.normaltermination(job, **kwargs) #i.e. some can be ignored
+            if ignoremol:
+                mol.ignore=True
+                break
         else:
-            print "no ignores"
             mols_toread.append(mol)
     return mols_toread
 
 @log_io()
 def datareader( mols, run):
     # 1. test normal termination
-    mols_toread = normaltermination(mols, debug=run.debug)
+    mols_toread = normaltermination(mols, debug=run.debug, ignore=run.ignore)
 
     # 2. obtain data for each molecule
     for molecule in mols_toread:
-        print "><"*15, molecule
+        print "><"*15, molecule,
         for job in molecule.jobs:
             readings = read_file(job)
             molecule.props.update(readings)
         molecule.predicted = False
 
-    return mols_toread
+    #return mols_toread
+    return mols
 
 def read_file(job):
     # 1. look to which calc the logfile belongs when there were simultaneous calculations:
@@ -158,7 +159,7 @@ def read_file(job):
 
     # 2. split logfile in different jobs
     if program=='gaussian':
-        from CINDES4.cclib.parser.gaussianparser import Gaussian as Logfile
+        from CINDES.cclib.parser.gaussianparser import Gaussian as Logfile
         key='termination'
         # if keyword freq in line than there is an extra internal job!
         jobslines_v1 = open(filename).read().split(key)[:-1]
@@ -170,16 +171,16 @@ def read_file(job):
             else:
                 jobslines.append(joblines_v1)
     elif program=='orca':
-        from CINDES4.cclib.parser.orcaparser import ORCA as Logfile
+        from CINDES.cclib.parser.orcaparser import ORCA as Logfile
         raise SystemExit('not implemented')
     elif program=='nwchem':
-        from CINDES4.cclib.parser.nwchemparser import NWChem as Logfile
+        from CINDES.cclib.parser.nwchemparser import NWChem as Logfile
         key='NWChem Input Module'
         splitted = open(filename).read().split(key)
         jobslines = splitted[1:-1]
     else:
         raise SystemExit('not implemented')
-    print "njobs:", len(jobslines)
+    print "njobs:", len(jobslines), 
 
     # 3. handle every subjob as a different logfile and read the needed job['info'] from it
     from cStringIO import StringIO
@@ -206,44 +207,44 @@ def read_file(job):
             elif inf=='mw':
                 datadict['mw'] = float( sum( job_data.atomnos) )
             elif inf=='rdv':
-                print "job_data.atomcharges:", job_data.atomcharges
-                spiden=job_data.atomcharges['natural']
-                datadict['rdv'] = sum([ float(item[2])**2 for item in spiden if abs(item[2])>0.05 ])
-                print datadict['rdv']
-                print job_data.atomcharges
-                try:
-                    print job_data.atomspins
-                except AttributeError:
-                    pass
-                raise SystemExit('rdv not tested yet')
+                spiden = map(lambda x:x[0]-x[1], zip(job_data.npaa, job_data.npab))
+                #spiden=job_data.atomcharges['natural']
+                datadict['rdv'] = sum([ item**2 for item in spiden if abs(item)>0.05 ])
+                #try:
+                #    print job_data.atomspins
+                #except AttributeError:
+                #    pass
             elif inf in ['pcharges','partialcharges']:
-                print "partial charges"
+                print "partial charges",
                 pcharges = zip(map(int, job_data.atomnos), map(float, job_data.atomcharges['mulliken']))
                 datadict['pcharges']=pcharges
             else:
                 print "value not recognized:", inf
-    #print "datadict:", datadict
+    print
+
+    # maybe I can add _P# to each key if the job has a pos
+    if hasattr(job,'pos'):
+        datadict["{}_P{}".format(old_key, str(pos))] = datadict.pop(old_key)
+
     return datadict
 
 def set_combined_variables(mol, to_read_props):
-
     # so now datadict should have all energy keys + homo/lumo + dipole
     # but not yet omega/solv/gap so:
     results=mol.props
     if 'gap' in to_read_props:
-        results['gap']=results['lumo']-results['homo']
+        results['gap']   = results['lumo']-results['homo']
     if 'solv' in to_read_props:
-        results['solv']= (results['e1_solv']-results['e0_solv'])*627.5
+        results['solv']  = (results['e1_solv']-results['e0_solv'])*627.5
     if any(i in to_read_props for i in ['ip','omega','stab']):
-        results['ip']= (results['eIP']-results['e0'])*27.2113838
+        results['ip']    = (results['eIP']-results['e0'])*27.2113838
     if any(i in to_read_props for i in ['ea','omega','stab']):
-        results['ea']= (results['e0']-results['eEA'])*27.2113838
+        results['ea']    = (results['e0']-results['eEA'])*27.2113838
     if any(i in to_read_props for i in ['omega', 'stab']):
-        results['omega'] = ( ( results['ip'] + results['ea'] )**2 ) / ( 8 * ( results['ip'] - results['ea'] ))
+        results['omega'] = (( results['ip'] + results['ea'] )**2 ) / ( 8 * ( results['ip'] - results['ea'] ))
     if 'stab' in to_read_props:
-        results = calculate_stab(results)
+        results = calculate_stab(results, mol)
 
-    print "results:", results
     return results
 
 if __name__ == "__main__":
@@ -268,7 +269,7 @@ if __name__ == "__main__":
     if hasattr(mymol,'hypolvibr'):
         if not mymol.hypolvibr==[]: print "Diagonal vibrational hyperpolarisability:", mymol.hypolvibr
     if True:
-        from CINDES4.cclib.parser import ccopen
+        from CINDES.cclib.parser import ccopen
         myfile=ccopen(filename).parse()
         HOMO = myfile.myhomos[index]
         Ehomo= myfile.mymos[index]['alpha'][0][HOMO]

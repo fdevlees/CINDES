@@ -13,21 +13,21 @@ from time  import time
 import logging
 from sys   import platform as sys_platform
 from sys   import stdout as sys_stdout
-from CINDES4.pyevolve.GPopulation  import GPopulation
-from CINDES4.pyevolve.GPopulation  import Util
+from CINDES.pyevolve.GPopulation  import GPopulation
+from CINDES.pyevolve.GPopulation  import Util
 import random as rrandom
 
 # my own modules
 #from writings import log_io, sprint, print_title
-from CINDES4.utils.writings import log_io, sprint, print_title
-from CINDES4.utils.molecule import Molecule
-from CINDES4 import INDES
+from CINDES.utils.writings import log_io, sprint, print_title
+from CINDES.utils.molecule import Molecule
+from CINDES import INDES
 from predictions import predictor
-from CINDES4.predictor import learning_int as ml_i
+from CINDES.predictor import learning_int as ml_i
 
-from CINDES4.pyevolve import G1DList , GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters, Crossovers
-from CINDES4.pyevolve import Scaling
-import CINDES4.pyevolve as pyevolve
+from CINDES.pyevolve import G1DList , GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters, Crossovers
+from CINDES.pyevolve import Scaling
+import CINDES.pyevolve as pyevolve
 
 def my_mutator(conf):
     pos_to_mutate = np.random.randint(0, len(individual)-1)
@@ -405,7 +405,7 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
 ###### CALL(s) from __main__.py ###########
 
 # 1. setup system
-from CINDES4.INDES import procedures
+from CINDES.INDES import procedures
 
 def main(param, array):
     GArun = procedures.Run(**param)

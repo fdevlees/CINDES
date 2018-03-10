@@ -1,9 +1,9 @@
 from writings import print_title, log_io
 import pickle
-from CINDES4.INDES import construction as zcon
-from CINDES4.INDES.procedures import Run, set_table, submittingprocedure
-from CINDES4.INDES.predictions import predictor
-from CINDES4.INDES.loggings import loggings
+from CINDES.INDES import construction as zcon
+from CINDES.INDES.procedures import Run, set_table, submittingprocedure
+from CINDES.INDES.predictions import predictor
+from CINDES.INDES.loggings import loggings
 
 # procedure 7. Farthest Point Selection based on the diversity index. 
 def database_construction(param,array):
@@ -76,9 +76,9 @@ def getdivers(array, table, myrun):
     minnch = myrun.divers_minnch
 
     #1.
-    from CINDES4.utils.molecule import Molecule
-    from CINDES4.utils.diversity1 import Diversifier
-    from CINDES4.utils.table import Tablebin
+    from CINDES.utils.molecule import Molecule
+    from CINDES.utils.diversity1 import Diversifier
+    from CINDES.utils.table import Tablebin
     diversifier = Diversifier(index=index)
     mols = []
     #confs = [ item[0].split('_') for item in table ]

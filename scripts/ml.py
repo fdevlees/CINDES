@@ -4,8 +4,8 @@
 import sys
 import numpy as np
 
-from CINDES4.predictor import learning_int
-from CINDES4.predictor import learning_skl as learning
+from CINDES.predictor import learning_int
+from CINDES.predictor import learning_skl as learning
 from sklearn.kernel_ridge import KernelRidge
 
 import matplotlib.pyplot as plt
@@ -17,7 +17,7 @@ def main_single(show=True,
         2. test the best estimator on the validation set
         3. analyse the results on the validation set
     '''
-    from CINDES4.predictor import learning_xyz
+    from CINDES.predictor import learning_xyz
 
     # my_ML sets the data into the ML class. self.X / self.y and possibly self.X_val / self.y_val
     my_ML = learning_xyz.MachineLearning( inputfile = args.file,
@@ -131,7 +131,7 @@ if __name__=='__main__':
     #if args.timer:
     if False:
         print "use sklearn:", args.use_sklearn
-        from CINDES4.utils.timer import Timer
+        from CINDES.utils.timer import Timer
         with Timer() as t:
             learning.Amachinelearning2( sigma = args.sigma,
                                labda = args.labda,

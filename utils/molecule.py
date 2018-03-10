@@ -3,6 +3,20 @@ import numpy as np
 from converter import Converter
 from collections import MutableSequence
 
+# helper function
+def indtosmi(index):
+    replacements = {
+            '=':'a',
+            '(':'d', ')':'e',
+            '[':'g', ']':'i',
+            '\\':'j','/':'k',
+            '@':'m','-':'q', '+':'r',
+            '.':'t','#':'u'
+            }
+    inverserepl = { v:k for k,v in replacements.iteritems()}
+    smiles = "".join([inverserepl.get(c, c) for c in index])
+    return smiles
+
 debug=0
 
 try:
@@ -89,6 +103,7 @@ class BaseMolecule(object):
         self.infoline = [] # for storing additional properties
         self.predictions = {}
         self.predicted = None
+        self.ignore = False
         self.opt = False
         # for jsonification:
         self.props = {}
@@ -129,11 +144,13 @@ class SmiMolecule(BaseMolecule):
         return "SmiMolecule: " + self.smiles
 
     def copy(self):
-        new_mol = SmiMolecule(self.conf)
+        new_mol = SmiMolecule(self.smiles)
         new_mol.Pvalue = self.Pvalue
         new_mol.props = self.props
         new_mol.predicted = self.predicted
         new_mol.jobs = self.jobs[:]
+        if hasattr(self, 'oemol'):
+            new_mol.oemol = self.oemol.CreateCopy()
         return new_mol
 
     def set_index(self):
@@ -143,7 +160,7 @@ class SmiMolecule(BaseMolecule):
                 '[':'g', ']':'i',
                 '\\':'j','/':'k',
                 '@':'m','-':'q', '+':'r',
-                '.':'t'
+                '.':'t','#':'u'
                 }
         #ireplacements = {v: k for k, v in replacements.iteritems()}
         index = "".join([replacements.get(c, c) for c in self.smiles])

@@ -1,6 +1,6 @@
 import json
 from numpy import asarray as A
-from CINDES4.INDES.predictions import plot_predictions
+from CINDES.INDES.predictions import plot_predictions
 
 # read file
 with open('predictions.json') as f:

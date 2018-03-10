@@ -2,9 +2,9 @@
 debug=0
 
 import construction as zcon
-from CINDES4.utils.writings import log_io, print_title, sprint, dump
-from CINDES4.utils.molecule import Molecule
-from CINDES4.predictor import learning_skl as learning
+from CINDES.utils.writings import log_io, print_title, sprint, dump
+from CINDES.utils.molecule import Molecule
+from CINDES.predictor import learning_skl as learning
 import random
 from math import exp #exp(x) returns e^x
 #from operator import mul
@@ -71,7 +71,7 @@ def ML_init(prediction, run, table, retrain=True, array=[], count=100, nsite=0, 
 
 def ML_pred(regressor, conf, **kwargs):
     # 3. use model to predict
-    from CINDES4.utils.molecule import Molecule
+    from CINDES.utils.molecule import Molecule
     mol = Molecule(conf)
     regressor.do_predict([mol], rstd=True, MC=True)
     #print mol.predictions

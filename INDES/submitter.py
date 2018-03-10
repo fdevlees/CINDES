@@ -39,8 +39,12 @@ def nosubmit(job, extension='.com'): # not tested
     fakename = job.filepath[:-4] + '.o12345'
     print "fakename:", fakename
     with open(inputname,'r') as inp, open(outname,'w') as out, open(fakename,'w') as err:
-        p = subprocess.Popen(gaussiancmd, stdin=inp, stdout=out, stderr=err, cwd=path)
-        p.wait()
+        try:
+            p = subprocess.Popen(gaussiancmd, stdin=inp, stdout=out, stderr=err, cwd=path)
+            p.wait()
+        except OSError as e:
+            print "module probably not loaded."
+            raise
     return 123456
 
 def jobstatus(jobid):
