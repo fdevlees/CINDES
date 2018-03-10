@@ -4,6 +4,7 @@ import re
 
 def writegeom(mol, fid):
     if hasattr(mol, 'zmat'):
+        zmat=mol.zmat
         # here the zmat
         for i in range(len(zmat)):
             for item in zmat[i]:
@@ -192,12 +193,12 @@ def errortermination(path,debug=False):
     t=utils.PeriodicTable()
     if hasattr(mymol,'atomcoords'):
         coords = map(list, mymol.atomcoords[-1])
-        print coords
+        #print coords
         for sym,xyz in zip(mymol.atomnos,coords):
             xyz.insert(0,t.element[sym])
         print "atomcoords and added elements:"
-        for item in mymol.atomcoords[-1]:
-            print ' '.join(map(str,item))
+        #for item in mymol.atomcoords[-1]:
+        #    print ' '.join(map(str,item))
         if debug==True:
             import submitter
             if hasattr(mymol,'optdone'):
@@ -226,7 +227,7 @@ def errortermination(path,debug=False):
                             #                                   str, item[1:]
                             #                                 )
                             #                            ) + '\n' for item in xyz ]
-                            print xyz_f
+                            #print xyz_f
                             newfile.extend(xyz_f)
                             newfile.extend(['\n'])
                             break

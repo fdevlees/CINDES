@@ -129,7 +129,7 @@ def get_prop_function(subinp, line):
 
     return subinp, func, props
 
-def get_jobs(subinp, line)
+def get_jobs(subinp, line):
     njobs = int(line.split()[1])
     jobs=[]
     for _ in range(njobs):

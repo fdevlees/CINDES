@@ -94,6 +94,7 @@ class ccData(object):
         "ccenergies":     numpy.ndarray,
         "charge":         int,
         "coreelectrons":  numpy.ndarray,
+        "dipole":         float,
         "enthalpy":       float,
         "entropy":        float,
         "etenergies":     numpy.ndarray,

@@ -35,6 +35,18 @@ import os
 import shutil
 once=0
 
+# this function to redirect the output of the optga keyword
+import sys
+from contextlib import contextmanager
+@contextmanager
+def custom_redirection(fileobj):
+    old = sys.stdout
+    sys.stdout = fileobj
+    try:
+        yield fileobj
+    finally:
+        sys.stdout = old
+
 def get_secret_data(tablefilename,mols_tocal, mols_nocal, myrun):
     '''checks for confs already calculated:
         uses myrun.~
@@ -100,6 +112,9 @@ def procedure(myrun, mols_tocal, mols_nocal, TZmat):
 #0. geom making
 @log_io()
 def geommaker(mols_tocal,myrun,passive, active, core):
+    if myrun.symlinks: print "symmetry will be applied |",
+    if myrun.optga: print "Output of Dihedral GA Optimizer is redirected to optga.out. optimizing... |",
+    print
     e=None
     for molecule in mols_tocal:
         c = deepcopy(core)
@@ -111,23 +126,20 @@ def geommaker(mols_tocal,myrun,passive, active, core):
         try:
             smiles= molecule.get_format()
             print "smiles:", smiles,
-        except IndexError as e:
-            print "IndexError while trying to make smiles for molecule"
-        except NameError as e:
-            print "NameError while trying to make smiles for molecule:"
-        except KeyError as e:
-            print "KeyError while trying to make smiles for molecule"
+        except (IndexError, NameError, KeyError) as e:
+            pass # only the last error is printed after the whole molecule loop
 
         if myrun.optga:
+            import sys
             from CINDES4.utils.ga_dihedrals import reduce_conflicts
             # this function sets molecule.conf with optimized dihedrals in the conf attribute
             c = deepcopy(core)
             a = deepcopy(active)
             p = deepcopy(passive)
-            reduce_conflicts(molecule, c, a, p)
-            # here location for conformational analysis
-            # here location for avoiding geom conflicts
-            pass
+
+            with open('optga.out','a') as out:
+                with custom_redirection(out):
+                    reduce_conflicts(molecule, c, a, p)
         elif False:
             import fafoom
             # conformational analysis could be implemented here
@@ -147,7 +159,7 @@ def geommaker(mols_tocal,myrun,passive, active, core):
         else:
             # no special action. the first assigned geometry is used as a start
             pass
-    print e
+    if e: print "OpenBabel Smiles error:", e
     return
 
 # 1. file making

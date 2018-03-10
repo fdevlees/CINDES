@@ -408,7 +408,7 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
 from CINDES4.INDES import procedures
 
 def main(param, array):
-    GArun = procedures.Run(**param)
+    GArun = procedures.FrameRun(**param)
     table = procedures.set_table(GArun, array)
     #print "run object:\n", GArun
     final_genome = run_pyevolve(array, table, GArun)

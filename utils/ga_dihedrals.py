@@ -4,10 +4,16 @@ from copy import deepcopy
 from CINDES4.pyevolve import G1DList , GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters, Crossovers
 import CINDES4.pyevolve as pyevolve
 
+DE=False
+
 # main function:
 def reduce_conflicts(molecule, core=[], active=[], passive=[]):
     print "\n{0} {1} {0}".format("$"*20, molecule.index)
     conf = molecule.conf
+    if DE:
+        print "initial conf:", conf
+        print "initial index", molecule.index
+
     new_conf = []
     for group in conf:
         if is_float(group[-1]):
@@ -26,7 +32,9 @@ def reduce_conflicts(molecule, core=[], active=[], passive=[]):
     TZMat={'core':core, 'passive':passive, 'active':active}
     #with open('TZMat','w') as f: pickle.dump(TZMat, f)
     run_pyevolve(molecule, **TZMat)
-    #print "best conf:", molecule.conf
+    if DE:
+        print "final conf:", molecule.conf
+        print "final index", molecule.index
     return
 
 def is_float(s):
@@ -190,12 +198,12 @@ class Fitness_Function():
     def get_final_molecule(self, dihedrals):
         dihedrals=map(int,dihedrals)
         self.dihedrals_to_conf(dihedrals)
-        print "self.molecule.bestconf:", self.molecule.conf
-        self.molecule.index = '_'.join([''.join(map(str,item)) for item in self.molecule.conf])
-        print "self.molecule.index with dihedrals:", self.molecule.index
-        # index has to be without dihedrals?
+        print "molecule.conf:", self.molecule.conf
+        dihedralindex = '_'.join([''.join(map(str,item)) for item in self.molecule.conf])
+        print "dihedralindex", self.molecule.index
+        # index has to be without dihedrals? index has to stay the same for the whole event
         from string import digits
-        self.molecule.index= self.molecule.index.translate(None, digits)
+        #self.molecule.index= self.molecule.index.translate(None, digits)
         print "self.molecule.index:", self.molecule.index
         get_xyz(self.molecule, **self.kwargs)
         #get_xyz(self.molecule)

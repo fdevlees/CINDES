@@ -70,7 +70,7 @@ def get_X_qml(indices,descriptor='bob', **TZmat):
         X = np.array([slatm(xyz) for xyz in xyzs])
     elif descriptor=='arad':
         X = np.array([arad(xyz) for xyz in xyzs])
-    print "X[1]:", X[1], np.nonzero(X[1])
+    #print "X[1]:", X[1], np.nonzero(X[1])
 
     #raise SystemExit('stopped: implementation not ready')
     return X
