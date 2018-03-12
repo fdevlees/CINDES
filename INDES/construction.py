@@ -181,7 +181,7 @@ def constructor2(conf,core,active,passive, links=[]):
         >hydrogenizer
     '''
     def extend_conf(conf, links):
-        print "Symmetry applied!",
+        #print "Symmetry applied!",
         # allocate room for new sites:
         conf.extend([ [] for _ in range(len(links)) ])
         # for all links: fill site with same group as the linked site.

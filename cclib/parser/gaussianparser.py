@@ -272,6 +272,9 @@ class Gaussian(logfileparser.Logfile):
                 line = next(inputfile)
 
         # Extract the atomic numbers and coordinates of the atoms.
+        if line[1:14] == 'Dipole moment':
+            line = next(inputfile)
+            self.set_attribute('dipole', float(line.split()[7]))
         if line.strip() == "Standard orientation:":
 
             self.updateprogress(inputfile, "Attributes", self.cupdate)

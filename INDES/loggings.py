@@ -135,9 +135,9 @@ def log_screen( mols ):
 
     # print header line.
     maxlenconf= max(map(lambda x:len(x.index),mols))
-    lenh = maxlenconf+28+len(props)*16
+    lenh = maxlenconf+26+len(props)*16
     print "+{}+".format(lenh*"-")
-    print "| index"+(maxlenconf-4)*" "+" pred?     {:15s} ".format(p) + " ".join(('{:15s}'.format(prop) for prop in props)) +"|"
+    print "| index"+(maxlenconf-4)*" "+" pred?   {:15s} ".format(p) + " ".join(('{:15s}'.format(prop) for prop in props)) +"|"
     print "}}{}{{".format(lenh*"-")
     # print data
     for molecule in mols:

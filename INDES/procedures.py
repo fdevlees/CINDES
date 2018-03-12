@@ -81,11 +81,15 @@ class BaseRun(object):
                     sb.append("{key:20}={value}".format(key=key, value=value.__doc__))
                 else:
                     sb.append("{key:20}= lambda function")
+            elif key in ['adj']:
+                sb.append("{key:20}=\n".format(key=key))
+                f = lambda v:''.join([('0','1')[int(item)] for item in v ])
+                sb.append('\n'.join(map(f,value)))
             else:
                 sb.append("{key:20}='{value}'".format(key=key, value=value))
         sb.append("    empty attributes={}".format(" ".join(empty_attributes)))
         return '\n'.join(sb)
-    
+
     def __repr__(self):
         return self.__str__()
 
@@ -578,7 +582,7 @@ def BFS(param,array):
                 # define new starting geometry
                 print "optsite:",optsite
                 del startconf
-                startconf = optsite.conf
+                startconf = zcon.indtocon(optsite.index)
 
             # STEP 1: INDEXMAKER
             #get indices_all and the indices that still need to be calculated
