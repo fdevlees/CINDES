@@ -76,18 +76,19 @@ def runjobs(mols_tocal, myrun, calc):
     mols_calc = filter(lambda x:not x.ignore, mols_tocal)
 
     # 1. Make the jobs and add them to the molecules:
-    call(jobmaker, mols=mols_tocal, myrun=myrun, calc=calc)
+    #call(jobmaker, mols=mols_tocal, myrun=myrun, calc=calc)
+    call(jobmaker, mols=mols_calc, myrun=myrun, calc=calc)
     # 2. now the jobs have to be submitted (this function contains a try_ready test)
-    jobids = submission(mols_tocal, myrun)
+    jobids = submission(mols_calc, myrun)
  
     # 3. test of all jobs are ready
-    if jobids: jobtester(mols_tocal,myrun,jobids)
+    if jobids: jobtester(mols_calc,myrun,jobids)
     else: print "no jobids so assume no jobs submitted"
  
     # 4. test normal termination and read jobs (only myrun variable used is actually debug)
-    mols_calc = datareader.datareader(mols_tocal, myrun)
+    datareader.datareader(mols_calc, myrun)
 
-    return mols_calc
+    return mols_tocal
 
 def do_calcs(mols_tocal, myrun):
     for i, calc in enumerate(myrun.calcs):
@@ -219,7 +220,7 @@ def jobmaker(mols,myrun, calc): #----- dict with info for filewriter has to pass
                     job = program.filewriter(molecule, calc, pos)
                     job.N=N
                     # here set somehow if the pos belongs to nitrogen
-                    raise NotImplementedError('here implement Npos')
+                    #raise NotImplementedError('here implement Npos')
         else: # so single job
             program.filewriter(molecule, calc) #------------------------------------------------HERE IS THE FILEWRITER CALL
     return

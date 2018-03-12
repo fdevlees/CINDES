@@ -38,7 +38,22 @@ class prettyfloat(float):
     def __repr__(self):
         return "%-0.4f" % self
 
+def setEAHs(molecule):
+    EAHs=dict()
+    Npos=[] #positions with a nitrogen in here
+    #print "props:", molecule.props
+    for job in molecule.jobs:
+        if hasattr(job, 'pos'):
+            #print "job:", job
+            EAHs[job.pos]={'eAH':molecule.props.pop('eAH_P{}'.format(str(job.pos))), 'N':job.N}
+    if EAHs: 
+        #print "EAHs:"
+        #pprint(EAHs)
+        molecule.props['EAHs']=EAHs
+    return
+
 def calculate_stab(results, molecule):
+    #print "molecule:", molecule
     #---- some parameters needed
     bde_a = -12.68 #kJ/mol/eV^2
     bde_b = -218.1 #kJ/mol
@@ -54,49 +69,13 @@ def calculate_stab(results, molecule):
     chi_term = bde_b*(chi_h-3)*(chi_n-3) #term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
     #gasconstant = 8.3144621
     #----- end of parameters
-
-    #----- make the EAHs list. = {pos:{'eAH':value, 'N':bool}, pos:{...}, ... }
-    # index = molecule.index
-    # pos   = molecule.job.position ?
-    # N     = molecule.job.N?
-    # I need positions here so I need more information probably:
-    #     - positions
-    #     - index
-    #     - fileparameters['corresp']
-    #     - fileparameters['sites']
-    EAHs=dict()
-    Npos=[] #positions with a nitrogen in here
-    for job in molecules.jobs:
-        """
-        confje = index.split('_')
-        N=False #set initially to False
-        try:
-            siteindex = fileparameters['corresp'][pos] #find for each position the methyl index
-        except KeyError:
-            # there is theoretically a possibility that the position to add a A-X, (X=H,CH3) group is not an active or passive site
-            # in this case the fileparameters['corresp'] does not contain the pos this is only possible when te possible reactive center
-            # has no hydrogen for the case of phenenalenyl. for thiadiazinyl this is automatically an sp2 nitrogen position
-            print 'position of H atom is not a possible site. Therefore the program assumes H is attached to a nitrogen atom!'
-            N=True
-        else:
-            # this is only executed when no Error is raised!
-            if siteindex in fileparameters['sites']:# look if that index is used as a site
-                if any(confje[ fileparameters['sites'].index(siteindex) ]==n for n in [['N'],'N']):
-                    print '    there is a nitrogen on this position!    '
-                    N=True
-        if N:
-            Npos.append(pos)
-        """
-        if hasattr(job, 'pos'):
-            EAHs[pos]={'eAH':getattr(mol.props,'eAH_P{}'.format(str(pos)), 'N':job.N}
-    print "EAHs:"
-    pprint(EAHs)
-
+    print results
+    EAHs=results['EAHs']
     minpos = min(EAHs, key=lambda x:EAHs[x]['eAH'])
     E_ah = EAHs[minpos]['eAH']
 
     Domega = results['omega'] - 2.
-    print "Domega:", Domega
+    #print "Domega:", Domega
     results['BDE_ah']  = ( results['eA'] + H_h - E_ah)*kJmol + avtc #avtc is AVerage Thermal Correction. 
     #if E_ah[1] in Npos:
     if EAHs[minpos]['N']:
@@ -143,19 +122,27 @@ def datareader( mols, run):
     for molecule in mols_toread:
         print "><"*15, molecule,
         for job in molecule.jobs:
+            #print "job:", job
             readings = read_file(job)
+            # maybe I can add _P# to each key if the job has a pos
+            if hasattr(job,'pos'):
+                #print "readings:", readings
+                for old_key in readings.keys(): #the .keys is very important here. iterkeys or for just readings do not work!
+                    readings["{}_P{}".format(old_key, str(job.pos))] = readings.pop(old_key)
             molecule.props.update(readings)
         molecule.predicted = False
 
-    #return mols_toread
-    return mols
+        # only relevant for stab calculations
+        setEAHs(molecule)
 
-def read_file(job):
+    return
+
+def read_file(Job):
     # 1. look to which calc the logfile belongs when there were simultaneous calculations:
-    program=job.calc['program']
+    program=Job.calc['program']
     program_mod=import_program(program)
-    jobs=job.calc['jobs']
-    filename=job.logpath
+    jobs=Job.calc['jobs']
+    filename=Job.logpath
 
     # 2. split logfile in different jobs
     if program=='gaussian':
@@ -222,9 +209,6 @@ def read_file(job):
                 print "value not recognized:", inf
     print
 
-    # maybe I can add _P# to each key if the job has a pos
-    if hasattr(job,'pos'):
-        datadict["{}_P{}".format(old_key, str(pos))] = datadict.pop(old_key)
 
     return datadict
 

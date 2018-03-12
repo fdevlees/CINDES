@@ -313,7 +313,7 @@ def readfile(subinp):
             paras['extrajobs']=get_jobs(subinp, line)
         elif 'extrawaittime' in line: paras['extrawaittime'] = float(line.split()[1])
         elif 'ignore' in line: 
-            try: paras['ignore'] is int(line.split()[1])
+            try: paras['ignore']=int(line.split()[1])
             except IndexError: paras['ignore']=3600
 	elif 'stabjobs' in line:
             #raise NotImplementedError('this is not updated to the multiprogram scheme')

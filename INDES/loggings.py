@@ -109,7 +109,7 @@ def log_table( mols, table, tablename='table'):
 
 def log_screen( mols ):
     try:
-        print "print first molecule:", mols[0].index, mols[0].Pvalue
+        print "first molecule:", mols[0].index, mols[0].Pvalue
         for k, v in mols[0].props.iteritems(): print "{:15s}:{}".format(k,v)
     except IndexError:
         return

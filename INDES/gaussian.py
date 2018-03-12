@@ -63,16 +63,16 @@ def filewriter(mol, calc, pos=None): #paras is short for fileparameters
         filename = "{}.com".format(name)
         filepath = '{0}/{1}/{2}'.format(paras['path'], str(index), filename)
         geom=pos
-        job=GaussianJob(filepath, calc)
-        job.pos=pos
+        Job=GaussianJob(filepath, calc)
+        Job.pos=pos
     else:
         name = paras['identify'] + str(index)
         filename = "{}.com".format(name)
         filepath = paras['path'] + '/' + filename
         try: geom=calc['geom']
         except KeyError: geom=None
-        job=GaussianJob(filepath, calc)
-    mol.addjob(job)
+        Job=GaussianJob(filepath, calc)
+    mol.addjob(Job)
 
     fid=open(filepath,'w')
 
@@ -104,7 +104,7 @@ def filewriter(mol, calc, pos=None): #paras is short for fileparameters
         if not 'allcheck' in job['hotline']:
             fid.write("{} {}\n\n".format(job['charge'], job['mult']))
     fid.close()
-    return job
+    return Job
 
 def get_paths(mols):
     ''' get all paths that need to be examined later 
@@ -197,12 +197,12 @@ def normaltermination(job, debug=True, ignore=0):
             break
         elif (not errorpath is None) and ignore and extratime>ignore:
             ignoremol=True
-            print "\n\n{0}\n    AUTOMATICALLY IGNORED after {2} seconds of waiting: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, path, str(ignore))
+            print "\n\n{0}\n    AUTOMATICALLY IGNORED after {2} seconds of waiting: {1}\n{0}\n".format("    --oOo--"*10, path, str(ignore))
             break
         else:
             print "no normal termination for: ",path
-        time.sleep(timestep) # wait 5 minudtes
-        extratime += timestep
+        time.sleep(timestep1) # wait 5 minudtes
+        extratime += timestep1
         # after some time use larger timesteps
         if extratime>=timestep2:timestep1=timestep2
         print "extra waittime/h:", extratime/3600, "||",

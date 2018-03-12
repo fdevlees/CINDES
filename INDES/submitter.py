@@ -32,11 +32,8 @@ def nosubmit(job, extension='.com'): # not tested
     gaussiancmd='g16'
     path=job.path
     inputname = job.filepath
-    print "inputname:", inputname
-    outname =   job.logpath
-    print "outname:", outname
-    #fakename =  job.filepath + '.o123456'
-    fakename = job.filepath[:-4] + '.o12345'
+    outname   = job.logpath
+    fakename  = job.filepath[:-4] + '.o12345'  #NOTE: on hydra this is without the [:-4] (.com)
     print "fakename:", fakename
     with open(inputname,'r') as inp, open(outname,'w') as out, open(fakename,'w') as err:
         try:
