@@ -1,7 +1,7 @@
 debug=False
 #from writings import log_io, sprint
-from CINDES4.utils.writings import log_io, print_title, sprint
-from CINDES4.utils.utils import run_once
+from CINDES.utils.writings import log_io, print_title, sprint
+from CINDES.utils.utils import run_once
 from copy import deepcopy
 #import pickle
 import json
@@ -20,7 +20,7 @@ def formatitem(opt, item, maxlenconf=49):
             try:
                 return item.rjust(15)
             except AttributeError:
-                return "{}None".format(11*" ")
+                return "No single value"
             #return "      {}".format(item)
 
     index = '{opt} {conf:{width}s}'.format(opt=opt, conf=item[0], width=maxlenconf+1)
@@ -45,7 +45,8 @@ def log_cyclesinfo(mols, count, k, l):
             # new json style:
             #print "molecule.props:", molecule.props
             item.append( molecule.Pvalue)  #predictions have only this one?
-            item.extend( molecule.props.values() )
+            isSingleValue = lambda x:isinstance(x, int) or isinstance(x, float) or isinstance(x, str)
+            item.extend( filter(isSingleValue, molecule.props.values() ))
 
             # old pickle style:
             #item.append( molecule.Pvalue)
@@ -84,7 +85,7 @@ def log_table( mols, table, tablename='table'):
 
         #3 write updated json object
         with open(filename,'w') as f:
-            json.dump(json_table, f, indent=-1)
+            json.dump(json_table, f, indent=0)
         print "dumped table in {} with {} of the {} molecules".format(filename, len(table), len(json_table))
         return
     # -------------
@@ -108,7 +109,8 @@ def log_table( mols, table, tablename='table'):
 
 def log_screen( mols ):
     try:
-        print "in log_screen:", mols[0].index, mols[0].props, mols[0].Pvalue
+        print "first molecule:", mols[0].index, mols[0].Pvalue
+        for k, v in mols[0].props.iteritems(): print "{:15s}:{}".format(k,v)
     except IndexError:
         return
     # get property line. 
@@ -119,11 +121,13 @@ def log_screen( mols ):
         try: props.update(mol.props.keys())
         except AttributeError:pass
     props = list(props)
+    issinglevalued=lambda x:any([ isinstance(x[1],t) for t in (str,int,float)])
+    keys, values = zip(*filter(issinglevalued, mols[0].props.items()))
     # check if Pvalue is one of these singular props
-    if mols[0].Pvalue in mols[0].props.values():
+    if mols[0].Pvalue in values:
         # so yes. Pvalue is one of the propvalues. but which one?
         # get index of prop
-        keys, values= zip(*mols[0].props.items())
+        #keys, values= zip(*mols[0].props.items())
         i=values.index(mols[0].Pvalue)
         p=keys[i]
         # remove that one from props
@@ -190,7 +194,7 @@ def log_pred_info(pred_info, count, k, l):
     return
 
 def pstats(predinfo):
-    from CINDES4.utils import statistics
+    from CINDES.utils import statistics
     import pprint
     #import statistics
     #print "predinfo:\n", pprint.pformat(predinfo)

@@ -4,13 +4,16 @@ import re
 from job import BaseJob
 
 class GaussianJob(BaseJob):
+    extension='.log'
     def write(self):
         ''' overwrites the standard BaseJob write method '''
         pass
+    def getlog(self):
+        return self.name + '.log'
 
-def writegeom(mol, fid, geom=1):
+def writegeom(mol, fid, geom=None):
     # set attributes
-    if geom==1:
+    if geom is None:
         Azmat='zmat'
         Axyz='xyz'
     else:
@@ -38,26 +41,44 @@ def writegeom(mol, fid, geom=1):
 
 
 #---- START FILEWRITER2 THIS ONLY FOR MAKERS TRY TO MAKE THIS ONE UNIVERSAL ----#
-def filewriter(mol, paras, geom=1): #paras is short for fileparameters
+def filewriter(mol, calc, pos=None): #paras is short for fileparameters
     '''    This function creates a file with the geometry contained in zmat
     The name of the file contains the index in the name
     '''
     #------------
     # this function uses globals: identify, path
-    #------------
-    if geom==1:
-        index = mol.index
-        jobs = paras['jobs']
-    else:
-        index = "{}_{}".format(mol.index, str(geom))
-        jobs = paras['extrajobs']
 
-    filename = paras['identify'] + str(index) + ".com"
-    fid=open(paras['path'] + '/' + filename,'w')
+    # and paras:
+    # -path
+    # -identify
+    # -nprocs
+    # -jobs
+    #------------
+    index = mol.index
+    paras=calc
+    jobs = paras['jobs']
+
+    if pos:
+        name = "{0}{1}_{2}".format(paras['identify'], str(index), str(pos))
+        filename = "{}.com".format(name)
+        filepath = '{0}/{1}/{2}'.format(paras['path'], str(index), filename)
+        geom=pos
+        Job=GaussianJob(filepath, calc)
+        Job.pos=pos
+    else:
+        name = paras['identify'] + str(index)
+        filename = "{}.com".format(name)
+        filepath = paras['path'] + '/' + filename
+        try: geom=calc['geom']
+        except KeyError: geom=None
+        Job=GaussianJob(filepath, calc)
+    mol.addjob(Job)
+
+    fid=open(filepath,'w')
 
     # JOB 1
     job1 = jobs[0]
-    fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
+    fid.write("%chk=" + name + ".chk\n")
     fid.write("%mem=1500MB\n")
     if not paras['nprocs']==1:
         fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
@@ -73,7 +94,7 @@ def filewriter(mol, paras, geom=1): #paras is short for fileparameters
     #for i, (charge, mult, line) in enumerate(paras['gaussianlines'][1:]):
     for i, job in enumerate(jobs[1:]):
         fid.write("--link1--\n")
-        fid.write("%chk=" + paras['identify'] + str(index) + ".chk\n")
+        fid.write("%chk=" + name + ".chk\n")
         fid.write("%mem=1500MB\n")
         if not paras['nprocs']==1:
             fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
@@ -83,138 +104,116 @@ def filewriter(mol, paras, geom=1): #paras is short for fileparameters
         if not 'allcheck' in job['hotline']:
             fid.write("{} {}\n\n".format(job['charge'], job['mult']))
     fid.close()
-    return
+    return Job
 
-def filewriterAH(zmat, pos, index,**paras): #paras is short for fileparameters
-    '''    This function creates a file with the geometry contained in zmat
-    The name of the file contains the index in the name
-    '''
-    #------------
-    # this function uses globals: identify, path
-    #------------
-    filename = paras['identify'] + str(index) + "_{}.com".format(str(pos))
-    fid=open(paras['path'] + '/' + index + '/' + filename,'w')
-
-    # JOB 1
-    job1 = paras['stabjobs'][0]
-    fid.write("%chk=" + paras['identify'] + str(index) + "_" + str(pos) + ".chk\n")
-    fid.write("%mem=1500MB\n")
-    if not paras['nprocs']==1:
-        fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
-    fid.write(job1['hotline']) # first gaussianline
-    fid.write("\n\n")
-    fid.write(paras['identify'] + str(index) + "\n\n")
-    fid.write("{} {}\n".format(job1['charge'], job1['mult']))
-    # here the zmat
-    for i in range(len(zmat)):
-        for item in zmat[i]:
-            fid.writelines("%s " % item)
-        fid.write("\n")
-    fid.write("\n")
-
-    # THE OTHER JOBS
-    #for i, (charge, mult, line) in enumerate(paras['gaussianlines'][1:]):
-    for i, job in enumerate(paras['stabjobs'][1:]):
-        fid.write("--link1--\n")
-        fid.write("%chk=" + paras['identify'] + str(index) + "_" + str(pos) + ".chk\n")
-        fid.write("%mem=1500MB\n")
-        if not paras['nprocs']==1:
-            fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
-        fid.write(job['hotline'])
-        fid.write("\n\n")
-        fid.write(str(index) + " {}th calc\n\n".format(i+2) )
-        if not 'allcheck' in job['hotline']:
-            fid.write("{} {}\n\n".format(job['charge'], job['mult']))
-    fid.close()
-    return
-
-def get_paths( mols, fileparameters):
-    ''' get all paths that need to be examined later '''
+def get_paths(mols):
+    ''' get all paths that need to be examined later 
+    this could be a population method '''
     files=[]
     for molecule in mols:
-        files.extend(get_molpaths(molecule, fileparameters))
+        files.extend( get_molpaths(molecule) )
     return files
 
-def get_molpaths(mol, fileparameters):
+def get_molpaths(mol):
     paths=[]
-    paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '.log')
-    if fileparameters['stab']==1:
-        for pos in fileparameters['positions']: #extract al AH energies and take the lowest
-            paths.append(fileparameters['path'] + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.log')
-    if fileparameters['extrajobs']:
-        paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '_2.log')
+    for job in mol.jobs:
+        log=get_logpath(job)
+        paths.append(log)
     return paths
 
-def normaltermination(mols_tocal, fileparameters):
+def get_logpath(job):
+    log = job.name + '.log'
+    return log
+
+#    paths=[]
+#    for mol in 
+#    #paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '.log')
+#    #if fileparameters['stab']==1:
+#    #    for pos in fileparameters['positions']: #extract al AH energies and take the lowest
+#    #        paths.append(fileparameters['path'] + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.log')
+#    #if fileparameters['extrajobs']:
+#    #    paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '_2.log')
+#    return paths
+
+def normaltermination(job, debug=True, ignore=0):
     import re
     import time
     #-----
-    def termination(filepath):
-       with open(filepath,'r') as fid:
-           text = fid.readlines()[-3:]
-           if re.search('Normal termination',''.join(text)):
-               fid.close()
-               return 1
-           elif re.search('IGNORE',''.join(text)):
-               fid.close()
-               return 2
-    #-----
-    filepaths = get_paths( mols_tocal, fileparameters)
-    debug=fileparameters['debug']
-    copyfilepaths = filepaths[:] #copy to be able to append to it while looping over it
-    for path in copyfilepaths: #test all for information which jobs crashed
-        for attempt in range(3):
-            try:
-                if not termination(path)==1:
-                    print "Error termination:",path
-                    bnewfile = errortermination(path,debug)
-            except IOError as e:
-                time.sleep(10)
+    def termination(filepath, raise_errors=True):
+        with open(filepath,'r') as fid:
+            text = fid.readlines()[-3:]
+            if re.search('Normal termination',''.join(text)):
+                ret=1
+            elif re.search('IGNORE',''.join(text)):
+                ret=2
+            elif re.search('open-new-file',''.join(text)):
+                ret=3
             else:
-                break
+                ret=0
+        return ret
+    #-----
+    path=job.logpath
+    once = 0
+    errorpath=None
+    for attempt in range(3):
+        try:
+            ret = termination(path)
+            if ret==3 and once==0:
+                print "open-new-file submit-problem. trying to resubmit"
+                once=1
+                import submitter
+                submitter.submit(job)
+            elif not ret==1:
+                print "Error termination:",path
+                errorpath=errortermination(path,debug)
+        except IOError as e:
+            time.sleep(10)
         else:
-            raise e
-
+            break
+    else:
+        raise e
     extratime = 0
     once = 0
-
-    #--- new:
-    mols_toread=[]
-    for mol in mols_tocal:
-        # get path belonging to this particular mol
-        molpaths=get_molpaths(mol, fileparameters)
-        ignoremol=False
-        for path in molpaths: #test one by one waiting for normal termination
-            while True:
-                if termination(path)==1:
-                    break
-                elif termination(path)==2:
-                    print "\n\n{0}\n             INGORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, path)
-                    ignoremol=True
-                    break
-                else:
-                    print "no normal termination for: ",path
-                #time.sleep(300) # wait 5 minudtes
-                time.sleep(300) # wait 5 minudtes
-                extratime += 300
-                print "extra waittime/h:", extratime/3600, "||",
-            # when I'm here this path has normal termination
-            if ignoremol: break # this ignores the other paths belonging to this mol
-        # when I'm here every molpath of this mol should have normal termination
-        if not ignoremol:
-            mols_toread.append(mol)
-    # when I'm here every mol should have normal termination
-
-    print "mols_toread:", mols_toread
-    return mols_toread
+    timestep1 = 60
+    timestep2 = 300
+    ignoremol=False
+    #for path in molpaths: #test one by one waiting for normal termination
+    while True:
+        # try a normal termination of errorpath
+        if errorpath:
+            try:ret_zzz=termination(errorpath)
+            except IOError:ret_zzz=0
+        else: ret_zzz=0
+        if termination(path)==1:
+            break
+        elif termination(path)==2:
+            print "\n\n{0}\n             IGNORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, path)
+            ignoremol=True
+            break
+        elif (not errorpath is None) and ret_zzz==1 and True:
+            import shutil
+            shutil.copyfile(errorpath, path)
+            print "*zzz.log file with normal termination copied back to original logfile."
+            break
+        elif (not errorpath is None) and ignore and extratime>ignore:
+            ignoremol=True
+            print "\n\n{0}\n    AUTOMATICALLY IGNORED after {2} seconds of waiting: {1}\n{0}\n".format("    --oOo--"*10, path, str(ignore))
+            break
+        else:
+            print "no normal termination for: ",path
+        time.sleep(timestep1) # wait 5 minudtes
+        extratime += timestep1
+        # after some time use larger timesteps
+        if extratime>=timestep2:timestep1=timestep2
+        print "extra waittime/h:", extratime/3600, "||",
+    return ignoremol
 
 def errortermination(path,debug=False):
     import re
     import time
-
-    from CINDES4.cclib.parser.gaussianparser import Gaussian
+    from CINDES.cclib.parser.gaussianparser import Gaussian
     mymol = Gaussian(path).parse()
-    from CINDES4.utils import utils
+    from CINDES.utils import utils
     t=utils.PeriodicTable()
     if hasattr(mymol,'atomcoords'):
         coords = map(list, mymol.atomcoords[-1])
@@ -263,21 +262,23 @@ def errortermination(path,debug=False):
             #print newfile
             open(path[:-4]+'zzz.com','w').writelines(newfile)
             print "newfile written in: ", path[:-4] + 'zzz.com'
+            errorjob = GaussianJob(path[:-4]+'zzz.com')
 
             #---- preparation for submit command ---
-            splitpath = path.split('/')
-            filename = splitpath[-1]
-            folder = '/'.join(splitpath[:-1])
-            filenamesplit = filename[:-4].split('_')
-            identify= filenamesplit[0]+'_'
-            index = '_'.join(filenamesplit[1:])+'zzz.com'
-            print "folder", folder
-            print "index:", index
-            print "identi", identify
+            #splitpath = path.split('/')
+            #filename = splitpath[-1]
+            #folder = '/'.join(splitpath[:-1])
+            #filenamesplit = filename[:-4].split('_')
+            #identify= filenamesplit[0]+'_'
+            #index = '_'.join(filenamesplit[1:])+'zzz.com'
+            #print "folder", folder
+            #print "index:", index
+            #print "identi", identify
             #----- keywords constructed so:
-            submitter.submit(folder,index,identify)
-            return True
-    return False
+            submitter.submit(errorjob)
+            return path[:-4]+'zzz.log'
+    else:
+        return False
 
 
 

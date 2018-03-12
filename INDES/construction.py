@@ -5,7 +5,7 @@ from itertools import izip, islice
 from re import findall
 import re
 import logging
-from CINDES4.utils.writings import log_io
+from CINDES.utils.writings import log_io
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 #
@@ -124,7 +124,7 @@ def classmaker2(startconf,array,k,table,run=[]):
     '''checks for confs already calculated'''
     confs = get_configurations(startconf,array,k,run=run)
 
-    from CINDES4.utils.molecule import Molecule, Population
+    from CINDES.utils.molecule import Molecule, Population
     individuals = [ Molecule(conf=conf) for conf in confs ] # list of molecules
     #population = Population( population = individuals )
     mols_todo, mols_nodo = check_in_table(individuals, table, run.props)
@@ -134,7 +134,7 @@ def classmaker2(startconf,array,k,table,run=[]):
 def classmaker2_SD(startconf,array,table,run=[]):
     '''checks for confs already calculated'''
     print "IN CLASSMAKER", type(run)
-    from CINDES4.utils.molecule import Molecule, Population
+    from CINDES.utils.molecule import Molecule, Population
     # make configurations
     confs = []
     for i in run.restingsites:

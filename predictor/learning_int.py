@@ -22,9 +22,9 @@ from pprint import pprint
 #from converter import Converter
 #import construction as zcon
 
-from CINDES4.utils.writings import log_io, sprint, print_title
-from CINDES4.utils.converter import Converter
-from CINDES4.INDES import construction as zcon
+from CINDES.utils.writings import log_io, sprint, print_title
+from CINDES.utils.converter import Converter
+from CINDES.INDES import construction as zcon
 
 
 class MachineLearning(object):

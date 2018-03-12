@@ -1,1 +1,1 @@
-''' the whole CINDES4 package '''
+''' the whole CINDES package '''

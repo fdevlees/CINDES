@@ -3,6 +3,20 @@ import numpy as np
 from converter import Converter
 from collections import MutableSequence
 
+# helper function
+def indtosmi(index):
+    replacements = {
+            '=':'a',
+            '(':'d', ')':'e',
+            '[':'g', ']':'i',
+            '\\':'j','/':'k',
+            '@':'m','-':'q', '+':'r',
+            '.':'t','#':'u'
+            }
+    inverserepl = { v:k for k,v in replacements.iteritems()}
+    smiles = "".join([inverserepl.get(c, c) for c in index])
+    return smiles
+
 debug=0
 
 try:
@@ -89,6 +103,7 @@ class BaseMolecule(object):
         self.infoline = [] # for storing additional properties
         self.predictions = {}
         self.predicted = None
+        self.ignore = False
         self.opt = False
         # for jsonification:
         self.props = {}
@@ -100,6 +115,24 @@ class BaseMolecule(object):
     def __repr__(self):
         return self.__str__()
 
+    def log(self):
+        ret = [ self.index ]
+        ret.append( int( not self.predicted ) )
+        ret.append( self.Pvalue     )
+        ret.extend( self.boundaries )
+        return ret
+
+    def addjob(self, jobname):
+        if hasattr(self, 'jobs'): self.jobs.append(jobname)
+        else: self.jobs=[jobname]
+
+    def deletejobs(self):
+        try: delattr(self, 'jobs')
+        except AttributeError: pass
+
+    def submit_jobs(self):
+        pass
+
 class SmiMolecule(BaseMolecule):
     def __init__(self, smiles):
         super(SmiMolecule, self).__init__()
@@ -110,6 +143,16 @@ class SmiMolecule(BaseMolecule):
     def __str__(self):
         return "SmiMolecule: " + self.smiles
 
+    def copy(self):
+        new_mol = SmiMolecule(self.smiles)
+        new_mol.Pvalue = self.Pvalue
+        new_mol.props = self.props
+        new_mol.predicted = self.predicted
+        new_mol.jobs = self.jobs[:]
+        if hasattr(self, 'oemol'):
+            new_mol.oemol = self.oemol.CreateCopy()
+        return new_mol
+
     def set_index(self):
         replacements = {
                 '=':'a',
@@ -117,7 +160,7 @@ class SmiMolecule(BaseMolecule):
                 '[':'g', ']':'i',
                 '\\':'j','/':'k',
                 '@':'m','-':'q', '+':'r',
-                '.':'t'
+                '.':'t','#':'u'
                 }
         #ireplacements = {v: k for k, v in replacements.iteritems()}
         index = "".join([replacements.get(c, c) for c in self.smiles])
@@ -161,15 +204,8 @@ class Molecule(BaseMolecule):
         new_mol.Pvalue = self.Pvalue
         new_mol.props = self.props
         new_mol.predicted = self.predicted
+        if hasattr(self, 'jobs'): new_mol.jobs = self.jobs[:]
         return new_mol
-
-    def log(self):
-        ret = [ self.index ]
-        ret.append( int( not self.predicted ) )
-        ret.append( self.Pvalue     )
-        ret.extend( self.boundaries )
-        #ret.extend( self.infoline   )
-        return ret
 
     def set_path(self, path, extension='.com'):
         pass

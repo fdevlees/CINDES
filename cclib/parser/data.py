@@ -126,6 +126,8 @@ class ccData(object):
         "nmo":            int,
         "nocoeffs":       numpy.ndarray,
         "nooccnos":       numpy.ndarray,
+        "npab":           list,
+        "npaa":           list,
         "optdone":        bool,
         "scancoords":     numpy.ndarray,
         "scanenergies":   list,

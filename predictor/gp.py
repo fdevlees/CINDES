@@ -7,7 +7,7 @@ from sklearn.decomposition.pca import PCA
 
 from experiment_interface import Experiment
 
-from CINDES4.utils.statistics import print_stats
+from CINDES.utils.statistics import print_stats
 
 class GaussianProcessExperiment(Experiment):
 

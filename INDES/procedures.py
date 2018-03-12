@@ -31,8 +31,8 @@ from loggings import loggings
 # import datareader
 
 # import utils 
-# from CINDES4.utils.molecule import Molecule
-from CINDES4.utils.writings import log_io, print_title, sprint, dump
+# from CINDES.utils.molecule import Molecule
+from CINDES.utils.writings import log_io, print_title, sprint, dump
 
 # initial global variables
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
@@ -62,21 +62,25 @@ class BaseRun(object):
         self.ppid = os.getppid()
         # for self.setup_filesystem one needs to have: self.(-nosub / -program)
         self.setup_filesystem()
+        self.set_calcs()
         return
 
     def __str__(self):
         sb=['BaseRun object with the following attributes:']
         empty_attributes=[]
         for key,value in sorted(self.__dict__.items()):
-            if not value: # i.e. value is either None, False, zero, empty list/string
-                empty_attributes.append(key)
+            try:
+                if not value: # i.e. value is either None, False, zero, empty list/string
+                    empty_attributes.append(key)
+                    continue
+            except ValueError: pass
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( dump( value ) )
-            elif key in ['TZmat','genalg', 'adj', 'jobs', 'stabjobs', 'extrajobs']:
+            elif key in ['TZmat','genalg', 'adj', 'jobs', 'stabjobs', 'prejobs', 'extrajobs', 'calcs']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( pprint.pformat(value, width=150) )
-            elif key='property' and callable(value): #i.e. the value is a lambda function
+            elif key=='function' and callable(value): #i.e. the value is a lambda function
                 if value.__doc__:
                     sb.append("{key:20}={value}".format(key=key, value=value.__doc__))
                 else:
@@ -87,11 +91,46 @@ class BaseRun(object):
                 sb.append('\n'.join(map(f,value)))
             else:
                 sb.append("{key:20}='{value}'".format(key=key, value=value))
-        sb.append("    empty attributes={}".format(" ".join(empty_attributes)))
+        sb.append("empty attributes    ={}".format(" ".join(empty_attributes)))
         return '\n'.join(sb)
 
     def __repr__(self):
         return self.__str__()
+
+    # the the calculationskeyword:
+    def set_calcs(self):
+        def tocalc(paras, job):
+            # path only set after setup_filesystem!
+            calc=paras[job]
+            tohavekeys=['program', 'nprocs', 'identify', 'path', 'nosub']
+            for key in tohavekeys:
+                if not key in calc:
+                    calc[key]=paras[key]
+            return calc
+        def check(cal, i):
+            if cal['identify'] in identifiers:
+                cal['identify']="{}{}_".format(cal['identify'],str(i))
+                assert not cal['identify'] in identifiers
+                i+=1
+            identifiers.append(cal['identify'])
+            return cal, i
+
+        paras=self.__dict__
+        calcs=[tocalc(paras, 'jobs')]
+        if paras['prejobs']: calcs.insert(0, tocalc(paras, 'prejobs'))
+        for key in ['stabjobs', 'extrajobs']:
+            if paras[key]: calcs[-1] = [calcs[-1], tocalc(paras, key)]
+
+        # verify that there are not similar identifiers
+        identifiers=[]
+        i=1
+        for calc in calcs:
+            if isinstance(calc, list):
+                for cal in calc:cal, i=check(cal, i)
+            else: calc, i=check(calc, i)
+        #print "calcs:", pprint.pprint(calcs)
+        self.calcs=calcs
+        return
 
     def setup_filesystem(self):
         param = self.__dict__
@@ -137,7 +176,7 @@ class FrameRun(BaseRun):
 
     def set_adj(self, core, active):
         debug=0
-        from CINDES4.utils.converter import Converter
+        from CINDES.utils.converter import Converter
         import numpy as np
         conv = Converter()
         conv.read_zmalist(core)
@@ -589,7 +628,7 @@ def BFS(param,array):
             # if table is correctly formatted all second element item[1]==1. meaning they are ab-initio calculated
             #indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker2(startconf,array,k,table )
             mols_todo, mols_nodo = zcon.classmaker2(startconf,array,k,table, myrun )
-            if 1 in myrun.restrictions:
+            if 1 in myrun.restrictions: # this are actually filters!
                 mols_todo, mols_nodo = restriction1(mols_todo, mols_nodo, myrun )
             print "|      NEW POPULATION CONSTRUCTED:"
             print "|   mols_todo:"
@@ -674,7 +713,7 @@ def genconf(param):
         import nwchem as program
     else:
         raise SystemExit('program not recognized')
-    from CINDES4.utils.molecule import Molecule
+    from CINDES.utils.molecule import Molecule
     mol = Molecule(index=param['startind'])
     mol.zmat = mat
     program.filewriter(mol, **param)
@@ -751,7 +790,7 @@ def generate_procedure(param,array):
     return
 
 def get_all_molecules(array):
-    from CINDES4.utils.molecule import Molecule
+    from CINDES.utils.molecule import Molecule
     print "in get_all_molecules"
     #A = [ map(''.join,item) for item in array ]
     A = array

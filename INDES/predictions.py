@@ -4,12 +4,12 @@ debug = 0
 import pprint
 
 # my own modules
-from CINDES4.predictor import learning_skl as learning
-from CINDES4.predictor import learning_int as ml_int
-#from CINDES4.predictor import tfitter
+from CINDES.predictor import learning_skl as learning
+from CINDES.predictor import learning_int as ml_int
+#from CINDES.predictor import tfitter
 
-from CINDES4.utils.writings import log_io, print_title, dump
-from CINDES4.utils.utils import processify
+from CINDES.utils.writings import log_io, print_title, dump
+from CINDES.utils.utils import processify
 #import learning_skl as learning
 #import learning_int as ml_int
 #from writings import log_io
@@ -35,7 +35,7 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
         pass
     elif ptype=='1d':
         #print "kwargs:", kwargs
-        from CINDES4.predictor.linreg import LinRegOneExperiment, LinRegOneWithPCAExperiment
+        from CINDES.predictor.linreg import LinRegOneExperiment, LinRegOneWithPCAExperiment
         if prediction['pca']:
             regressor = LinRegOneWithPCAExperiment(table=table,
                                                    retrain=retrain,
@@ -66,7 +66,7 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
         #preds = ml_int.learn_int_skl_procedure(table,mols_todo, array, **TZmat)
         pass
     elif ptype=='nn':
-        from CINDES4.predictor.nn import NeuralNetworkExperiment
+        from CINDES.predictor.nn import NeuralNetworkExperiment
 
         regressor = NeuralNetworkExperiment(   table=table,
                                                retrain=retrain,
@@ -75,8 +75,8 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
                                                **kwargs
                                                )
     elif ptype=='gp':
-        from CINDES4.predictor.gp import GaussianProcessExperiment, GaussianProcessWithPCAExperiment
-        from CINDES4.predictor.gp import GaussianProcessExperiment_skl
+        from CINDES.predictor.gp import GaussianProcessExperiment, GaussianProcessWithPCAExperiment
+        from CINDES.predictor.gp import GaussianProcessExperiment_skl
         if prediction['pca']:
             regressor = GaussianProcessWithPCAExperiment(table=table,
                                                          retrain = retrain,
@@ -90,8 +90,8 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
                                                        run = run,
                                                        **kwargs )
     elif ptype=='knn':
-        #from CINDES4.predictor.knn import NearestNeighborWithPCAExperiment
-        from CINDES4.predictor.knn import NearestNeighborExperiment, NearestNeighborWithPCAExperiment
+        #from CINDES.predictor.knn import NearestNeighborWithPCAExperiment
+        from CINDES.predictor.knn import NearestNeighborExperiment, NearestNeighborWithPCAExperiment
         if prediction['pca']:
             print "PCA!"
             regressor = NearestNeighborWithPCAExperiment( table = table,
@@ -108,7 +108,7 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
                                                       **kwargs   #run=run
                                                       )
     elif ptype=='svr':
-        from CINDES4.predictor.svr import SupportVectorExperiment, SupportVectorWithPCAExperiment
+        from CINDES.predictor.svr import SupportVectorExperiment, SupportVectorWithPCAExperiment
         regressor = SupportVectorExperiment(        table=table,
                                                     retrain=retrain,
                                                     array=array,
@@ -116,7 +116,7 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
                                                     **kwargs   #run=run
                                                     )
     elif ptype=='krr':
-        from CINDES4.predictor.krr import KernelRidgeExperiment, KernelRidgeWithPCAExperiment
+        from CINDES.predictor.krr import KernelRidgeExperiment, KernelRidgeWithPCAExperiment
         regressor = KernelRidgeExperiment(          table=table,
                                                     retrain=retrain,
                                                     array=array,
@@ -124,7 +124,7 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
                                                     **kwargs   #run=run
                                                     )
     elif ptype=='qml':
-        from CINDES4.predictor.krr_qml import KernelRidgeExperiment
+        from CINDES.predictor.krr_qml import KernelRidgeExperiment
         regressor = KernelRidgeExperiment(          table=table,
                                                     retrain=retrain,
                                                     array=array,
@@ -202,7 +202,7 @@ def do_prediction_process2(*args,**kwargs):
 
 def json_predictions(predictions):
     import json
-    from CINDES4.predictor.experiment_interface import jsonify
+    from CINDES.predictor.experiment_interface import jsonify
 
     #print "predictions:", predictions
 
@@ -292,13 +292,14 @@ def set_nxy(n):
 
 
 @log_io()
-def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[], optimum=None):
+def predictor(run,table,mols_todo,mols_nodo=[],count=0, nsite=0, array=[], optimum=None):
     '''makes the predictions using KRR(ML) / RR(LS) / DIF(MC)
        run_object = myrun with all param elements
     '''
+    
+
     made_pred=False
     #print "mols_todo:", mols_todo
-    TZmat = run.TZmat
     retrain = nsite==0
     retrain = False
     GA = False
@@ -376,7 +377,7 @@ def predictor(run,table,mols_todo,mols_nodo,count, nsite=0, array=[], optimum=No
             mols_nocal = mols_nodo
             mols_tocal = mols_todo
     else:
-        print "    no predictions will be made    "
+        print "    no predictions will be made    len(table)={}".format(len(table))
         mols_nocal = mols_nodo
         mols_tocal = mols_todo
 

@@ -7,13 +7,12 @@ import string
 import tempfile
 import subprocess
 
-def submit(path,index,identify,script='ID_gauss'):
-    filename = identify + index
+def submit(job,script='ID_gauss'):
     print( 'filename:'),
-    print( filename)
+    print( job.filename)
     command = './' + script
     try:
-        jobid = subprocess.check_output([command,filename],cwd=path)
+        jobid = subprocess.check_output([command,job.filename],cwd=job.path)
     except subprocess.CalledProcessError as e:
         print "submitting error:", repr(e)
     time.sleep(1)
@@ -28,15 +27,21 @@ def nosubmit_orca(path,index,identify):
         p.wait()
     return 123456
 
-def nosubmit(path,index,identify, extension='.com'): # not tested
+def nosubmit(job, extension='.com'): # not tested
     #gaussiancmd='g09'
     gaussiancmd='g16'
-    inputname = path + '/' + identify + index + extension
-    outname =   path + '/' + identify + index + '.log'
-    fakename =  path + '/' + identify + index + '.com.o123456'
+    path=job.path
+    inputname = job.filepath
+    outname   = job.logpath
+    fakename  = job.filepath[:-4] + '.o12345'  #NOTE: on hydra this is without the [:-4] (.com)
+    print "fakename:", fakename
     with open(inputname,'r') as inp, open(outname,'w') as out, open(fakename,'w') as err:
-        p = subprocess.Popen(gaussiancmd, stdin=inp, stdout=out, stderr=err, cwd=path)
-        p.wait()
+        try:
+            p = subprocess.Popen(gaussiancmd, stdin=inp, stdout=out, stderr=err, cwd=path)
+            p.wait()
+        except OSError as e:
+            print "module probably not loaded."
+            raise
     return 123456
 
 def jobstatus(jobid):

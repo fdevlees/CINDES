@@ -23,4 +23,4 @@ setup(name='CINDES',
      )
 
 
-# probably want to run as: python setup.py build --build-base=/u/jteuniss/CINDES4_setup/test_setup
+# probably want to run as: python setup.py build --build-base=/u/jteuniss/CINDES_setup/test_setup

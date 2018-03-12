@@ -204,9 +204,9 @@ def errortermination(path, fileparameters):
     import re
     import time
 
-    from CINDES4.cclib.parser.nwchemparser import NWChem
+    from CINDES.cclib.parser.nwchemparser import NWChem
     mymol = NWChem(path).parse()
-    from CINDES4.utils import utils
+    from CINDES.utils import utils
     t=utils.PeriodicTable()
     if hasattr(mymol,'atomcoords'):
         coords = map(list, mymol.atomcoords[-1])

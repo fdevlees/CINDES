@@ -1,6 +1,6 @@
 debug=True
 
-from CINDES4.utils.writings import log_io, sprint
+from CINDES.utils.writings import log_io, sprint
 
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout

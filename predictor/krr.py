@@ -30,11 +30,11 @@ class KernelRidgeExperiment(Experiment):
 
         # set default hyperparam ( super sets self.hparams to dict() ) so beware of order.
         self.hparam = { 'kernel':'rbf',
-                        'alpha': 1.e-3,
-                        'gamma':1.e-6 }  # gamma parameter is specific for rbf/laplacian kernel
+                        'alpha':1.e-15,
+                        'gamma':1.e-15 }  # gamma parameter is specific for rbf/laplacian kernel
 
-        self.hparam_grid = {'alpha': np.logspace(-10,5,10),
-                            'gamma': np.logspace(-10,5,10),
+        self.hparam_grid = {'alpha': np.logspace(-10,0,5),
+                            'gamma': np.logspace(-10,0,5),
                             'kernel': ['rbf','laplacian'] }
         # see if new defaults are given via input
         for key in self.hparam:

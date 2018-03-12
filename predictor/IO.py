@@ -1,8 +1,8 @@
 ''' module for getting data.xyz and descriptors '''
 
-from CINDES4.utils.converter import Converter
-from CINDES4.utils.utils import processify
-from CINDES4.INDES import construction as zcon
+from CINDES.utils.converter import Converter
+from CINDES.utils.utils import processify
+from CINDES.INDES import construction as zcon
 
 import numpy as np
 import os
@@ -37,23 +37,34 @@ def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='x_', array
     return X,y
 
 def get_X(indices, descriptor='BoB',array=[], identify='x_', **TZmat):
-    if descriptor=='BoB':
-        X = get_X_BoB(indices=indices, **TZmat )
-    elif 'int' in descriptor:
-        X = get_X_int( indices=indices, array=array)
-    elif descriptor=='1DL':
-        X = get_X_1D(indices=indices, descriptor=descriptor, identify = identify)
-    elif descriptor=='BoB_qml':
-        X = get_X_qml(indices=indices,descriptor='bob', **TZmat )
-    elif descriptor=='slatm':
-        X = get_X_qml(indices=indices,descriptor='slatm', **TZmat )
-    elif descriptor=='arad':
-        X = get_X_qml(indices=indices,descriptor='arad', **TZmat )
+    if TZmat:
+        if descriptor=='BoB':
+            X = get_X_BoB(indices=indices, **TZmat )
+        elif 'int' in descriptor:
+            X = get_X_int( indices=indices, array=array)
+        elif descriptor=='1DL':
+            X = get_X_1D(indices=indices, descriptor=descriptor, identify = identify)
+        elif descriptor=='BoB_qml':
+            X = get_X_qml_xyz(indices=indices,descriptor='bob', **TZmat )
+        elif descriptor=='slatm':
+            X = get_X_qml_xyz(indices=indices,descriptor='slatm', **TZmat )
+        elif descriptor=='arad':
+            X = get_X_qml_xyz(indices=indices,descriptor='arad', **TZmat )
+        else:
+            X = np.asarray( tuple( coulomb(item) for item in xyzs) )
     else:
-        X = np.asarray( tuple( coulomb(item) for item in xyzs) )
+        print "descriptor not based on TZmat or indices:"
+        from CINDES.utils import acsess_utils
+        if descriptor in ['autocorr', 'mqn']:
+            X = acsess_utils.GetCoords(indices, descriptor)
+        elif descriptor=='BoB_qml_smi':
+            xyzs=acsess_utils.GetXYZs(indices)
+            size, asize= get_BoB_sizes(xyzs)
+            # we should pass some extra information to qml as max number of each type to be present
+            X = get_X_qml(xyzs, descriptor='bob', size=size, asize=asize)
     return X
 
-def get_X_qml(indices,descriptor='bob', **TZmat):
+def get_X_qml_xyz(indices, descriptor, **TZmat):
     #1
     converter = Converter()
     mats = tuple( contozma(zcon.indtocon(item),**TZmat) for item in indices)
@@ -61,18 +72,17 @@ def get_X_qml(indices,descriptor='bob', **TZmat):
     #2
     converter = Converter()
     xyzs = [ zmatoxyz(converter=converter,zmat=item) for item in mats ]
-    #X = np.asarray( tuple( BoB(item) for item in xyzs) )
 
-    #print "xyzs[1]:", xyzs[1]
+    return get_X_qml(xyzs, descriptor)
+
+def get_X_qml(xyzs,descriptor='bob', **kwargs):
     if descriptor=='bob':
-        X = np.array([BoB_qml(xyz) for xyz in xyzs])
+        X = np.array([BoB_qml(xyz, **kwargs) for xyz in xyzs])
     elif descriptor=='slatm':
         X = np.array([slatm(xyz) for xyz in xyzs])
     elif descriptor=='arad':
         X = np.array([arad(xyz) for xyz in xyzs])
     #print "X[1]:", X[1], np.nonzero(X[1])
-
-    #raise SystemExit('stopped: implementation not ready')
     return X
 
 def get_X_BoB(indices, **TZmat):
@@ -247,7 +257,7 @@ def coulomb(xyz, ctype='norm4'):
         assert ctype=='normal'
         return C
 
-def BoB_qml(xyz):
+def BoB_qml(xyz, **kwargs):
     import qml
     from collections import OrderedDict
     mol = qml.Compound()
@@ -255,18 +265,25 @@ def BoB_qml(xyz):
     mol.atomtypes= [ item[0] for item in xyz ]
     mol.natoms=len(mol.atomtypes)
     mol.nuclear_charges=[int(item[2]) for item in xyz]
-    size=56 #max n adamantane with all COOH groups
-    asize = OrderedDict((( 'H' , 36 ),
-                         ( 'C' , 20 ),
-                         ( 'O' , 20 ),
-                         ( 'N' , 10 ),
-                         ( 'F' , 30 ),
-                         ( 'S' , 10 ),
-                         ( 'Cl', 10 ),
-                         ( 'Br',  5 )) )
-    mol.generate_bob(size=size, asize=asize)
+    #if 'size' in kwargs: size=kwargs['size']
+    #else: size=56 #max n adamantane with all COOH groups
+    size=56
+    #if 'asize' in kwargs: asize=kwargs['asize']
+    #else:
+        #asize = OrderedDict((( 'H' , 36 ),( 'C' , 20 ),( 'O' , 20 ),( 'N' , 10 ),( 'F' , 30 ),( 'S' , 10 ),
+        #                     ( 'Cl', 10 ),( 'Br',  5 )) )
+    asize = OrderedDict((( 'H' , 40 ),( 'C' , 25 ),( 'O' , 8 ),( 'N' , 8 )))
+    ret = mol.generate_bob(asize=asize)
+    if not hasattr(mol, 'representation'):
+        print mol.coordinates
+        print mol.atomtypes
+        print mol.natoms
+        print mol.nuclear_charges
+        print asize
+        print size
+        raise AttributeError
     print "b",
-    return mol.bob
+    return mol.representation
 
 def slatm(xyz):
     '''current qml version doesn't support this'''
@@ -300,3 +317,15 @@ def padzeros(M, maxn=76 ):
     npad = maxn - M.shape[0]
     padM = np.pad(M, (0, npad), 'constant', constant_values=0.0)
     return padM
+
+def get_BoB_sizes(xyzs):
+    from collections import Counter
+    getatoms = lambda x:Counter([item[0] for item in x])
+    maxi     = lambda x,y:{ k:max((x.get(k,0),y.get(k,0))) for k in set(x)|set(y)} #if x,y are counters
+    atoms = map(getatoms, xyzs) # is a list of Counters
+    print atoms
+    asize = reduce(maxi, atoms)
+    print "asize:", asize
+    size  = max(map(lambda x:sum(x.values()), atoms))
+    print " size:", size
+    return size, asize

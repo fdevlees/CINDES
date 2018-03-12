@@ -10,9 +10,9 @@ from sklearn.model_selection import KFold, train_test_split
 from scipy.stats import pearsonr
 
 from IO import get_XY, get_X
-from CINDES4.utils.utils import processify
-from CINDES4.utils.statistics import print_stats
-from CINDES4.utils.writings import sprint, log_io, dump
+from CINDES.utils.utils import processify
+from CINDES.utils.statistics import print_stats
+from CINDES.utils.writings import sprint, log_io, dump
 
 debug=False
 
