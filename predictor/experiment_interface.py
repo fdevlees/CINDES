@@ -3,6 +3,7 @@ import pickle
 import time
 
 import numpy as np
+np.seterr(under='ignore')
 import pandas as pd
 pd.set_option('display.width',150)
 

@@ -27,7 +27,8 @@ def read_input(siteinput):
     if param['nlinks']:
         param['nsites'] = len(param['sites']) - param['nlinks']
     else:
-        param['nsites'] = len(param['sites'])
+        try:param['nsites'] = len(param['sites'])
+        except KeyError: param['nsites']=0
     #param['nsites'] = len(param['line1'])
     #####################
     if param['procedure'] in [ 'genconf' ]:
@@ -132,8 +133,8 @@ def get_prop_function(subinp, line):
 def get_jobs(subinp, line):
     def get_extra_line(line):
         key, value=line.strip().split(None,1)
-        assert key in ['identify', 'nosub', 'program', 'nprocs', 'geom', 'script', 'positions']
-        if key in ['nosub', 'nprocs']: value=int(value)
+        assert key in ['identify', 'nosub', 'program', 'nprocs', 'geom', 'script', 'positions', 'fafoom']
+        if key in ['nosub', 'nprocs', 'fafoom']: value=int(value)
         elif key in ['positions']: value=map(int,value.split())
         calc[key]=value
         return

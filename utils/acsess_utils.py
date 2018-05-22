@@ -23,18 +23,29 @@ def GetCoords(indices, descriptor='autocorr'):
     return X
 
 def GetXYZs(indices):
+    import cPickle as pickle
     from PropOptACSESS.QCindes import xyzfromoemol
     import numpy as np
     from openeye.oechem import OEMol, OESmilesToMol
     smiles = get_smiles(indices)
     XYZs=[]
+    try:
+        with open('XYZs','rb') as fin:
+            Dxyz=pickle.load(fin)
+    except IOError:
+        Dxyz=dict()
     for smile in smiles:
+        if smile in Dxyz:
+            XYZs.append(Dxyz[smile])
+            continue
         mol = OEMol()
         OESmilesToMol(mol, smile)
         xyz = xyzfromoemol(mol)
         xyz = map(lambda x:x.split(), xyz.strip().split('\n'))
         xyz = [ [ item[0], np.array(map(float,item[1:])), masses[item[0]] ] for item in xyz ] 
         XYZs.append(xyz)
-        #print xyz
+        Dxyz[smile]=xyz
+    with open('XYZs','wb') as f:
+        pickle.dump(Dxyz, f)
     return XYZs
 

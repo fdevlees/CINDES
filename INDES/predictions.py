@@ -117,7 +117,15 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
                                                     )
     elif ptype=='krr':
         from CINDES.predictor.krr import KernelRidgeExperiment, KernelRidgeWithPCAExperiment
-        regressor = KernelRidgeExperiment(          table=table,
+        if prediction['pca']:
+            regressor =KernelRidgeWithPCAExperiment(table=table,
+                                                    retrain=retrain,
+                                                    array=array,
+                                                    run = run,
+                                                    **kwargs   #run=run
+                                                    )
+        else:
+            regressor = KernelRidgeExperiment(      table=table,
                                                     retrain=retrain,
                                                     array=array,
                                                     run = run,
@@ -225,7 +233,7 @@ def plot_predictions(predictions, prop=""):
     import matplotlib.pyplot as plt
     from numpy import asarray as A
     #if predictions[0]['plots']==[]:return
-    plotted = False
+    plotted = True
     n = len(predictions)
     nx,ny = set_nxy(len(predictions))
     print nx, ny
@@ -272,8 +280,8 @@ def plot_predictions(predictions, prop=""):
 
             a.legend()
     if plotted:
-        pass
-        #plt.show()
+        #pass
+        plt.show()
     else:
         del f, axs, axs2d
         #plt.close()

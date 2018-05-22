@@ -104,7 +104,8 @@ def normaltermination(mols, **kwargs):
             program=import_program(job.calc['program'])
             ignoremol = program.normaltermination(job, **kwargs) #i.e. some can be ignored
             if ignoremol:
-                mol.ignore=True
+                mol.ignore=True #not necessary statement anymore
+                mol.discard()
                 break
         else:
             mols_toread.append(mol)
@@ -155,7 +156,7 @@ def read_file(Job):
                 jobslines.append(joblines_v1)
     elif program=='orca':
         from CINDES.cclib.parser.orcaparser import ORCA as Logfile
-        raise SystemExit('not implemented')
+        raise SystemExit('ORCA interface not implemented')
     elif program=='nwchem':
         from CINDES.cclib.parser.nwchemparser import NWChem as Logfile
         key='NWChem Input Module'
@@ -164,6 +165,10 @@ def read_file(Job):
     else:
         raise SystemExit('not implemented')
     print "njobs:", len(jobslines), 
+    if len(jobslines)==0:
+        print "no jobs in logfile!"
+        raise SystemExit('should not occur here')
+
 
     # 3. handle every subjob as a different logfile and read the needed job['info'] from it
     from cStringIO import StringIO
@@ -197,10 +202,17 @@ def read_file(Job):
                 #    print job_data.atomspins
                 #except AttributeError:
                 #    pass
-            elif inf in ['pcharges','partialcharges']:
-                print "partial charges",
-                pcharges = zip(map(int, job_data.atomnos), map(float, job_data.atomcharges['mulliken']))
-                datadict['pcharges']=pcharges
+            elif inf=='spindensities':
+                spiden = map(lambda x:round(x[0]-x[1], 8), zip(job_data.npaa, job_data.npab))
+                datadict['spindensities']=spiden
+            elif any(prop in inf for prop in ['pcharges','partialcharges']):
+                print "partial charges", job_data.atomcharges
+                round8 = lambda x:round(float(x), 8)
+                try:
+                    pcharges = zip(map(int, job_data.atomnos), map(round8, job_data.atomcharges['mulliken']))
+                except KeyError:
+                    pcharges = zip(map(int, job_data.atomnos), map(round8, job_data.atomcharges['natural']))
+                datadict[inf]=pcharges
             else:
                 print "value not recognized:", inf
     print
@@ -224,6 +236,13 @@ def set_combined_variables(mol, to_read_props):
         results['omega'] = (( results['ip'] + results['ea'] )**2 ) / ( 8 * ( results['ip'] - results['ea'] ))
     if 'stab' in to_read_props:
         results = calculate_stab(results, mol)
+    if any(i in to_read_props for i in ['ipfukui','radfukui']):
+        print "results:", results
+        results['ipfukui'] = [ -( q_ip[1] - q_0[1] ) for q_ip, q_0 in zip(results['pchargesIP'], results['pcharges0'])]
+    if any(i in to_read_props for i in ['eafukui','radfukui']):
+        results['eafukui'] = [ -( q_0[1] - q_ea[1] ) for q_0, q_ea in zip(results['pcharges0'], results['pchargesEA'])]
+    if 'radfukui' in to_read_props:
+        results['radfukui'] = [ .5*(ipf + eaf) for ipf, eaf in zip(results['ipfukui'], results['eafukui'])]
 
     return results
 

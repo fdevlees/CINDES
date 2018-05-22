@@ -59,7 +59,9 @@ def get_X(indices, descriptor='BoB',array=[], identify='x_', **TZmat):
             X = acsess_utils.GetCoords(indices, descriptor)
         elif descriptor=='BoB_qml_smi':
             xyzs=acsess_utils.GetXYZs(indices)
-            size, asize= get_BoB_sizes(xyzs)
+            #size, asize= get_BoB_sizes(xyzs)
+            asize = {'H': 40, 'C': 25, 'S': 2, 'O': 8, 'N': 8}
+            size  = 80
             # we should pass some extra information to qml as max number of each type to be present
             X = get_X_qml(xyzs, descriptor='bob', size=size, asize=asize)
     return X
@@ -323,7 +325,7 @@ def get_BoB_sizes(xyzs):
     getatoms = lambda x:Counter([item[0] for item in x])
     maxi     = lambda x,y:{ k:max((x.get(k,0),y.get(k,0))) for k in set(x)|set(y)} #if x,y are counters
     atoms = map(getatoms, xyzs) # is a list of Counters
-    print atoms
+    #print atoms
     asize = reduce(maxi, atoms)
     print "asize:", asize
     size  = max(map(lambda x:sum(x.values()), atoms))

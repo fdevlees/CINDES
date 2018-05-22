@@ -103,6 +103,7 @@ class BaseMolecule(object):
         self.infoline = [] # for storing additional properties
         self.predictions = {}
         self.predicted = None
+        self.IsDiscarded = False
         self.ignore = False
         self.opt = False
         # for jsonification:
@@ -121,6 +122,19 @@ class BaseMolecule(object):
         ret.append( self.Pvalue     )
         ret.extend( self.boundaries )
         return ret
+
+    def discard(self):
+        self.IsDiscarded=True
+        self.ignore=True
+        import glob
+        if glob.glob('IGNORED'):
+            with open('IGNORED','r') as f:
+                ignored=set(f.read().split('\n'))
+        else: ignored=set()
+        if not self.index in ignored:
+            with open('IGNORED','a') as f2:
+                f2.write(self.index+'\n')
+        return
 
     def addjob(self, jobname):
         if hasattr(self, 'jobs'): self.jobs.append(jobname)
