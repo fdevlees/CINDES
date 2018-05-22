@@ -217,6 +217,7 @@ def readfile(subinp):
            'function': lambda x:x,
            'ignore':0,
            'jobs':[],
+           'ml':0,
            'maxiter':10,
            'montecarlo':0,   #Temperature at start
            'nch3':16,

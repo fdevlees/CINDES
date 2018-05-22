@@ -3,6 +3,40 @@
 import re
 multiplicity = {1:'singlet', 2:'doublet', 3:'triplet', 4:'quartet'}
 
+from job import BaseJob
+class NWChemJob(BaseJob):
+    extension=''
+    def write(self):
+        pass
+
+def write_geom(mol, fid, geom=None):
+    # set attributes:
+    if geom is None:
+        Azmat='zmat'
+        Axyz='xyz'
+    else:
+        Azmat='zmat{}'.format(str(geom))
+        Axyz='xyz{}'.format(str(geom))
+
+    if hasattr(mol, Azmat):
+        zmat=getattr(mol, Azmat)
+        fid.write("geometry\n zmatrix\n")
+        for i in range(len(zmat)):
+            fid.write("  ")
+            for item in zmat[i]:
+                fid.writelines("%s " % item)
+            fid.write("\n")
+        fid.write(" end\nend\n")
+    elif hasattr(mol, Axyz):
+        xyz=getattr(mol, Axyz)
+        fid.write("geometry'n")
+        fid.write(xyz)
+        fid.write('\n')
+    else:
+        print "attribute not found:", Axyz
+        raise AttributeError
+    return
+
 def write_subjob(fid, job):
     hotline=job['hotline']
     func, basis = [ w for w in hotline.split() if '/' in w ][0].split('/')
@@ -20,7 +54,8 @@ def write_subjob(fid, job):
     #basisset/functional
     fid.write("basis\n * library {}\nend\n".format(basis))
     if theory=='scf':
-        fid.write('scf\n {}\n maxiter 50\n {}\nend\n'.format(multiplicity[int(job['mult'])],func))
+        fid.write('scf\n {}\n maxiter 50\n {}\nend\n'.format(
+            multiplicity[int(job['mult'])],func))
     if theory=='dft':
         fid.write('dft\n')
         fid.write(' iterations 100\n')
@@ -59,34 +94,45 @@ def write_subjob(fid, job):
 
 
 #---- START FILEWRITER2 THIS ONLY FOR MAKERS TRY TO MAKE THIS ONE UNIVERSAL ----#
-def filewriter(mol, **paras): #paras is short for fileparameters
+def filewriter(mol, calc, pos=None):
     '''    This function creates a file with the geometry contained in zmat
     The name of the file contains the index in the name
     '''
     #------------
     # this function uses globals: identify, path
     #------------
-    zmat = mol.zmat
     index= mol.index
-    filename = paras['identify'] + str(index)
-    fid=open(paras['path'] + '/' + filename,'w')
+    paras= calc
+    jobs = paras['jobs']
+
+    if pos:
+        name = "{0}{1}_{2}".format(paras['identify'], str(index), str(pos))
+        filename = name
+        filepath = '{0}/{1}/{2}'.format(paras['path'], str(index), filename)
+        geom=pos
+        Job=NWChemJob(filepath, calc)
+        Job.pos=pos
+    else:
+        name = paras['identify'] + str(index)
+        filename = name
+        filepath = paras['path'] + '/' + filename
+        try: geom=calc['geom']
+        except KeyError: geom=None
+        Job=NWChemJob(filepath, calc)
+    mol.addjob(Job)
+
+    fid=open(filepath,'w')
 
     # JOB 1
     # extract info
-    job1 = paras['jobs'][0]
+    job1 = jobs[0]
 
     # write info
     fid.write("echo\nstart {filename}\n".format(filename=filename))
     fid.write("memory 1500 mb\n")
     fid.write("title \"{filename}\"\n".format(filename=filename))
     # here the zmat
-    fid.write("geometry\n zmatrix\n")
-    for i in range(len(zmat)):
-        fid.write("  ")
-        for item in zmat[i]:
-            fid.writelines("%s " % item)
-        fid.write("\n")
-    fid.write(" end\nend\n")
+    writegeom(mol, fid, geom)
     write_subjob(fid, job1)
 
     # THE OTHER JOBS
@@ -98,56 +144,24 @@ def filewriter(mol, **paras): #paras is short for fileparameters
     fid.close()
     return
 
-def filewriterAH(zmat, pos, index,**paras): #paras is short for fileparameters
-    '''    This function creates a file with the geometry contained in zmat
-    The name of the file contains the index in the name
-    '''
-    #------------
-    # this function uses globals: identify, path
-    #------------
-    filename = paras['identify'] + str(index) + "_{}".format(str(pos))
-    fid=open(paras['path'] + '/' + index + '/' + filename,'w')
-    job1 = paras['stabjobs'][0]
-
-    # write info
-    fid.write("echo\nstart {filename}\n".format(filename=filename))
-    fid.write("memory 1500 mb\n")
-    fid.write("title \"{filename}\"\n".format(filename=filename))
-    # here the zmat
-    fid.write("geometry\n zmatrix\n")
-    for i in range(len(zmat)):
-        fid.write("  ")
-        for item in zmat[i]:
-            fid.writelines("%s " % item)
-        fid.write("\n")
-    fid.write(" end\nend\n")
-    write_subjob(fid, job1)
-
-    # JOB 1
-    for i, job in enumerate(paras['stabjobs'][1:]):
-        # write title
-        fid.write("title \"{filename}\"\n".format(filename=filename))
-        write_subjob(fid, job)
-
-    fid.close()
-    return
-
-def get_paths( mols, fileparameters):
+def get_paths(mols):
     ''' get all paths that need to be examined later '''
     files=[]
     for molecule in mols:
-        files.extend(get_molpaths(molecule, fileparameters))
+        files.extend(get_molpaths(molecule))
     return files
 
 def get_molpaths(mol, fileparameters):
     paths=[]
-    paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '.log')
-    if fileparameters['stab']==1:
-        for pos in fileparameters['positions']: #extract al AH energies and take the lowest
-            paths.append(fileparameters['path'] + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.log')
+    for job in mol.jobs:
+        log=get_logpath(job)
+        paths.append(log)
     return paths
 
-def normaltermination(mols_tocal, fileparameters):
+def get_logpath(job):
+    return job.name + '.log'
+
+def normaltermination(job, debug=True, ignore=0):
     import re
     import time
     #-----
@@ -161,46 +175,36 @@ def normaltermination(mols_tocal, fileparameters):
                fid.close()
                return 2
     #-----
-    filepaths = get_paths( mols_tocal, fileparameters)
-    copyfilepaths = filepaths[:] #copy to be able to append to it while looping over it
-    for path in copyfilepaths: #test all for information which jobs crashed
+    path=job.logpath
+    errorpath=None
+    try:
         if not termination(path)==1:
             print "Error termination:",path
-            bnewfile = errortermination(path, fileparameters)
+            errorpath = errortermination(path, fileparameters)
+    except IOError as e:
+        pass
+
     extratime = 0
     once = 0
 
-    #--- new:
-    mols_toread=[]
-    for mol in mols_tocal:
-        # get path belonging to this particular mol
-        molpaths=get_molpaths(mol, fileparameters)
-        ignoremol=False
-        for path in molpaths: #test one by one waiting for normal termination
-            while True:
-                if termination(path)==1:
-                    break
-                elif termination(path)==2:
-                    print "\n\n{0}\n             INGORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, path)
-                    ignoremol=True
-                    break
-                else:
-                    print "no normal termination for: ",path
-                #time.sleep(300) # wait 5 minudtes
-                time.sleep(300) # wait 5 minudtes
-                extratime += 300
-                print "extra waittime/h:", extratime/3600, "||",
-            # when I'm here this path has normal termination
-            if ignoremol: break # this ignores the other paths belonging to this mol
-        # when I'm here every molpath of this mol should have normal termination
-        if not ignoremol:
-            mols_toread.append(mol)
-    # when I'm here every mol should have normal termination
+    ignoremol=False
+    while True:
+        if termination(path)==1:
+            break
+        elif termination(path)==2:
+            print "\n\n{0}\n\tIGNORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, path)
+            ignoremol=True
+            break
+        else:
+            print "no normal termination for: ",path
+        #time.sleep(300) # wait 5 minudtes
+        time.sleep(300) # wait 5 minudtes
+        extratime += 300
+        print "extra waittime/h:", extratime/3600, "||",
 
-    print "mols_toread:", mols_toread
-    return mols_toread
+    return ignoremol
 
-def errortermination(path, fileparameters):
+def errortermination(path, debug=False):
     import re
     import time
 
@@ -208,6 +212,7 @@ def errortermination(path, fileparameters):
     mymol = NWChem(path).parse()
     from CINDES.utils import utils
     t=utils.PeriodicTable()
+
     if hasattr(mymol,'atomcoords'):
         coords = map(list, mymol.atomcoords[-1])
         #print coords
@@ -254,25 +259,16 @@ def errortermination(path, fileparameters):
                 else:
                     newfile.append(line) #copy that line because it is not the zmat found in the inputfile
             print "="*20
-            open(path[:-4]+'zzz','w').writelines(newfile)
-            print "newfile written in: ", path[:-4] + 'zzz'
+            filename=path[:-4]+'zzz'
+            open(filename,'w').writelines(newfile)
+            print "newfile written in: ", filename
+            errorjob = NWChemJob(filename)
 
-            #---- preparation for submit command ---
-            splitpath = path.split('/')
-            filename = splitpath[-1]
-            folder = '/'.join(splitpath[:-1])
-            filenamesplit = filename[:-4].split('_')
-            identify= filenamesplit[0]+'_'
-            index = '_'.join(filenamesplit[1:])+'zzz'
-            print "folder", folder
-            print "index:", index
-            print "identi", identify
-            #----- keywords constructed so:
-            submitter.submit(folder,index,identify, script='ID_NWChem')
-            return True
+            submitter.submit(errorjob, script='ID_NWChem')
+            return filename
     else:
         print "has no coords in file"
-    return False
+        return False
 
 
 

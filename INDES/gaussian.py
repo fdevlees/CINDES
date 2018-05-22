@@ -41,7 +41,7 @@ def writegeom(mol, fid, geom=None):
 
 
 #---- START FILEWRITER2 THIS ONLY FOR MAKERS TRY TO MAKE THIS ONE UNIVERSAL ----#
-def filewriter(mol, calc, pos=None): #paras is short for fileparameters
+def filewriter(mol, calc, pos=None):
     '''    This function creates a file with the geometry contained in zmat
     The name of the file contains the index in the name
     '''
@@ -125,16 +125,6 @@ def get_logpath(job):
     log = job.name + '.log'
     return log
 
-#    paths=[]
-#    for mol in 
-#    #paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '.log')
-#    #if fileparameters['stab']==1:
-#    #    for pos in fileparameters['positions']: #extract al AH energies and take the lowest
-#    #        paths.append(fileparameters['path'] + '/' + mol.index + '/' + fileparameters['identify'] + mol.index + '_' + str(pos) + '.log')
-#    #if fileparameters['extrajobs']:
-#    #    paths.append(fileparameters['path'] + '/' + fileparameters['identify'] + mol.index + '_2.log')
-#    return paths
-
 def normaltermination(job, debug=True, ignore=0):
     import re
     import time
@@ -187,7 +177,7 @@ def normaltermination(job, debug=True, ignore=0):
         if termination(path)==1:
             break
         elif termination(path)==2:
-            print "\n\n{0}\n             IGNORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, path)
+            print "\n{0}\n\t  IGNORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, path)
             ignoremol=True
             break
         elif (not errorpath is None) and ret_zzz==1 and True:

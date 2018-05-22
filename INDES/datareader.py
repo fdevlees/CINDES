@@ -46,7 +46,7 @@ def setEAHs(molecule):
         if hasattr(job, 'pos'):
             #print "job:", job
             EAHs[job.pos]={'eAH':molecule.props.pop('eAH_P{}'.format(str(job.pos))), 'N':job.N}
-    if EAHs: 
+    if EAHs:
         #print "EAHs:"
         #pprint(EAHs)
         molecule.props['EAHs']=EAHs
@@ -69,15 +69,12 @@ def calculate_stab(results, molecule):
     chi_term = bde_b*(chi_h-3)*(chi_n-3) #term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
     #gasconstant = 8.3144621
     #----- end of parameters
-    print results
     EAHs=results['EAHs']
     minpos = min(EAHs, key=lambda x:EAHs[x]['eAH'])
     E_ah = EAHs[minpos]['eAH']
 
     Domega = results['omega'] - 2.
-    #print "Domega:", Domega
     results['BDE_ah']  = ( results['eA'] + H_h - E_ah)*kJmol + avtc #avtc is AVerage Thermal Correction. 
-    #if E_ah[1] in Npos:
     if EAHs[minpos]['N']:
         print "electronegativity correction for nitrogen is used"
         stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
@@ -122,13 +119,12 @@ def datareader( mols, run):
     for molecule in mols_toread:
         print "><"*15, molecule,
         for job in molecule.jobs:
-            #print "job:", job
             readings = read_file(job)
-            # maybe I can add _P# to each key if the job has a pos
+
             if hasattr(job,'pos'):
-                #print "readings:", readings
                 for old_key in readings.keys(): #the .keys is very important here. iterkeys or for just readings do not work!
                     readings["{}_P{}".format(old_key, str(job.pos))] = readings.pop(old_key)
+
             molecule.props.update(readings)
         molecule.predicted = False
 

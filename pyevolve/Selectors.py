@@ -132,8 +132,13 @@ def GRouletteWheel(population, **args):
    upper = len(population) - 1
    while(upper >= lower):
       i = lower + ((upper-lower)/2)
-      if psum[i] > cutoff: upper = i-1
-      else: lower = i+1
+      if i>len(psum):i=len(psum)-1
+      try:
+          if psum[i] > cutoff: upper = i-1
+          else: lower = i+1
+      except IndexError:
+          #print "IndexError in GRouletteWheel. psum:",psum, "i:", i
+          
 
    lower = min(len(population)-1, lower)
    lower = max(0, lower)

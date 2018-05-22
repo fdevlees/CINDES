@@ -92,11 +92,11 @@ def runjobs(mols_tocal, myrun, calc):
     call(jobmaker, mols=mols_calc, myrun=myrun, calc=calc)
     # 2. now the jobs have to be submitted (this function contains a try_ready test)
     jobids = submission(mols_calc, myrun)
- 
+
     # 3. test of all jobs are ready
     if jobids: jobtester(mols_calc,myrun,jobids)
     else: print "no jobids so assume no jobs submitted"
- 
+
     # 4. test normal termination and read jobs (only myrun variable used is actually debug)
     datareader.datareader(mols_calc, myrun)
 
@@ -108,14 +108,13 @@ def do_calcs(mols_tocal, myrun):
 
         # if there need to be set some new geometries for new calculation.
         invoke_script(calc, locals())
-        
+
         # 5. delete jobs such that new jobs can be set up.
         for mol in mols_tocal: mol.deletejobs()
 
     # after every calculation is performed:
-    for mol in mols_tocal: 
+    for mol in mols_tocal:
         if not mol.ignore: datareader.set_combined_variables(mol, myrun.props)
-        
     return mols_tocal
 
 # PROCEDURE
@@ -341,7 +340,7 @@ def submit_normal(mols_tocal, myrun):
             # 1. try ready part
             if myrun.try_ready:
                 if arrayjob:name=job.logpath
-                else:name=job.filepath[:-4] + '.o[0-9][0-9][0-9][0-9]*'
+                else:name=job.filepath[:-4] + '*.o[0-9][0-9][0-9][0-9]*'
                 #print "name=:", name
                 if glob.glob(name): # test A
                     print "already calculated:", name

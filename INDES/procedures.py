@@ -77,7 +77,7 @@ class BaseRun(object):
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( dump( value ) )
-            elif key in ['TZmat','genalg', 'adj', 'jobs', 'stabjobs', 'prejobs', 'extrajobs', 'calcs']:
+            elif key in ['TZmat','genalg', 'jobs', 'stabjobs', 'prejobs', 'extrajobs', 'calcs']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append( pprint.pformat(value, width=150) )
             elif key=='function' and callable(value): #i.e. the value is a lambda function
@@ -714,9 +714,12 @@ def genconf(param):
     else:
         raise SystemExit('program not recognized')
     from CINDES.utils.molecule import Molecule
-    mol = Molecule(index=param['startind'])
+    mol = Molecule(conf=conf)
     mol.zmat = mat
-    program.filewriter(mol, **param)
+    calcs=myrun.calcs
+    if isinstance(calcs[0], list): calc=calcs[0][0]
+    else: calc=calcs[0]
+    program.filewriter(mol, calc)
     return
 
 # 3: generate
