@@ -116,6 +116,9 @@ class BaseRun(object):
             return cal, i
 
         paras=self.__dict__
+        if not paras['jobs']:
+            self.calcs=[]
+            return
         calcs=[tocalc(paras, 'jobs')]
         if paras['prejobs']: calcs.insert(0, tocalc(paras, 'prejobs'))
         for key in ['stabjobs', 'extrajobs']:
@@ -169,9 +172,11 @@ class FrameRun(BaseRun):
     def __init__(self,**entries):
         super(FrameRun, self).__init__(**entries)
         # specific for FrameRun:
-        self.TZmat = r.geometry(**entries)
-        self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
-        self.corresp = self.set_corresp( self.TZmat['active'], self.TZmat['passive'])
+        if self.nsites:
+            self.TZmat = r.geometry(**entries)
+            self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
+            self.corresp = self.set_corresp( self.TZmat['active'], self.TZmat['passive'])
+        else: print "NO ZMAT"
         return
 
     def set_adj(self, core, active):
@@ -864,10 +869,11 @@ def testpred(param,array):
         def __repr__(self): return "<empty molecule object>"
     myrun = FrameRun(**param)
     print myrun
-    table = set_table(myrun, datacolumn=param['datacolumn'])
-    sprint(10,table)
+    table = set_table(myrun)
+    property_table = get_property_table(table, myrun)
+    #sprint(10,property_table)
     mols_todo, mols_nodo = ([Mol(),],[Mol(),])
-    mols_nocal, mols_tocal, made_pred = predictor(myrun, table, mols_todo,mols_nodo, 99, array=array, nsite=0)
+    mols_nocal, mols_tocal, made_pred = predictor(myrun, property_table, mols_todo,mols_nodo, 99, array=array, nsite=0)
     return
 
 # 6: steepest descent

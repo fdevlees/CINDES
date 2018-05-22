@@ -121,21 +121,27 @@ def log_screen( mols ):
         try: props.update(mol.props.keys())
         except AttributeError:pass
     props = list(props)
-    issinglevalued=lambda x:any([ isinstance(x[1],t) for t in (str,int,float)])
-    keys, values = zip(*filter(issinglevalued, mols[0].props.items()))
-    # check if Pvalue is one of these singular props
-    if mols[0].Pvalue in values:
-        # so yes. Pvalue is one of the propvalues. but which one?
-        # get index of prop
-        #keys, values= zip(*mols[0].props.items())
-        i=values.index(mols[0].Pvalue)
-        p=keys[i]
-        # remove that one from props
-        props.remove(p)
-        print "property seems to be:", p
-    else:
-        p='function'
-        #props.insert(0,props.pop(i))
+    issinglevalued=lambda x:any([isinstance(x[1],t) for t in (str,int,float)])
+    j=0
+    p=None
+    while j<len(mols):
+        try:
+            keys, values = zip(*filter(issinglevalued, mols[j].props.items()))
+            # check if Pvalue is one of these singular props
+            if mols[j].Pvalue in values:
+                # so yes. Pvalue is one of the propvalues. but which one?
+                # get index of prop
+                #keys, values= zip(*mols[0].props.items())
+                i=values.index(mols[j].Pvalue)
+                p=keys[i]
+                # remove that one from props
+                props.remove(p)
+                print "property seems to be:", p
+            else:
+                print "function"
+                p='function'
+            break
+        except ValueError: j+=1
 
     # print header line.
     maxlenconf= max(map(lambda x:len(x.index),mols))

@@ -47,14 +47,14 @@ def custom_redirection(fileobj):
     finally:
         sys.stdout = old
 
-def invoke_script(calc, namespace):
+def invoke_script(calc, namespace, ID=0):
     if not isinstance(calc, dict): return
     if not 'script' in calc: 
         print "no script invocation"
         return
     print "in invoke script:):"
     module_obj=__import__(calc['script'])
-    module_obj.main(namespace)
+    module_obj.main(namespace, ID)
     return
 
 def get_secret_data(tablefilename,mols_tocal, mols_nocal, myrun):
@@ -79,11 +79,16 @@ def get_secret_data(tablefilename,mols_tocal, mols_nocal, myrun):
         mols_nocal.append(mol)
     return mols_tocal, mols_nocal
 
-def runjobs(mols_tocal, myrun, calc):
+def runjobs(mols_tocal, myrun, i):
+    calc=myrun.calcs[i]
     def call( function, calc, *args, **kwargs):
         if isinstance(calc, list) or isinstance(calc, tuple):
-            for cal in calc: function(calc=cal, *args, **kwargs)
-        else: function(calc=calc, *args, **kwargs)
+            for j,cal in enumerate(calc):
+                invoke_script(cal, locals(), (i+1)*100+(j+1))
+                function(calc=cal, *args, **kwargs)
+        else: 
+            invoke_script(calc, locals(), i+1)
+            function(calc=calc, *args, **kwargs)
     # 0. filter off ignored molecules
     mols_calc = filter(lambda x:not x.ignore, mols_tocal)
 
@@ -104,10 +109,11 @@ def runjobs(mols_tocal, myrun, calc):
 
 def do_calcs(mols_tocal, myrun):
     for i, calc in enumerate(myrun.calcs):
-        runjobs(mols_tocal, myrun, calc=myrun.calcs[i])
+        
+        runjobs(mols_tocal, myrun, i)
 
         # if there need to be set some new geometries for new calculation.
-        invoke_script(calc, locals())
+        invoke_script(calc, locals(), 2)
         
         # 5. delete jobs such that new jobs can be set up.
         for mol in mols_tocal: mol.deletejobs()
@@ -231,10 +237,25 @@ def jobmaker(mols,myrun, calc): #----- dict with info for filewriter has to pass
                     setattr(molecule, 'zmat{}'.format(pos), zmat2)
                     job = program.filewriter(molecule, calc, pos)
                     job.N=N
-                    # here set somehow if the pos belongs to nitrogen
-                    #raise NotImplementedError('here implement Npos')
+        elif 'fafoom' in calc: # so first find a lower xyz
+            from CINDES.utils import fafoom_utils
+            print "trying fafoom..."
+            if calc['fafoom']==1:
+                # only find the lowest conformer
+                molecule.xyz = fafoom_utils.GetLowestXYZ(molecule)
+                program.filewriter(molecule, calc) #--------------------------------------------HERE IS A FILEWRITER CALL
+            elif calc['fafoom']==2:
+                if not os.path.exists(calc['path'] + '/' + molecule.index): #path is $WORKDIR/data
+                    os.makedirs(calc['path'] + '/' + molecule.index)
+                    # and make sure ID_gauss is in the folder!
+                    shutil.copy(calc['path'] + '/' + myrun.script, calc['path']+'/'+molecule.index)
+                # find a set of conformers
+                conformers = fafoom_utils.GetConformers(molecule)
+                for i, conformer in enumerate(conformers, 1): #enumerate starts at 1!
+                    setattr(molecule, 'xyz{}'.format(i), conformer.GetProp('xyz'))
+                    program.filewriter(molecule, calc, i) #------------------------------HERE IS A FILEWRITER CALL
         else: # so single job
-            program.filewriter(molecule, calc) #------------------------------------------------HERE IS THE FILEWRITER CALL
+            program.filewriter(molecule, calc) #------------------------------------------------HERE IS A FILEWRITER CALL
     return
 
 def add_hydrogen(zmat, pos, ncore):
@@ -537,8 +558,8 @@ def set_target_properties(molecules, myrun):
     for mol in molecules:
         if mol.ignore:
             print mol, 'ignored'
-            if myrun.optimum=='maximum':mol.Pvalue=float("inf")
-            else: mol.Pvalue=-float("inf")
+            if myrun.optimum=='maximum':mol.Pvalue=-float("inf")
+            else: mol.Pvalue=float("inf")
             continue
         if mol.Pvalue:
             print "molecular target property already set. Predicted?", mol
@@ -546,7 +567,11 @@ def set_target_properties(molecules, myrun):
             print "molecule has probably no .props attribute"
             continue
         if myrun.property=='func':
-            kwargs = { prop:mol.props[prop] for prop in myrun.func_args }
+            try:
+                kwargs = { prop:mol.props[prop] for prop in myrun.func_args }
+            except KeyError:
+                print "error mol:", mol
+                print "props:", mol.props
             mol.Pvalue = myrun.function(**kwargs)
             #print "function value:", mol.Pvalue
         else:

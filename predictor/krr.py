@@ -1,7 +1,7 @@
 from sklearn.decomposition.pca import PCA
 from sklearn.externals import joblib
 from sklearn.kernel_ridge import KernelRidge
-from gpu_sklearn import GPU_KernelRidge
+#from gpu_sklearn import GPU_KernelRidge
 from sklearn.utils import resample
 import pandas as pd
 import numpy as np
@@ -30,11 +30,11 @@ class KernelRidgeExperiment(Experiment):
 
         # set default hyperparam ( super sets self.hparams to dict() ) so beware of order.
         self.hparam = { 'kernel':'rbf',
-                        'alpha':1.e-15,
-                        'gamma':1.e-15 }  # gamma parameter is specific for rbf/laplacian kernel
+                        'alpha':1.e-5,
+                        'gamma':1.e-5 }  # gamma parameter is specific for rbf/laplacian kernel
 
-        self.hparam_grid = {'alpha': np.logspace(-10,0,5),
-                            'gamma': np.logspace(-10,0,5),
+        self.hparam_grid = {'alpha': np.logspace(-10,5,8),
+                            'gamma': np.logspace(-10,5,8),
                             'kernel': ['rbf','laplacian'] }
         # see if new defaults are given via input
         for key in self.hparam:
@@ -52,7 +52,7 @@ class KernelRidgeExperiment(Experiment):
         if y is None: y=self.y
 
         krr_rbf = self.get_estimator()
-        print "Fitting...",
+        print "Fitting... with hparam:", self.hparam
         krr_rbf.fit(X, y)
 
         if verbose: print "\tLearned model: ", krr_rbf
@@ -60,13 +60,13 @@ class KernelRidgeExperiment(Experiment):
         return krr_rbf
 
     def get_estimator(self):
-        if True:
-            krr_rbf = GPU_KernelRidge(kernel='rbf',
+        if False:
+            krr_rbf = GPU_KernelRidge(kernel=self.hparam['kernel'],
                       alpha = self.hparam['alpha'],
                       gamma = self.hparam['gamma'],
                       )
         else:
-            krr_rbf = KernelRidge(kernel='rbf',
+            krr_rbf = KernelRidge(kernel=self.hparam['kernel'],
                       alpha = self.hparam['alpha'],
                       gamma = self.hparam['gamma'],
                       )

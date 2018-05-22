@@ -355,7 +355,8 @@ class Logfile(object):
                 try:
                     assert getattr(self, name) == value
                 except AssertionError:
-                    self.logger.warning("Attribute %s changed value (%s -> %s)" % (name, getattr(self, name), value))
+                    if not name in ['dipole']:
+                        self.logger.warning("Attribute %s changed value (%s -> %s)" % (name, getattr(self, name), value))
         setattr(self, name, value)
 
     def skip_lines(self, inputfile, sequence):

@@ -193,8 +193,9 @@ def normaltermination(job, debug=True, ignore=0):
         elif (not errorpath is None) and ret_zzz==1 and True:
             import shutil
             shutil.copyfile(errorpath, path)
+            time.sleep(1)
             print "*zzz.log file with normal termination copied back to original logfile."
-            break
+            continue # in the following iteration of while true the termination(path) should return 1
         elif (not errorpath is None) and ignore and extratime>ignore:
             ignoremol=True
             print "\n\n{0}\n    AUTOMATICALLY IGNORED after {2} seconds of waiting: {1}\n{0}\n".format("    --oOo--"*10, path, str(ignore))

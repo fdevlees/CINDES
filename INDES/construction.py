@@ -147,7 +147,7 @@ def classmaker2_SD(startconf,array,table,run=[]):
     mols_todo, mols_nodo = check_in_table(individuals, table, run.props)
     return mols_todo, mols_nodo
 
-def check_in_table(individuals, table, props=set()):
+def check_in_table(individuals, table, props=set(), check_ignored=False):
     mols_todo = individuals[:]
     mols_nodo = []
     neglect_dihedrals=True
@@ -168,6 +168,19 @@ def check_in_table(individuals, table, props=set()):
                     #print "already calculated:", individual.index
         if i: print "{} molecules are already in database".format(i)
     if debug: print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
+
+    if check_ignored:
+        try:
+            with open('IGNORED','r') as f:ignored=set(f.read().split('\n'))
+            for mol in mols_todo[:]:
+                if mol.index in ignored:
+                    print mol, 'in IGNORE'
+                    mol.ignore=True
+                    mol.IsDiscarded = True
+                    mols_nodo.append(mol)
+                    mols_todo.remove(mol)
+        except IOError:pass
+
     return mols_todo, mols_nodo  #indicesfull are all the indices. 
 
 def constructor2(conf,core,active,passive, links=[]):
