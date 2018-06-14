@@ -21,6 +21,7 @@ import random as rrandom
 #from writings import log_io, sprint, print_title
 from CINDES.utils.writings import log_io, sprint, print_title
 from CINDES.utils.molecule import Molecule
+from CINDES.utils.table import set_table, get_property_table
 from CINDES import INDES
 from predictions import predictor
 from CINDES.predictor import learning_int as ml_i
@@ -103,7 +104,7 @@ class Fitness_Function():
 
         # STEP 2: PREDICTOR
         # perform prescreaning in a predictions.
-        property_table = INDES.procedures.get_property_table(self.table, self.run)
+        property_table = get_property_table(self.table, self.run)
         mols_nocal, mols_tocal, made_pred = predictor(
                 self.run,
                 property_table,
@@ -409,7 +410,7 @@ from CINDES.INDES import procedures
 
 def main(param, array):
     GArun = procedures.FrameRun(**param)
-    table = procedures.set_table(GArun, array)
+    table = set_table(GArun, array)
     #print "run object:\n", GArun
     final_genome = run_pyevolve(array, table, GArun)
     best = final_genome.bestIndividual()

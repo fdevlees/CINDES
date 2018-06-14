@@ -51,6 +51,7 @@ class BaseJob(object):
 
     def check_normal_termination(self):
         ''' checks if the job has ran correctly '''
+        pass
 
 
 

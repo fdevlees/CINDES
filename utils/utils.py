@@ -123,6 +123,13 @@ def run_once(f):
     wrapper.has_run = False
     return wrapper
 
+def is_float(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
 import os
 import sys
 import traceback

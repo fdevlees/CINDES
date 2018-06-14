@@ -49,7 +49,7 @@ def custom_redirection(fileobj):
 
 def invoke_script(calc, namespace, ID=0):
     if not isinstance(calc, dict): return
-    if not 'script' in calc: 
+    if not 'script' in calc:
         print "no script invocation"
         return
     print "in invoke script:):"
@@ -86,7 +86,7 @@ def runjobs(mols_tocal, myrun, i):
             for j,cal in enumerate(calc):
                 invoke_script(cal, locals(), (i+1)*100+(j+1))
                 function(calc=cal, *args, **kwargs)
-        else: 
+        else:
             invoke_script(calc, locals(), i+1)
             function(calc=calc, *args, **kwargs)
     # 0. filter off ignored molecules
@@ -315,39 +315,10 @@ def submission(mol_tocal,myrun):
         once = 2
         jobids = None
     else:
-        #MOST IMPORTANT PART
-        #if myrun.try_ready==1:
-        #    print "try_ready activated"
-        #    mol_tosubmit = try_ready_test(mol_tocal, myrun.__dict__)
-        #else: mol_tosubmit=mol_tocal
-        #jobids = submit_normal(mol_tosubmit, myrun) #In here is decided to run on shell or to really submit!
         jobids = submit_normal(mol_tocal, myrun) #In here is decided to run on shell or to really submit!
     logging.info("----- END all jobs are submitted ----------")
     if safe: time.sleep(15) # wait 15 seconds. to be sure that the jobs appear in the qstat command
     return jobids
-
-'''
-def try_ready_test(mol_tocal, fileparameters):
-    """ Jobtester 3 looks which files shouldn't be submitted anymore. These are removed from the indices list and this list is returned
-
-        - It tested if the .com.o123899 file already exists. Actually it should test if the logfile ends in normal termination.?
-        - Note that this function does return new indices and no jobids
-    """
-    #extension=fileparameters['extension']
-    #mol_submit = [ mol.copy() for mol in mol_tocal ] 
-    arrayjob=False
-    for mol in mol_tocal:
-        for job in mol.jobs:
-            if arrayjob:name=job.logpath
-            else:name=job.filepath[:-4] + '.o[0-9][0-9][0-9][0-9]*'
-            print "name=:", name
-            if glob.glob(name): # test A
-                print "already calculated:", name
-                mol.jobs.remove(job)
-        #if not mol.jobs: #so if it is an empty list
-        #    mol_submit.remove(mol)
-    return mol_tocal
-'''
 
 def submit_normal(mols_tocal, myrun):
     jobids = []
@@ -402,6 +373,7 @@ def jobtester(mols_tocal,myrun,jobids=[]):
     return
 
 def test_ready1(indices,myrun):
+    ''' test ready based on the presence of inputfile.o$$ file '''
     path = myrun.path
     fileparameters = myrun.__dict__
     tijdje = 0
@@ -462,8 +434,7 @@ def test_ready2(mols_tocal,myrun):
             print "qsta not working!"
             time.sleep(fileparameters['timestep'])
             continue
-        qsta_out = [ item.split() for item in subm.qsta().split('\n') ]
-        #states,jobs = zip(*[ (item[2],item[4]) for item in qsta_out if len(item)>4 ])
+        qsta_out = [ item.split() for item in qsta_raw.split('\n') ]
         states = []
         jobs = []
         for item in qsta_out:

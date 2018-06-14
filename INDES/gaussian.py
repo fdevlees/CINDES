@@ -125,23 +125,23 @@ def get_logpath(job):
     log = job.name + '.log'
     return log
 
+#-----
+def termination(filepath, raise_errors=True):
+    with open(filepath,'r') as fid:
+        text = fid.readlines()[-3:]
+        if re.search('Normal termination',''.join(text)):
+            ret=1
+        elif re.search('IGNORE',''.join(text)):
+            ret=2
+        elif re.search('open-new-file',''.join(text)):
+            ret=3
+        else:
+            ret=0
+    return ret
+#-----
+
 def normaltermination(job, debug=True, ignore=0):
-    import re
     import time
-    #-----
-    def termination(filepath, raise_errors=True):
-        with open(filepath,'r') as fid:
-            text = fid.readlines()[-3:]
-            if re.search('Normal termination',''.join(text)):
-                ret=1
-            elif re.search('IGNORE',''.join(text)):
-                ret=2
-            elif re.search('open-new-file',''.join(text)):
-                ret=3
-            else:
-                ret=0
-        return ret
-    #-----
     path=job.logpath
     once = 0
     errorpath=None
@@ -162,6 +162,8 @@ def normaltermination(job, debug=True, ignore=0):
             break
     else:
         raise e
+
+    # split here?
     extratime = 0
     once = 0
     timestep1 = 60

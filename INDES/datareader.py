@@ -111,6 +111,15 @@ def normaltermination(mols, **kwargs):
             mols_toread.append(mol)
     return mols_toread
 
+def normaltermination2(mols, **kwargs):
+    """ kwargs ignore / debug this new normal termination runs more parallel """
+    while True:
+        for mol in mols:
+            for job in mol.jobs:
+                program=import_program(job.calc['program'])
+
+    return mols_toread
+
 @log_io()
 def datareader( mols, run):
     # 1. test normal termination
