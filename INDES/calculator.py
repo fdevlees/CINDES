@@ -90,7 +90,7 @@ def runjobs(mols_tocal, myrun, i):
             invoke_script(calc, locals(), i+1)
             function(calc=calc, *args, **kwargs)
     # 0. filter off ignored molecules
-    mols_calc = filter(lambda x:not x.ignore, mols_tocal)
+    mols_calc = filter(lambda x:not x.ignoremol, mols_tocal)
 
     # 1. Make the jobs and add them to the molecules:
     #call(jobmaker, mols=mols_tocal, myrun=myrun, calc=calc)
@@ -117,7 +117,7 @@ def do_calcs(mols_tocal, myrun):
 
     # after every calculation is performed:
     for mol in mols_tocal:
-        if not mol.ignore: datareader.set_combined_variables(mol, myrun.props)
+        if not mol.ignoremol: datareader.set_combined_variables(mol, myrun.props)
     return mols_tocal
 
 # PROCEDURE
@@ -239,7 +239,7 @@ def jobmaker(mols,myrun, calc): #----- dict with info for filewriter has to pass
             if calc['fafoom']==1:
                 # only find the lowest conformer
                 molecule.xyz = fafoom_utils.GetLowestXYZ(molecule)
-                program.filewriter(molecule, calc) #--------------------------------------------HERE IS A FILEWRITER CALL
+                program.filewriter(molecule, calc)
             elif calc['fafoom']==2:
                 if not os.path.exists(calc['path'] + '/' + molecule.index): #path is $WORKDIR/data
                     os.makedirs(calc['path'] + '/' + molecule.index)
@@ -249,9 +249,9 @@ def jobmaker(mols,myrun, calc): #----- dict with info for filewriter has to pass
                 conformers = fafoom_utils.GetConformers(molecule)
                 for i, conformer in enumerate(conformers, 1): #enumerate starts at 1!
                     setattr(molecule, 'xyz{}'.format(i), conformer.GetProp('xyz'))
-                    program.filewriter(molecule, calc, i) #------------------------------HERE IS A FILEWRITER CALL
+                    program.filewriter(molecule, calc, i)
         else: # so single job
-            program.filewriter(molecule, calc) #------------------------------------------------HERE IS A FILEWRITER CALL
+            program.filewriter(molecule, calc)
     return
 
 def add_hydrogen(zmat, pos, ncore):
@@ -336,13 +336,9 @@ def submit_normal(mols_tocal, myrun):
                     continue
 
             # 2. submit part
-            if job.calc['nosub'] ==2:
-                time.sleep(1)
-                subm.nosubmit(job)
-                print '{} submitted'.format(job)
-            else:
-                jobid = subm.submit(job, myrun.script).strip()
-                jobids.append(jobid)
+            jobid = job.submit()
+            jobids.append(jobid)
+            time.sleep(1)
     return jobids
 
 # 3. testing
@@ -521,9 +517,8 @@ def set_target_properties(molecules, myrun):
         -Pvalue
         -boundaries
     '''
-    #print "I'm here: molecules:", molecules,
     for mol in molecules:
-        if mol.ignore:
+        if mol.ignoremol:
             print mol, 'ignored'
             if myrun.optimum=='maximum':mol.Pvalue=-float("inf")
             else: mol.Pvalue=float("inf")
@@ -540,23 +535,15 @@ def set_target_properties(molecules, myrun):
                 print "error mol:", mol
                 print "props:", mol.props
             mol.Pvalue = myrun.function(**kwargs)
-            #print "function value:", mol.Pvalue
         else:
-            #print "I'm here too:", mol.props
-            #print "myrun.property:", myrun.property
             mol.Pvalue = mol.props[ myrun.property ]
-            #print "myrun.Pvalue:", mol.Pvalue
 
         if myrun.bc:
             try:
-                #print "I'm here: myrun.bcprop", myrun.bcprop, "mol.props?:", mol.props
                 mol.boundaries = [ mol.props[bcp] for bcp in [myrun.bcprop] ]
             except KeyError as e:
                 print e
                 pass
-    #print "test json attributes:"
-    #for mol in molecules:
-    #    print mol.index, mol.boundaries, mol.Pvalue
     return
 
 

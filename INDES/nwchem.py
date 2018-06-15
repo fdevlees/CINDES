@@ -6,6 +6,7 @@ multiplicity = {1:'singlet', 2:'doublet', 3:'triplet', 4:'quartet'}
 from job import BaseJob
 class NWChemJob(BaseJob):
     extension=''
+    script='ID_NWChem'
     def write(self):
         pass
 
