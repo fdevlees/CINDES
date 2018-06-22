@@ -81,7 +81,7 @@ fseq= [ funcs[func] for func in seq ] #whahaha :)
 
 class Dataset(): #abstract data class
 
-    def extract(self,table=[],**kwargs):
+    def extract(self, table=None, **kwargs):
         #confs, data = self.readfile(cutoff=20.0)
         if table==[]:
             print "read table from tablebin"

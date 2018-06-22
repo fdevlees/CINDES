@@ -51,7 +51,7 @@ class BaseJob(object):
         try:
             if self.calc['nosub'] ==2:
                 time.sleep(1)
-                subm.nosubmit(self)
+                subm.nosubmit(self, self.cmd)
                 jobid = '0'
             else:
                 jobid = subm.submit(self, self.script).strip()
@@ -74,29 +74,56 @@ class BaseJob(object):
             try:
                 ret = self.termination(self.logpath)
             except IOError as e:
+                print "read error with:", self.logpath
                 time.sleep(10)
+                ret = 3
+                continue
             else:
                 break
-            finally:
-                if ret==3 and once==0:
-                    print "open-new-file submit-problem. trying to resubmit"
-                    import submitter
-                    submitter.submit(self)
-                elif not ret==1:
-                    print "Error termination:", self.logpath
-                    self.errortermination(debug)
-                else:
-                    self.IsReady=True
+
+        if ret==3:
+            print "open-new-file submit-problem. trying to resubmit"
+            self.submit()
+        elif not ret==1:
+            print "Error termination:", self.logpath
+            self.errortermination(debug)
         else:
-            raise e
+            self.IsReady=True
         return
 
-    def ready(self, ignore=0, **kwargs):
+    def ready(self, ignore=0, extratime=0, **kwargs):
         ''' if job had no normal termination, this function checks how to proceed:
             1. by a normal termination of the logfile
             2. by a normal termination of the errorlogfile (*zzz.log)
             3. by IGNORE statement
         '''
-        pass
+        # try a normal termination of errorpath
+        try:
+            ret = self.termination(self.logpath)
+        except IOError:
+            ret = 0
 
+        if self.errorpath:
+            try:
+                ret_zzz=self.termination(self.errorpath)
+            except IOError:ret_zzz=0
+        else: ret_zzz=0
+
+        if ret==1:
+            self.IsReady=True
+        elif ret==2:
+            print "\n{0}\n\t  IGNORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, self.logpath)
+            self.ignorejob=True
+            self.IsReady=True
+        elif self.errorpath and ret_zzz==1:
+            import shutil
+            shutil.copyfile(self.errorpath, self.logpath)
+            time.sleep(1)
+            print "*zzz.log file with normal termination copied back to original logfile."
+            pass # in the following iteration of while true the termination(path) should return 1
+        elif (not self.errorpath is None) and ignore and extratime>ignore:
+            self.ignorejob=True
+            self.IsReady=True
+            print "\n\n{0}\n    AUTOMATICALLY IGNORED after {2} seconds of waiting: {1}\n{0}\n".format("    --oOo--"*10, self.logpath, str(ignore))
+        return
 

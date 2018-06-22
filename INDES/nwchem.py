@@ -1,14 +1,87 @@
 #!/bin/env python
 ''' this module contains all functions related to the NWChem program '''
 import re
+import time
 multiplicity = {1:'singlet', 2:'doublet', 3:'triplet', 4:'quartet'}
 
 from job import BaseJob
 class NWChemJob(BaseJob):
     extension=''
     script='ID_NWChem'
+    cmd='nwchem'
     def write(self):
         pass
+    #-----
+    def termination(self, logpath):
+        with open(logpath,'r') as fid:
+            text = fid.readlines()[-4:]
+            if re.search('Zhang',''.join(text)):
+                fid.close()
+                return 1
+            elif re.search('IGNORE',''.join(text)):
+                fid.close()
+                return 2
+            else:
+                return 3
+    #-----
+
+    def errortermination(self, debug=False):
+        from CINDES.cclib.parser.nwchemparser import NWChem
+        mymol = NWChem(self.logpath).parse()
+        from CINDES.utils import utils
+        t=utils.PeriodicTable()
+
+        if hasattr(mymol,'atomcoords'):
+            coords = map(list, mymol.atomcoords[-1])
+            #print coords
+            for sym,xyz in zip(mymol.atomnos,coords):
+                xyz.insert(0,t.element[sym])
+            print "atomcoords and added elements:"
+            for item in mymol.atomcoords[-1]:
+                print ' '.join(map(str,item))
+            if debug==True:
+                import submitter
+                if hasattr(mymol,'optdone'):
+                    if mymol.optdone==False:
+                        print "Optimizations not converged!"
+                    elif mymol.optdone==True:
+                        print "Optimization is converged!"
+                fid = open(self.filepath,'r') #change .log in .com extension and read input file
+                multcharge = re.compile(' zmatrix') #a regex for the mult charge line
+                newfile=[]
+                once=0 #only find that line once
+                for line in fid: #copy file exept for the zmat found in the inputfile
+                    if multcharge.match(line) and once==0: #when found 
+                        print "match!"
+                        once+=1
+                        while True:
+                            line= next(fid) #take al new lines
+                            if line==' end\n': #end of zmat
+                                #now instead of this zmat that is now completely skipped place in newfile
+                                #the last coordinates of the crashed run
+                                coords = filter(lambda x:not x[0] is None, coords)
+                                xyz_f = [ " " + item[0] + ' '.join( map( "{:12.6f}".format, item[1:])) + '\n' for item in coords ]
+                                print xyz_f
+                                newfile.extend(xyz_f)
+                                break
+                    else:
+                        newfile.append(line) #copy that line because it is not the zmat found in the inputfile
+                print "="*20
+                newfilepath = "{}/{}zzz".format(self.path, self.name)
+                open(newfilepath, 'w').writelines(newfile)
+                print "newfile written in: ", newfilepath
+                errorjob = NWChemJob(newfilepath, self.calc)
+                errorjob.submit()
+                self.errorpath = "{}.log".format(newfilepath)
+                return newfilepath
+        else:
+            print "has no coords in file"
+            return False
+
+
+
+
+
 
 def write_geom(mol, fid, geom=None):
     # set attributes:
@@ -133,7 +206,7 @@ def filewriter(mol, calc, pos=None):
     fid.write("memory 1500 mb\n")
     fid.write("title \"{filename}\"\n".format(filename=filename))
     # here the zmat
-    writegeom(mol, fid, geom)
+    write_geom(mol, fid, geom)
     write_subjob(fid, job1)
 
     # THE OTHER JOBS
@@ -158,121 +231,6 @@ def get_molpaths(mol, fileparameters):
         log=get_logpath(job)
         paths.append(log)
     return paths
-
-def get_logpath(job):
-    return job.name + '.log'
-
-def normaltermination(job, debug=True, ignore=0):
-    import re
-    import time
-    #-----
-    def termination(filepath):
-       with open(filepath,'r') as fid:
-           text = fid.readlines()[-4:]
-           if re.search('Zhang',''.join(text)):
-               fid.close()
-               return 1
-           elif re.search('IGNORE',''.join(text)):
-               fid.close()
-               return 2
-    #-----
-    path=job.logpath
-    errorpath=None
-    try:
-        if not termination(path)==1:
-            print "Error termination:",path
-            errorpath = errortermination(path, fileparameters)
-    except IOError as e:
-        pass
-
-    extratime = 0
-    once = 0
-
-    ignoremol=False
-    while True:
-        if termination(path)==1:
-            break
-        elif termination(path)==2:
-            print "\n\n{0}\n\tIGNORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, path)
-            ignoremol=True
-            break
-        else:
-            print "no normal termination for: ",path
-        #time.sleep(300) # wait 5 minudtes
-        time.sleep(300) # wait 5 minudtes
-        extratime += 300
-        print "extra waittime/h:", extratime/3600, "||",
-
-    return ignoremol
-
-def errortermination(path, debug=False):
-    import re
-    import time
-
-    from CINDES.cclib.parser.nwchemparser import NWChem
-    mymol = NWChem(path).parse()
-    from CINDES.utils import utils
-    t=utils.PeriodicTable()
-
-    if hasattr(mymol,'atomcoords'):
-        coords = map(list, mymol.atomcoords[-1])
-        #print coords
-        for sym,xyz in zip(mymol.atomnos,coords):
-            xyz.insert(0,t.element[sym])
-        print "atomcoords and added elements:"
-        for item in mymol.atomcoords[-1]:
-            print ' '.join(map(str,item))
-        if fileparameters['debug']==True:
-            import submitter
-            if hasattr(mymol,'optdone'):
-                if mymol.optdone==False:
-                    print "Optimizations not converged!"
-                elif mymol.optdone==True:
-                    print "Optimization is converged!"
-            fid = open(path[:-4],'r') #change .log in .com extension and read input file
-            multcharge = re.compile(' zmatrix') #a regex for the mult charge line
-            newfile=[]
-            once=0 #only find that line once
-            for line in fid: #copy file exept for the zmat found in the inputfile
-                if multcharge.match(line) and once==0: #when found 
-                    print "match!"
-                    once+=1
-                    #newfile.append(line) #the line with the match itself has to be included in the newfile
-                    while True:
-                        line= next(fid) #take al new lines
-                        if line==' end\n': #end of zmat
-                            #now instead of this zmat that is now completely skipped place in newfile
-                            #the last coordinates of the crashed run
-                            #newfile.extend([' '.join( map("{12.6f}".format, item))+'\n' for item in mymol.atomcoords[-1]])
-                            #xyz = mymol.atomcoords[-1]
-                            print "coords:", coords
-                            # filter 'X':
-                            coords = filter(lambda x:not x[0] is None, coords)
-                            xyz_f = [ " " + item[0] + ' '.join( map( "{:12.6f}".format, item[1:])) + '\n' for item in coords ]
-                            #xyz_f = [ item[0] + ' '.join(
-                            #                              map(
-                            #                                   str, item[1:]
-                            #                                 )
-                            #                            ) + '\n' for item in xyz ]
-                            print xyz_f
-                            newfile.extend(xyz_f)
-                            break
-                else:
-                    newfile.append(line) #copy that line because it is not the zmat found in the inputfile
-            print "="*20
-            filename=path[:-4]+'zzz'
-            open(filename,'w').writelines(newfile)
-            print "newfile written in: ", filename
-            errorjob = NWChemJob(filename)
-
-            submitter.submit(errorjob, script='ID_NWChem')
-            return filename
-    else:
-        print "has no coords in file"
-        return False
-
-
-
 
 
 

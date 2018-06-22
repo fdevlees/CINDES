@@ -343,7 +343,7 @@ def submit_normal(mols_tocal, myrun):
 
 # 3. testing
 @log_io(signator='=')
-def jobtester(mols_tocal,myrun,jobids=[]):
+def jobtester(mols_tocal,myrun,jobids=None):
     """ this tester tests if the jobs are ready by looking for a file <name><.extension>.o<6digits>.
 
         - even if try_ready is activated all indices are used. And the already ready ones are immediately recognized as ready. 
@@ -351,6 +351,7 @@ def jobtester(mols_tocal,myrun,jobids=[]):
         - note that jobids are not used!
         - function returns nothing but returns when all jobs are ready! this function therefore can take very long!
     """
+    if jobids is None: jobids=[] # this to avoid the mutable default gotcha
     if myrun.nosub==2 or len(mols_tocal)==0:
         print "Job tester skipped because jobs are evaluated on login node or no jobs to be calculated"
         return
@@ -459,7 +460,8 @@ def test_ready2(mols_tocal,myrun):
                             completedjobs.append(job)
                     if debug:
                         print "found a job: ", state, job, filetje
-        print "there are still %d jobs in queue and %d jobs are ready | waittime=%f uur" % (count, njobs-count,float(tijdje)/3600.)
+        t = "{:.2f}".format(round(tijdje/3600.),2)
+        print "njobs -running: {:d} -ready: {:d} | waittime={} hrs".format(count, njobs-count, t)
         if count==0: #so no jobs anymore in queue
             break
         time.sleep(fileparameters['timestep'])

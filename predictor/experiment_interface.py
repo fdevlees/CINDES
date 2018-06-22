@@ -23,8 +23,8 @@ class Experiment(object):
     def __init__(self,
                  run=None,
                  name='default_estimator',
-                 table=[],
-                 array=[],
+                 table=None,
+                 array=None,
                  n_folds=5,
                  retrain=False,
                  getR = False,
@@ -32,7 +32,7 @@ class Experiment(object):
                  multiple = False,
                  descriptor='BoB',
                  weights= False,
-                 plots=[],
+                 plots=(),
                  **kwargs):
         """
         Initialize experiment by reading/constructing data.

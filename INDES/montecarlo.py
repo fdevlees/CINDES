@@ -9,7 +9,7 @@ import random
 from math import exp #exp(x) returns e^x
 #from operator import mul
 
-def randomconf(subarray, maxconf=[], nrandsites=0):
+def randomconf(subarray, maxconf=tuple(), nrandsites=0):
     '''this function makes a random configuration. choosing one sub for each site '''
     # version 20/01/2016
 

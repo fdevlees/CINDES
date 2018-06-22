@@ -285,8 +285,8 @@ def readfile(subinp):
             if paras['nosub']==3: raise SyntaxError('this functionality is renamed to: secret_file <filename>')
             continue
         elif 'secret_file' in line:
-            paras['secret_file'] = splitted[2]
-            logging.info( "nosub3. external file is used for data!: " + paras['nosub_file'])
+            paras['secret_file'] = splitted[1]
+            logging.info( "nosub3. external file is used for data!: " + paras['secret_file'])
             continue
         elif 'END' in line: break
 

@@ -63,7 +63,8 @@ def normaltermination(mols, **kwargs):
             job.normaltermination(**kwargs)
             if not job.IsReady:
                 notready += "{}.{}: {}\n".format(i,j, job.name)
-    print "jobs not ready:\n", notready
+    if notready:
+        print "jobs not ready:\n", notready
 
     # 2. test normal termination and errorjob are ready or molecule is ignored
     extratime = 0
@@ -78,7 +79,7 @@ def normaltermination(mols, **kwargs):
                 if job.IsReady or job.ignorejob: continue
                 else:
                     print "{}.{}".format(i,j),
-                job.ready(**kwargs)
+                job.ready(extratime=extratime, **kwargs)
                 if job.ignorejob: mol.discard()
 
             if all(job.IsReady for job in mol.jobs):

@@ -6,6 +6,7 @@ from job import BaseJob
 class GaussianJob(BaseJob):
     extension='.log'
     script='ID_gauss'
+    cmd = 'g09'
 
     def write(self):
         ''' overwrites the standard BaseJob write method '''
@@ -28,33 +29,6 @@ class GaussianJob(BaseJob):
                 ret=0
         return ret
     #-----
-
-    def ready(self, ignore=0, **kwargs):
-        # try a normal termination of errorpath
-        ret = self.termination(self.logpath)
-
-        if self.errorpath:
-            try:ret_zzz=self.termination(self.errorpath)
-            except IOError:ret_zzz=0
-        else: ret_zzz=0
-
-        if ret==1:
-            self.IsReady=True
-        elif ret==2:
-            print "\n{0}\n\t  IGNORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, self.logpath)
-            self.ignorejob=True
-            self.IsReady=True
-        elif (not self.errorpath is None) and ret_zzz==1:
-            import shutil
-            shutil.copyfile(self.errorpath, self.logpath)
-            time.sleep(1)
-            print "*zzz.log file with normal termination copied back to original logfile."
-            pass # in the following iteration of while true the termination(path) should return 1
-        elif (not self.errorpath is None) and ignore and extratime>ignore:
-            self.ignorejob=True
-            self.IsReady=True
-            print "\n\n{0}\n    AUTOMATICALLY IGNORED after {2} seconds of waiting: {1}\n{0}\n".format("    --oOo--"*10, self.logpath, str(ignore))
-        return
 
     def errortermination(self, debug=False):
         import time
@@ -102,7 +76,7 @@ class GaussianJob(BaseJob):
                 errorjob = GaussianJob(newfilepath, self.calc)
 
                 errorjob.submit()
-                self.errorpath = newfilepath
+                self.errorpath = "{}/{}zzz.log".format(self.path, self.name)
                 return True
         else:
             return False

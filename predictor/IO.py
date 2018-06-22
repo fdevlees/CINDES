@@ -10,7 +10,7 @@ import pickle
 from copy import deepcopy
 from descriptor import get_X_1D, get_X_int
 
-def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='x_', array=[], **kwargs):
+def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='x_', array=None, **kwargs):
     ''' calculte X and y '''
     def get_y(table, tableindex):
         y =  np.fromiter((item[tableindex] for item in table ),np.float)
@@ -36,7 +36,7 @@ def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='x_', array
 
     return X,y
 
-def get_X(indices, descriptor='BoB',array=[], identify='x_', **TZmat):
+def get_X(indices, descriptor='BoB',array=None, identify='x_', **TZmat):
     if TZmat:
         if descriptor=='BoB':
             X = get_X_BoB(indices=indices, **TZmat )

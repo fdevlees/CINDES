@@ -21,7 +21,7 @@ debug=0
 
 try:
     pass
-    #import pybel
+    import pybel
 except:
     print "pybel not installed"
 
