@@ -29,12 +29,12 @@ from CINDES.INDES import construction as zcon
 class MachineLearning(object):
     ''' Class for making training set / kernel / coulomb / predictions etc. '''
     def __init__(self,
-                 converter, 
+                 converter,
                  type='normal',
                  kerneltype='laplacian',
-                 table=[],
-                 sigma = 1e8, 
-                 labda = 1e-5, 
+                 table=None,
+                 sigma = 1e8,
+                 labda = 1e-5,
                  inputfile = 'table.xyz',
                  **kwargs):
         self.type = type
@@ -44,7 +44,7 @@ class MachineLearning(object):
         self.labda = labda
         self.inputfile = inputfile
         print_title("As a kernel: "+kerneltype+" is used",outline='l',signator='k',newlines=True)
-        if table==[]:
+        if table is None:
             self.get_input(self.converter)
         else:
             self.setXY(table, **kwargs)
@@ -848,8 +848,8 @@ def generate_xyz(indices,converter,outputfile='table.xyz',y=0,*args,**kwargs):
             # now for each mat transform to xyz
     return
 
-def generate1(converter,table=[],**kwargs):
-    if table==[]:
+def generate1(converter, table=None, **kwargs):
+    if table is None:
         with open('tablebin','rb') as f:
             table = pickle.load(f)
 
@@ -889,7 +889,7 @@ def machinelearning3(*args,**kwargs):
     return result
 
 @log_io()
-def machinelearning2(indices=[],table=[],sigma=1e5, labda= 1e-5, printlevel=1,**kwargs):
+def machinelearning2(indices=None, table=None, sigma=1e5, labda= 1e-5, printlevel=1,**kwargs):
     ''' or this function will be called by CINDES'''
     #from converter import Converter
     from CINDES.utils.converter import Converter
@@ -919,7 +919,7 @@ def machinelearning2(indices=[],table=[],sigma=1e5, labda= 1e-5, printlevel=1,**
     return new_y
 
 @log_io()
-def normal_machinelearning(indices=[], table=[], sigma=1e6, labda= 1e-6, printlevel=1, **kwargs):
+def normal_machinelearning(indices=None, table=None, sigma=1e6, labda= 1e-6, printlevel=1, **kwargs):
     ''' function to do ML without sklearn '''
     from CINDES.utils.converter import Converter
     #from converter import Converter
@@ -957,7 +957,7 @@ def normal_machinelearning(indices=[], table=[], sigma=1e6, labda= 1e-6, printle
 ############### COPY of for call as __main__ ######
 
 @log_io()
-def ANN(indices=[],table=[],sigma=1e4, labda= 1., printlevel=1,fraction=0.5, kernel='gaussian', descriptor='norm4', **kwargs):
+def ANN(indices=None, table=None, sigma=1e4, labda= 1., printlevel=1,fraction=0.5, kernel='gaussian', descriptor='norm4', **kwargs):
     ''' or this function will be called by CINDES'''
     #from converter import Converter
     from CINDES.utils.converter import Converter
@@ -975,7 +975,7 @@ def ANN(indices=[],table=[],sigma=1e4, labda= 1., printlevel=1,fraction=0.5, ker
 
 
 @log_io()
-def Amachinelearning2(indices=[],table=[],sigma=1e4, labda= 1., printlevel=1,fraction=0.5, kernel='gaussian', descriptor='norm4', args = None, **kwargs):
+def Amachinelearning2(indices=None, table=None, sigma=1e4, labda= 1., printlevel=1,fraction=0.5, kernel='gaussian', descriptor='norm4', args = None, **kwargs):
     ''' or this function will be called by CINDES'''
     #from converter import Converter
     globals()['args'] = args

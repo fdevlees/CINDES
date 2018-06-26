@@ -1,11 +1,145 @@
 #!/bin/env python
 import sys
 import pickle
+import json
 from pprint import pprint
+
+def get_property_table(table, myrun):
+    '''set a dict with {'index1':prop1, etc. } to use for montecarlo and prediction making '''
+    db=dict()
+    for key,value in table.iteritems():
+        if myrun.property=='func':
+            kwargs = { prop:value[prop] for prop in myrun.func_args }
+            Pvalue = myrun.function(**kwargs)
+            db[key]=Pvalue
+        else:
+            Pvalue = value[ myrun.property ]
+            db[key]=Pvalue
+    return db
+
+# 4 table (database)
+def set_table(myrun, array=[]):
+    '''this function loads molecules from a given database it uses a few runattributes:
+        - tablename (str)
+        - restart (int)
+        - props (set)
+
+    '''
+    #------- enclosed function 1
+    def try_oldstyle(tablename):
+        import pickle
+        print tablename
+        with open(tablename,'rb') as f:
+            pickle_db = pickle.load(f)
+        print "pickled table is loaded"
+        print "pickle_db:", pickle_db
+        json_db = dict()
+        #tableprops=['mw','solv', 'e0_solv', 'e1_solv', 'lumo', 'solv']
+        #tableprops=['omega']
+        tableprops=['stab']
+        tableprops=['gap', 'homo', 'lumo', 'E0' ]
+        for item in pickle_db:
+            key=item[0]
+            value={prop:prop_value for prop,prop_value in zip(tableprops,item[1:])}
+            json_db[key]=value
+        print "an old_style formatted tablefile was loaded with props:", tableprops
+        # touch new json file
+        with open('{}.json'.format(tablename),'w') as f2:
+            json.dump(json_db, f2, indent=-1)
+        raise SystemExit('stop')
+        return json_db
+    #-------- enclosed function 2:
+    def adjust_dihedrals(table, array):
+        # 1. create a dictionary for each site that maps the group to group-dihedral
+        #print "array:", array
+        specific_dihedrals=[{} for _ in array]
+        for groupssite, groupsdihedrals in zip(array, specific_dihedrals):
+            for group in groupssite:
+                if is_float(group[-1]):
+                    dgroup=''.join(group)
+                    group=''.join(group[:-1])
+                    groupsdihedrals[group]=dgroup
+        print "specificdihedrals:", specific_dihedrals
+        ###
+        # 2. convert each index in table to the correct dihedral 
+        print table.keys()[:20]
+        new_table={}
+        for key in table:
+            conf = key.split('_')
+            new_conf=[]
+            for group, groupsdihedrals in zip(conf, specific_dihedrals):
+                # 1. remove any dihedrals from group
+                try:
+                    group=group.translate(None, '0123456789')
+                except TypeError:
+                    group=group.translate({ord(ch): None for ch in '0123456789'})
+                dgroup=groupsdihedrals.get(group,group)
+                new_conf.append(dgroup)
+            new_key='_'.join(new_conf)
+            new_table[new_key]=table[key]
+        print new_table.keys()[:20]
+        #raise SystemExit
+        return new_table
+
+    #-------- enclosed function 3
+    def remove_dihedrals(table):
+        # convert each index in table to the correct dihedral 
+        new_table={}
+        i=0
+        for key in table:
+            conf = key.split('_')
+            new_conf=[]
+            for group in conf:
+                # 1. remove any dihedrals from group
+                try:
+                    group=group.translate(None, '0123456789')
+                except TypeError:
+                    group=group.translate({ord(ch): None for ch in '0123456789'})
+                new_conf.append(group)
+            new_key='_'.join(new_conf)
+            new_table[new_key]=table[key]
+        return new_table
+    # -------
+    print "------------"
+    # try if tablename is given
+    try:
+        tablename = myrun.tablename
+    except AttributeError:
+        tablename = 'table.json'
+    # look if extension is used otherwise set it automatically
+    if not tablename[-5:]=='.json': tablename='{}.json'.format(tablename)
+
+    if myrun.restart>0:
+        # look if tablename is given in INPUT otherwise default
+        try:
+            with open(tablename,'rb') as f:
+                db = json.load(f)
+        except (IOError,ValueError):
+            print "no json table"
+            print "try to load as pickle {}".format(tablename[:-5])
+            try:
+                db = try_oldstyle(tablename[:-5])
+            except IOError:
+                print "also no correct pickled table"
+                raise
+        print "loaded json database with {} molecules".format(len(db))
+        # myrun.props has to be a subset of value.viewkeys(): set operations <= means "is subset of"
+        table = { key:value for key,value in db.iteritems() if myrun.props <= value.viewkeys() }
+        print "made a table with {} molecules that have the required properties".format(len(table))
+
+        # should the function value be included in the table? otherwise here is the place ;)
+        if myrun.adjust_dihedrals:
+            table = adjust_dihedrals(table, array)
+        else:
+            table = remove_dihedrals(table)
+
+    else:
+        table = dict()
+        open(tablename,'wb').close()
+    return table
 
 class args:
     column=3
-
 
 class Tablebin(object):
     ''' class for tablebin binary pickled data files '''

@@ -115,12 +115,12 @@ def matrixmerger2(core,active,passive):
     #return totalmat
     return core
 
-def get_configurations(startconf,array,k, run=[]):
+def get_configurations(startconf,array,k, run=None):
     'select on site k all the configurations with the different functionalizations for that site present in array'
     configurations =  [ startconf[0:k] + [array[k][i]] + startconf[k+1:] for i in range(len(array[k]))]
     return configurations
 
-def classmaker2(startconf,array,k,table,run=[]):
+def classmaker2(startconf,array,k,table,run=None):
     '''checks for confs already calculated'''
     confs = get_configurations(startconf,array,k,run=run)
 
@@ -131,7 +131,7 @@ def classmaker2(startconf,array,k,table,run=[]):
     # set here (*mols_nodo).Pvalue
     return mols_todo, mols_nodo  #indicesfull are all the indices. 
 
-def classmaker2_SD(startconf,array,table,run=[]):
+def classmaker2_SD(startconf,array,table,run=None):
     '''checks for confs already calculated'''
     print "IN CLASSMAKER", type(run)
     from CINDES.utils.molecule import Molecule, Population
@@ -183,7 +183,7 @@ def check_in_table(individuals, table, props=set(), check_ignored=False):
 
     return mols_todo, mols_nodo  #indicesfull are all the indices. 
 
-def constructor2(conf,core,active,passive, links=[]):
+def constructor2(conf,core,active,passive, links=None):
     ''' This is the main constructor of the zmatrix for a given configuration using
     the core, active and passive zmatrices. Also symmetry links can be given
 

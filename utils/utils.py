@@ -123,12 +123,57 @@ def run_once(f):
     wrapper.has_run = False
     return wrapper
 
+def is_float(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+class prettyfloat(float):
+    def __repr__(self):
+        return "%-0.4f" % self
+
+def round_sig( x, sig=8):
+    from math import log10, floor
+    try:
+        return round(x, sig-int(floor(log10(abs(x))))-1)
+    except ValueError:
+        if not x==0.0: print "ValueError:", x
+        return x
+
+def rm_duplicates(seq, nsig=8):
+    seen = set()
+    seen_add = seen.add
+    new_seq = []
+    if True: # try to round to numerical precision errors:
+        print "    the sequence(scfenergies?) is rounded to max 10 significant digits"
+        seq = [ round_sig( item, sig=10 ) for item in seq ]
+    for x in seq:
+        if x in seen:
+            print "    multiples found in sequence. name probably scfenergies! | value: ", x
+        else:
+            new_seq.append(x)
+            seen_add(x)
+    return new_seq
+
+def import_program(program_name):
+    if program_name=='gaussian':
+        import gaussian as program
+    elif program_name=='orca':
+        import orca as program
+    elif program_name=='nwchem':
+        import nwchem as program
+    else:
+        print "program_name:", program_name
+        raise SystemExit('not implemented')
+    return program
+
 import os
 import sys
 import traceback
 from functools import wraps
 from multiprocessing import Process, Queue
-
 
 def processify(func):
     '''Decorator to run a function as a process.

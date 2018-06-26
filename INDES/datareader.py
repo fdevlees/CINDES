@@ -11,44 +11,13 @@ import construction
 
 corresp = {2:46,6:18,7:42,9:34,11:22,12:30}
 
-def round_sig( x, sig=8):
-    from math import log10, floor
-    try:
-        return round(x, sig-int(floor(log10(abs(x))))-1)
-    except ValueError:
-        if not x==0.0: print "ValueError:", x
-        return x
-
-def rm_duplicates(seq, nsig=8):
-    seen = set()
-    seen_add = seen.add
-    new_seq = []
-    if True: # try to round to numerical precision errors:
-        print "    the sequence(scfenergies?) is rounded to max 10 significant digits"
-        seq = [ round_sig( item, sig=10 ) for item in seq ]
-    for x in seq:
-        if x in seen:
-            print "    multiples found in sequence. name probably scfenergies! | value: ", x
-        else:
-            new_seq.append(x)
-            seen_add(x)
-    return new_seq
-
-class prettyfloat(float):
-    def __repr__(self):
-        return "%-0.4f" % self
-
 def setEAHs(molecule):
     EAHs=dict()
     Npos=[] #positions with a nitrogen in here
-    #print "props:", molecule.props
     for job in molecule.jobs:
         if hasattr(job, 'pos'):
-            #print "job:", job
             EAHs[job.pos]={'eAH':molecule.props.pop('eAH_P{}'.format(str(job.pos))), 'N':job.N}
     if EAHs:
-        #print "EAHs:"
-        #pprint(EAHs)
         molecule.props['EAHs']=EAHs
     return
 
@@ -84,31 +53,50 @@ def calculate_stab(results, molecule):
     results['stab'] = stab
     return results
 
-def import_program(program_name):
-    if program_name=='gaussian':
-        import gaussian as program
-    elif program_name=='orca':
-        import orca as program
-    elif program_name=='nwchem':
-        import nwchem as program
-    else:
-        print "program_name:", program_name
-        raise SystemExit('not implemented')
-    return program
 
 def normaltermination(mols, **kwargs):
-    """ kwargs can be either ignore / or debug """
-    mols_toread=[]
-    for mol in mols:
-        for job in mol.jobs:
-            program=import_program(job.calc['program'])
-            ignoremol = program.normaltermination(job, **kwargs) #i.e. some can be ignored
-            if ignoremol:
-                mol.ignore=True #not necessary statement anymore
-                mol.discard()
-                break
-        else:
-            mols_toread.append(mol)
+    """ kwargs ignore / debug this new normal termination runs more parallel """
+    # 1. test normal termination and submit errorjob
+    notready=''
+    for i, mol in enumerate(mols):
+        for j, job in enumerate(mol.jobs):
+            job.normaltermination(**kwargs)
+            if not job.IsReady:
+                notready += "{}.{}: {}\n".format(i,j, job.name)
+    if notready:
+        print "jobs not ready:\n", notready
+
+    # 2. test normal termination and errorjob are ready or molecule is ignored
+    extratime = 0
+    timestep1 = 10
+    timestep2 = 300
+    while True:
+        # CHECK READY:
+        print "not ready:",
+        for i, mol in enumerate(mols):
+            if mol.ignoremol or mol.IsReady: continue
+            for j, job in enumerate(mol.jobs):
+                if job.IsReady or job.ignorejob: continue
+                else:
+                    print "{}.{}".format(i,j),
+                job.ready(extratime=extratime, **kwargs)
+                if job.ignorejob: mol.discard()
+
+            if all(job.IsReady for job in mol.jobs):
+                mol.IsReady=True
+        print
+        if all(mol.IsReady for mol in mols):
+            break
+
+        # WAIT:
+        time.sleep(timestep1) # wait 5 minudtes
+        extratime += timestep1
+        # after some time use larger timesteps
+        if extratime>=timestep2:timestep1=timestep2
+        print "extra waittime/h:", "{:.2f}".format(round(extratime/3600.,2)), "||",
+
+    # 3. return mols that are not ignored:
+    mols_toread = filter(lambda mol:not mol.ignoremol, mols)
     return mols_toread
 
 @log_io()
@@ -137,7 +125,6 @@ def datareader( mols, run):
 def read_file(Job):
     # 1. look to which calc the logfile belongs when there were simultaneous calculations:
     program=Job.calc['program']
-    program_mod=import_program(program)
     jobs=Job.calc['jobs']
     filename=Job.logpath
 
@@ -164,7 +151,7 @@ def read_file(Job):
         jobslines = splitted[1:-1]
     else:
         raise SystemExit('not implemented')
-    print "njobs:", len(jobslines), 
+    print "njobs:", len(jobslines),
     if len(jobslines)==0:
         print "no jobs in logfile!"
         raise SystemExit('should not occur here')

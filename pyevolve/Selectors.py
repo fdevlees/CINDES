@@ -138,6 +138,7 @@ def GRouletteWheel(population, **args):
           else: lower = i+1
       except IndexError:
           #print "IndexError in GRouletteWheel. psum:",psum, "i:", i
+          pass
           
 
    lower = min(len(population)-1, lower)

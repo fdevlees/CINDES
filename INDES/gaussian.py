@@ -5,11 +5,82 @@ from job import BaseJob
 
 class GaussianJob(BaseJob):
     extension='.log'
+    script='ID_gauss'
+    cmd = 'g09'
+
     def write(self):
         ''' overwrites the standard BaseJob write method '''
         pass
+
     def getlog(self):
         return self.name + '.log'
+
+    #----- might as well be a static method
+    def termination(self, logpath, raise_errors=True):
+        with open(logpath, 'r') as fid:
+            text = fid.readlines()[-3:]
+            if re.search('Normal termination',''.join(text)):
+                ret=1
+            elif re.search('IGNORE',''.join(text)):
+                ret=2
+            elif re.search('open-new-file',''.join(text)):
+                ret=3
+            else:
+                ret=0
+        return ret
+    #-----
+
+    def errortermination(self, debug=False):
+        import time
+        from CINDES.cclib.parser.gaussianparser import Gaussian
+        mymol = Gaussian(self.logpath).parse()
+        from CINDES.utils import utils
+        t=utils.PeriodicTable()
+        if hasattr(mymol,'atomcoords'):
+            coords = map(list, mymol.atomcoords[-1])
+            #print coords
+            for sym,xyz in zip(mymol.atomnos,coords):
+                xyz.insert(0,t.element[sym])
+            print "atomcoords and added elements:"
+            #for item in mymol.atomcoords[-1]:
+            #    print ' '.join(map(str,item))
+            if debug==True:
+                if hasattr(mymol,'optdone'):
+                    if mymol.optdone==False:
+                        print "Optimizations not converged!"
+                    elif mymol.optdone==True:
+                        print "Optimization is converged!"
+                fid = open(self.filepath, 'r') #change .log in .com extension and read input file
+                multcharge = re.compile('^\-?[01]\s[12]') #a regex for the mult charge line
+                newfile=[]
+                once=0 #only find that line once
+                for line in fid: #copy file exept for the zmat found in the inputfile
+                    if multcharge.match(line) and once==0: #when found 
+                        once+=1
+                        newfile.append(line) #the line with the match itself has to be included in the newfile
+                        while True:
+                            line= next(fid) #take al new lines
+                            if line=='\n': #end of zmat
+                                #now instead of this zmat that is now completely skipped place in newfile
+                                #the last coordinates of the crashed run
+                                xyz_f = [ item[0] + ' '.join( map( "{:12.6f}".format, item[1:])) + '\n' for item in coords ]
+                                newfile.extend(xyz_f)
+                                newfile.extend(['\n'])
+                                break
+                    else:
+                        newfile.append(line) #copy that line because it is not the zmat found in the inputfile
+                print "="*20
+                newfilepath = "{}/{}zzz.com".format(self.path, self.name)
+                open(newfilepath, 'w').writelines(newfile)
+                print "newfile written in: ", newfilepath
+                errorjob = GaussianJob(newfilepath, self.calc)
+
+                errorjob.submit()
+                self.errorpath = "{}/{}zzz.log".format(self.path, self.name)
+                return True
+        else:
+            return False
+
 
 def writegeom(mol, fid, geom=None):
     # set attributes
@@ -107,7 +178,7 @@ def filewriter(mol, calc, pos=None):
     return Job
 
 def get_paths(mols):
-    ''' get all paths that need to be examined later 
+    ''' get all paths that need to be examined later
     this could be a population method '''
     files=[]
     for molecule in mols:
@@ -124,155 +195,4 @@ def get_molpaths(mol):
 def get_logpath(job):
     log = job.name + '.log'
     return log
-
-def normaltermination(job, debug=True, ignore=0):
-    import re
-    import time
-    #-----
-    def termination(filepath, raise_errors=True):
-        with open(filepath,'r') as fid:
-            text = fid.readlines()[-3:]
-            if re.search('Normal termination',''.join(text)):
-                ret=1
-            elif re.search('IGNORE',''.join(text)):
-                ret=2
-            elif re.search('open-new-file',''.join(text)):
-                ret=3
-            else:
-                ret=0
-        return ret
-    #-----
-    path=job.logpath
-    once = 0
-    errorpath=None
-    for attempt in range(3):
-        try:
-            ret = termination(path)
-            if ret==3 and once==0:
-                print "open-new-file submit-problem. trying to resubmit"
-                once=1
-                import submitter
-                submitter.submit(job)
-            elif not ret==1:
-                print "Error termination:",path
-                errorpath=errortermination(path,debug)
-        except IOError as e:
-            time.sleep(10)
-        else:
-            break
-    else:
-        raise e
-    extratime = 0
-    once = 0
-    timestep1 = 60
-    timestep2 = 300
-    ignoremol=False
-    #for path in molpaths: #test one by one waiting for normal termination
-    while True:
-        # try a normal termination of errorpath
-        if errorpath:
-            try:ret_zzz=termination(errorpath)
-            except IOError:ret_zzz=0
-        else: ret_zzz=0
-        if termination(path)==1:
-            break
-        elif termination(path)==2:
-            print "\n{0}\n\t  IGNORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, path)
-            ignoremol=True
-            break
-        elif (not errorpath is None) and ret_zzz==1 and True:
-            import shutil
-            shutil.copyfile(errorpath, path)
-            time.sleep(1)
-            print "*zzz.log file with normal termination copied back to original logfile."
-            continue # in the following iteration of while true the termination(path) should return 1
-        elif (not errorpath is None) and ignore and extratime>ignore:
-            ignoremol=True
-            print "\n\n{0}\n    AUTOMATICALLY IGNORED after {2} seconds of waiting: {1}\n{0}\n".format("    --oOo--"*10, path, str(ignore))
-            break
-        else:
-            print "no normal termination for: ",path
-        time.sleep(timestep1) # wait 5 minudtes
-        extratime += timestep1
-        # after some time use larger timesteps
-        if extratime>=timestep2:timestep1=timestep2
-        print "extra waittime/h:", extratime/3600, "||",
-    return ignoremol
-
-def errortermination(path,debug=False):
-    import re
-    import time
-    from CINDES.cclib.parser.gaussianparser import Gaussian
-    mymol = Gaussian(path).parse()
-    from CINDES.utils import utils
-    t=utils.PeriodicTable()
-    if hasattr(mymol,'atomcoords'):
-        coords = map(list, mymol.atomcoords[-1])
-        #print coords
-        for sym,xyz in zip(mymol.atomnos,coords):
-            xyz.insert(0,t.element[sym])
-        print "atomcoords and added elements:"
-        #for item in mymol.atomcoords[-1]:
-        #    print ' '.join(map(str,item))
-        if debug==True:
-            import submitter
-            if hasattr(mymol,'optdone'):
-                if mymol.optdone==False:
-                    print "Optimizations not converged!"
-                elif mymol.optdone==True:
-                    print "Optimization is converged!"
-            fid = open(path[:-3]+'com','r') #change .log in .com extension and read input file
-            multcharge = re.compile('^\-?[01]\s[12]') #a regex for the mult charge line
-            newfile=[]
-            once=0 #only find that line once
-            for line in fid: #copy file exept for the zmat found in the inputfile
-                if multcharge.match(line) and once==0: #when found 
-                    once+=1
-                    newfile.append(line) #the line with the match itself has to be included in the newfile
-                    while True:
-                        line= next(fid) #take al new lines
-                        if line=='\n': #end of zmat
-                            #now instead of this zmat that is now completely skipped place in newfile
-                            #the last coordinates of the crashed run
-                            #newfile.extend([' '.join( map("{12.6f}".format, item))+'\n' for item in mymol.atomcoords[-1]])
-                            #xyz = mymol.atomcoords[-1]
-                            xyz_f = [ item[0] + ' '.join( map( "{:12.6f}".format, item[1:])) + '\n' for item in coords ]
-                            #xyz_f = [ item[0] + ' '.join(
-                            #                              map(
-                            #                                   str, item[1:]
-                            #                                 )
-                            #                            ) + '\n' for item in xyz ]
-                            #print xyz_f
-                            newfile.extend(xyz_f)
-                            newfile.extend(['\n'])
-                            break
-                else:
-                    newfile.append(line) #copy that line because it is not the zmat found in the inputfile
-            print "="*20
-            #for line in newfile: print line,
-            #print newfile
-            open(path[:-4]+'zzz.com','w').writelines(newfile)
-            print "newfile written in: ", path[:-4] + 'zzz.com'
-            errorjob = GaussianJob(path[:-4]+'zzz.com')
-
-            #---- preparation for submit command ---
-            #splitpath = path.split('/')
-            #filename = splitpath[-1]
-            #folder = '/'.join(splitpath[:-1])
-            #filenamesplit = filename[:-4].split('_')
-            #identify= filenamesplit[0]+'_'
-            #index = '_'.join(filenamesplit[1:])+'zzz.com'
-            #print "folder", folder
-            #print "index:", index
-            #print "identi", identify
-            #----- keywords constructed so:
-            submitter.submit(errorjob)
-            return path[:-4]+'zzz.log'
-    else:
-        return False
-
-
-
-
-
 

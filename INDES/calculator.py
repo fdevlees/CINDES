@@ -49,7 +49,7 @@ def custom_redirection(fileobj):
 
 def invoke_script(calc, namespace, ID=0):
     if not isinstance(calc, dict): return
-    if not 'script' in calc: 
+    if not 'script' in calc:
         print "no script invocation"
         return
     print "in invoke script:):"
@@ -86,11 +86,11 @@ def runjobs(mols_tocal, myrun, i):
             for j,cal in enumerate(calc):
                 invoke_script(cal, locals(), (i+1)*100+(j+1))
                 function(calc=cal, *args, **kwargs)
-        else: 
+        else:
             invoke_script(calc, locals(), i+1)
             function(calc=calc, *args, **kwargs)
     # 0. filter off ignored molecules
-    mols_calc = filter(lambda x:not x.ignore, mols_tocal)
+    mols_calc = filter(lambda x:not x.ignoremol, mols_tocal)
 
     # 1. Make the jobs and add them to the molecules:
     #call(jobmaker, mols=mols_tocal, myrun=myrun, calc=calc)
@@ -117,7 +117,7 @@ def do_calcs(mols_tocal, myrun):
 
     # after every calculation is performed:
     for mol in mols_tocal:
-        if not mol.ignore: datareader.set_combined_variables(mol, myrun.props)
+        if not mol.ignoremol: datareader.set_combined_variables(mol, myrun.props)
     return mols_tocal
 
 # PROCEDURE
@@ -239,7 +239,7 @@ def jobmaker(mols,myrun, calc): #----- dict with info for filewriter has to pass
             if calc['fafoom']==1:
                 # only find the lowest conformer
                 molecule.xyz = fafoom_utils.GetLowestXYZ(molecule)
-                program.filewriter(molecule, calc) #--------------------------------------------HERE IS A FILEWRITER CALL
+                program.filewriter(molecule, calc)
             elif calc['fafoom']==2:
                 if not os.path.exists(calc['path'] + '/' + molecule.index): #path is $WORKDIR/data
                     os.makedirs(calc['path'] + '/' + molecule.index)
@@ -249,9 +249,9 @@ def jobmaker(mols,myrun, calc): #----- dict with info for filewriter has to pass
                 conformers = fafoom_utils.GetConformers(molecule)
                 for i, conformer in enumerate(conformers, 1): #enumerate starts at 1!
                     setattr(molecule, 'xyz{}'.format(i), conformer.GetProp('xyz'))
-                    program.filewriter(molecule, calc, i) #------------------------------HERE IS A FILEWRITER CALL
+                    program.filewriter(molecule, calc, i)
         else: # so single job
-            program.filewriter(molecule, calc) #------------------------------------------------HERE IS A FILEWRITER CALL
+            program.filewriter(molecule, calc)
     return
 
 def add_hydrogen(zmat, pos, ncore):
@@ -315,39 +315,10 @@ def submission(mol_tocal,myrun):
         once = 2
         jobids = None
     else:
-        #MOST IMPORTANT PART
-        #if myrun.try_ready==1:
-        #    print "try_ready activated"
-        #    mol_tosubmit = try_ready_test(mol_tocal, myrun.__dict__)
-        #else: mol_tosubmit=mol_tocal
-        #jobids = submit_normal(mol_tosubmit, myrun) #In here is decided to run on shell or to really submit!
         jobids = submit_normal(mol_tocal, myrun) #In here is decided to run on shell or to really submit!
     logging.info("----- END all jobs are submitted ----------")
     if safe: time.sleep(15) # wait 15 seconds. to be sure that the jobs appear in the qstat command
     return jobids
-
-'''
-def try_ready_test(mol_tocal, fileparameters):
-    """ Jobtester 3 looks which files shouldn't be submitted anymore. These are removed from the indices list and this list is returned
-
-        - It tested if the .com.o123899 file already exists. Actually it should test if the logfile ends in normal termination.?
-        - Note that this function does return new indices and no jobids
-    """
-    #extension=fileparameters['extension']
-    #mol_submit = [ mol.copy() for mol in mol_tocal ] 
-    arrayjob=False
-    for mol in mol_tocal:
-        for job in mol.jobs:
-            if arrayjob:name=job.logpath
-            else:name=job.filepath[:-4] + '.o[0-9][0-9][0-9][0-9]*'
-            print "name=:", name
-            if glob.glob(name): # test A
-                print "already calculated:", name
-                mol.jobs.remove(job)
-        #if not mol.jobs: #so if it is an empty list
-        #    mol_submit.remove(mol)
-    return mol_tocal
-'''
 
 def submit_normal(mols_tocal, myrun):
     jobids = []
@@ -370,18 +341,14 @@ def submit_normal(mols_tocal, myrun):
                         continue
 
             # 2. submit part
-            if job.calc['nosub'] ==2:
-                time.sleep(1)
-                subm.nosubmit(job)
-                print '{} submitted'.format(job)
-            else:
-                jobid = subm.submit(job, myrun.script).strip()
-                jobids.append(jobid)
+            jobid = job.submit()
+            jobids.append(jobid)
+            time.sleep(1)
     return jobids
 
 # 3. testing
 @log_io(signator='=')
-def jobtester(mols_tocal,myrun,jobids=[]):
+def jobtester(mols_tocal,myrun,jobids=None):
     """ this tester tests if the jobs are ready by looking for a file <name><.extension>.o<6digits>.
 
         - even if try_ready is activated all indices are used. And the already ready ones are immediately recognized as ready. 
@@ -389,6 +356,7 @@ def jobtester(mols_tocal,myrun,jobids=[]):
         - note that jobids are not used!
         - function returns nothing but returns when all jobs are ready! this function therefore can take very long!
     """
+    if jobids is None: jobids=[] # this to avoid the mutable default gotcha
     if myrun.nosub==2 or len(mols_tocal)==0:
         print "Job tester skipped because jobs are evaluated on login node or no jobs to be calculated"
         return
@@ -407,6 +375,7 @@ def jobtester(mols_tocal,myrun,jobids=[]):
     return
 
 def test_ready1(indices,myrun):
+    ''' test ready based on the presence of inputfile.o$$ file '''
     path = myrun.path
     fileparameters = myrun.__dict__
     tijdje = 0
@@ -467,8 +436,7 @@ def test_ready2(mols_tocal,myrun):
             print "qsta not working!"
             time.sleep(fileparameters['timestep'])
             continue
-        qsta_out = [ item.split() for item in subm.qsta().split('\n') ]
-        #states,jobs = zip(*[ (item[2],item[4]) for item in qsta_out if len(item)>4 ])
+        qsta_out = [ item.split() for item in qsta_raw.split('\n') ]
         states = []
         jobs = []
         for item in qsta_out:
@@ -497,7 +465,8 @@ def test_ready2(mols_tocal,myrun):
                             completedjobs.append(job)
                     if debug:
                         print "found a job: ", state, job, filetje
-        print "there are still %d jobs in queue and %d jobs are ready | waittime=%f uur" % (count, njobs-count,float(tijdje)/3600.)
+        t = "{:.2f}".format(round(tijdje/3600.),2)
+        print "njobs -running: {:d} -ready: {:d} | waittime={} hrs".format(count, njobs-count, t)
         if count==0: #so no jobs anymore in queue
             break
         time.sleep(fileparameters['timestep'])
@@ -555,9 +524,8 @@ def set_target_properties(molecules, myrun):
         -Pvalue
         -boundaries
     '''
-    #print "I'm here: molecules:", molecules,
     for mol in molecules:
-        if mol.ignore:
+        if mol.ignoremol:
             print mol, 'ignored'
             if myrun.optimum=='maximum':mol.Pvalue=-float("inf")
             else: mol.Pvalue=float("inf")
@@ -574,23 +542,15 @@ def set_target_properties(molecules, myrun):
                 print "error mol:", mol
                 print "props:", mol.props
             mol.Pvalue = myrun.function(**kwargs)
-            #print "function value:", mol.Pvalue
         else:
-            #print "I'm here too:", mol.props
-            #print "myrun.property:", myrun.property
             mol.Pvalue = mol.props[ myrun.property ]
-            #print "myrun.Pvalue:", mol.Pvalue
 
         if myrun.bc:
             try:
-                #print "I'm here: myrun.bcprop", myrun.bcprop, "mol.props?:", mol.props
                 mol.boundaries = [ mol.props[bcp] for bcp in [myrun.bcprop] ]
             except KeyError as e:
                 print e
                 pass
-    #print "test json attributes:"
-    #for mol in molecules:
-    #    print mol.index, mol.boundaries, mol.Pvalue
     return
 
 

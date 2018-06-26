@@ -23,8 +23,8 @@ class Experiment(object):
     def __init__(self,
                  run=None,
                  name='default_estimator',
-                 table=[],
-                 array=[],
+                 table=None,
+                 array=None,
                  n_folds=5,
                  retrain=False,
                  getR = False,
@@ -32,7 +32,7 @@ class Experiment(object):
                  multiple = False,
                  descriptor='BoB',
                  weights= False,
-                 plots=[],
+                 plots=(),
                  **kwargs):
         """
         Initialize experiment by reading/constructing data.
@@ -149,7 +149,10 @@ class Experiment(object):
             print "self.hparam after h_opt:", self.hparam
         elif self.getR:
             self.cross_val()
-        print "R**2 value is:", self.R
+        print "R value is:", self.R,
+        try:
+            print "R2 value is:", self.R2,
+        except AttributeError:pass
 
         # and always do a refit on total database:
         if not self.multiple:
@@ -178,6 +181,7 @@ class Experiment(object):
         hyperparameter search with use of the sklearn GridSearchCV function
         """
         from sklearn.model_selection import GridSearchCV
+        from sklearn.metrics import r2_score
         import time
         stime = time.time()
 
@@ -194,9 +198,10 @@ class Experiment(object):
             ind = np.arange(self.X.shape[0])
             np.random.shuffle(ind)
             if self.X.shape[0] > 600: # use only 300 or if nX<400 only 75% of items. 
-                n_opt = 300
+                n_opt = 500
             else:
                 n_opt = int( 0.75 * self.X.shape[0] )
+            print "hyperparameters are optimized using a set of {} samples".format(n_opt)
             X_hyp, X_test, y_hyp, y_test = train_test_split( self.X, self.y, train_size=n_opt, random_state = self.run.seed )
             #X_hyp = self.X[ind[:n_opt],:]
             #y_hyp = self.y[ind[:n_opt]]
@@ -211,7 +216,10 @@ class Experiment(object):
             y_pred = clf_gs.predict(X_test)
             y_pred_hyp = clf_gs.predict(X_hyp)
             self.R = pearsonr( y_test, y_pred)[0]
+            self.R2 = r2_score( y_test, y_pred)
+            # plot of validation data. len=total-n_opt
             self.plot1 = np.c_[ y_test, y_pred ]
+            # plot of training/hyperopt len=n_opt
             self.plot2 = np.c_[ y_hyp, y_pred_hyp ]
             for i in range(10):
                 try:print y_test[i], y_pred[i]

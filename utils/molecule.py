@@ -21,7 +21,7 @@ debug=0
 
 try:
     pass
-    #import pybel
+    import pybel
 except:
     print "pybel not installed"
 
@@ -104,7 +104,8 @@ class BaseMolecule(object):
         self.predictions = {}
         self.predicted = None
         self.IsDiscarded = False
-        self.ignore = False
+        self.IsReady = False
+        self.ignoremol = False
         self.opt = False
         # for jsonification:
         self.props = {}
@@ -125,7 +126,7 @@ class BaseMolecule(object):
 
     def discard(self):
         self.IsDiscarded=True
-        self.ignore=True
+        self.ignoremol=True
         import glob
         if glob.glob('IGNORED'):
             with open('IGNORED','r') as f:

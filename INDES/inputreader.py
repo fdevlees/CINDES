@@ -285,16 +285,15 @@ def readfile(subinp):
             if paras['nosub']==3: raise SyntaxError('this functionality is renamed to: secret_file <filename>')
             continue
         elif 'secret_file' in line:
-            paras['secret_file'] = splitted[2]
-            logging.info( "nosub3. external file is used for data!: " + paras['nosub_file'])
+            paras['secret_file'] = splitted[1]
+            logging.info( "nosub3. external file is used for data!: " + paras['secret_file'])
             continue
         elif 'END' in line: break
 
-        
 
         # 2. capital insensitive keywords:
         line = line.split('#')[0].lower()
-	if 'adjust_dihedrals' in line: paras['adjust_dihedrals']=True
+        if 'adjust_dihedrals' in line: paras['adjust_dihedrals']=True
         elif 'bc' in line:
             paras['bc'] = True
             paras['bcprop'] = line.split()[1]
@@ -313,10 +312,10 @@ def readfile(subinp):
         elif 'extrajobs' in line:
             paras['extrajobs']=get_jobs(subinp, line)
         elif 'extrawaittime' in line: paras['extrawaittime'] = float(line.split()[1])
-        elif 'ignore' in line: 
+        elif 'ignore' in line:
             try: paras['ignore']=int(line.split()[1])
             except IndexError: paras['ignore']=3600
-	elif 'stabjobs' in line:
+        elif 'stabjobs' in line:
             #raise NotImplementedError('this is not updated to the multiprogram scheme')
             # this code has to come before 'jobs' because also 'jobs' in 'stabjobs'
             njobs = int(line.split()[1])
@@ -360,7 +359,7 @@ def readfile(subinp):
             if 'max' in line.split()[1]:
                 print "changed optimization to maximum instead of minimum!"
                 paras['optimum'] = 'maximum'
-	elif 'optga' in line: paras['optga']=True
+        elif 'optga' in line: paras['optga']=True
         elif 'positions' in line: paras['positions'] = [ int(item) for item in line.split()[1:] ]
         elif 'predictions' in line:
             subinp, paras['predictions'] = get_preds( subinp, line)
