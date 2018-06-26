@@ -1260,8 +1260,9 @@ class Gaussian(logfileparser.Logfile):
                 line = next(inputfile)
             for _ in xrange(6):
                 line= next(inputfile)
-            if not hasattr(self, "npaa"):
-                self.npaa = []
+            if hasattr(self, "npaa"):#already
+                print("2nd npaa", end="")
+            self.npaa = []
             while not '=' in line:
                 self.npaa.append(float(line.split()[2]))
                 line = next(inputfile)
@@ -1271,8 +1272,10 @@ class Gaussian(logfileparser.Logfile):
                 line = next(inputfile)
             for _ in xrange(6):
                 line= next(inputfile)
-            if not hasattr(self, "npab"):
-                self.npab = []
+            if hasattr(self, "npab"):#already
+                print("2nd npab", end="")
+            #if not hasattr(self, "npab"):
+            self.npab = []
             while not '=' in line:
                 self.npab.append(float(line.split()[2]))
                 line = next(inputfile)

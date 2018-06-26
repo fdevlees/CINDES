@@ -357,12 +357,17 @@ def submit_normal(mols_tocal, myrun):
 
             # 1. try ready part
             if myrun.try_ready:
-                if arrayjob:name=job.logpath
-                else:name=job.filepath[:-4] + '*.o[0-9][0-9][0-9][0-9]*'
-                #print "name=:", name
-                if glob.glob(name): # test A
-                    print "already calculated:", name
-                    continue
+                if arrayjob:
+                    name=job.logpath
+                    if glob.glob(name):
+                        print "already calculated:", name
+                        continue
+                else:
+                    name1 = job.filepath[:-4] + '.o[0-9][0-9][0-9][0-9]*'
+                    name2 = job.filepath + '.o[0-9][0-9][0-9][0-9]*'
+                    if glob.glob(name1) or glob.glob(name2):
+                        print "already calculated:", name2
+                        continue
 
             # 2. submit part
             if job.calc['nosub'] ==2:
