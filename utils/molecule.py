@@ -3,16 +3,17 @@ import numpy as np
 from converter import Converter
 from collections import MutableSequence
 
+replacements = {
+        '=':'a',
+        '(':'d', ')':'e',
+        '[':'g', ']':'i',
+        '\\':'j','/':'k',
+        '@':'m','-':'q', '+':'r',
+        '.':'t','#':'u'
+        }
+
 # helper function
 def indtosmi(index):
-    replacements = {
-            '=':'a',
-            '(':'d', ')':'e',
-            '[':'g', ']':'i',
-            '\\':'j','/':'k',
-            '@':'m','-':'q', '+':'r',
-            '.':'t','#':'u'
-            }
     inverserepl = { v:k for k,v in replacements.iteritems()}
     smiles = "".join([inverserepl.get(c, c) for c in index])
     return smiles
@@ -134,7 +135,10 @@ class BaseMolecule(object):
         else: ignored=set()
         if not self.index in ignored:
             with open('IGNORED','a') as f2:
-                f2.write(self.index+'\n')
+                f2.write(self.index)
+                if hasattr(self, 'smiles'):
+                    f2.write(" {}".format(self.smiles))
+                f2.write("\n")
         return
 
     def addjob(self, jobname):
@@ -169,15 +173,6 @@ class SmiMolecule(BaseMolecule):
         return new_mol
 
     def set_index(self):
-        replacements = {
-                '=':'a',
-                '(':'d', ')':'e',
-                '[':'g', ']':'i',
-                '\\':'j','/':'k',
-                '@':'m','-':'q', '+':'r',
-                '.':'t','#':'u'
-                }
-        #ireplacements = {v: k for k, v in replacements.iteritems()}
         index = "".join([replacements.get(c, c) for c in self.smiles])
         self.index = index
         return
@@ -369,4 +364,14 @@ Format of converter cartesian
 '''
 
 
-
+if __name__=="__main__":
+    import sys
+    if len(sys.argv)==1:
+         raise SystemExit('no argument given')
+    try:
+        with open(sys.argv[1]) as f:
+            indices = f.readlines()
+            for index in indices:
+                print indtosmi(index)
+    except IOError:
+        print indtosmi(sys.argv[1])

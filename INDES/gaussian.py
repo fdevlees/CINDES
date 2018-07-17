@@ -71,6 +71,7 @@ class GaussianJob(BaseJob):
                         newfile.append(line) #copy that line because it is not the zmat found in the inputfile
                 print "="*20
                 newfilepath = "{}/{}zzz.com".format(self.path, self.name)
+                self.errorfile = newfilepath
                 open(newfilepath, 'w').writelines(newfile)
                 print "newfile written in: ", newfilepath
                 errorjob = GaussianJob(newfilepath, self.calc)

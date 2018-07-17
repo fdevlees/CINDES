@@ -12,7 +12,7 @@
 
 import openbabel as ob
 
-from cclib.parser.data import ccData
+from CINDES.cclib.parser.data import ccData
 
 
 def makeopenbabel(atomcoords, atomnos, charge=0, mult=1):

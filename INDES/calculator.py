@@ -348,7 +348,7 @@ def submit_normal(mols_tocal, myrun):
 
 # 3. testing
 @log_io(signator='=')
-def jobtester(mols_tocal,myrun,jobids=None):
+def jobtester(mols_tocal, myrun, jobids=None):
     """ this tester tests if the jobs are ready by looking for a file <name><.extension>.o<6digits>.
 
         - even if try_ready is activated all indices are used. And the already ready ones are immediately recognized as ready. 
@@ -365,11 +365,11 @@ def jobtester(mols_tocal,myrun,jobids=None):
     path = myrun.path
     fileparameters = myrun.__dict__
     if test_ready==1:
-        test_ready1(mols_tocal,myrun)
+        test_ready1(mols_tocal, myrun)
     elif test_ready==2: # default
-        test_ready2(mols_tocal,myrun)
+        test_ready2(mols_tocal, myrun)
     elif test_ready==3:
-        test_ready3(mols_tocal,myrun)
+        test_ready3(mols_tocal, myrun)
     else:
         raise SystemExit('no valid test_ready value')
     return
@@ -405,7 +405,7 @@ def test_ready1(indices,myrun):
     time.sleep(fileparameters['extrawaittime']) #just wait for the files to write back before opening them
     return
 
-def test_ready2(mols_tocal,myrun):
+def test_ready2(mols_tocal, myrun):
     """
     this function tests if the jobs are still queing or running based on the output of the 'qsta' command
     function needs:
@@ -420,6 +420,8 @@ def test_ready2(mols_tocal,myrun):
     files=[]
     fileparameters=myrun.__dict__
     for mol in mols_tocal:
+        #if zzz:
+        #    jobnames = [ job.errorfile for job in mol.jobs if not job.errorfile is None ]
         jobnames = [ job.filename for job in mol.jobs ]
         files.extend(jobnames)
     print "files:", files
@@ -527,8 +529,10 @@ def set_target_properties(molecules, myrun):
     for mol in molecules:
         if mol.ignoremol:
             print mol, 'ignored'
-            if myrun.optimum=='maximum':mol.Pvalue=-float("inf")
-            else: mol.Pvalue=float("inf")
+            if myrun.optimum=='maximum':
+                mol.Pvalue=-float("inf")
+            else: 
+                mol.Pvalue=float("inf")
             continue
         if mol.Pvalue:
             print "molecular target property already set. Predicted?", mol
@@ -543,7 +547,13 @@ def set_target_properties(molecules, myrun):
                 print "props:", mol.props
             mol.Pvalue = myrun.function(**kwargs)
         else:
-            mol.Pvalue = mol.props[ myrun.property ]
+            try:
+                mol.Pvalue = mol.props[ myrun.property ]
+            except KeyError:
+                print "error mol:", mol
+                print "mol.ignoremol", mol.ignoremol, map(lambda job:job.ignorejob, mol.jobs)
+                print "props:", mol.props
+                raise
 
         if myrun.bc:
             try:

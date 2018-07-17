@@ -32,6 +32,7 @@ class BaseJob(object):
 
         self.calc=calc
         self.errorpath = None
+        self.errorfile = None
         self.ignorejob = False
         self.IsReady = False
         return
@@ -48,6 +49,7 @@ class BaseJob(object):
 
     def submit(self):
         '''submit the job input file'''
+        jobid = None
         try:
             if self.calc['nosub'] ==2:
                 time.sleep(1)
@@ -57,8 +59,9 @@ class BaseJob(object):
                 jobid = subm.submit(self, self.script).strip()
         except Exception as e:
             print repr(e)
-            print "retry submit..."
-            subm.submit(self, self.script).strip()
+            print "retry submit after 5s..."
+            time.sleep(5)
+            jobid = subm.submit(self, self.script).strip()
         print '{} submitted'.format(self)
         return jobid
 
@@ -125,5 +128,10 @@ class BaseJob(object):
             self.ignorejob=True
             self.IsReady=True
             print "\n\n{0}\n    AUTOMATICALLY IGNORED after {2} seconds of waiting: {1}\n{0}\n".format("    --oOo--"*10, self.logpath, str(ignore))
+            try:
+                with open(self.logpath, 'a') as f:
+                    f.write(' IGNORED')
+            except IOError as e:
+                print "not able to write IGNORE to file"
         return
 

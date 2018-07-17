@@ -1,6 +1,7 @@
 from pprint import pprint
 #from writings import log_io
 from CINDES.utils.writings import log_io, print_title, sprint
+from submitter import qsta
 import re
 import numpy
 import time
@@ -54,13 +55,13 @@ def calculate_stab(results, molecule):
     return results
 
 
-def normaltermination(mols, **kwargs):
+def normaltermination(mols, run):
     """ kwargs ignore / debug this new normal termination runs more parallel """
     # 1. test normal termination and submit errorjob
     notready=''
     for i, mol in enumerate(mols):
         for j, job in enumerate(mol.jobs):
-            job.normaltermination(**kwargs)
+            job.normaltermination(debug=run.debug)
             if not job.IsReady:
                 notready += "{}.{}: {}\n".format(i,j, job.name)
     if notready:
@@ -79,7 +80,7 @@ def normaltermination(mols, **kwargs):
                 if job.IsReady or job.ignorejob: continue
                 else:
                     print "{}.{}".format(i,j),
-                job.ready(extratime=extratime, **kwargs)
+                job.ready(extratime=extratime, ignore=run.ignore)
                 if job.ignorejob: mol.discard()
 
             if all(job.IsReady for job in mol.jobs):
@@ -87,10 +88,12 @@ def normaltermination(mols, **kwargs):
         print
         if all(mol.IsReady for mol in mols):
             break
-
+        
+        # test if there are still uncompleted zzz_files in queue. If not count extra time
+        if not zzztester(mols):
+            extratime += timestep1
         # WAIT:
         time.sleep(timestep1) # wait 5 minudtes
-        extratime += timestep1
         # after some time use larger timesteps
         if extratime>=timestep2:timestep1=timestep2
         print "extra waittime/h:", "{:.2f}".format(round(extratime/3600.,2)), "||",
@@ -99,10 +102,67 @@ def normaltermination(mols, **kwargs):
     mols_toread = filter(lambda mol:not mol.ignoremol, mols)
     return mols_toread
 
+def zzztester(mols):
+    """
+    this function tests if the jobs are still queing or running based on the output of the 'qsta' command
+    function needs:
+    mols:
+    -jobs
+    myrun:
+    -timestep
+    """
+    files=[]
+    for mol in mols_tocal:
+        jobnames = [ job.errorfile for job in mol.jobs if not job.errorfile is None ]
+        files.extend(jobnames)
+    if files:
+        print "zzz-files:", files
+    else: # here return so we don't need the qsta
+        return False
+
+    # get qstat
+    while True:
+        qsta_raw = qsta()
+        if qsta_raw==False:
+            print "qsta not working! trying again after 1 minute"
+            time.sleep(60)
+        else:
+            break
+
+    # get list of jobs and list of their states
+    qsta_out = [ item.split() for item in qsta_raw.split('\n') ]
+    states = []
+    jobs = []
+    for item in qsta_out:
+        if len(item)==4:
+            states.append(item[1])
+            jobs.append(item[3])
+        elif len(item)==5:
+            states.append(item[2])
+            jobs.append(item[4])
+
+    # inefficient loop
+    count = 0
+    for filetje in files:
+        for state, job in zip(states,jobs):
+            if filetje==job: # so there is a zzzjob in the queue!
+                if state in ['Q','R', 'H', 'E']: #so if job still in queue and not has state=='C'
+                    count += 1 #so count all the jobs still in queue
+                else:
+                    assert state=='C'
+
+    # return answer
+    if count>0:
+        return True
+    else:
+        return False
+
+
 @log_io()
 def datareader( mols, run):
     # 1. test normal termination
-    mols_toread = normaltermination(mols, debug=run.debug, ignore=run.ignore)
+    #mols_toread = normaltermination(mols, debug=run.debug, ignore=run.ignore)
+    mols_toread = normaltermination(mols, run=run)
 
     # 2. obtain data for each molecule
     for molecule in mols_toread:
