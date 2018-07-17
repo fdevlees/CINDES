@@ -32,7 +32,7 @@ import CINDES.pyevolve as pyevolve
 
 
 def my_mutator(conf):
-    pos_to_mutate = np.random.randint(0, len(individual)-1)
+    pos_to_mutate = np.random.randint(0, len(individual) - 1)
     conf[pos_to_mutate] = np.random.choice(array[pos_to_mutate])
     return conf
 
@@ -80,7 +80,7 @@ def get_geometry(options):
 
 class Fitness_Function():
     '''A class for the fitness functions. The class contains the attr's needed for evaluation. Here this will be
-    the database that does not change. maybe even the kernel. see which part stays here and what part has to be 
+    the database that does not change. maybe even the kernel. see which part stays here and what part has to be
     done in learning.py.
     Aim is that i can use:
         evaluator = FitnessFunction()
@@ -263,11 +263,11 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
             if self.getMinimax() == Consts.minimaxType["maximize"]:
                 for i in xrange(self.nElitismReplacement):
                     if self.internalPop.bestRaw(i).score > newPop.bestRaw(i).score:
-                        newPop[len(newPop)-1-i] = self.internalPop.bestRaw(i)
+                        newPop[len(newPop) - 1 - i] = self.internalPop.bestRaw(i)
             elif self.getMinimax() == Consts.minimaxType["minimize"]:
                 for i in xrange(self.nElitismReplacement):
                     if self.internalPop.bestRaw(i).score < newPop.bestRaw(i).score:
-                        newPop[len(newPop)-1-i] = self.internalPop.bestRaw(i)
+                        newPop[len(newPop) - 1 - i] = self.internalPop.bestRaw(i)
 
         self.internalPop = newPop
         self.internalPop.sort()
@@ -381,7 +381,8 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
                                 print
                                 code.interact(interact_banner, local=session_locals)
 
-                    if (self.getInteractiveGeneration() >= 0) and (self.getInteractiveGeneration() == self.getCurrentGeneration()):
+                    if (self.getInteractiveGeneration() >= 0) and (
+                            self.getInteractiveGeneration() == self.getCurrentGeneration()):
                         print "Loading modules for Interactive Mode...",
                         logging.debug("Manual Interactive Mode key detected ! generation=%d",
                                       self.getCurrentGeneration())
@@ -532,7 +533,9 @@ def run_pyevolve(array, table, options):
         print "n elitism:", options.genalg['nelitism']
         ga.nElitismReplacement = options.genalg['nelitism']
 
-    # 16. set scaling: to allow for negative scores we have to use SigmaTruncScaling. otherwise also LinearScaling or PowerLawScaling could be used
+    # 16. set scaling: to allow for negative scores we have to use
+    # SigmaTruncScaling. otherwise also LinearScaling or PowerLawScaling could
+    # be used
     pop = ga.getPopulation()
     pop.scaleMethod.set(Scaling.SigmaTruncScaling)
 

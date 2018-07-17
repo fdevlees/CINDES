@@ -91,10 +91,10 @@ def runjobs(mols_tocal, myrun, i):
     def call(function, calc, *args, **kwargs):
         if isinstance(calc, list) or isinstance(calc, tuple):
             for j, cal in enumerate(calc):
-                invoke_script(cal, locals(), (i+1)*100+(j+1))
+                invoke_script(cal, locals(), (i + 1) * 100 + (j + 1))
                 function(calc=cal, *args, **kwargs)
         else:
-            invoke_script(calc, locals(), i+1)
+            invoke_script(calc, locals(), i + 1)
             function(calc=calc, *args, **kwargs)
     # 0. filter off ignored molecules
     mols_calc = filter(lambda x: not x.ignoremol, mols_tocal)
@@ -246,7 +246,7 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
                 if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
                     os.makedirs(calc['path'] + '/' + molecule.index)
                     # and make sure ID_gauss is in the folder!
-                    shutil.copy(calc['path'] + '/' + myrun.script, calc['path']+'/'+molecule.index)
+                    shutil.copy(calc['path'] + '/' + myrun.script, calc['path'] + '/' + molecule.index)
                 # 2. use zmat to make the AH files with the positions stored in fileparameters['positions']
                 for pos in calc['positions']:
                     zmat2 = deepcopy(molecule.zmat)
@@ -265,7 +265,7 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
                 if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
                     os.makedirs(calc['path'] + '/' + molecule.index)
                     # and make sure ID_gauss is in the folder!
-                    shutil.copy(calc['path'] + '/' + myrun.script, calc['path']+'/'+molecule.index)
+                    shutil.copy(calc['path'] + '/' + myrun.script, calc['path'] + '/' + molecule.index)
                 # find a set of conformers
                 conformers = fafoom_utils.GetConformers(molecule)
                 for i, conformer in enumerate(conformers, 1):  # enumerate starts at 1!
@@ -282,9 +282,9 @@ def add_hydrogen(zmat, pos, ncore):
     spos = str(pos)  # spos is string of pos. pos = position
     h = 0
     logging.debug(pprint.pformat(zmat))
-    if zmat[pos-1][0] == 'N':
+    if zmat[pos - 1][0] == 'N':
         N = True
-        item = zmat[pos-1]
+        item = zmat[pos - 1]
         h = 1
         if len(item) == 1:  # when pos is 1 so first index of a zmat
             hline = ['H', 1, 0.9, 2, 109.5, 3, 176.0]
@@ -378,7 +378,7 @@ def submit_normal(mols_tocal, myrun):
 def jobtester(mols_tocal, myrun, jobids=None):
     """ this tester tests if the jobs are ready by looking for a file <name><.extension>.o<6digits>.
 
-        - even if try_ready is activated all indices are used. And the already ready ones are immediately recognized as ready. 
+        - even if try_ready is activated all indices are used. And the already ready ones are immediately recognized as ready.
         - they are just not submitted again.
         - note that jobids are not used!
         - function returns nothing but returns when all jobs are ready! this function therefore can take very long!
@@ -429,7 +429,7 @@ def test_ready1(indices, myrun):
                 print "ready: ", pathje[:-25]
         if paths == []:
             break
-        print "time/h:", tijdje/3600, "len paths:", len(paths),
+        print "time/h:", tijdje / 3600, "len paths:", len(paths),
         time.sleep(fileparameters['timestep'])
         tijdje += fileparameters['timestep']
     logging.info("All jobs are READY")
@@ -499,8 +499,8 @@ def test_ready2(mols_tocal, myrun):
                             completedjobs.append(job)
                     if debug:
                         print "found a job: ", state, job, filetje
-        t = "{:.2f}".format(round(tijdje/3600.), 2)
-        print "njobs -running: {:d} -ready: {:d} | waittime={} hrs".format(count, njobs-count, t)
+        t = "{:.2f}".format(round(tijdje / 3600.), 2)
+        print "njobs -running: {:d} -ready: {:d} | waittime={} hrs".format(count, njobs - count, t)
         if count == 0:  # so no jobs anymore in queue
             break
         time.sleep(fileparameters['timestep'])
@@ -538,7 +538,7 @@ def test_ready3(indices, myrun):
                 print "ready: ", pathje[:-25]
         if paths == []:
             break
-        print "time/h:", tijdje/3600, "len paths:", len(paths),
+        print "time/h:", tijdje / 3600, "len paths:", len(paths),
         time.sleep(fileparameters['timestep'])
         tijdje += fileparameters['timestep']
     logging.info("All jobs are READY")

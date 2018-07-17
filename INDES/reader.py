@@ -99,7 +99,7 @@ def zmatprinter(czmat, dictio):
     # from each other by a whitespace.
     # print "czmat[1][2]:", czmat[1][2]
     # search the dictionary
-    for i in range(1, len(czmat)-1):  # first row already printed, contains no value
+    for i in range(1, len(czmat) - 1):  # first row already printed, contains no value
         for key in dictio.keys():
             for j in [2, 4, 6]:  # 2 bondlengt #4 angle #6 dihedral
                 # now the first two don't have 4 and 6 giving IndexError so
@@ -122,7 +122,7 @@ def sitesplitter(zmatrix, natomscore, index, nsites):  # here nsites is number o
     sitemat = []
     # here i split the rest, that are al ch3 groups
     for i in range(nsites):
-        sitemat.append(zmatrix[natomscore+4*i:natomscore+4*(i+1)])
+        sitemat.append(zmatrix[natomscore + 4 * i:natomscore + 4 * (i + 1)])
     logging.debug('sitemat' + pprint.pformat(sitemat))
     # now split in passive and active part
     activeindex = [((x - natomscore + 3) / 4) - 1 for x in index]

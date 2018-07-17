@@ -566,7 +566,7 @@ def substireader(nsit, subinp):
         except IndexError:
             print "no functional groups present or wrong formatted"
             break
-        inrlog.debug("site number: " + str(i+1))
+        inrlog.debug("site number: " + str(i + 1))
         inrlog.debug("nsubsit: " + str(nsubsit))
         #print "site number: ", i+1
         #print "nsubsit: ", nsubsit

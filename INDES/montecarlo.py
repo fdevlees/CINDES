@@ -124,9 +124,10 @@ def montecarloprocedure(run, subarray, maxi, Dtable, **kwargs):
         # 4.2a predict property via difference algorithm
         if False:
             deltaetje = 0
-            for i in range(len(rconf)):  # now we want to have a value erandom for this configuration and test it with a certain probability
+            for i in range(
+                    len(rconf)):  # now we want to have a value erandom for this configuration and test it with a certain probability
                 if not rconf[i] == cmaximum[i]:
-                    confje = cmaximum[0:i] + [rconf[i]] + cmaximum[i+1:]
+                    confje = cmaximum[0:i] + [rconf[i]] + cmaximum[i + 1:]
                     indje = zcon.contoind(confje)
                     #print "Dtable[indje]:", Dtable[indje]
                     try:
@@ -145,8 +146,8 @@ def montecarloprocedure(run, subarray, maxi, Dtable, **kwargs):
 
             if debug:
                 print "random conf:", rconf
-                print "random ind:",  rind
-                print "indje    :",   indje
+                print "random ind:", rind
+                print "indje    :", indje
                 print "Dtable[indje]", Dtable[indje]
                 print "deltaetje:", deltaetje
                 print "erandom:", erandom

@@ -68,7 +68,7 @@ def jobstatus(jobid):
 def qsta():
     try:
         p1 = subprocess.check_output(['qsta'])
-    except subprocess.CalledProcessError, e:
+    except subprocess.CalledProcessError as e:
         print "subprocess.CalledProcessError"
         print repr(e)
         p1 = False

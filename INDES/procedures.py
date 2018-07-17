@@ -35,7 +35,7 @@ logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 once = 0
 zmatrixfile = "ZMAT"
 
-print "time for imports:", time.clock()-start
+print "time for imports:", time.clock() - start
 
 
 class BaseRun(object):
@@ -147,14 +147,14 @@ class BaseRun(object):
             if param['program'] == 'gaussian':
                 self.script = 'ID_gauss'
                 self.extension = '.com'
-                shutil.copy(os.getcwd()+'/ID_gauss', path)
+                shutil.copy(os.getcwd() + '/ID_gauss', path)
             elif param['program'] == 'orca':
                 self.script = 'ID_orca'
                 shutil.copy(os.getcwd() + '/ID_orca', path)
             elif param['program'] == 'nwchem':
                 self.script = 'ID_NWChem'
                 self.extension = ''
-                shutil.copy(os.getcwd()+'/ID_NWChem', path)
+                shutil.copy(os.getcwd() + '/ID_NWChem', path)
             else:
                 raise SystemExit('ERROR: No valid program specified')
         self.path = path
@@ -165,7 +165,7 @@ class BaseRun(object):
 
 
 class FrameRun(BaseRun):
-    ''' This inherites from BaseRun and is the main object for all BFS/SD molecular frame based 
+    ''' This inherites from BaseRun and is the main object for all BFS/SD molecular frame based
     procedures.
     '''
 
@@ -194,7 +194,7 @@ class FrameRun(BaseRun):
             for j in range(i, ncore):
                 adj[i][j] = 0.1 < np.linalg.norm(xyz[i] - xyz[j]) < 2.0
                 adj[j][i] = adj[i][j]
-        sites = [int(methyl[0][1])-1 for methyl in active]
+        sites = [int(methyl[0][1]) - 1 for methyl in active]
         sites_adj = adj[sites][:, sites]
         if debug:
             print "adjacency matrix of core:", adj
@@ -248,7 +248,7 @@ def get_startconf(param, array):
             for i in range(len(array)):
                 startconf.append(random.choice(array[i]))
             logging.info("constructed random start configuration")
-    logging.warning("startconf:"+pprint.pformat(startconf))
+    logging.warning("startconf:" + pprint.pformat(startconf))
     return startconf
 
 # 3 site order (sequence)
@@ -261,7 +261,7 @@ def get_sequence(count, myrun):
     nsites = param['nsites']
     if 'sequences' in param:
         try:
-            sequence = param['sequences'][count-1]  # accounting for the fact count starts counting at 1
+            sequence = param['sequences'][count - 1]  # accounting for the fact count starts counting at 1
         except IndexError:
             sequence = random.sample(range(nsites), nsites)
         finally:
@@ -485,7 +485,8 @@ def BFS(param, array):
     # set optimum
     optimum = set_optimum(myrun, table)
     # set calculation properties
-    # END MYRUN CLASS assignments. from now myrun should contain all the necessary information to work with during the whole program run.
+    # END MYRUN CLASS assignments. from now myrun should contain all the
+    # necessary information to work with during the whole program run.
 
     # ------------------------------------- #
     # --- HERE THE MAIN LOOP STARTS --- --- #
@@ -654,7 +655,7 @@ def generate_procedure(param, array):
         def chunks(l, n):
             '''yields successive n-sized chunks of l'''
             for i in range(0, len(l), n):
-                yield l[i:i+n]
+                yield l[i:i + n]
 
         mols_all = []
         for i, batch in enumerate(chunks(mols_tocal, batchsize)):
@@ -701,7 +702,7 @@ def get_all_molecules(array):
         D = []
         for item in C:
             for group in site:
-                conf = item+[group]
+                conf = item + [group]
                 D.append(conf)
         C = D
     print "molecules:"
@@ -730,9 +731,9 @@ def generate2(core, active, passive, converter, **kwargs):
             mat = zcon.constructor2(confs[i], c, a, p, **kwargs)
             xyz = zmatoxyz(converter, mat)
             if printindices == 1:
-                fid.write('{:05d} {:4d} {:s}\n'.format(i+1, len(xyz), zcon.contoind(confs[i])))
+                fid.write('{:05d} {:4d} {:s}\n'.format(i + 1, len(xyz), zcon.contoind(confs[i])))
             else:
-                fid.write('{:05d} {:4d}\n'.format(i+1, len(xyz)))
+                fid.write('{:05d} {:4d}\n'.format(i + 1, len(xyz)))
             # fid.write('{:12.8f}\n'.format(Y[i])) #no property for chemspace
             for item in xyz:
                 fid.write('{:3s} {:10.4f} {:10.4f} {:10.4f}\n'.format(item[0], item[1][0], item[1][1], item[1][2]))
@@ -799,7 +800,8 @@ def SteepestDescent(param, array):
     optimum = set_optimum(myrun, table)
     # set calculation properties
     startconf = get_startconf(param, array)
-    # END MYRUN CLASS assignments. from now myrun should contain all the necessary information to work with during the whole program run.
+    # END MYRUN CLASS assignments. from now myrun should contain all the
+    # necessary information to work with during the whole program run.
 
     # defines which sites will be changed. only relevant for steepest2 algorithm
     myrun.restingsites = range(myrun.nsites)

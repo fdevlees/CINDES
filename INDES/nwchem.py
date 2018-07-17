@@ -71,7 +71,7 @@ class NWChemJob(BaseJob):
                                 break
                     else:
                         newfile.append(line)  # copy that line because it is not the zmat found in the inputfile
-                print "="*20
+                print "=" * 20
                 newfilepath = "{}/{}zzz".format(self.path, self.name)
                 open(newfilepath, 'w').writelines(newfile)
                 print "newfile written in: ", newfilepath

@@ -24,7 +24,7 @@ def formatitem(opt, item, maxlenconf=49):
                 return "No single value"
             # return "      {}".format(item)
 
-    index = '{opt} {conf:{width}s}'.format(opt=opt, conf=item[0], width=maxlenconf+1)
+    index = '{opt} {conf:{width}s}'.format(opt=opt, conf=item[0], width=maxlenconf + 1)
     abin = ' {:5s} '.format(str(item[1]))
     try:
         #datas = ' '.join(( fmt.format('{:15.8f}', (datatje for datatje in item[2:] ))))
@@ -57,7 +57,7 @@ def log_cyclesinfo(mols, count, k, l):
             #item.extend( molecule.infoline )
 
             item.extend([count, k, l])
-            cfid.write(' '.join(pprint.pformat(i) for i in item)+'\n')
+            cfid.write(' '.join(pprint.pformat(i) for i in item) + '\n')
     #del filedata
     return
 
@@ -154,11 +154,11 @@ def log_screen(mols):
 
     # print header line.
     maxlenconf = max(map(lambda x: len(x.index), mols))
-    lenh = maxlenconf+26+len(props)*16
-    print "+{}+".format(lenh*"-")
-    print "| index"+(maxlenconf-4)*" "+" pred?   {:15s} ".format(p) + \
+    lenh = maxlenconf + 26 + len(props) * 16
+    print "+{}+".format(lenh * "-")
+    print "| index" + (maxlenconf - 4) * " " + " pred?   {:15s} ".format(p) + \
         " ".join(('{:15s}'.format(prop) for prop in props)) + "|"
-    print "}}{}{{".format(lenh*"-")
+    print "}}{}{{".format(lenh * "-")
     # print data
     for molecule in mols:
         opt = "|"
@@ -168,7 +168,7 @@ def log_screen(mols):
         propvals = [molecule.props.get(prop, 'unknown') for prop in props]
         item.extend(propvals)
         print formatitem(opt, item, maxlenconf)
-    print "+{}+".format(lenh*"-")
+    print "+{}+".format(lenh * "-")
     return p
 
 
@@ -183,12 +183,12 @@ def log_screen_pred(mols):
     # ----- pretty print df -----
     s = df.to_string().split('\n')
     ls = len(s[0])
-    print "+{}+".format((ls+2)*"-")
+    print "+{}+".format((ls + 2) * "-")
     print "| {} |".format(s[0])
-    print "+{}+".format((ls+2)*"-")
+    print "+{}+".format((ls + 2) * "-")
     for item in s[1:]:
         print "| {} |".format(item)
-    print "+{}+".format((ls+2)*"-")
+    print "+{}+".format((ls + 2) * "-")
     # ----- end pretty print-----
 
     return df

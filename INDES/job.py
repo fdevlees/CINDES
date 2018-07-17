@@ -119,7 +119,7 @@ class BaseJob(object):
         if ret == 1:
             self.IsReady = True
         elif ret == 2:
-            print "\n{0}\n\t  IGNORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, self.logpath)
+            print "\n{0}\n\t  IGNORED: {1} IGNORED!\n{0}\n".format("    --oOo--" * 10, self.logpath)
             self.ignorejob = True
             self.IsReady = True
         elif self.errorpath and ret_zzz == 1:
@@ -132,7 +132,7 @@ class BaseJob(object):
             self.ignorejob = True
             self.IsReady = True
             print "\n\n{0}\n    AUTOMATICALLY IGNORED after {2} seconds of waiting: {1}\n{0}\n".format(
-                "    --oOo--"*10, self.logpath, str(ignore))
+                "    --oOo--" * 10, self.logpath, str(ignore))
             try:
                 with open(self.logpath, 'a') as f:
                     f.write(' IGNORED')

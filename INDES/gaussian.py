@@ -70,7 +70,7 @@ class GaussianJob(BaseJob):
                                 break
                     else:
                         newfile.append(line)  # copy that line because it is not the zmat found in the inputfile
-                print "="*20
+                print "=" * 20
                 newfilepath = "{}/{}zzz.com".format(self.path, self.name)
                 self.errorfile = newfilepath
                 open(newfilepath, 'w').writelines(newfile)
@@ -155,7 +155,7 @@ def filewriter(mol, calc, pos=None):
     fid.write("%chk=" + name + ".chk\n")
     fid.write("%mem=1500MB\n")
     if not paras['nprocs'] == 1:
-        fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
+        fid.write("%nprocshared=" + str(paras['nprocs']) + "\n")
     fid.write(job1['hotline'])  # first gaussianline
     fid.write("\n\n")
     fid.write(str(mol) + "\n\n")
@@ -171,10 +171,10 @@ def filewriter(mol, calc, pos=None):
         fid.write("%chk=" + name + ".chk\n")
         fid.write("%mem=1500MB\n")
         if not paras['nprocs'] == 1:
-            fid.write("%nprocshared="+str(paras['nprocs'])+"\n")
+            fid.write("%nprocshared=" + str(paras['nprocs']) + "\n")
         fid.write(job['hotline'])
         fid.write("\n\n")
-        fid.write(str(index) + " {}th calc\n\n".format(i+2))
+        fid.write(str(index) + " {}th calc\n\n".format(i + 2))
         if not 'allcheck' in job['hotline']:
             fid.write("{} {}\n\n".format(job['charge'], job['mult']))
     fid.close()

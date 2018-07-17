@@ -38,7 +38,7 @@ def calculate_stab(results, molecule):
     kJmol = 2625.5
     eV = 27.2113838
     avtc = -28.1290706  # kJ/mol #average thermal correction for 5 random structures kJ/mol
-    chi_term = bde_b*(chi_h-3)*(chi_n-3)  # term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
+    chi_term = bde_b * (chi_h - 3) * (chi_n - 3)  # term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
     #gasconstant = 8.3144621
     # ----- end of parameters
     EAHs = results['EAHs']
@@ -46,7 +46,7 @@ def calculate_stab(results, molecule):
     E_ah = EAHs[minpos]['eAH']
 
     Domega = results['omega'] - 2.
-    results['BDE_ah'] = (results['eA'] + H_h - E_ah)*kJmol + avtc  # avtc is AVerage Thermal Correction.
+    results['BDE_ah'] = (results['eA'] + H_h - E_ah) * kJmol + avtc  # avtc is AVerage Thermal Correction.
     if EAHs[minpos]['N']:
         print "electronegativity correction for nitrogen is used"
         stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
@@ -102,7 +102,7 @@ def normaltermination(mols, run):
         # after some time use larger timesteps
         if extratime >= timestep2:
             timestep1 = timestep2
-        print "extra waittime/h:", "{:.2f}".format(round(extratime/3600., 2)), "||",
+        print "extra waittime/h:", "{:.2f}".format(round(extratime / 3600., 2)), "||",
 
     # 3. return mols that are not ignored:
     mols_toread = filter(lambda mol: not mol.ignoremol, mols)
@@ -173,7 +173,7 @@ def datareader(mols, run):
 
     # 2. obtain data for each molecule
     for molecule in mols_toread:
-        print "><"*15, molecule,
+        print "><" * 15, molecule,
         for job in molecule.jobs:
             readings = read_file(job)
 
@@ -236,22 +236,22 @@ def read_file(Job):
             if inf == '_':
                 continue
             elif inf[0] == 'e':  # so it concerns an energy!:
-                datadict[inf] = job_data.scfenergies[-1]/27.21138505  # this value is used in cclib
+                datadict[inf] = job_data.scfenergies[-1] / 27.21138505  # this value is used in cclib
             elif inf[0] == 'g' and not inf == 'gap':
                 # note that scfenergies are given in eV by cclib but free energy in hartree
                 datadict[inf] = job_data.freeenergy
                 print "free energy found:", job_data.freeenergy
             elif inf in ['homo', 'lumo']:
                 datadict['homo'] = job_data.moenergies[-1][job_data.homos[0]]
-                datadict['lumo'] = job_data.moenergies[-1][job_data.homos[0]+1]
+                datadict['lumo'] = job_data.moenergies[-1][job_data.homos[0] + 1]
             elif inf == 'dipole':
                 datadict[inf] = job_data.dipole
             elif inf == 'polar':
-                datadict['polar'] = sum([job_data.polex[i]/3 for i in [0, 2, 5]])  # = 1/3*(axx+ayy+azz)
+                datadict['polar'] = sum([job_data.polex[i] / 3 for i in [0, 2, 5]])  # = 1/3*(axx+ayy+azz)
             elif inf == 'mw':
                 datadict['mw'] = float(sum(job_data.atomnos))
             elif inf == 'rdv':
-                spiden = map(lambda x: x[0]-x[1], zip(job_data.npaa, job_data.npab))
+                spiden = map(lambda x: x[0] - x[1], zip(job_data.npaa, job_data.npab))
                 # spiden=job_data.atomcharges['natural']
                 datadict['rdv'] = sum([item**2 for item in spiden if abs(item) > 0.05])
                 # try:
@@ -259,7 +259,7 @@ def read_file(Job):
                 # except AttributeError:
                 #    pass
             elif inf == 'spindensities':
-                spiden = map(lambda x: round(x[0]-x[1], 8), zip(job_data.npaa, job_data.npab))
+                spiden = map(lambda x: round(x[0] - x[1], 8), zip(job_data.npaa, job_data.npab))
                 datadict['spindensities'] = spiden
             elif any(prop in inf for prop in ['pcharges', 'partialcharges']):
                 print "partial charges", job_data.atomcharges
@@ -282,13 +282,13 @@ def set_combined_variables(mol, to_read_props):
     # but not yet omega/solv/gap so:
     results = mol.props
     if 'gap' in to_read_props:
-        results['gap'] = results['lumo']-results['homo']
+        results['gap'] = results['lumo'] - results['homo']
     if 'solv' in to_read_props:
-        results['solv'] = (results['e1_solv']-results['e0_solv'])*627.5
+        results['solv'] = (results['e1_solv'] - results['e0_solv']) * 627.5
     if any(i in to_read_props for i in ['ip', 'omega', 'stab']):
-        results['ip'] = (results['eIP']-results['e0'])*27.2113838
+        results['ip'] = (results['eIP'] - results['e0']) * 27.2113838
     if any(i in to_read_props for i in ['ea', 'omega', 'stab']):
-        results['ea'] = (results['e0']-results['eEA'])*27.2113838
+        results['ea'] = (results['e0'] - results['eEA']) * 27.2113838
     if any(i in to_read_props for i in ['omega', 'stab']):
         results['omega'] = ((results['ip'] + results['ea'])**2) / (8 * (results['ip'] - results['ea']))
     if 'stab' in to_read_props:
@@ -299,7 +299,7 @@ def set_combined_variables(mol, to_read_props):
     if any(i in to_read_props for i in ['eafukui', 'radfukui']):
         results['eafukui'] = [-(q_0[1] - q_ea[1]) for q_0, q_ea in zip(results['pcharges0'], results['pchargesEA'])]
     if 'radfukui' in to_read_props:
-        results['radfukui'] = [.5*(ipf + eaf) for ipf, eaf in zip(results['ipfukui'], results['eafukui'])]
+        results['radfukui'] = [.5 * (ipf + eaf) for ipf, eaf in zip(results['ipfukui'], results['eafukui'])]
 
     return results
 
@@ -318,7 +318,7 @@ if __name__ == "__main__":
     if hasattr(mymol, 'npab'):
         print "npab:"
         pprint(mymol.npa)
-        snpa = [a-b for a, b in zip(mymol.npa, mymol.npab)]
+        snpa = [a - b for a, b in zip(mymol.npa, mymol.npab)]
         print "----- npa spin densities -----"
         for item in snpa:
             print '{:>8.5f}'.format(float(item))
@@ -332,10 +332,10 @@ if __name__ == "__main__":
         myfile = ccopen(filename).parse()
         HOMO = myfile.myhomos[index]
         Ehomo = myfile.mymos[index]['alpha'][0][HOMO]
-        Elumo = myfile.mymos[index]['alpha'][0][HOMO+1]
+        Elumo = myfile.mymos[index]['alpha'][0][HOMO + 1]
 
         Egap = Elumo - Ehomo
-        print "E-HOMO :", Ehomo, Ehomo/27.2113838
-        print "E-LUMO :", Elumo, Elumo/27.2113838
+        print "E-HOMO :", Ehomo, Ehomo / 27.2113838
+        print "E-LUMO :", Elumo, Elumo / 27.2113838
         print "BANDGAP:", Egap
         print Ehomo, Elumo, Egap

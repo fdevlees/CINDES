@@ -71,8 +71,8 @@ def demethyl(passive):
 
 
 def hydrogenizer(totalmat):
-    ''' This function is meant to be a kind of geom optimizer. 
-    All standard bond lengths belong to a C-C bond therefore: 
+    ''' This function is meant to be a kind of geom optimizer.
+    All standard bond lengths belong to a C-C bond therefore:
     Each -H bond is moved to an average C-H bond length
     Each -N bond except for the core, is decreased
     Each -O bond except for the core, is decreased
@@ -126,7 +126,7 @@ def matrixmerger2(core, active, passive):
 
 def get_configurations(startconf, array, k, run=None):
     'select on site k all the configurations with the different functionalizations for that site present in array'
-    configurations = [startconf[0:k] + [array[k][i]] + startconf[k+1:] for i in range(len(array[k]))]
+    configurations = [startconf[0:k] + [array[k][i]] + startconf[k + 1:] for i in range(len(array[k]))]
     return configurations
 
 
@@ -152,7 +152,7 @@ def classmaker2_SD(startconf, array, table, run=None):
         confs.extend(get_configurations(startconf, array, i, run=run))
     # remove duplicates by sorting and subsequently only adding when the previous one is not similar
     sortedconfs = sorted(confs)
-    confs = [sortedconfs[i] for i in xrange(len(sortedconfs)) if i == 0 or sortedconfs[i] != sortedconfs[i-1]]
+    confs = [sortedconfs[i] for i in xrange(len(sortedconfs)) if i == 0 or sortedconfs[i] != sortedconfs[i - 1]]
     individuals = [Molecule(conf=conf) for conf in confs]  # list of molecules
     #population = Population( population = individuals )
     mols_todo, mols_nodo = check_in_table(individuals, table, run.props)
@@ -216,7 +216,7 @@ def constructor2(conf, core, active, passive, links=None):
         conf.extend([[] for _ in range(len(links))])
         # for all links: fill site with same group as the linked site.
         for i, j in links:
-            conf[j-1] = conf[i-1]
+            conf[j - 1] = conf[i - 1]
         return conf
 
     # 1. if links change conf to extended conf
@@ -269,7 +269,7 @@ def doper2(group, geom, core, passive):
         # this assumes standard a C is present.
         # this also prevents other groups from overwriting dopants on this site
         # only one site is allowed to have the dopants in that case btw!
-        core[coreindex-1][0] = group[0]
+        core[coreindex - 1][0] = group[0]
     if debug:
         print "coreindex:", coreindex, "group:", group
         print "core after doping:",
@@ -328,7 +328,7 @@ def geomfiller(zma, geom, count):
             elif zma[i][j] == 1:
                 geom[i][j] = bi
             else:
-                geom[i][j] = str(zma[i][j] + count-1)
+                geom[i][j] = str(zma[i][j] + count - 1)
     #print "final geom:", geom
     #raise SystemExit('stop')
     return geom
@@ -431,16 +431,17 @@ def substituter2(group, geom0, count):
         geom[1][0] = group[2]
         geom[2][0] = group[3]
         geom[3][0] = group[4]
-        if group in [['C', 'C', 'F', 'F', 'F'], ['C', 'C', 'H', 'H', 'H'], ['N', 'C', 'H', 'H', 'H'], ['C', 'N', 'H', 'H', 'H']]:
-            geom[1][1] = str(count+1)
-            geom[2][1] = str(count+1)  # if also attached to that one
-            geom[3][1] = str(count+1)
+        if group in [['C', 'C', 'F', 'F', 'F'], ['C', 'C', 'H', 'H', 'H'],
+                     ['N', 'C', 'H', 'H', 'H'], ['C', 'N', 'H', 'H', 'H']]:
+            geom[1][1] = str(count + 1)
+            geom[2][1] = str(count + 1)  # if also attached to that one
+            geom[3][1] = str(count + 1)
             if group in [['C', 'N', 'H', 'H', 'H']]:
                 print "WARNING: charged group: +1"
         elif group in [['C', 'C', 'O', 'O', 'H']]:
             #print "carbonic acid"
-            geom[1][1] = str(count+1)  # this is the =O
-            geom[2][1] = str(count+1)  # this is the -O-
+            geom[1][1] = str(count + 1)  # this is the =O
+            geom[2][1] = str(count + 1)  # this is the -O-
 
             geom[1][2] = 1.3  # bond length C=O
             geom[1][4] = 120.1  # angle coreC-C=O
@@ -451,13 +452,13 @@ def substituter2(group, geom0, count):
             geom[2][2] = 1.3  # bond length C-O
             geom[2][4] = 120.1  # angle coreC-C=O
             if dihedral:
-                geom[2][6] = dihedral-180.0
+                geom[2][6] = dihedral - 180.0
             else:
                 geom[2][6] = 180.1  # dihedral with one of the core
 
-            geom[3][1] = str(count+3)  # attached to -O-
-            geom[3][3] = str(count+1)  # angled with -C
-            geom[3][5] = str(count+2)  # dihedraled with =O
+            geom[3][1] = str(count + 3)  # attached to -O-
+            geom[3][3] = str(count + 1)  # angled with -C
+            geom[3][5] = str(count + 2)  # dihedraled with =O
 
             geom[3][2] = 0.9
             geom[3][4] = 109.5
@@ -475,8 +476,8 @@ def substituter2(group, geom0, count):
         geom[1][0] = group[2]
         geom[2][0] = group[3]
 
-        geom[1][1] = str(count+1)
-        geom[2][1] = str(count+1)  # if also attached to that one
+        geom[1][1] = str(count + 1)
+        geom[2][1] = str(count + 1)  # if also attached to that one
 
         if group == ['C', 'C', 'C', 'H']:
             # zma = [['C',1, '1.4554490', 0, '111.0852500', -1, '121.9277283'],
@@ -524,10 +525,10 @@ def substituter2(group, geom0, count):
             geom[2][2] = '1.02'
             if dihedral:
                 geom[1][6] = dihedral
-                geom[2][6] = dihedral-120.0
+                geom[2][6] = dihedral - 120.0
         elif group in [['C', 'C', 'H', 'O'], ['C', 'C', 'O', 'H']]:
-            geom[1][1] = str(count+1)  # this is the =O
-            geom[2][1] = str(count+1)  # this is the -H
+            geom[1][1] = str(count + 1)  # this is the =O
+            geom[2][1] = str(count + 1)  # this is the -H
 
             geom[1][2] = 1.18  # bond length C=O
             geom[1][4] = 125.1  # angle coreC-C=O
@@ -550,7 +551,7 @@ def substituter2(group, geom0, count):
         else:
             # because the N now directly binds to the core
             # geom[1][1] verwijst naar the position of geom[0]
-            geom[1][1] = str(count+1)  # the bondlength index has to count+1 denk ik
+            geom[1][1] = str(count + 1)  # the bondlength index has to count+1 denk ik
         geom[0][0] = group[1]  # change C to O or also C
         geom[1][0] = group[2]  # change H to N or also H
         count += 2  # because two atoms are added to the activemat
@@ -567,9 +568,9 @@ def substituter2(group, geom0, count):
             zma = [['C', 1, '1.51'],
                    ['C', 2, '1.401', 1, '120.1', 0, '30.1'],
                    ['C', 3, '1.395', 2, '120.9', 1, '178.5'],
-                   ['C', 4, '1.395', 3, '120.1', 2,  '0.1'],
-                   ['C', 5, '1.395', 4, '119.5', 3,  '0.1'],
-                   ['C', 6, '1.395', 5, '120.1', 4,  '0.1'],
+                   ['C', 4, '1.395', 3, '120.1', 2, '0.1'],
+                   ['C', 5, '1.395', 4, '119.5', 3, '0.1'],
+                   ['C', 6, '1.395', 5, '120.1', 4, '0.1'],
                    ['H', 3, '1.087', 2, '119.3', 7, '180.1'],
                    ['H', 4, '1.086', 3, '119.8', 2, '180.1'],
                    ['H', 5, '1.086', 4, '119.9', 3, '180.1'],
