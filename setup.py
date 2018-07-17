@@ -8,8 +8,8 @@ setup(name='CINDES',
       description='Python Inverse Design Utility',
       author='Jos Teunissen',
       author_email='jteuniss@vub.ac.be',
-      packages=['INDES','utils','predictor', ''],
-      scripts = [ 'scripts/cyreader.py', 'scripts/ID_gauss' ],  # makes that automatically the right !# path is used. 
+      packages=['INDES', 'utils', 'predictor', ''],
+      scripts=['scripts/cyreader.py', 'scripts/ID_gauss'],  # makes that automatically the right !# path is used.
       #data_files=[ ("", ['requirements.txt'])],
       #py_modules=['foo'],
 
@@ -19,7 +19,7 @@ setup(name='CINDES',
           "scipy",
           "sklearn",
           #"pybel",
-          "seaborn" ]
+          "seaborn"]
      )
 
 

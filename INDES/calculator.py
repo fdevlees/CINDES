@@ -14,11 +14,11 @@ The output:
 J.L. Teunissen, 20th June 2016
 
 """
-debug=False
-safe=False
+debug = False
+safe = False
 
 import submitter as subm
-from copy import  deepcopy
+from copy import deepcopy
 import glob
 from pprint import pprint
 import pprint
@@ -33,11 +33,13 @@ import datareader
 import re
 import os
 import shutil
-once=0
+once = 0
 
 # this function to redirect the output of the optga keyword
 import sys
 from contextlib import contextmanager
+
+
 @contextmanager
 def custom_redirection(fileobj):
     old = sys.stdout
@@ -47,50 +49,55 @@ def custom_redirection(fileobj):
     finally:
         sys.stdout = old
 
+
 def invoke_script(calc, namespace, ID=0):
-    if not isinstance(calc, dict): return
+    if not isinstance(calc, dict):
+        return
     if not 'script' in calc:
         print "no script invocation"
         return
     print "in invoke script:):"
-    module_obj=__import__(calc['script'])
+    module_obj = __import__(calc['script'])
     module_obj.main(namespace, ID)
     return
 
-def get_secret_data(tablefilename,mols_tocal, mols_nocal, myrun):
+
+def get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun):
     '''checks for confs already calculated:
         uses myrun.~
         -props (set)
     '''
     import json
-    with open(tablefilename,'rb') as f:
+    with open(tablefilename, 'rb') as f:
         db = json.load(f)
     if debug:
         print "secret_table:"
-        sprint(10,secret_table)
-    table = { key:value for key,value in db.iteritems() if myrun.props <= value.viewkeys() }
+        sprint(10, secret_table)
+    table = {key: value for key, value in db.iteritems() if myrun.props <= value.viewkeys()}
     for mol in mols_tocal[:]:
         try:
-            mol.props=table[mol.index]
+            mol.props = table[mol.index]
         except KeyError:
             continue
-        mol.predicted=False
+        mol.predicted = False
         mols_tocal.remove(mol)
         mols_nocal.append(mol)
     return mols_tocal, mols_nocal
 
+
 def runjobs(mols_tocal, myrun, i):
-    calc=myrun.calcs[i]
-    def call( function, calc, *args, **kwargs):
+    calc = myrun.calcs[i]
+
+    def call(function, calc, *args, **kwargs):
         if isinstance(calc, list) or isinstance(calc, tuple):
-            for j,cal in enumerate(calc):
+            for j, cal in enumerate(calc):
                 invoke_script(cal, locals(), (i+1)*100+(j+1))
                 function(calc=cal, *args, **kwargs)
         else:
             invoke_script(calc, locals(), i+1)
             function(calc=calc, *args, **kwargs)
     # 0. filter off ignored molecules
-    mols_calc = filter(lambda x:not x.ignoremol, mols_tocal)
+    mols_calc = filter(lambda x: not x.ignoremol, mols_tocal)
 
     # 1. Make the jobs and add them to the molecules:
     #call(jobmaker, mols=mols_tocal, myrun=myrun, calc=calc)
@@ -99,13 +106,16 @@ def runjobs(mols_tocal, myrun, i):
     jobids = submission(mols_calc, myrun)
 
     # 3. test of all jobs are ready
-    if jobids: jobtester(mols_calc,myrun,jobids)
-    else: print "no jobids so assume no jobs submitted"
+    if jobids:
+        jobtester(mols_calc, myrun, jobids)
+    else:
+        print "no jobids so assume no jobs submitted"
 
     # 4. test normal termination and read jobs (only myrun variable used is actually debug)
     datareader.datareader(mols_calc, myrun)
 
     return mols_tocal
+
 
 def do_calcs(mols_tocal, myrun):
     for i, calc in enumerate(myrun.calcs):
@@ -113,30 +123,34 @@ def do_calcs(mols_tocal, myrun):
         # if there need to be set some new geometries for new calculation.
         invoke_script(calc, locals(), 2)
         # 5. delete jobs such that new jobs can be set up.
-        for mol in mols_tocal: mol.deletejobs()
+        for mol in mols_tocal:
+            mol.deletejobs()
 
     # after every calculation is performed:
     for mol in mols_tocal:
-        if not mol.ignoremol: datareader.set_combined_variables(mol, myrun.props)
+        if not mol.ignoremol:
+            datareader.set_combined_variables(mol, myrun.props)
     return mols_tocal
 
 # PROCEDURE
+
+
 def procedure(myrun, mols_tocal, mols_nocal, TZMat):
     global once
     #print "nconfs:", len(population)
     print "| n_indices_tocal:", len(mols_tocal)
     print "|    n_data_nocal:", len(mols_nocal)
-    if myrun.no1sub==1 and once==0:
+    if myrun.no1sub == 1 and once == 0:
         once = 1
         print " "
     elif myrun.secret_file:
         print "SECRET DATA activated:", myrun.secret_file
         tablefilename = myrun.secret_file
-        mols_tocal , mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun)
+        mols_tocal, mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun)
 
-    if not mols_tocal==[]:
+    if not mols_tocal == []:
         # 0. Set the molecular geometries
-        geommaker(mols_tocal,myrun,**TZMat)
+        geommaker(mols_tocal, myrun, **TZMat)
         # 1. And perform the calculations
         do_calcs(mols_tocal, myrun)
 
@@ -144,32 +158,36 @@ def procedure(myrun, mols_tocal, mols_nocal, TZMat):
     mols_all = mols_tocal + mols_nocal
 
     # 6. set target property i.e. mol.Pvalue and mol.boundaries
-    set_target_properties( mols_all, myrun)
+    set_target_properties(mols_all, myrun)
 
     return mols_all
 
-#0. geom making
+# 0. geom making
+
+
 @log_io()
-def geommaker(mols_tocal,myrun,passive, active, core):
-    if myrun.symlinks: print "symmetry will be applied |",
-    if myrun.optga: print "Output of Dihedral GA Optimizer is redirected to optga.out. optimizing... |",
+def geommaker(mols_tocal, myrun, passive, active, core):
+    if myrun.symlinks:
+        print "symmetry will be applied |",
+    if myrun.optga:
+        print "Output of Dihedral GA Optimizer is redirected to optga.out. optimizing... |",
     print
-    e=None
+    e = None
     for molecule in mols_tocal:
         c = deepcopy(core)
         a = deepcopy(active)
         p = deepcopy(passive)
-        molecule.set_zmat( zcon.constructor2(molecule.conf,c,a,p, links=myrun.symlinks) )
+        molecule.set_zmat(zcon.constructor2(molecule.conf, c, a, p, links=myrun.symlinks))
         if myrun.extrajobs:
-            if True: # i.e. give second geom similar geometry as default geom
-                molecule.zmat2=molecule.zmat
+            if True:  # i.e. give second geom similar geometry as default geom
+                molecule.zmat2 = molecule.zmat
 
         # Try to print SMILES
         try:
-            smiles= molecule.get_format()
+            smiles = molecule.get_format()
             print "smiles:", smiles,
         except (IndexError, NameError, KeyError) as e:
-            pass # only the last error is printed after the whole molecule loop
+            pass  # only the last error is printed after the whole molecule loop
 
         if myrun.optga:
             import sys
@@ -179,20 +197,20 @@ def geommaker(mols_tocal,myrun,passive, active, core):
             a = deepcopy(active)
             p = deepcopy(passive)
 
-            with open('optga.out','a') as out:
+            with open('optga.out', 'a') as out:
                 with custom_redirection(out):
                     reduce_conflicts(molecule, c, a, p)
         elif False:
             import fafoom
             # conformational analysis could be implemented here
             # the program is not ready for multiple conformations at the moment!
-            # possibly the molecule has only 1 index attribute without dihedral angles 
-            # but multiple conf lists with different dihedral angles. 
+            # possibly the molecule has only 1 index attribute without dihedral angles
+            # but multiple conf lists with different dihedral angles.
             # or when we also want to consider more than one dihedral per group
-            # for example not only the core-COOH but also the coreCOO-H dihedral 
+            # for example not only the core-COOH but also the coreCOO-H dihedral
             # then the zma or xyz attribute is a list of multiple zmatrices or cartesian coordinates
             # the the filenames should not be similar so also an index should be included in the filename
-            # subsequently the program has to check readyness of all structures 
+            # subsequently the program has to check readyness of all structures
             # and read them
             # and take the props of the lowest energy structure.
 
@@ -201,28 +219,31 @@ def geommaker(mols_tocal,myrun,passive, active, core):
         else:
             # no special action. the first assigned geometry is used as a start
             pass
-    if e: print "OpenBabel Smiles error:", e
+    if e:
+        print "OpenBabel Smiles error:", e
     return
 
 # 1. file making
+
+
 @log_io()
-def jobmaker(mols,myrun, calc): #----- dict with info for filewriter has to pass here)
+def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to pass here)
     '''jkl'''
 
     # 1. Decide program
-    if calc['program']=='gaussian':
+    if calc['program'] == 'gaussian':
         import gaussian as program
-    elif calc['program']=='nwchem':
+    elif calc['program'] == 'nwchem':
         import nwchem as program
     else:
         raise SystemExit('program not recognized')
 
     # 2. Write inputfile(s)
     for molecule in mols:
-        if 'positions' in calc: # so multiple jobs
+        if 'positions' in calc:  # so multiple jobs
             if 'geom' in calc and (calc['geom'] in ['H', 'AH']):
                 # 1. make a folder with the indexname in /data/indices[i]
-                if not os.path.exists(calc['path'] + '/' + molecule.index): #path is $WORKDIR/data
+                if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
                     os.makedirs(calc['path'] + '/' + molecule.index)
                     # and make sure ID_gauss is in the folder!
                     shutil.copy(calc['path'] + '/' + myrun.script, calc['path']+'/'+molecule.index)
@@ -232,52 +253,54 @@ def jobmaker(mols,myrun, calc): #----- dict with info for filewriter has to pass
                     zmat2, h, N = add_hydrogen(zmat2, pos, myrun.ncore)
                     setattr(molecule, 'zmat{}'.format(pos), zmat2)
                     job = program.filewriter(molecule, calc, pos)
-                    job.N=N
-        elif 'fafoom' in calc: # so first find a lower xyz
+                    job.N = N
+        elif 'fafoom' in calc:  # so first find a lower xyz
             from CINDES.utils import fafoom_utils
             print "trying fafoom..."
-            if calc['fafoom']==1:
+            if calc['fafoom'] == 1:
                 # only find the lowest conformer
                 molecule.xyz = fafoom_utils.GetLowestXYZ(molecule)
                 program.filewriter(molecule, calc)
-            elif calc['fafoom']==2:
-                if not os.path.exists(calc['path'] + '/' + molecule.index): #path is $WORKDIR/data
+            elif calc['fafoom'] == 2:
+                if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
                     os.makedirs(calc['path'] + '/' + molecule.index)
                     # and make sure ID_gauss is in the folder!
                     shutil.copy(calc['path'] + '/' + myrun.script, calc['path']+'/'+molecule.index)
                 # find a set of conformers
                 conformers = fafoom_utils.GetConformers(molecule)
-                for i, conformer in enumerate(conformers, 1): #enumerate starts at 1!
+                for i, conformer in enumerate(conformers, 1):  # enumerate starts at 1!
                     setattr(molecule, 'xyz{}'.format(i), conformer.GetProp('xyz'))
                     program.filewriter(molecule, calc, i)
-        else: # so single job
+        else:  # so single job
             program.filewriter(molecule, calc)
     return
+
 
 def add_hydrogen(zmat, pos, ncore):
     """makes new file with hydrogen attached on first dihedral"""
     zmatnew = deepcopy(zmat)
-    spos = str(pos) #spos is string of pos. pos = position
-    h=0
+    spos = str(pos)  # spos is string of pos. pos = position
+    h = 0
     logging.debug(pprint.pformat(zmat))
     if zmat[pos-1][0] == 'N':
-        N=True
+        N = True
         item = zmat[pos-1]
-        h=1
-        if len(item)==1: #when pos is 1 so first index of a zmat
-            hline = ['H',1,0.9,2,109.5,3,176.0]
-        elif len(item)==3: #when pos is 2 so second index of a zmat
-            hline = ['H',2,0.9,3,109.5,4,176.0]
+        h = 1
+        if len(item) == 1:  # when pos is 1 so first index of a zmat
+            hline = ['H', 1, 0.9, 2, 109.5, 3, 176.0]
+        elif len(item) == 3:  # when pos is 2 so second index of a zmat
+            hline = ['H', 2, 0.9, 3, 109.5, 4, 176.0]
         else:
-            bondindex=item[1] #or if item only has length 1
-            dihedralindex=item[3]
-            hline= ['H',spos,0.9,bondindex,109.5,item[3],176.0]#LOOK AT THIS
+            bondindex = item[1]  # or if item only has length 1
+            dihedralindex = item[3]
+            hline = ['H', spos, 0.9, bondindex, 109.5, item[3], 176.0]  # LOOK AT THIS
     else:
-        N=False
+        N = False
         for item in zmatnew[ncore:]:
             if str(item[1]) == spos:
-                if item[0] == 'H': h=1
-                hline=item.copy()
+                if item[0] == 'H':
+                    h = 1
+                hline = item.copy()
                 item[6] = '126.0'
                 hline[6] = '234.0'
                 hline[2] = 0.9
@@ -287,7 +310,7 @@ def add_hydrogen(zmat, pos, ncore):
     return zmatnew, h, N
 
 #    IF I ever want to make the structures with H on the other side attached I need something like this:
-#def maker2(zmat,pos,index,**fileparameters):
+# def maker2(zmat,pos,index,**fileparameters):
 #    '''makes new file with hydrogen attached on second dihedral.
 #    this is only necessary when there is not already another hydrogen on the compound
 #    or that the site is nitrogen or possibly sulfur doped. '''
@@ -308,28 +331,30 @@ def add_hydrogen(zmat, pos, ncore):
 
 # 2. submission
 @log_io()
-def submission(mol_tocal,myrun):
+def submission(mol_tocal, myrun):
     global once
-    if once==1 and myrun.no1sub==1:
+    if once == 1 and myrun.no1sub == 1:
         print "submit skipped"
         once = 2
         jobids = None
     else:
-        jobids = submit_normal(mol_tocal, myrun) #In here is decided to run on shell or to really submit!
+        jobids = submit_normal(mol_tocal, myrun)  # In here is decided to run on shell or to really submit!
     logging.info("----- END all jobs are submitted ----------")
-    if safe: time.sleep(15) # wait 15 seconds. to be sure that the jobs appear in the qstat command
+    if safe:
+        time.sleep(15)  # wait 15 seconds. to be sure that the jobs appear in the qstat command
     return jobids
+
 
 def submit_normal(mols_tocal, myrun):
     jobids = []
-    arrayjob=False
+    arrayjob = False
     for molecule in mols_tocal:
         for job in molecule.jobs:
 
             # 1. try ready part
             if myrun.try_ready:
                 if arrayjob:
-                    name=job.logpath
+                    name = job.logpath
                     if glob.glob(name):
                         print "already calculated:", name
                         continue
@@ -347,6 +372,8 @@ def submit_normal(mols_tocal, myrun):
     return jobids
 
 # 3. testing
+
+
 @log_io(signator='=')
 def jobtester(mols_tocal, myrun, jobids=None):
     """ this tester tests if the jobs are ready by looking for a file <name><.extension>.o<6digits>.
@@ -356,54 +383,59 @@ def jobtester(mols_tocal, myrun, jobids=None):
         - note that jobids are not used!
         - function returns nothing but returns when all jobs are ready! this function therefore can take very long!
     """
-    if jobids is None: jobids=[] # this to avoid the mutable default gotcha
-    if myrun.nosub==2 or len(mols_tocal)==0:
+    if jobids is None:
+        jobids = []  # this to avoid the mutable default gotcha
+    if myrun.nosub == 2 or len(mols_tocal) == 0:
         print "Job tester skipped because jobs are evaluated on login node or no jobs to be calculated"
         return
     print "len(mols_tocal):", len(mols_tocal)
     test_ready = myrun.test_ready
     path = myrun.path
     fileparameters = myrun.__dict__
-    if test_ready==1:
+    if test_ready == 1:
         test_ready1(mols_tocal, myrun)
-    elif test_ready==2: # default
+    elif test_ready == 2:  # default
         test_ready2(mols_tocal, myrun)
-    elif test_ready==3:
+    elif test_ready == 3:
         test_ready3(mols_tocal, myrun)
     else:
         raise SystemExit('no valid test_ready value')
     return
 
-def test_ready1(indices,myrun):
+
+def test_ready1(indices, myrun):
     ''' test ready based on the presence of inputfile.o$$ file '''
     path = myrun.path
     fileparameters = myrun.__dict__
     tijdje = 0
-    paths = [] #here we are going to make a list of paths of the jobs
+    paths = []  # here we are going to make a list of paths of the jobs
     for i in range(len(indices)):
-        path1 = path + '/' + fileparameters['identify'] + indices[i] + myrun.extension + '.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+        path1 = path + '/' + fileparameters['identify'] + indices[i] + \
+            myrun.extension + '.o[0-9][0-9][0-9][0-9][0-9][0-9]'
         paths.append(path1)
-        if fileparameters['stab']==1: #property is global variable
+        if fileparameters['stab'] == 1:  # property is global variable
             for pos in fileparameters['positions']:
-                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + myrun.extension + '.o[0-9][0-9][0-9][0-9][0-9][0-9]'
+                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + \
+                    '_' + str(pos) + myrun.extension + '.o[0-9][0-9][0-9][0-9][0-9][0-9]'
                 paths.append(path2)
-    while True: # then we remove each item of the paths that exists. If every path exists, all jobs are ready
-        if tijdje>fileparameters['timelimit']:
+    while True:  # then we remove each item of the paths that exists. If every path exists, all jobs are ready
+        if tijdje > fileparameters['timelimit']:
             print "time is up"
             break
-        pathscopy= paths[:]
+        pathscopy = paths[:]
         for pathje in pathscopy:
             if glob.glob(pathje):
                 paths.remove(pathje)
                 print "ready: ", pathje[:-25]
-        if paths==[]:
+        if paths == []:
             break
         print "time/h:", tijdje/3600, "len paths:", len(paths),
         time.sleep(fileparameters['timestep'])
-        tijdje+=fileparameters['timestep']
+        tijdje += fileparameters['timestep']
     logging.info("All jobs are READY")
-    time.sleep(fileparameters['extrawaittime']) #just wait for the files to write back before opening them
+    time.sleep(fileparameters['extrawaittime'])  # just wait for the files to write back before opening them
     return
+
 
 def test_ready2(mols_tocal, myrun):
     """
@@ -417,67 +449,68 @@ def test_ready2(mols_tocal, myrun):
     -extrawaittime
     """
     completedjobs = []
-    files=[]
-    fileparameters=myrun.__dict__
+    files = []
+    fileparameters = myrun.__dict__
     for mol in mols_tocal:
-        #if zzz:
+        # if zzz:
         #    jobnames = [ job.errorfile for job in mol.jobs if not job.errorfile is None ]
-        jobnames = [ job.filename for job in mol.jobs ]
+        jobnames = [job.filename for job in mol.jobs]
         files.extend(jobnames)
     print "files:", files
     tijdje = 0
     while True:
-        count=0
-        if tijdje>fileparameters['timelimit']:
+        count = 0
+        if tijdje > fileparameters['timelimit']:
             print "time is up"
             break
         filescopy = files[:]
         njobs = len(filescopy)
         qsta_raw = subm.qsta()
-        if qsta_raw==False:
+        if qsta_raw == False:
             print "qsta not working!"
             time.sleep(fileparameters['timestep'])
             continue
-        qsta_out = [ item.split() for item in qsta_raw.split('\n') ]
+        qsta_out = [item.split() for item in qsta_raw.split('\n')]
         states = []
         jobs = []
         for item in qsta_out:
-            if len(item)==4:
+            if len(item) == 4:
                 states.append(item[1])
                 jobs.append(item[3])
-            elif len(item)==5:
+            elif len(item) == 5:
                 states.append(item[2])
                 jobs.append(item[4])
         if debug:
-            print "states:",states
-            print "jobs:",jobs
+            print "states:", states
+            print "jobs:", jobs
             print "files:", files
         for filetje in filescopy:
-            for state,job in zip(states,jobs):
-                if filetje==job:
-                    if state in ['Q','R']: #so if job still in queue and not has state=='C'
-                        count += 1 #so count all the jobs still in queue
-                    elif state in ['H','E']:
+            for state, job in zip(states, jobs):
+                if filetje == job:
+                    if state in ['Q', 'R']:  # so if job still in queue and not has state=='C'
+                        count += 1  # so count all the jobs still in queue
+                    elif state in ['H', 'E']:
                         print "ERROR jobs on hold or Error"
-                        count +=1
+                        count += 1
                     else:
-                        assert state=='C'
+                        assert state == 'C'
                         if job not in completedjobs:
-                            print 'JOB completed:',job
+                            print 'JOB completed:', job
                             completedjobs.append(job)
                     if debug:
                         print "found a job: ", state, job, filetje
-        t = "{:.2f}".format(round(tijdje/3600.),2)
+        t = "{:.2f}".format(round(tijdje/3600.), 2)
         print "njobs -running: {:d} -ready: {:d} | waittime={} hrs".format(count, njobs-count, t)
-        if count==0: #so no jobs anymore in queue
+        if count == 0:  # so no jobs anymore in queue
             break
         time.sleep(fileparameters['timestep'])
-        tijdje+=fileparameters['timestep']
+        tijdje += fileparameters['timestep']
     logging.info("All jobs are READY")
-    time.sleep(fileparameters['extrawaittime']) #just wait for the files to write back before opening them
+    time.sleep(fileparameters['extrawaittime'])  # just wait for the files to write back before opening them
     return
 
-def test_ready3(indices,myrun):
+
+def test_ready3(indices, myrun):
     '''this could be something using a line as :
         touch ${PBS_JOBID}.completed
     in the jobscript ID_gauss
@@ -485,34 +518,37 @@ def test_ready3(indices,myrun):
     path = myrun.path
     fileparameters = myrun.__dict__
     tijdje = 0
-    paths = [] #here we are going to make a list of paths of the jobs
+    paths = []  # here we are going to make a list of paths of the jobs
     for i in range(len(indices)):
         path1 = path + '/' + fileparameters['identify'] + indices[i] + '.completed'
         paths.append(path1)
-        if fileparameters['stab']==1: #property is global variable
+        if fileparameters['stab'] == 1:  # property is global variable
             for pos in fileparameters['positions']:
-                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + '_' + str(pos) + '.completed'
+                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + \
+                    indices[i] + '_' + str(pos) + '.completed'
                 paths.append(path2)
-    while True: # then we remove each item of the paths that exists. If every path exists, all jobs are ready
-        if tijdje>fileparameters['timelimit']:
+    while True:  # then we remove each item of the paths that exists. If every path exists, all jobs are ready
+        if tijdje > fileparameters['timelimit']:
             print "time is up"
             break
-        pathscopy= paths[:]
+        pathscopy = paths[:]
         for pathje in pathscopy:
             if glob.glob(pathje):
                 paths.remove(pathje)
                 print "ready: ", pathje[:-25]
-        if paths==[]:
+        if paths == []:
             break
         print "time/h:", tijdje/3600, "len paths:", len(paths),
         time.sleep(fileparameters['timestep'])
-        tijdje+=fileparameters['timestep']
+        tijdje += fileparameters['timestep']
     logging.info("All jobs are READY")
-    time.sleep(fileparameters['extrawaittime']) #just wait for the files to write back before opening them
+    time.sleep(fileparameters['extrawaittime'])  # just wait for the files to write back before opening them
     return
     pass
 
-#6. set molecular property attributes
+# 6. set molecular property attributes
+
+
 def set_target_properties(molecules, myrun):
     ''' set mol.Pvalue and if boundary conditions mol.boundaries
     uses myrun attributes:
@@ -529,38 +565,37 @@ def set_target_properties(molecules, myrun):
     for mol in molecules:
         if mol.ignoremol:
             print mol, 'ignored'
-            if myrun.optimum=='maximum':
-                mol.Pvalue=-float("inf")
-            else: 
-                mol.Pvalue=float("inf")
+            if myrun.optimum == 'maximum':
+                mol.Pvalue = -float("inf")
+            else:
+                mol.Pvalue = float("inf")
             continue
         if mol.Pvalue:
             print "molecular target property already set. Predicted?", mol
-            if myrun.bc: print "boundary condition cannot be set"
+            if myrun.bc:
+                print "boundary condition cannot be set"
             print "molecule has probably no .props attribute"
             continue
-        if myrun.property=='func':
+        if myrun.property == 'func':
             try:
-                kwargs = { prop:mol.props[prop] for prop in myrun.func_args }
+                kwargs = {prop: mol.props[prop] for prop in myrun.func_args}
             except KeyError:
                 print "error mol:", mol
                 print "props:", mol.props
             mol.Pvalue = myrun.function(**kwargs)
         else:
             try:
-                mol.Pvalue = mol.props[ myrun.property ]
+                mol.Pvalue = mol.props[myrun.property]
             except KeyError:
                 print "error mol:", mol
-                print "mol.ignoremol", mol.ignoremol, map(lambda job:job.ignorejob, mol.jobs)
+                print "mol.ignoremol", mol.ignoremol, map(lambda job: job.ignorejob, mol.jobs)
                 print "props:", mol.props
                 raise
 
         if myrun.bc:
             try:
-                mol.boundaries = [ mol.props[bcp] for bcp in [myrun.bcprop] ]
+                mol.boundaries = [mol.props[bcp] for bcp in [myrun.bcprop]]
             except KeyError as e:
                 print e
                 pass
     return
-
-

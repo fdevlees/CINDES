@@ -4,6 +4,7 @@
 import time
 import submitter as subm
 
+
 class BaseJob(object):
     '''BaseJob of any kind of submittable job'''
     script = ''
@@ -17,20 +18,21 @@ class BaseJob(object):
         -logfile  = name of outputfile without path
         -logpath  = full path to outputfile
         '''
-        path, filename=filepath.rsplit('/',1)
+        path, filename = filepath.rsplit('/', 1)
 
-        self.filepath=filepath
-        self.path=path
-        self.filename=filename
+        self.filepath = filepath
+        self.path = path
+        self.filename = filename
 
         if '.' in filename:
-            self.name=filename.split('.')[0]
-        else: self.name=self.filename
+            self.name = filename.split('.')[0]
+        else:
+            self.name = self.filename
 
-        self.logfile=self.name + '.log'
-        self.logpath=self.path + '/' + self.logfile
+        self.logfile = self.name + '.log'
+        self.logpath = self.path + '/' + self.logfile
 
-        self.calc=calc
+        self.calc = calc
         self.errorpath = None
         self.errorfile = None
         self.ignorejob = False
@@ -51,7 +53,7 @@ class BaseJob(object):
         '''submit the job input file'''
         jobid = None
         try:
-            if self.calc['nosub'] ==2:
+            if self.calc['nosub'] == 2:
                 time.sleep(1)
                 subm.nosubmit(self, self.cmd)
                 jobid = '0'
@@ -84,14 +86,14 @@ class BaseJob(object):
             else:
                 break
 
-        if ret==3:
+        if ret == 3:
             print "open-new-file submit-problem. trying to resubmit"
             self.submit()
-        elif not ret==1:
+        elif not ret == 1:
             print "Error termination:", self.logpath
             self.errortermination(debug)
         else:
-            self.IsReady=True
+            self.IsReady = True
         return
 
     def ready(self, ignore=0, extratime=0, **kwargs):
@@ -108,30 +110,32 @@ class BaseJob(object):
 
         if self.errorpath:
             try:
-                ret_zzz=self.termination(self.errorpath)
-            except IOError:ret_zzz=0
-        else: ret_zzz=0
+                ret_zzz = self.termination(self.errorpath)
+            except IOError:
+                ret_zzz = 0
+        else:
+            ret_zzz = 0
 
-        if ret==1:
-            self.IsReady=True
-        elif ret==2:
+        if ret == 1:
+            self.IsReady = True
+        elif ret == 2:
             print "\n{0}\n\t  IGNORED: {1} IGNORED!\n{0}\n".format("    --oOo--"*10, self.logpath)
-            self.ignorejob=True
-            self.IsReady=True
-        elif self.errorpath and ret_zzz==1:
+            self.ignorejob = True
+            self.IsReady = True
+        elif self.errorpath and ret_zzz == 1:
             import shutil
             shutil.copyfile(self.errorpath, self.logpath)
             time.sleep(1)
             print "*zzz.log file with normal termination copied back to original logfile."
-            pass # in the following iteration of while true the termination(path) should return 1
-        elif (not self.errorpath is None) and ignore and extratime>ignore:
-            self.ignorejob=True
-            self.IsReady=True
-            print "\n\n{0}\n    AUTOMATICALLY IGNORED after {2} seconds of waiting: {1}\n{0}\n".format("    --oOo--"*10, self.logpath, str(ignore))
+            pass  # in the following iteration of while true the termination(path) should return 1
+        elif (not self.errorpath is None) and ignore and extratime > ignore:
+            self.ignorejob = True
+            self.IsReady = True
+            print "\n\n{0}\n    AUTOMATICALLY IGNORED after {2} seconds of waiting: {1}\n{0}\n".format(
+                "    --oOo--"*10, self.logpath, str(ignore))
             try:
                 with open(self.logpath, 'a') as f:
                     f.write(' IGNORED')
             except IOError as e:
                 print "not able to write IGNORE to file"
         return
-
