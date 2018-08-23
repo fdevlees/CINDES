@@ -3,14 +3,25 @@ import fafoomga
 from rdkit import Chem
 import os, sys
 
+debug=True
+
 def GetLowestXYZ(mol):
     print "in GetLowestXYZ"
+    if debug:
+        print "mol:", mol, "mol.smiles:", mol.smiles
     for filename in ['kill.dat', 'optimized_structures.sdf']:
         if os.path.exists(filename): os.remove(filename)
     try:
         fafoomga.main(mol.smiles)
     except SystemExit as e:
-        print e
+        # the fafoom program exits automatically by sys.exit(0) so we 
+        # need to catch it and continue!
+        if debug:
+            import traceback
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            print repr(" ".join(traceback.format_exception(exc_type, exc_value,
+                                                          exc_traceback)))
+            print e
     suppl = Chem.SDMolSupplier('optimized_structures.sdf', removeHs=False)
     mols = [ mol for mol in suppl ]
     lowmol = sorted(mols, key=lambda mol:mol.GetDoubleProp('Energy'))[0]

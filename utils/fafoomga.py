@@ -5,6 +5,8 @@ from fafoom import MoleculeDescription, Structure, selection, print_output,\
     remover_dir, set_default, file2dict
 import fafoom.run_utilities as run_util
 
+debug=True
+
 def main(smi=None, restart=False):
     global blacklist, energy_function, params, population
     # Decide for restart or a simple run.
@@ -12,7 +14,6 @@ def main(smi=None, restart=False):
     else: opt = "simple"
 
     # set SMILES
-    print "fafoom-smi:", smi
     p_file = "fafoomparams"
     # Build a dictionary from two section of the parameter file.
     params = file2dict(p_file, ['GA settings', 'Run settings'])
@@ -21,6 +22,7 @@ def main(smi=None, restart=False):
     cnt_max = 200
     population, blacklist = [], []
     min_energy = []
+
 
     if opt == "simple":
         mol = MoleculeDescription(p_file)

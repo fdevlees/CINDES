@@ -1,4 +1,6 @@
 #!/bin/env python
+# previous line must be at the beginning of the file!
+from __future__ import division
 
 # debug flag
 debug = 1
@@ -7,6 +9,7 @@ debug = 1
 import time  # for getting time/date and time delays
 start = time.clock()
 from inspect import stack
+from math import ceil
 import shutil  # module to copy files
 from platform import node
 import pprint  # pretty printer for printing lists
@@ -76,7 +79,7 @@ class BaseRun(object):
                 if value.__doc__:
                     sb.append("{key:20}={value}".format(key=key, value=value.__doc__))
                 else:
-                    sb.append("{key:20}= lambda function")
+                    sb.append("{key:20}= lambda function".format(key=key))
             elif key in ['adj']:
                 sb.append("{key:20}=\n".format(key=key))
 
@@ -84,7 +87,12 @@ class BaseRun(object):
                 sb.append('\n'.join(map(f, value)))
             else:
                 sb.append("{key:20}='{value}'".format(key=key, value=value))
-        sb.append("empty attributes    ={}".format(" ".join(empty_attributes)))
+
+        # now a table of items that are empty is printed in rows of 5 items
+        l = 5
+        inrows = [ empty_attributes[l*i:l*i+l] for i in range(int(ceil(len(empty_attributes)/l))) ] 
+        asstr = "\n".join([ "".join(map(" {:20}".format, item)) for item in inrows])
+        sb.append("empty attributes    =\n{}".format(asstr))
         return '\n'.join(sb)
 
     def __repr__(self):

@@ -77,14 +77,23 @@ def normaltermination(mols, run):
         # CHECK READY:
         print "not ready:",
         for i, mol in enumerate(mols):
+            # i. check if mol is ignored or ready
             if mol.ignoremol or mol.IsReady:
                 continue
+
+            # ii. check jobs of mol
             for j, job in enumerate(mol.jobs):
+                # check if job is ignored or ready
                 if job.IsReady or job.ignorejob:
                     continue
                 else:
                     print "{}.{}".format(i, j),
+
+                # test ready. when extratime is too high job is ignored
                 job.ready(extratime=extratime, ignore=run.ignore)
+
+                # until now when one job is ignored automatically the whole molecule is discarded
+                # this could be more complex if for example only a certain configuration is ignored!
                 if job.ignorejob:
                     mol.discard()
 
@@ -102,7 +111,7 @@ def normaltermination(mols, run):
         # after some time use larger timesteps
         if extratime >= timestep2:
             timestep1 = timestep2
-        print "extra waittime/h:", "{:.2f}".format(round(extratime / 3600., 2)), "||",
+        print "extra waittime/h:", "{:.2f}".format(extratime / 3600.), "||",
 
     # 3. return mols that are not ignored:
     mols_toread = filter(lambda mol: not mol.ignoremol, mols)
@@ -119,11 +128,12 @@ def zzztester(mols):
     -timestep
     """
     files = []
-    for mol in mols_tocal:
+    for mol in mols:
         jobnames = [job.errorfile for job in mol.jobs if not job.errorfile is None]
         files.extend(jobnames)
     if files:
-        print "zzz-files:", files
+        #print "zzz-files:", files
+        print "n zzz files:", len(files),
     else:  # here return so we don't need the qsta
         return False
 
@@ -162,6 +172,7 @@ def zzztester(mols):
     if count > 0:
         return True
     else:
+        print "no zzzs (anymore) in queue",
         return False
 
 

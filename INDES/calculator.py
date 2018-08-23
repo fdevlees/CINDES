@@ -499,7 +499,7 @@ def test_ready2(mols_tocal, myrun):
                             completedjobs.append(job)
                     if debug:
                         print "found a job: ", state, job, filetje
-        t = "{:.2f}".format(round(tijdje / 3600.), 2)
+        t = "{:.2f}".format(tijdje / 3600.)
         print "njobs -running: {:d} -ready: {:d} | waittime={} hrs".format(count, njobs - count, t)
         if count == 0:  # so no jobs anymore in queue
             break

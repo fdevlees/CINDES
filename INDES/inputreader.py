@@ -263,6 +263,7 @@ def readfile(subinp):
         'try_ready': 0,
         'secret_file': '',
         'TZmat': {},
+        'zmatrixfile': 'ZMAT',
 
         #          LOCAL JOB PARAMETERS
         'geom2': None,
@@ -289,10 +290,10 @@ def readfile(subinp):
             continue
         # 1. some capital sensitive keywords:
         elif 'tablename' in line:
-            paras['tablename'] = line.split()[1]
+            paras['tablename'] = splitted[1]
             continue
         elif 'startind' in line:
-            paras['startind'] = line.split()[1]
+            paras['startind'] = splitted[1]
             continue
         elif 'nosub' in line:
             try:
@@ -306,6 +307,8 @@ def readfile(subinp):
             paras['secret_file'] = splitted[1]
             logging.info("nosub3. external file is used for data!: " + paras['secret_file'])
             continue
+        elif 'zmatrixfile' in line:
+            paras['zmatrixfile'] = splitted[1]
         elif 'END' in line:
             break
 
