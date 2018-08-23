@@ -74,7 +74,8 @@ def get_input():
 
 @log_io()
 def get_geometry(options):
-    zmatrix = INDES.reader.geometry(zmatrixfile='ZMAT', **options)
+    '''zmatrixfile should be in options'''
+    zmatrix = INDES.reader.geometry(**options)
     return zmatrix
 
 

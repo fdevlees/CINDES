@@ -85,10 +85,13 @@ class GaussianJob(BaseJob):
 
 
 def writegeom(mol, fid, geom=None):
+    print "geom", geom,
     # set attributes
     if geom is None:
         Azmat = 'zmat'
         Axyz = 'xyz'
+    elif geom.startswith('ZMAT'):
+        Azmat = geom
     else:
         Azmat = 'zmat{}'.format(str(geom))
         Axyz = 'xyz{}'.format(str(geom))

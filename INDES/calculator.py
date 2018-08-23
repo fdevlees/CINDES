@@ -181,6 +181,13 @@ def geommaker(mols_tocal, myrun, passive, active, core):
         if myrun.extrajobs:
             if True:  # i.e. give second geom similar geometry as default geom
                 molecule.zmat2 = molecule.zmat
+        if isinstance(myrun.zmatrixfile, list):
+            print "myrun.zmatrixfile:", myrun.zmatrixfile
+            for zmatfile in myrun.zmatrixfile:
+                tzmat = myrun.TZmatrices[zmatfile]
+                c, a, p = map(deepcopy, (tzmat['core'], tzmat['active'], tzmat['passive']))
+                mtzmat = zcon.constructor2(molecule.conf, c, a, p, links=myrun.symlinks)
+                setattr(molecule, zmatfile, mtzmat)
 
         # Try to print SMILES
         try:

@@ -36,7 +36,6 @@ from CINDES.utils.table import set_table, get_property_table
 # initial global variables
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 once = 0
-zmatrixfile = "ZMAT"
 
 print "time for imports:", time.clock() - start
 
@@ -181,7 +180,15 @@ class FrameRun(BaseRun):
         super(FrameRun, self).__init__(**entries)
         # specific for FrameRun:
         if self.nsites:
-            self.TZmat = r.geometry(**entries)
+            if isinstance(self.zmatrixfile, list):
+                self.TZmatrices={}
+                for zmatrixfile in self.zmatrixfile:
+                    tzmat = r.geometry(zmatfile=zmatrixfile, **entries)
+                    #self.TZmatrices.append(tzmat)
+                    self.TZmatrices[zmatrixfile]=tzmat
+                self.TZmat = self.TZmatrices[self.zmatrixfile[0]]
+            else:
+                self.TZmat = r.geometry(zmatfile=self.zmatrixfile, **entries)
             self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
             self.corresp = self.set_corresp(self.TZmat['active'], self.TZmat['passive'])
         else:

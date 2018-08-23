@@ -30,15 +30,15 @@ if True:
     # READ COMMAND LINE ARGUMENTS
     parser = argparse.ArgumentParser(description="INverse DESign package")
     parser.add_argument("-i", "--inputfile", type=str, default='INPUT', help="name of the input file. default name: INPUT")
-    parser.add_argument("-z", "--zmatrixfile", type=str, default='ZMAT', help="name of the zmatrix file. default name: ZMAT")
+    #parser.add_argument("-z", "--zmatrixfile", type=str, default='ZMAT', help="name of the zmatrix file. default name: ZMAT")
     parser.add_argument("-v", "--verbose", action="count", default=0, help="increase output verbosity")
     args = parser.parse_args()
     #zmatrixfile is a global variable
-    logging.info("name of zmatfile:  " + args.zmatrixfile)
+    #logging.info("name of zmatfile:  " + args.zmatrixfile)
     logging.info("name of input-file:" + args.inputfile)
     # INPUT READING
     param, array = read_input(args.inputfile)
-    param['zmatrixfile'] = args.zmatrixfile
+    #param['zmatrixfile'] = args.zmatrixfile
     # END INPUT READING
 
     #START PROGRAM PROCEDURE

@@ -288,8 +288,9 @@ def readfile(subinp):
             continue
         if line[0] == '#':
             continue
+        key = splitted[0]
         # 1. some capital sensitive keywords:
-        elif 'tablename' in line:
+        if 'tablename' in line:
             paras['tablename'] = splitted[1]
             continue
         elif 'startind' in line:
@@ -308,7 +309,12 @@ def readfile(subinp):
             logging.info("nosub3. external file is used for data!: " + paras['secret_file'])
             continue
         elif 'zmatrixfile' in line:
-            paras['zmatrixfile'] = splitted[1]
+            if len(splitted[1:])==1:
+                paras['zmatrixfile'] = splitted[1]
+            else:
+                print "multiple ZMAT files!"
+                paras['zmatrixfile'] = splitted[1:]
+            continue
         elif 'END' in line:
             break
 
@@ -377,7 +383,8 @@ def readfile(subinp):
         elif 'multiplejobs' in line:
             print "set multiple jobs:"
             paras['multiplejobs'] = int(line.split()[1])
-        elif 'mult' in line:
+        #elif 'mult' in line:
+        elif key=='mult':
             paras['mult'] = int(line.split()[1])
         # -----
 
