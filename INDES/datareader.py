@@ -281,6 +281,9 @@ def read_file(Job):
                 except KeyError:
                     pcharges = zip(map(int, job_data.atomnos), map(round8, job_data.atomcharges['natural']))
                 datadict[inf] = pcharges
+            elif inf == 'xyz':
+                datadict['xyz_last'] = job_data.atomcoords[-1]
+                datadict['atomnos'] = job_data.atomnos
             else:
                 print "value not recognized:", inf
     print

@@ -167,6 +167,11 @@ def filewriter(mol, calc, pos=None):
     # write geom:
     writegeom(mol, fid, geom)
 
+    # write extra inputs:
+    if 'rdfreq' in job1['hotline']:
+        fid.write(' {}\n'.format(calc['rdfreq']))
+
+    fid.write('\n')
     # THE OTHER JOBS
     # for i, (charge, mult, line) in enumerate(paras['gaussianlines'][1:]):
     for i, job in enumerate(jobs[1:]):
@@ -180,6 +185,8 @@ def filewriter(mol, calc, pos=None):
         fid.write(str(index) + " {}th calc\n\n".format(i + 2))
         if not 'allcheck' in job['hotline']:
             fid.write("{} {}\n\n".format(job['charge'], job['mult']))
+        if 'rdfreq' in job['hotline']:
+            fid.write(' {}\n\n'.format(calc['rdfreq']))
     fid.close()
     return Job
 

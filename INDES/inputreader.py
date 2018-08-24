@@ -33,7 +33,6 @@ def read_input(siteinput):
             param['nsites'] = len(param['sites'])
         except KeyError:
             param['nsites'] = 0
-    #param['nsites'] = len(param['line1'])
     #####################
     if param['procedure'] in ['genconf']:
         print "Generate Configuration Procedure Active"
@@ -140,11 +139,35 @@ def get_prop_function(subinp, line):
 
     return subinp, func, props
 
+def get_calcs(subinp, line):
+    supercalcs = []
+    calcs = []
+    i, j=1, 1
+    line = subinp.readline()
+    while True:
+        assert line.strip()=='{:d}.{:d}'.format(i,j)
+        line = subinp.readline()
+        calcs.append(get_jobs(subinp, line, index=0))
+        # try to see if yet another job is given
+        line = subinp.readline().strip()
+        if line=='endcalcs' or line.split('.')[0]==str(i+1):
+            if len(calcs)==1:
+                supercalcs.append(calcs[0])
+            else:
+                supercalcs.append(calcs)
+            calcs = []
+        if line=='endcalcs':
+            break
+        i, j = map(int, line.split('.'))
+    print "supercalcs:", supercalcs
+    return supercalcs
 
-def get_jobs(subinp, line):
+
+def get_jobs(subinp, line, index=1):
     def get_extra_line(line):
         key, value = line.strip().split(None, 1)
-        assert key in ['identify', 'nosub', 'program', 'nprocs', 'geom', 'script', 'positions', 'fafoom']
+        assert key in ['identify', 'nosub', 'program', 'nprocs',
+                'geom', 'script', 'positions', 'fafoom', 'rdfreq']
         if key in ['nosub', 'nprocs', 'fafoom']:
             value = int(value)
         elif key in ['positions']:
@@ -153,9 +176,9 @@ def get_jobs(subinp, line):
         return
     calc = dict()
     splitted = line.split()
-    njobs = int(splitted[1])
-    if len(splitted) == 3:
-        n_extra_lines = int(splitted[2])
+    njobs = int(splitted[index])
+    if len(splitted) == index+2:
+        n_extra_lines = int(splitted[index+1])
         for _ in range(n_extra_lines):
             line = subinp.readline()
             get_extra_line(line)
@@ -331,6 +354,8 @@ def readfile(subinp):
             except IndexError:
                 paras['bcoptimum'] = 'min'
             assert paras['bcoptimum'] in ['min', 'max']
+        elif 'startcalcs' in line:
+            paras['calcs'] = get_calcs(subinp, line)
         # elif 'basisset' in line: paras['basisset'] = line.split()[1]
         elif 'cutoff' in line:
             paras['cutoff'] = float(line.split()[1])

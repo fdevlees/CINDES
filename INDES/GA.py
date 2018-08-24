@@ -129,7 +129,7 @@ class Fitness_Function():
         mols_all = INDES.procedures.submittingprocedure(mols_tocal,
                                                         mols_nocal,
                                                         myrun,
-                                                        **myrun.TZmat)  # here call submitting procedure
+                                                        )  # here call submitting procedure
         #newy = [ molecule.log() for molecule in mols_all ]
 
         # 4. log new results
