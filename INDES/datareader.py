@@ -159,10 +159,14 @@ def zzztester(mols):
             jobs.append(item[4])
 
     # inefficient loop
+    print "files:", files
+    print "jobs:", jobs
+    print "states:", states
     count = 0
     for filetje in files:
         for state, job in zip(states, jobs):
-            if filetje == job:  # so there is a zzzjob in the queue!
+            if job in filetje:  # so there is a zzzjob in the queue!
+                # filetje is whole path so job in filetje or filetje.split('/')[-1]==job
                 if state in ['Q', 'R', 'H', 'E']:  # so if job still in queue and not has state=='C'
                     count += 1  # so count all the jobs still in queue
                 else:

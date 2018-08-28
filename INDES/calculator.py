@@ -587,10 +587,11 @@ def set_target_properties(molecules, myrun):
             try:
                 mol.Pvalue = mol.props[myrun.property]
             except KeyError:
-                print "error mol:", mol
+                print "error mol:", mol, mol.index
                 print "mol.ignoremol", mol.ignoremol, map(lambda job: job.ignorejob, mol.jobs)
                 print "props:", mol.props
-                raise
+                print "molecule doesnt have the required property! so is ignored!"
+                mol.discard()
 
         if myrun.bc:
             try:
