@@ -339,14 +339,14 @@ def add_hydrogen(zmat, pos, ncore):
 
 # 2. submission
 @log_io()
-def submission(mol_tocal, myrun):
+def submission(mols_tocal, myrun):
     global once
     if once == 1 and myrun.no1sub == 1:
         print "submit skipped"
         once = 2
         jobids = None
     else:
-        jobids = submit_normal(mol_tocal, myrun)  # In here is decided to run on shell or to really submit!
+        jobids = submit_normal(mols_tocal, myrun)  # In here is decided to run on shell or to really submit!
     logging.info("----- END all jobs are submitted ----------")
     if safe:
         time.sleep(15)  # wait 15 seconds. to be sure that the jobs appear in the qstat command
@@ -354,8 +354,17 @@ def submission(mol_tocal, myrun):
 
 
 def submit_normal(mols_tocal, myrun):
+    ''' this function submits all the jobs of every mol.jobs list
+    when worker=True the worker framework will be used:
+        first a list of jobs is gathered in jobids and this list is used
+        to submit the jobs simultaneously
+
+        worker/1.6.8-intel-2018a
+        '''
+
     jobids = []
     arrayjob = False
+    worker = False
     for molecule in mols_tocal:
         for job in molecule.jobs:
 
@@ -374,9 +383,28 @@ def submit_normal(mols_tocal, myrun):
                         continue
 
             # 2. submit part
-            jobid = job.submit()
-            jobids.append(jobid)
-            time.sleep(1)
+            if worker:
+                jobids.append(job)
+            else:
+                jobid = job.submit()
+                jobids.append(jobid)
+                time.sleep(1)
+
+    if worker:
+        with open('loglist.csv') as f:
+            f.write('job,log\n')
+            for job in jobids:
+                f.write('{},{}\n'.format(job.name,job.logname))
+        # make sure there is a worker.pbs file with content like:
+        #    #!/bin/bash -l
+        #    #PBS -N my-gaussian-worker-job
+        #    #PBS -l walltime=1:00:00,nodes=1:ppn=8
+        #    module load Gaussian/G09.D01
+        #    cd $PBS_O_WORKDIR
+        #    time g09 <$PBS_O_WORKDIR/$job>$PBS_O_WORKDIR/$log
+        # execulte command:
+        #    wsub -batch worker.pbs -data loglist.csv
+        raise NotImplementedError('not yet fully implemented')
     return jobids
 
 # 3. testing

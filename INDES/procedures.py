@@ -124,7 +124,7 @@ class BaseRun(object):
             return
 
         # if calcs are given as jobs input:
-        if not paras['calcs']:
+        if 'jobs' in paras:
             calc = paras['jobs']
             calcs = [tocalc(calc)]
         else:

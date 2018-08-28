@@ -57,17 +57,25 @@ def intocon(inconf, array):
     return conf
 
 
-def demethyl(passive):
+def demethyl(passive, core):
     """here is now a quite simple operations but i here have
     an open option to fix some other groups later on
     now for each site the methyl group is changed for an H.
     """
+    newpassive = []
     for i in range(len(passive)):
-        # remove the hydrogens from the methyl groups
-        del passive[i][1:4]
-        # change carbons to hydrogens
-        passive[i][0][0] = 'H'
-    return passive
+        coreindex = int(passive[i][0][1])
+        if core[coreindex - 1][0] == 'N':
+            #del passive[i]
+            print "nitrogen passive site. no H placed"
+            pass
+        else:
+            # remove the hydrogens from the methyl groups
+            passive[i][1:4]
+            # change carbons to hydrogens
+            passive[i][0][0] = 'H'
+            newpassive.append(passive[i])
+    return newpassive
 
 
 def hydrogenizer(totalmat):
@@ -224,7 +232,8 @@ def constructor2(conf, core, active, passive, links=None):
         conf = extend_conf(conf, links)
 
     #print "CONFIGURATION:",conf
-    passive = demethyl(passive)
+    #if core is nitrogen passive = total remove
+    passive = demethyl(passive, core)
 
     # set counter for nth atom in new zmat
     count = 0
