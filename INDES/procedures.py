@@ -1,5 +1,5 @@
 #!/bin/env python
-# previous line must be at the beginning of the file!
+# this line must be at the beginning of the file!
 from __future__ import division
 
 # debug flag
@@ -27,6 +27,7 @@ import reader as r  # this reads the zmatrix in gaussian format
 from predictions import predictor
 from montecarlo import montecarloprocedure
 from loggings import loggings
+import calculator
 
 # import utils
 from CINDES.utils.writings import log_io, print_title, sprint, dump
@@ -36,7 +37,6 @@ from CINDES.utils.table import set_table, get_property_table
 # initial global variables
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 once = 0
-zmatrixfile = "ZMAT"
 
 print "time for imports:", time.clock() - start
 
@@ -72,7 +72,7 @@ class BaseRun(object):
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append(dump(value))
-            elif key in ['TZmat', 'genalg', 'jobs', 'stabjobs', 'prejobs', 'extrajobs', 'calcs']:
+            elif key in ['TZmat', 'TZmatrices', 'genalg', 'jobs', 'stabjobs', 'prejobs', 'extrajobs', 'calcs']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append(pprint.pformat(value, width=150))
             elif key == 'function' and callable(value):  # i.e. the value is a lambda function
@@ -100,9 +100,8 @@ class BaseRun(object):
 
     # the the calculationskeyword:
     def set_calcs(self):
-        def tocalc(paras, job):
+        def tocalc(calc):
             # path only set after setup_filesystem!
-            calc = paras[job]
             tohavekeys = ['program', 'nprocs', 'identify', 'path', 'nosub']
             for key in tohavekeys:
                 if not key in calc:
@@ -118,15 +117,36 @@ class BaseRun(object):
             return cal, i
 
         paras = self.__dict__
-        if not paras['jobs']:
+
+        # if no calcs are given
+        if not (paras['jobs'] or paras['calcs']):
             self.calcs = []
             return
-        calcs = [tocalc(paras, 'jobs')]
+
+        # if calcs are given as jobs input:
+        if not paras['calcs']:
+            calc = paras['jobs']
+            calcs = [tocalc(calc)]
+        else:
+            # we modify the jobs to calcs this is a bit confusing since calcs are actually
+            # still jobs
+            precalcs = paras['calcs']
+            calcs = []
+            for calc in precalcs:
+                if isinstance(calc, list):
+                    C = []
+                    for cal in calc:
+                        C.append(tocalc(cal))
+                    calcs.append(C)
+                else:
+                    calcs.append(tocalc(calc))
         if paras['prejobs']:
-            calcs.insert(0, tocalc(paras, 'prejobs'))
+            calc = paras['prejobs']
+            calcs.insert(0, tocalc(calc))
         for key in ['stabjobs', 'extrajobs']:
             if paras[key]:
-                calcs[-1] = [calcs[-1], tocalc(paras, key)]
+                calc = paras[key]
+                calcs[-1] = [calcs[-1], tocalc(calc)]
 
         # verify that there are not similar identifiers
         identifiers = []
@@ -181,7 +201,14 @@ class FrameRun(BaseRun):
         super(FrameRun, self).__init__(**entries)
         # specific for FrameRun:
         if self.nsites:
-            self.TZmat = r.geometry(**entries)
+            if isinstance(self.zmatrixfile, list):
+                self.TZmatrices={}
+                for zmatrixfile in self.zmatrixfile:
+                    tzmat = r.geometry(zmatfile=zmatrixfile, **entries)
+                    self.TZmatrices[zmatrixfile]=tzmat
+                self.TZmat = self.TZmatrices[self.zmatrixfile[0]]
+            else:
+                self.TZmat = r.geometry(zmatfile=self.zmatrixfile, **entries)
             self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
             self.corresp = self.set_corresp(self.TZmat['active'], self.TZmat['passive'])
         else:
@@ -375,7 +402,6 @@ def testmax(myrun, mols, bcok):
 
 def runtest(run, optimum, optsite, count, bcok, mctable=[], array=[]):
     param = run.__dict__
-    TZmat = run.TZmat
     converged = 0
     print
 
@@ -390,7 +416,7 @@ def runtest(run, optimum, optsite, count, bcok, mctable=[], array=[]):
                 if param['ml'] == 0:
                     optsite = montecarloprocedure(run, array, optimum, mctable)
                 else:
-                    optsite = montecarloprocedure(run, array, optimum, mctable, **TZmat)
+                    optsite = montecarloprocedure(run, array, optimum, mctable, **run.TZmat)
                 print "optimal_after_this_site:", pprint.pformat(optsite, width=100)
         else:
             print "Global_Iteration_optimum and optimum_after_this_site are not the same yet"
@@ -461,10 +487,8 @@ def restriction1(mols_todo, mols_nodo, run):
 
 
 # B: getting the real data by submitting
-def submittingprocedure(mols_tocal, mols_nocal, myrun, **kwargs):
-    fileparameters = myrun.__dict__
-    import calculator
-    data = calculator.procedure(myrun, mols_tocal, mols_nocal, kwargs)
+def submittingprocedure(mols_tocal, mols_nocal, myrun):
+    data = calculator.procedure(myrun, mols_tocal, mols_nocal)
     return data
 
 # THERE ARE DIFFERENT GLOBAL PROGRAM FLOW PROCEDURES:
@@ -476,10 +500,9 @@ def submittingprocedure(mols_tocal, mols_nocal, myrun, **kwargs):
 # 6: Steepest Descent algorithm. Looks like BFS but there is no loop over sites
 # 7: Generate database based on farthest point selection. (based on diversity index)
 
-# 1: standard BFS
-
-
 def BFS(param, array):
+    """ 1. This is the standard BFS procedure """
+
     bcok = 0  # TO REMOVE LATER
     param['bcok'] = 0
     startconf = get_startconf(param, array)
@@ -553,7 +576,7 @@ def BFS(param, array):
                 mols_all = submittingprocedure(mols_tocal,
                                                mols_nocal,
                                                myrun,
-                                               **myrun.TZmat)  # here call submitting procedure
+                                               )  # here call submitting procedure
             else:
                 mols_all = skipper(mols_tocal, mols_nocal)
 
@@ -574,7 +597,7 @@ def BFS(param, array):
 
             print("--- %s seconds ---" % (time.time() - myrun.starttime))
             print(myrun.currenttime())
-        # END LOOP OVER SITES
+        # HERE ENDS LOOP OVER SITES
 
         # get optimum and test convergence
         optimum, optsite, converged = runtest(myrun, optimum, optsite, count, bcok, mctable=property_table, array=array)
@@ -591,45 +614,58 @@ def BFS(param, array):
     print "DONE"
     return
 
-# 2: genconf
-
-
 def genconf(param):
+    """ 2. Procedure to generate the inputfiles for a single index """
+    from CINDES.utils.molecule import Molecule
     myrun = FrameRun(**param)
     param = myrun.__dict__
-    TZmat = r.geometry(**param)
     conf = zcon.indtocon(param['startind'])
+    mol = Molecule(conf=conf)
     print "in GENCONF: conf is:", conf
     param['workdir'] = os.getcwd()
     path = param['workdir']
     param["path"] = str(path)
 
-    c = deepcopy(TZmat['core'])
-    a = deepcopy(TZmat['active'])
-    p = deepcopy(TZmat['passive'])
-    mat = zcon.constructor2(conf, c, a, p, links=myrun.symlinks)
+    if isinstance(myrun.zmatrixfile, list):
+        print "myrun.zmatrixfile:", myrun.zmatrixfile
+        for zmatfile in myrun.zmatrixfile:
+            tzmat = myrun.TZmatrices[zmatfile]
+            c, a, p = map(deepcopy, (tzmat['core'], tzmat['active'], tzmat['passive']))
+            mtzmat = zcon.constructor2(mol.conf, c, a, p, links=myrun.symlinks)
+            setattr(mol, zmatfile, mtzmat)
+    else:
+        TZmat = r.geometry(**param)
+        c = deepcopy(TZmat['core'])
+        a = deepcopy(TZmat['active'])
+        p = deepcopy(TZmat['passive'])
+        zmat = zcon.constructor2(conf, c, a, p, links=myrun.symlinks)
+        mol.zmat = mat
     if myrun.program == 'gaussian':
         import gaussian as program
     elif myrun.program == 'nwchem':
         import nwchem as program
     else:
         raise SystemExit('program not recognized')
-    from CINDES.utils.molecule import Molecule
-    mol = Molecule(conf=conf)
-    mol.zmat = mat
     calcs = myrun.calcs
-    if isinstance(calcs[0], list):
-        calc = calcs[0][0]
-    else:
-        calc = calcs[0]
-    program.filewriter(mol, calc)
+    for calc in calcs:
+        if isinstance(calc, list):
+            calc = calc
+            for cal in calc:
+                program.filewriter(mol, cal)
+                print "\n\tprinter file with:"
+                pprint.pprint(cal)
+        else:
+            calc = calcs[0]
+            program.filewriter(mol, calc)
+            print "\n\tprinter file with:"
+            pprint.pprint(calc)
     return
 
 # 3: generate
 
 
 def generate_procedure(param, array):
-    ''' calculate all possible structures '''
+    ''' 3. calculate all possible structures '''
 
     myrun = FrameRun(**param)
     table = set_table(myrun)
@@ -653,7 +689,7 @@ def generate_procedure(param, array):
             mols_all = submittingprocedure(mols_tocal,
                                            mols_nocal,
                                            myrun,
-                                           **myrun.TZmat)  # here call submitting procedure
+                                           )  # here call submitting procedure
         else:
             mols_all = skipper(mols_tocal, mols_nocal)
     elif False:
@@ -672,7 +708,7 @@ def generate_procedure(param, array):
                 batch = submittingprocedure(batch,
                                             [],
                                             myrun,
-                                            **myrun.TZmat)  # here call submitting procedure
+                                            )  # here call submitting procedure
             else:
                 batch = skipper(batch, [])
             mols_all.extend(batch)
@@ -689,9 +725,8 @@ def generate_procedure(param, array):
         print "njobs:", len(mols_tocal)
 
         # generate all inputfiles
-        from calculator import filemaker, geommaker
-        geommaker(mols_tocal, myrun, **myrun.TZmat)
-        filemaker(mols_tocal, myrun)  # ----------------------------------HERE IS THE FILEWRITER CALL
+        calculator.geommaker(mols_tocal, myrun)
+        calculator.filemaker(mols_tocal, myrun)  # ----------------------------------HERE IS THE FILEWRITER CALL
 
     print "mols_all:", mols_all
     table = loggings(mols_all, table, count, 1, 1, made_pred=made_pred)
@@ -844,7 +879,7 @@ def SteepestDescent(param, array):
             mols_all = submittingprocedure(mols_tocal,
                                            mols_nocal,
                                            myrun,
-                                           **myrun.TZmat)  # here call submitting procedure
+                                          )  # here call submitting procedure
         else:
             mols_all = skipper(mols_tocal, mols_nocal)
 

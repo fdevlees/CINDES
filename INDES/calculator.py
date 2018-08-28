@@ -122,7 +122,7 @@ def do_calcs(mols_tocal, myrun):
         runjobs(mols_tocal, myrun, i)
         # if there need to be set some new geometries for new calculation.
         invoke_script(calc, locals(), 2)
-        # 5. delete jobs such that new jobs can be set up.
+        # delete jobs such that new jobs can be set up.
         for mol in mols_tocal:
             mol.deletejobs()
 
@@ -135,7 +135,7 @@ def do_calcs(mols_tocal, myrun):
 # PROCEDURE
 
 
-def procedure(myrun, mols_tocal, mols_nocal, TZMat):
+def procedure(myrun, mols_tocal, mols_nocal):
     global once
     #print "nconfs:", len(population)
     print "| n_indices_tocal:", len(mols_tocal)
@@ -150,7 +150,7 @@ def procedure(myrun, mols_tocal, mols_nocal, TZMat):
 
     if not mols_tocal == []:
         # 0. Set the molecular geometries
-        geommaker(mols_tocal, myrun, **TZMat)
+        geommaker(mols_tocal, myrun)
         # 1. And perform the calculations
         do_calcs(mols_tocal, myrun)
 
@@ -166,7 +166,8 @@ def procedure(myrun, mols_tocal, mols_nocal, TZMat):
 
 
 @log_io()
-def geommaker(mols_tocal, myrun, passive, active, core):
+def geommaker(mols_tocal, myrun):
+
     if myrun.symlinks:
         print "symmetry will be applied |",
     if myrun.optga:
@@ -174,13 +175,20 @@ def geommaker(mols_tocal, myrun, passive, active, core):
     print
     e = None
     for molecule in mols_tocal:
-        c = deepcopy(core)
-        a = deepcopy(active)
-        p = deepcopy(passive)
+        c = deepcopy(myrun.TZmat['core'])
+        a = deepcopy(myrun.TZmat['active'])
+        p = deepcopy(myrun.TZmat['passive'])
         molecule.set_zmat(zcon.constructor2(molecule.conf, c, a, p, links=myrun.symlinks))
         if myrun.extrajobs:
             if True:  # i.e. give second geom similar geometry as default geom
                 molecule.zmat2 = molecule.zmat
+        if isinstance(myrun.zmatrixfile, list):
+            print "myrun.zmatrixfile:", myrun.zmatrixfile
+            for zmatfile in myrun.zmatrixfile:
+                tzmat = myrun.TZmatrices[zmatfile]
+                c, a, p = map(deepcopy, (tzmat['core'], tzmat['active'], tzmat['passive']))
+                mtzmat = zcon.constructor2(molecule.conf, c, a, p, links=myrun.symlinks)
+                setattr(molecule, zmatfile, mtzmat)
 
         # Try to print SMILES
         try:

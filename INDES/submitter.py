@@ -37,8 +37,8 @@ def nosubmit_orca(path, index, identify):
 
 def nosubmit(job, extension='.com', cmd=None):  # not tested
     if not cmd:
-        # cmd='g09'
-        cmd = 'g16'
+        cmd='g09'
+        #cmd = 'g16'
     path = job.path
     inputname = job.filepath
     outname = job.logpath
