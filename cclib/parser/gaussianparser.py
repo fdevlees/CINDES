@@ -29,7 +29,7 @@ class Gaussian(logfileparser.Logfile):
 
         # Call the __init__ method of the superclass
         super(Gaussian, self).__init__(logname="Gaussian", *args, **kwargs)
-        
+
     def __str__(self):
         """Return a string representation of the object."""
         return "Gaussian log file %s" % (self.filename)
@@ -37,7 +37,7 @@ class Gaussian(logfileparser.Logfile):
     def __repr__(self):
         """Return a representation of the object."""
         return 'Gaussian("%s")' % (self.filename)
-    
+
     def normalisesym(self, label):
         """Use standard symmetry labels instead of Gaussian labels.
 
@@ -59,8 +59,7 @@ class Gaussian(logfileparser.Logfile):
                 label = v
                 if tmp:
                     label = v + "." + tmp
-        
-        ans = label.replace("U", "u").replace("G", "g") 
+        ans = label.replace("U", "u").replace("G", "g")
         return ans
 
     def before_parsing(self):
@@ -92,7 +91,7 @@ class Gaussian(logfileparser.Logfile):
             self.scancoords = []
             self.scancoords = self.atomcoords
 
-        if (hasattr(self, 'enthalpy') and hasattr(self, 'temperature') 
+        if (hasattr(self, 'enthalpy') and hasattr(self, 'temperature')
                 and hasattr(self, 'freeenergy')):
             self.set_attribute('entropy', (self.enthalpy - self.freeenergy) / self.temperature)
 
@@ -110,7 +109,6 @@ class Gaussian(logfileparser.Logfile):
                 self.atomcoords = self.atomcoords[:last_point + 1]
             if hasattr(self, 'inputcoords'):
                 self.inputcoords = self.inputcoords[:last_point + 1]
-            
     def extract(self, inputfile, line):
         """Extract information from the file object inputfile."""
 
@@ -147,7 +145,6 @@ class Gaussian(logfileparser.Logfile):
                 regex = ".*=(.*)Mul.*=\s*-?(\d+).*"
                 match = re.match(regex, line)
                 assert match, "Something unusual about the line: '%s'" % line
-                
                 self.set_attribute('charge', int(match.groups()[0]))
                 self.set_attribute('mult', int(match.groups()[1]))
 
@@ -187,7 +184,6 @@ class Gaussian(logfileparser.Logfile):
                 regex = ".*=(.*)Mul.*=\s*-?(\d+).*"
                 match = re.match(regex, line)
                 assert match, "Something unusual about the line: '%s'" % line
-                
                 self.set_attribute('charge', int(match.groups()[0]))
                 self.set_attribute('mult', int(match.groups()[1]))
 
@@ -198,7 +194,6 @@ class Gaussian(logfileparser.Logfile):
         if line[1:8] == "NAtoms=":
 
             self.updateprogress(inputfile, "Attributes", self.fupdate)
-                    
             natom = int(line.split()[1])
             self.set_attribute('natom', natom)
 
@@ -214,7 +209,6 @@ class Gaussian(logfileparser.Logfile):
         if line[1:21] == "Optimization stopped":
             if not hasattr(self, "optdone"):
                 self.optdone = []
-        
         # Extract the atomic numbers and coordinates from the input orientation,
         #   in the event the standard orientation isn't available.
         if line.find("Input orientation") > -1 or line.find("Z-Matrix orientation") > -1:
@@ -224,13 +218,11 @@ class Gaussian(logfileparser.Logfile):
             self.counterpoise = 0
 
             self.updateprogress(inputfile, "Attributes", self.cupdate)
-            
             if not hasattr(self, "inputcoords"):
                 self.inputcoords = []
             self.inputatoms = []
 
             self.skip_lines(inputfile, ['d', 'cols', 'cols', 'd'])
-            
             atomcoords = []
             line = next(inputfile)
             while list(set(line.strip())) != ["-"]:
@@ -287,7 +279,6 @@ class Gaussian(logfileparser.Logfile):
                 self.atomcoords = []
 
             self.skip_lines(inputfile, ['d', 'cols', 'cols', 'd'])
-            
             atomnos = []
             atomcoords = []
             line = next(inputfile)
@@ -348,7 +339,6 @@ class Gaussian(logfileparser.Logfile):
 
         #ONIOM calculations result basis sets reported for atoms that are not in order of atom number which breaks this code (line 390 relies on atoms coming in order)
         if line[1:13] == "AO basis set" and not self.oniom:
-        
             self.gbasis = []
 
             # For counterpoise fragment calcualtions, skip these lines.
@@ -439,16 +429,13 @@ class Gaussian(logfileparser.Logfile):
 
         # Extract SCF convergence information (QM calcs).
         if line[1:10] == 'Cycle   1':
-                    
             if not hasattr(self, "scfvalues"):
                 self.scfvalues = []
 
             scfvalues = []
             line = next(inputfile)
             while line.find("SCF Done") == -1:
-            
                 self.updateprogress(inputfile, "QM convergence", self.fupdate)
-                      
                 if line.find(' E=') == 0:
                     self.logger.debug(line)
 
@@ -495,10 +482,8 @@ class Gaussian(logfileparser.Logfile):
             scfvalues = [[]]
 
             while line.find(" Energy") == -1:
-            
                 self.updateprogress(inputfile, "AM1 Convergence")
 
-                        
                 if line[1:4] == "It=":
                     parts = line.strip().split()
                     scfvalues[0].append(self.float(parts[-1][:-1]))
@@ -532,7 +517,6 @@ class Gaussian(logfileparser.Logfile):
             if not hasattr(self, "scfenergies"):
                 self.scfenergies = []
             self.scfenergies.append(utils.convertor(self.float(line.split()[1]), "hartree", "eV"))
-        
         # Total energies after Moller-Plesset corrections.
         # Second order correction is always first, so its first occurance
         #   triggers creation of mpenergies (list of lists of energies).
@@ -710,7 +694,6 @@ class Gaussian(logfileparser.Logfile):
             if self.counterpoise != 0: return
 
             self.updateprogress(inputfile, "MO Symmetries", self.fupdate)
-                    
             self.mosyms = [[]]
             line = next(inputfile)
             unres = False
@@ -806,7 +789,6 @@ class Gaussian(logfileparser.Logfile):
             if not hasattr(self, "homos"):
                 HOMO = len(self.moenergies[0])-1
                 self.homos = numpy.array([HOMO], "i")
-            
 
             if line.find('Beta') == 2:
                 self.moenergies.append([])
@@ -861,12 +843,12 @@ class Gaussian(logfileparser.Logfile):
                         self.vibsyms = []
                     syms = line.split()
                     self.vibsyms.extend(syms)
-            
+
                 if line[1:15] == "Frequencies --":
-                
+
                     if not hasattr(self, 'vibfreqs'):
                         self.vibfreqs = []
-                        
+
                     if removeold: # This is a reparse, so throw away the old info
                         if hasattr(self, "vibsyms"):
                             # We have already parsed the vibsyms so don't throw away!
@@ -880,12 +862,12 @@ class Gaussian(logfileparser.Logfile):
                         if hasattr(self, 'vibdisps'):
                             self.vibdisps = []
                         removeold = False
-                        
+
                     freqs = [self.float(f) for f in line[15:].split()]
                     self.vibfreqs.extend(freqs)
-            
+
                 if line[1:15] == "IR Inten    --":
-                
+
                     if not hasattr(self, 'vibirs'):
                         self.vibirs = []
 
@@ -898,7 +880,7 @@ class Gaussian(logfileparser.Logfile):
                     self.vibirs.extend(irs)
 
                 if line[1:15] == "Raman Activ --":
-                
+
                     if not hasattr(self, 'vibramans'):
                         self.vibramans = []
 
@@ -910,7 +892,7 @@ class Gaussian(logfileparser.Logfile):
                             ramans.append(self.float('nan'))
 
                     self.vibramans.extend(ramans)
-                
+
                 # Block with displacement should start with this.
                 if line.strip().split()[0:3] == ["Atom", "AN", "X"]:
                     if not hasattr(self, 'vibdisps'):
@@ -926,12 +908,12 @@ class Gaussian(logfileparser.Logfile):
                         for n in range(N):
                             disps[n].append(numbers[3*n:3*n+3])
                     self.vibdisps.extend(disps)
-                
+
                 line = next(inputfile)
 
         # Electronic transitions.
         if line[1:14] == "Excited State":
-        
+
             if not hasattr(self, "etenergies"):
                 self.etenergies = []
                 self.etoscs = []
@@ -950,7 +932,7 @@ class Gaussian(logfileparser.Logfile):
             self.etenergies.append(utils.convertor(self.float(groups[1]), "eV", "cm-1"))
             self.etoscs.append(self.float(line.split("f=")[-1].split()[0]))
             self.etsyms.append(groups[0].strip())
-            
+
             line = next(inputfile)
 
             p = re.compile("(\d+)")
@@ -966,7 +948,7 @@ class Gaussian(logfileparser.Logfile):
                 if fromMO[-1] == "B":
                     frommoindex = 1 # For beta unrestricted
                 fromMO = int(p.match(fromMO).group())-1 # subtract 1 so that it is an index into moenergies
-                
+
                 t = parts[1].split()
                 tomoindex = 0
                 toMO = t[0]
@@ -1023,7 +1005,7 @@ class Gaussian(logfileparser.Logfile):
                     self.etrotats.append(R)
                 line = next(inputfile)
                 temp = line.strip().split()
-                parts = line.strip().split()                
+                parts = line.strip().split()
             self.etrotats = numpy.array(self.etrotats, "d")
 
         # Number of basis sets functions.
@@ -1068,7 +1050,7 @@ class Gaussian(logfileparser.Logfile):
         # For AM1 calculations, set nbasis by a second method,
         #   as nmo may not always be explicitly stated.
         if line[7:22] == "basis functions, ":
-        
+
             nbasis = int(line.split()[0])
             self.set_attribute('nbasis', nbasis)
 
@@ -1090,9 +1072,9 @@ class Gaussian(logfileparser.Logfile):
             base = 0
             colmNames = next(inputfile)
             while base < self.nbasis:
-                 
+
                 self.updateprogress(inputfile, "Overlap", self.fupdate)
-                        
+
                 for i in range(self.nbasis-base): # Fewer lines this time
                     line = next(inputfile)
                     parts = line.split()
@@ -1102,7 +1084,7 @@ class Gaussian(logfileparser.Logfile):
                         self.aooverlaps[i+base, base+j] = k
                 base += 5
                 colmNames = next(inputfile)
-            self.aooverlaps = numpy.array(self.aooverlaps, "d")                    
+            self.aooverlaps = numpy.array(self.aooverlaps, "d")
 
         # Molecular orbital coefficients (mocoeffs).
         # Essentially only produced for SCF calculations.
@@ -1131,10 +1113,10 @@ class Gaussian(logfileparser.Logfile):
             base = 0
             self.popregular = False
             for base in range(0, self.nmo, 5):
-                
+
                 self.updateprogress(inputfile, "Coefficients", self.fupdate)
-                         
-                colmNames = next(inputfile)   
+
+                colmNames = next(inputfile)
 
                 if not colmNames.split():
                     self.logger.warning("Molecular coefficients header found but no coefficients.")
@@ -1147,7 +1129,7 @@ class Gaussian(logfileparser.Logfile):
                 symmetries = next(inputfile)
                 eigenvalues = next(inputfile)
                 for i in range(self.nbasis):
-                                   
+
                     line = next(inputfile)
                     if i == 0:
                         # Find location of the start of the basis function name
@@ -1203,10 +1185,10 @@ class Gaussian(logfileparser.Logfile):
             base = 0
             self.popregular = False
             for base in range(0, self.nmo, 5):
-                
+
                 self.updateprogress(inputfile, "Natural orbitals", self.fupdate)
-                         
-                colmNames = next(inputfile)   
+
+                colmNames = next(inputfile)
                 if base == 0 and int(colmNames.split()[0]) != 1:
                     # Implies that this is a POP=REGULAR calculation
                     # and so, only aonames (not mocoeffs) will be extracted
@@ -1216,7 +1198,7 @@ class Gaussian(logfileparser.Logfile):
                 nooccnos.extend(map(float, eigenvalues.split()[2:]))
 
                 for i in range(self.nbasis):
-                                   
+
                     line = next(inputfile)
 
                     # Just do this the first time 'round.
@@ -1235,7 +1217,7 @@ class Gaussian(logfileparser.Logfile):
                         atombasis.append(i)
 
                     part = line[21:].replace("D", "E").rstrip()
-                    temp = [] 
+                    temp = []
 
                     for j in range(0, len(part), 10):
                         temp.append(float(part[j:j+10]))
@@ -1290,7 +1272,7 @@ class Gaussian(logfileparser.Logfile):
             base = 0
             colmNames = next(inputfile)
             while base < Nvibs:
-                 
+
                 for i in range(Nvibs-base): # Fewer lines this time
                     line = next(inputfile)
                     parts = line.split()
@@ -1332,7 +1314,7 @@ class Gaussian(logfileparser.Logfile):
                     centers.append(int(temp[i:i+3]))
                 line = next(inputfile)
             centers.sort() # Not always in increasing order
-            
+
             self.coreelectrons = numpy.zeros(self.natom, "i")
 
             for center in centers:
@@ -1348,7 +1330,7 @@ class Gaussian(logfileparser.Logfile):
         # To prevent crashing, we need to know which fragment is being considered.
         # Other information is also printed in lines that start like this.
         if line[1:14] == 'Counterpoise:':
-        
+
             if line[42:50] == "fragment":
                 self.counterpoise = int(line[51:54])
 
@@ -1420,6 +1402,29 @@ class Gaussian(logfileparser.Logfile):
             self.set_attribute('freeenergy', float(line.split()[7]))
         if line[1:12] == "Temperature":
             self.set_attribute('temperature', float(line.split()[1]))
+
+        if ' Electric dipole moment (dipole orientation):' in line:
+            for i in range(3): line = next(inputfile)
+            m_xyz=[]
+            for i in range(3):
+                line = next(inputfile)
+                r = line.split()[1]
+                m_xyz.append(r)
+            m_xyz = map(lambda x:float(x.replace('D', 'E')), m_xyz)
+            mtot=numpy.sqrt(m_xyz[0]**2+m_xyz[1]**2+m_xyz[2]**2)
+            self.set_attribute('electricdipole', mtot)
+
+        if ' Dipole polarizability, Alpha (dipole orientation).' in line:
+            from CINDES.utils import NLO_TW
+            alpha_data = NLO_TW.get_alpha_data(inputfile)
+            #print("alpha_data:", alpha_data)
+            self.set_attribute('dipolealpha', alpha_data)
+
+        if ' First dipole hyperpolarizability, Beta (dipole orientation)' in line:
+            from CINDES.utils import NLO_TW
+            beta_data = NLO_TW.get_beta_data(inputfile)
+            #print("beta_data:", beta_data)
+            self.set_attribute('dipolebeta', beta_data)
 
 
 if __name__ == "__main__":

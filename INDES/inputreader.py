@@ -279,7 +279,6 @@ def readfile(subinp):
         'startind': '',
         'symlinks': [],
         'tablename': 'table.json',
-        'tdregression': 0,
         'test_ready': 2,
         'timelimit': 250000,
         'timestep': 300,
@@ -402,17 +401,8 @@ def readfile(subinp):
                 paras['nrandsites'] = int(line.split()[2])
             except IndexError:
                 pass
-
-        # -----
-        # do not interchange the following two keywords!!!"
-        elif 'multiplejobs' in line:
-            print "set multiple jobs:"
-            paras['multiplejobs'] = int(line.split()[1])
-        #elif 'mult' in line:
         elif key=='mult':
             paras['mult'] = int(line.split()[1])
-        # -----
-
         elif 'ml' == line[:2]:
             paras['ml'] = int(line.split()[1])
         elif 'norandom' in line:
@@ -512,7 +502,6 @@ def readfile(subinp):
             paras['simple'] = 1
         elif 'sites' in line:
             paras['sites'] = [int(item) for item in line.split()[1:]]
-        # elif 'twodimreg' in line: paras['tdregression'] = 1
         elif 'try_ready' in line:
             paras['try_ready'] = 1
         elif 'test_ready' in line:
