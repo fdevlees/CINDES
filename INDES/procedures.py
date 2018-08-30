@@ -242,6 +242,10 @@ class FrameRun(BaseRun):
     def set_corresp(self, active, passive):
         '''makes a dictionary that gives the correspondance of sites with position in core matrix'''
         corresp = dict()
+        print "active:"
+        pprint.pprint(active)
+        print "passive:"
+        pprint.pprint(passive)
         for site in active:
             corresp[int(site[0][1])] = int(site[1][1])
         for site in passive:
@@ -631,15 +635,16 @@ def genconf(param):
         for zmatfile in myrun.zmatrixfile:
             tzmat = myrun.TZmatrices[zmatfile]
             c, a, p = map(deepcopy, (tzmat['core'], tzmat['active'], tzmat['passive']))
-            mtzmat = zcon.constructor2(mol.conf, c, a, p, links=myrun.symlinks)
+            mtzmat = zcon.constructor2(mol.conf, c, a, p, links=myrun.symlinks, defaultgroups=myrun.defaultgroups)
             setattr(mol, zmatfile, mtzmat)
     else:
-        TZmat = r.geometry(**param)
+        #TZmat = r.geometry(zmatfile=param['zmatrixfile'], **param)
+        TZmat = myrun.TZmat
         c = deepcopy(TZmat['core'])
         a = deepcopy(TZmat['active'])
         p = deepcopy(TZmat['passive'])
-        zmat = zcon.constructor2(conf, c, a, p, links=myrun.symlinks)
-        mol.zmat = mat
+        zmat = zcon.constructor2(conf, c, a, p, links=myrun.symlinks, defaultgroups=myrun.defaultgroups)
+        setattr(mol, myrun.zmatrixfile, zmat)
     if myrun.program == 'gaussian':
         import gaussian as program
     elif myrun.program == 'nwchem':

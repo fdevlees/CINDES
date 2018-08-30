@@ -249,6 +249,7 @@ def readfile(subinp):
         'bc': False,
         'cutoff': 0,  # this cutoff has to apply to the final target property value only
         'debug': False,
+        'defaultgroups':None,
         'difmodel': 0,
         'extrajobs': [],
         'extra_props': [],
@@ -336,6 +337,14 @@ def readfile(subinp):
             else:
                 print "multiple ZMAT files!"
                 paras['zmatrixfile'] = splitted[1:]
+            continue
+        elif key=='defaultgroups':
+            ndefaults = int(splitted[1])
+            defaults = {}
+            for _ in range(ndefaults):
+                line = subinp.readline().split()
+                defaults[int(line[0])] = line[1]
+            paras['defaultgroups']=defaults
             continue
         elif 'END' in line:
             break

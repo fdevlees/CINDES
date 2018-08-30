@@ -238,6 +238,20 @@ class PartialFormatter(string.Formatter):
             if self.bad_fmt is not None: return self.bad_fmt
             else: raise
 
+def jsonify(data):
+    json_data = dict()
+    for key, value in data.iteritems():
+        if isinstance(value, list):
+            value = [ jsonify(item) if isinstance(item, dict) else item for item in value ]
+        if isinstance(value, dict):
+            value = jsonify(value)
+        if isinstance(key, int):
+            key = str(key)
+        if type(value).__module__=='numpy':
+            value = value.tolist()
+        json_data[key] = value
+    return json_data
+
 if __name__ == "__main__":
     import doctest, utils
     doctest.testmod(utils, verbose=False)

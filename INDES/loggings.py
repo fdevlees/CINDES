@@ -1,7 +1,7 @@
 debug = False
 #from writings import log_io, sprint
 from CINDES.utils.writings import log_io, print_title, sprint
-from CINDES.utils.utils import run_once
+from CINDES.utils.utils import run_once, jsonify
 from copy import deepcopy
 #import pickle
 import json
@@ -86,10 +86,11 @@ def log_table(mols, table, tablename='table'):
                 json_table[key].update(value)
             else:
                 json_table[key] = value
+        json_table = jsonify(json_table)
 
         # 3 write updated json object
         with open(filename, 'w') as f:
-            json.dump(json_table, f, indent=0)
+            json.dump(json_table, f, indent=None)
         print "dumped table in {} with {} of the {} molecules".format(filename, len(table), len(json_table))
         return
     # -------------

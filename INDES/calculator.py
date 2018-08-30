@@ -175,20 +175,29 @@ def geommaker(mols_tocal, myrun):
     print
     e = None
     for molecule in mols_tocal:
-        c = deepcopy(myrun.TZmat['core'])
-        a = deepcopy(myrun.TZmat['active'])
-        p = deepcopy(myrun.TZmat['passive'])
-        molecule.set_zmat(zcon.constructor2(molecule.conf, c, a, p, links=myrun.symlinks))
-        if myrun.extrajobs:
-            if True:  # i.e. give second geom similar geometry as default geom
-                molecule.zmat2 = molecule.zmat
+
+        # set zmatrices:
+        # for multiple zmats:
         if isinstance(myrun.zmatrixfile, list):
             print "myrun.zmatrixfile:", myrun.zmatrixfile
             for zmatfile in myrun.zmatrixfile:
                 tzmat = myrun.TZmatrices[zmatfile]
                 c, a, p = map(deepcopy, (tzmat['core'], tzmat['active'], tzmat['passive']))
-                mtzmat = zcon.constructor2(molecule.conf, c, a, p, links=myrun.symlinks)
-                setattr(molecule, zmatfile, mtzmat)
+                zmat = zcon.constructor2(molecule.conf, c, a, p, links=myrun.symlinks, defaultgroups=myrun.defaultgroups)
+                setattr(molecule, zmatfile, zmat)
+        # for a single zmat
+        else:
+            c = deepcopy(myrun.TZmat['core'])
+            a = deepcopy(myrun.TZmat['active'])
+            p = deepcopy(myrun.TZmat['passive'])
+            zmat = zcon.constructor2(molecule.conf, c, a, p, links=myrun.symlinks, defaultgroups=myrun.defaultgroups)
+            setattr(molecule, myrun.zmatrixfile, zmat)
+        # always give a default zmat
+        setattr(molecule, 'zmat', zmat)
+        # for an extra zmat
+        if myrun.extrajobs:
+            if True:  # i.e. give second geom similar geometry as default geom
+                molecule.zmat2 = molecule.zmat
 
         # Try to print SMILES
         try:

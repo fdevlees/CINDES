@@ -33,12 +33,6 @@ def indtocon(index):
         conf.append(site)
     return conf
 
-    # return  [ findall('[A-Z0-9][^A-Z1-9]*',item) for item in index.split('_') ]
-    # return  [ findall('[A-Z0-9][^A-Z1-9]*',item) for item in index.split('_') ]
-    # return [list(item) for item in index.split('_')]
-    # return  [ findall('[A-Z][^A-Z]*',item) for item in index.split('_') ]
-
-
 def contoind(conf):
     # return '_'.join([''.join(item) for item in conf])
     # without dihedrals:
@@ -57,24 +51,39 @@ def intocon(inconf, array):
     return conf
 
 
-def demethyl(passive, core):
+def demethyl(passive, defaultgroups):
     """here is now a quite simple operations but i here have
     an open option to fix some other groups later on
     now for each site the methyl group is changed for an H.
     """
     newpassive = []
-    for i in range(len(passive)):
-        coreindex = int(passive[i][0][1])
-        if core[coreindex - 1][0] == 'N':
-            #del passive[i]
-            print "nitrogen passive site. no H placed"
-            pass
+
+    # default groups for sites that will not be -H
+    if defaultgroups is None:
+        defaultgroups = {}
+
+    for i, passivesite in enumerate(passive):
+        #coreindex = int(passivesite[0][1])
+        siteindex = int(passivesite[1][1])
+
+        if siteindex in defaultgroups:
+            defaultconf = indtocon(defaultgroups[siteindex])[0]
+            ldefconf = len(defaultconf)
+            if ldefconf==1:
+                # no substitution at all even no H
+                continue
+            else:
+                passivesite = passivesite[:ldefconf-1]
+                for j, atom in enumerate(defaultconf[1:]):
+                    passivesite[j][0]=atom
+                newpassive.append(passivesite)
+            #print "final passivesite:", passivesite
         else:
             # remove the hydrogens from the methyl groups
-            passive[i][1:4]
+            passivesite = [passivesite[0]]
             # change carbons to hydrogens
-            passive[i][0][0] = 'H'
-            newpassive.append(passive[i])
+            passivesite[0][0] = 'H'
+            newpassive.append(passivesite)
     return newpassive
 
 
@@ -208,7 +217,7 @@ def check_in_table(individuals, table, props=set(), check_ignored=False):
     return mols_todo, mols_nodo  # indicesfull are all the indices.
 
 
-def constructor2(conf, core, active, passive, links=None):
+def constructor2(conf, core, active, passive, links=None, defaultgroups=None):
     ''' This is the main constructor of the zmatrix for a given configuration using
     the core, active and passive zmatrices. Also symmetry links can be given
 
@@ -233,7 +242,7 @@ def constructor2(conf, core, active, passive, links=None):
 
     #print "CONFIGURATION:",conf
     #if core is nitrogen passive = total remove
-    passive = demethyl(passive, core)
+    passive = demethyl(passive, defaultgroups)
 
     # set counter for nth atom in new zmat
     count = 0

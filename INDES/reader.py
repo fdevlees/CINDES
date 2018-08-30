@@ -9,7 +9,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 # NEW IDEA:
 class ZMatrix(object):
-    def __init__(self, zmatfile='ZMAT', **kwargs):
+    def __init__(self, zmatfile, **kwargs):
         self.zmatfile = zmatfile
         self.read()
         return
@@ -28,7 +28,7 @@ class ZMatrix(object):
         return
 
 
-def geometry(zmatfile='ZMAT', **param):
+def geometry(zmatfile, **param):
     '''reads the zmat from a file and splits it'''
     # note that zmatfile is now in **param
     zmat, fileid = zmatread(zmatfile)
