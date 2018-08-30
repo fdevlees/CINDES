@@ -9,8 +9,8 @@ import subprocess
 
 
 def submit(job, script='ID_gauss'):
-    print('filename:'),
-    print(job.filename)
+    #print('filename:'),
+    #print(job.filename)
     command = './' + script
     try:
         jobid = subprocess.check_output([command, job.filename], cwd=job.path)

@@ -120,22 +120,25 @@ def get_preds(subinp, line):
 
 def get_prop_function(subinp, line):
     line = subinp.readline()
-    splitted = line.split()
-    #print "functional property:", line
-    import re
+    isword = re.compile('(^[a-zA-Z_]*[0-9]?\(?$)')
+    splitted1 = re.split('(\[|\])', line)
+    splitted2 = map(lambda x:x.split(), splitted1)
 
-    # we need to find the properties going into the function. properties only contain [a-zA-Z]
-    word = re.compile('(^[a-zA-Z_]*$)')
-
-    # the properties in that line are: #set because one property can occur multiple times in function
-    props = {item for item in splitted if word.match(item) and not item in ['if', 'else']}
-    #print "properties:", props
-
-    # props need to be separated by a comma
-    arguments = ','.join(props)
-    #print "arguments:", arguments
-    func = eval('lambda {}:{}'.format(arguments, line))
-    func.__doc__ = 'lambda function {}'.format(line.strip())
+    props = set()
+    inkey = False
+    for _split in splitted2:
+        for split in _split:
+            if split=='[': inkey=True
+            elif split==']':inkey=False
+            if inkey: continue
+            #print split
+            if isword.match(split) and (not split in ['if', 'else', 'abs(']) and not inkey:
+                props.add(split)
+    arguments = ",".join(props)
+    funcstr = "lambda {}:{}".format(arguments, line)
+    print "funcstr:", funcstr
+    func = eval(funcstr)
+    func.__doc__ = 'lambda function: {}'.format(line.strip())
 
     return subinp, func, props
 
