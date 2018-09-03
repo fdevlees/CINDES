@@ -159,9 +159,9 @@ def zzztester(mols):
             jobs.append(item[4])
 
     # inefficient loop
-    print "files:", files
-    print "jobs:", jobs
-    print "states:", states
+    #print "files:", files
+    #print "jobs:", jobs
+    #print "states:", states
     count = 0
     for filetje in files:
         for state, job in zip(states, jobs):
