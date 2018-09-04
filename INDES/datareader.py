@@ -71,8 +71,10 @@ def normaltermination(mols, run):
 
     # 2. test normal termination and errorjob are ready or molecule is ignored
     extratime = 0
+    normaltime= 0
     timestep1 = 10
     timestep2 = 300
+    print "normal waiting time=NT | extra waiting time=XT"
     while True:
         # CHECK READY:
         print "not ready:",
@@ -106,12 +108,18 @@ def normaltermination(mols, run):
         # test if there are still uncompleted zzz_files in queue. If not count extra time
         if not zzztester(mols):
             extratime += timestep1
+        else:
+            normaltime += timestep1
         # WAIT:
         time.sleep(timestep1)  # wait 5 minudtes
         # after some time use larger timesteps
         if extratime >= timestep2:
             timestep1 = timestep2
-        print "extra waittime/h:", "{:.2f}".format(extratime / 3600.), "||",
+        if extratime:
+            print "XT: {:.4f} ||".format(extratime / 3600.),
+        else:
+            print "NT: {:.4f} ||".format(normaltime / 3600.),
+
 
     # 3. return mols that are not ignored:
     mols_toread = filter(lambda mol: not mol.ignoremol, mols)

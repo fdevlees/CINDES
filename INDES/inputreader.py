@@ -545,7 +545,7 @@ def readfile(subinp):
         elif 'identify' in line:
             paras['identify'] = line.split()[1]
             continue
-        elif key==worker:
+        elif key=='worker':
             paras['worker'] = True
         elif any(item in line.split()[0] for item in ('program', 'ai', 'program', 'prog', 'programma')):
             if line.split()[1] in ['gaussian', 'g09']:

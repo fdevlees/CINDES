@@ -400,26 +400,21 @@ def submit_normal(mols_tocal, myrun):
                 time.sleep(1)
 
     if worker:
-        with open('loglist.csv') as f:
+        with open('loglist.csv', 'w') as f:
             f.write('job,log\n')
             for job in jobids:
-                f.write('{},{}\n'.format(job.name,job.logname))
+                f.write('{},{}\n'.format(job.name,job.logfile))
 
         workerfile = """#!/bin/bash -l
 #PBS -N my-gaussian-worker-job
 #PBS -l walltime=1:00:00,nodes=1:ppn=8
-module load Gaussian/G09.D01
+module load Gaussian/G16.A.03-intel-2017b
 cd $PBS_O_WORKDIR
-time g09 <$PBS_O_WORKDIR/$job>$PBS_O_WORKDIR/$log
+time g16 <$PBS_O_WORKDIR/$job>$PBS_O_WORKDIR/$log
 """
         with open('myworker.pbs', 'w') as f:
             f.write(workerfile)
-
-        jobids = subprocess.check_output(['wsub', '-batch', 'myworker.pbs', '-data', 'loglist.csv'])
-        
-           
-        # execulte command:
-        #    wsub -batch worker.pbs -data loglist.csv
+        jobids = subm.submitworker()
     return jobids
 
 # 3. testing
