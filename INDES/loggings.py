@@ -113,29 +113,54 @@ def log_table(mols, table, tablename='table'):
 
 
 def log_screen(mols):
+    def issinglevalued(x):
+        return any([isinstance(x, t) for t in (str, int, float)])
+
+    # first print the properties of the first molecule
     try:
-        print "first molecule:", mols[0].index, mols[0].Pvalue
+        print "first molecule:", mols[0].index
         for k, v in mols[0].props.iteritems():
-            print "{:15s}:{}".format(k, v)
+            print "{:15s}:".format(k),
+            if len(repr(v))>100:
+                print
+                pprint.pprint(v, indent=2, width=160)
+            else:
+                print v
     except IndexError:
         return
+
     # get property line.
     # get all the props that possibly have to be printed
+    # but are not a list/dict
     # NB there are predicted confs that only have a Pvalue so they have no props attribute
     props = set()
+    noprintprops = set()
     for mol in mols:
         try:
-            props.update(mol.props.keys())
+            for prop, value in mol.props.items():
+                if prop in props:
+                    continue
+                if issinglevalued(value):
+                    props.add(prop)
+                else:
+                    noprintprops.add(prop)
+            #props.update(mol.props.keys())
         except AttributeError:
             pass
     props = list(props)
+    print "Properties that cannot be represented as a single value are:", noprintprops
 
-    def issinglevalued(x): return any([isinstance(x[1], t) for t in (str, int, float)])
+    # try to find the target property by looking for the Pvalue in all props such that
+    # the target property is not printed twice.
+    # if the property is not found, the Pvalue is probably a unique value obtained by 
+    # a function of other properties
     j = 0
     p = None
     while j < len(mols):
         try:
-            keys, values = zip(*filter(issinglevalued, mols[j].props.items()))
+            keys, values = zip(*filter(
+                lambda x:issinglevalued(x[1]), mols[j].props.items()
+                ))
             # check if Pvalue is one of these singular props
             if mols[j].Pvalue in values:
                 # so yes. Pvalue is one of the propvalues. but which one?
@@ -145,7 +170,7 @@ def log_screen(mols):
                 p = keys[i]
                 # remove that one from props
                 props.remove(p)
-                print "property seems to be:", p
+                print "property:", p
             else:
                 print "function"
                 p = 'function'

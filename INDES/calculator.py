@@ -100,7 +100,6 @@ def runjobs(mols_tocal, myrun, i):
     mols_calc = filter(lambda x: not x.ignoremol, mols_tocal)
 
     # 1. Make the jobs and add them to the molecules:
-    #call(jobmaker, mols=mols_tocal, myrun=myrun, calc=calc)
     call(jobmaker, mols=mols_calc, myrun=myrun, calc=calc)
     # 2. now the jobs have to be submitted (this function contains a try_ready test)
     jobids = submission(mols_calc, myrun)
@@ -121,7 +120,7 @@ def do_calcs(mols_tocal, myrun):
     for i, calc in enumerate(myrun.calcs):
         runjobs(mols_tocal, myrun, i)
         # if there need to be set some new geometries for new calculation.
-        invoke_script(calc, locals(), 2)
+        invoke_script(calc, locals(), (i+1)*100)
         # delete jobs such that new jobs can be set up.
         for mol in mols_tocal:
             mol.deletejobs()
@@ -258,19 +257,25 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
     # 2. Write inputfile(s)
     for molecule in mols:
         if 'positions' in calc:  # so multiple jobs
-            if 'geom' in calc and (calc['geom'] in ['H', 'AH']):
-                # 1. make a folder with the indexname in /data/indices[i]
-                if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
-                    os.makedirs(calc['path'] + '/' + molecule.index)
-                    # and make sure ID_gauss is in the folder!
-                    shutil.copy(calc['path'] + '/' + myrun.script, calc['path'] + '/' + molecule.index)
-                # 2. use zmat to make the AH files with the positions stored in fileparameters['positions']
-                for pos in calc['positions']:
-                    zmat2 = deepcopy(molecule.zmat)
-                    zmat2, h, N = add_hydrogen(zmat2, pos, myrun.ncore)
-                    setattr(molecule, 'zmat{}'.format(pos), zmat2)
-                    job = program.filewriter(molecule, calc, pos)
-                    job.N = N
+            assert 'geom' in calc and (calc['geom'] in ['H', 'AH'])
+            # 1. make a folder with the indexname in /data/indices[i]
+            if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
+                os.makedirs(calc['path'] + '/' + molecule.index)
+                # and make sure ID_gauss is in the folder!
+                shutil.copy(calc['path'] + '/' + myrun.script, calc['path'] + '/' + molecule.index)
+            # 2. use zmat to make the AH files with the positions stored in fileparameters['positions']
+            for pos in calc['positions']:
+                zmat2 = deepcopy(molecule.zmat)
+                zmat2, h, N = add_hydrogen(zmat2, pos, myrun.ncore)
+                attr = 'zmat{}_{:d}'.format(calc['geom'], pos)
+                setattr(molecule, attr, zmat2)
+                job = program.filewriter(molecule, calc, pos)
+
+                # job.N will be deprecated and replaced by job.Aatom which is the atomic number of 
+                # the attached atom. 
+                job.N = N
+                if job.N:
+                    job.Aatom=7
         elif 'fafoom' in calc:  # so first find a lower xyz
             from CINDES.utils import fafoom_utils
             print "trying fafoom..."
@@ -288,6 +293,21 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
                 for i, conformer in enumerate(conformers, 1):  # enumerate starts at 1!
                     setattr(molecule, 'xyz{}'.format(i), conformer.GetProp('xyz'))
                     program.filewriter(molecule, calc, i)
+        elif 'geom' in calc and isinstance(getattr(molecule, calc['geom']), list):
+            # 1. make a folder with the indexname in /data/indices[i]
+            if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
+                os.makedirs(calc['path'] + '/' + molecule.index)
+                # and make sure ID_gauss is in the folder!
+                shutil.copy(calc['path'] + '/' + myrun.script, calc['path'] + '/' + molecule.index)
+            # 2. 
+            for i, geom in enumerate(getattr(molecule, calc['geom'])):
+                geomattr = 'xyz{}_{:d}'.format(calc['geom'], i)
+                print "geomattr:", geomattr
+                setattr(molecule, geomattr, geom)
+                job = program.filewriter(molecule, calc, i)
+                job.Aatom = molecule.Aatoms[i]
+                # this line has to be removed later if job.N is fully deprecated!
+                job.N = None
         else:  # so single job
             program.filewriter(molecule, calc)
     return
@@ -412,8 +432,8 @@ module load Gaussian/G16.A.03-intel-2017b
 cd $PBS_O_WORKDIR
 time g16 <$PBS_O_WORKDIR/$job>$PBS_O_WORKDIR/$log
 """
-        with open('myworker.pbs', 'w') as f:
-            f.write(workerfile)
+        #with open('myworker.pbs', 'w') as f:
+        #    f.write(workerfile)
         jobids = subm.submitworker()
     return jobids
 
@@ -634,7 +654,7 @@ def set_target_properties(molecules, myrun):
                 mol.Pvalue = mol.props[myrun.property]
             except KeyError:
                 print "error mol:", mol, mol.index
-                print "mol.ignoremol", mol.ignoremol, map(lambda job: job.ignorejob, mol.jobs)
+                print "mol.ignoremol", mol.ignoremol
                 print "props:", mol.props
                 print "molecule doesnt have the required property! so is ignored!"
                 mol.discard()

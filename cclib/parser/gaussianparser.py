@@ -1398,6 +1398,8 @@ class Gaussian(logfileparser.Logfile):
         #Sum of electronic and thermal Free Energies=         -563.689037
         if "Sum of electronic and thermal Enthalpies" in line:
             self.set_attribute('enthalpy', float(line.split()[6]))
+        if "Thermal correction to Gibbs Free Energy" in line:
+            self.set_attribute('thermalcorrectionG', float(line.split()[6]))
         if "Sum of electronic and thermal Free Energies=" in line:
             self.set_attribute('freeenergy', float(line.split()[7]))
         if line[1:12] == "Temperature":
@@ -1416,15 +1418,22 @@ class Gaussian(logfileparser.Logfile):
 
         if ' Dipole polarizability, Alpha (dipole orientation).' in line:
             from CINDES.utils import NLO_TW
-            alpha_data = NLO_TW.get_alpha_data(inputfile)
-            #print("alpha_data:", alpha_data)
-            self.set_attribute('dipolealpha', alpha_data)
+            try:
+                alpha_data = NLO_TW.get_alpha_data(inputfile)
+                #print("alpha_data:", alpha_data)
+                self.set_attribute('dipolealpha', alpha_data)
+            except IndexError:
+                print("NO NLO ALPHA", end=' ')
 
         if ' First dipole hyperpolarizability, Beta (dipole orientation)' in line:
             from CINDES.utils import NLO_TW
-            beta_data = NLO_TW.get_beta_data(inputfile)
-            #print("beta_data:", beta_data)
-            self.set_attribute('dipolebeta', beta_data)
+            try:
+                beta_data = NLO_TW.get_beta_data(inputfile)
+                #print("beta_data:", beta_data)
+                self.set_attribute('dipolebeta', beta_data)
+            except IndexError:
+                print("NO NLO BETA", end=' ')
+
 
 
 if __name__ == "__main__":

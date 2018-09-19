@@ -64,7 +64,10 @@ def demethyl(passive, defaultgroups):
 
     for i, passivesite in enumerate(passive):
         #coreindex = int(passivesite[0][1])
-        siteindex = int(passivesite[1][1])
+        try:
+            siteindex = int(passivesite[1][1])
+        except IndexError:
+            print passivesite
 
         if siteindex in defaultgroups:
             defaultconf = indtocon(defaultgroups[siteindex])[0]
