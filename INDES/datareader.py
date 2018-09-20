@@ -328,7 +328,8 @@ def read_file(Job):
                 # except AttributeError:
                 #    pass
             elif inf.startswith('spindensities'):
-                spiden = map(lambda x: round(x[0] - x[1], 8), zip(job_data.npaa, job_data.npab))
+                # NB charge-beta - charge-alpha because spindensity is a positive value but electron charge is negative!
+                spiden = map(lambda x: round(x[1] - x[0], 8), zip(job_data.npaa, job_data.npab))
                 datadict[inf] = spiden
             elif any(prop in inf for prop in ['pcharges', 'partialcharges']):
                 print "partial charges", job_data.atomcharges

@@ -252,6 +252,21 @@ def jsonify(data):
         json_data[key] = value
     return json_data
 
+def pythonify(json_data):
+    for key, value in json_data.iteritems():
+        if isinstance(value, list):
+            value = [ pythonify(item) if isinstance(item, dict) else item for item in value ]
+        elif isinstance(value, dict):
+            value = pythonify(value)
+        try:
+            newkey = int(key)
+            del json_data[key]
+            key = newkey
+        except TypeError:
+            pass
+        json_data[key] = value
+    return json_data
+
 if __name__ == "__main__":
     import doctest, utils
     doctest.testmod(utils, verbose=False)

@@ -148,7 +148,7 @@ def log_screen(mols):
         except AttributeError:
             pass
     props = list(props)
-    print "Properties that cannot be represented as a single value are:", noprintprops
+    print "Properties that cannot be represented as a single value are:", ", ".join(noprintprops)
 
     # try to find the target property by looking for the Pvalue in all props such that
     # the target property is not printed twice.
@@ -170,31 +170,63 @@ def log_screen(mols):
                 p = keys[i]
                 # remove that one from props
                 props.remove(p)
-                print "property:", p
+                #print "property:", p
             else:
-                print "function"
+                #print "function"
                 p = 'function'
             break
         except ValueError:
             j += 1
 
-    # print header line.
+    # print everything:
+    # .1 decide max conf lenght
     maxlenconf = max(map(lambda x: len(x.index), mols))
-    lenh = maxlenconf + 26 + len(props) * 16
-    print "+{}+".format(lenh * "-")
-    print "| index" + (maxlenconf - 4) * " " + " pred?   {:15s} ".format(p) + \
-        " ".join(('{:15s}'.format(prop) for prop in props)) + "|"
-    print "}}{}{{".format(lenh * "-")
-    # print data
-    for molecule in mols:
-        opt = "|"
-        if molecule.opt:
-            opt = "+"
-        item = [molecule.index, molecule.predicted, molecule.Pvalue]
-        propvals = [molecule.props.get(prop, 'unknown') for prop in props]
-        item.extend(propvals)
-        print formatitem(opt, item, maxlenconf)
-    print "+{}+".format(lenh * "-")
+
+    # decide how many props per line and how many table need to be printed
+    propsets=[]
+    maxnpropsperline = 7
+    nextralines = len(props) / maxnpropsperline
+    if nextralines:
+        npropsperline = len(props) / (nextralines+1)
+        for i in range(nextralines+1):
+            propsets.append(props[i*npropsperline:(i+1)*npropsperline])
+        # correction
+        if not props[-1] in propsets[-1]:
+            propsets[-1].append(props[-1])
+    else:
+        propsets=props
+
+    # then print a table for every propset
+    for i, propset in enumerate(propsets):
+        lenh = maxlenconf + 26 + len(propset) * 16
+        if i==0:
+            headers =  "| index" + (maxlenconf - 4) * " " + " pred?   {:15s} ".format(p) + \
+                " ".join(('{:15s}'.format(prop) for prop in propset)) + "|"
+        else:
+            lenh -= 16
+            headers =  "| index" + (maxlenconf - 4) * " " + " pred?   ".format(p) + \
+                " ".join(('{:15s}'.format(prop) for prop in propset)) + "|"
+            print "    &"
+        print "+{}+".format(lenh * "-")
+        print headers
+        print "}}{}{{".format(lenh * "-")
+        # print data
+        for molecule in mols:
+            opt = "|"
+            if molecule.opt:
+                opt = "+"
+
+            if i and hasattr(molecule, 'smiles'):
+                item = [molecule.smiles, molecule.predicted]
+            else:
+                item = [molecule.index, molecule.predicted]
+            if not i:
+                item += [ molecule.Pvalue ]
+
+            propvals = [molecule.props.get(prop, 'unknown') for prop in propset]
+            item.extend(propvals)
+            print formatitem(opt, item, maxlenconf)
+        print "+{}+".format(lenh * "-")
     return p
 
 

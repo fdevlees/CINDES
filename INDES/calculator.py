@@ -423,7 +423,7 @@ def submit_normal(mols_tocal, myrun):
         with open('loglist.csv', 'w') as f:
             f.write('job,log\n')
             for job in jobids:
-                f.write('{},{}\n'.format(job.name,job.logfile))
+                f.write('{},{}\n'.format(job.filepath,job.logpath))
 
         workerfile = """#!/bin/bash -l
 #PBS -N my-gaussian-worker-job

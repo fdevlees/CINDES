@@ -3,6 +3,7 @@ import sys
 import pickle
 import json
 from pprint import pprint
+from utils import pythonify
 
 def get_property_table(table, myrun):
     '''set a dict with {'index1':prop1, etc. } to use for montecarlo and prediction making '''
@@ -78,7 +79,11 @@ def set_table(myrun, array=[]):
             new_key='_'.join(new_conf)
             new_table[new_key]=table[key]
         print new_table.keys()[:20]
-        #raise SystemExit
+
+        # 3. JSON doesn't accept integer keys. So I will try to 
+        # make JSON key strings an integer again.
+        new_table = pythonify(new_table)
+
         return new_table
 
     #-------- enclosed function 3
