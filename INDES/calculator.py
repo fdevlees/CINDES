@@ -403,17 +403,18 @@ def submit_normal(mols_tocal, myrun):
         with open('loglist.csv', 'w') as f:
             f.write('job,log\n')
             for job in jobids:
-                f.write('{},{}\n'.format(job.name,job.logfile))
+                f.write('{},{}\n'.format(job.filepath,job.logpath))
 
-        workerfile = """#!/bin/bash -l
-#PBS -N my-gaussian-worker-job
-#PBS -l walltime=1:00:00,nodes=1:ppn=8
-module load Gaussian/G16.A.03-intel-2017b
-cd $PBS_O_WORKDIR
-time g16 <$PBS_O_WORKDIR/$job>$PBS_O_WORKDIR/$log
-"""
-        with open('myworker.pbs', 'w') as f:
-            f.write(workerfile)
+#        workerfile = """#!/bin/bash -l
+##PBS -N my-gaussian-worker-job
+##PBS -l walltime=1:00:00,nodes=1:ppn=8
+##PBS -A lt1_starter-77
+#module load Gaussian/G16.A.03-intel-2017b
+#cd $PBS_O_WORKDIR
+#time g16 <$PBS_O_WORKDIR/$job>$PBS_O_WORKDIR/$log
+#"""
+#        with open('myworker.pbs', 'w') as f:
+#            f.write(workerfile)
         jobids = subm.submitworker()
     return jobids
 
@@ -497,12 +498,17 @@ def test_ready2(mols_tocal, myrun):
     completedjobs = []
     files = []
     fileparameters = myrun.__dict__
-    for mol in mols_tocal:
-        # if zzz:
-        #    jobnames = [ job.errorfile for job in mol.jobs if not job.errorfile is None ]
-        jobnames = [job.filename for job in mol.jobs]
-        files.extend(jobnames)
+
+    # 1. get the list of entries that are in the queue
+    if myrun.worker:
+        files = ['my-gaussian-worker-job']
+    else:
+        for mol in mols_tocal:
+            jobnames = [job.filename for job in mol.jobs]
+            files.extend(jobnames)
     print "files:", files
+
+    # 2. and wait until all are completed or not anymore in queue
     tijdje = 0
     while True:
         count = 0

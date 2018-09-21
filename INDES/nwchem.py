@@ -2,6 +2,9 @@
 ''' this module contains all functions related to the NWChem program '''
 import re
 import time
+import string
+import random
+import os
 multiplicity = {1: 'singlet', 2: 'doublet', 3: 'triplet', 4: 'quartet'}
 
 from job import BaseJob
@@ -104,9 +107,10 @@ def write_geom(mol, fid, geom=None):
         fid.write(" end\nend\n")
     elif hasattr(mol, Axyz):
         xyz = getattr(mol, Axyz)
-        fid.write("geometry'n")
+        fid.write("geometry\n")
         fid.write(xyz)
-        fid.write('\n')
+        fid.write("end\n")
+        #fid.write('\n')
     else:
         print "attribute not found:", Axyz
         raise AttributeError
@@ -220,7 +224,19 @@ def filewriter(mol, calc, pos=None):
 
     # write info
     fid.write("echo\nstart {filename}\n".format(filename=filename))
-    fid.write("memory 1500 mb\n")
+    #fid.write("memory 1500 mb\n")
+    fid.write("memory total 8 stack 2 heap 2 global 4 mb\n")
+
+    # set scratchdir:
+    #hash = ''.join(random.choice(string.ascii_lowercase) for _ in range(4))
+    spath = "/scratch/leuven/100/vsc10010/REDOX/CALC/{}".format(filename.rsplit('_',1)[1])
+    try: 
+        os.makedirs(spath)
+    except OSError:
+        if not os.path.isdir(spath):
+            raise
+
+    fid.write('scratch_dir ' + spath + '\n')
     fid.write("title \"{filename}\"\n".format(filename=filename))
     # here the zmat
     write_geom(mol, fid, geom)
