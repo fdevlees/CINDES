@@ -120,7 +120,7 @@ def get_preds(subinp, line):
 
 def get_prop_function(subinp, line):
     line = subinp.readline()
-    isword = re.compile('(^[a-zA-Z_]*[0-9]?\(?$)')
+    isword = re.compile('(^[a-zA-Z_]+[0-9]?\(?$)')
     splitted1 = re.split('(\[|\])', line)
     splitted2 = map(lambda x:x.split(), splitted1)
 
@@ -130,9 +130,9 @@ def get_prop_function(subinp, line):
         for split in _split:
             if split=='[': inkey=True
             elif split==']':inkey=False
-            if inkey: continue
-            #print split
-            if isword.match(split) and (not split in ['if', 'else', 'abs(']) and not inkey:
+            if inkey:
+                continue
+            if isword.match(split) and (not split in ['if', 'else', 'abs(']):
                 props.add(split)
     arguments = ",".join(props)
     funcstr = "lambda {}:{}".format(arguments, line)

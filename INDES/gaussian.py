@@ -133,11 +133,12 @@ def filewriter(mol, calc, pos=None):
     paras = calc
     jobs = paras['jobs']
 
-    if pos:
+    if not pos is None: # NB it can be 0!
         name = "{0}{1}_{2}".format(paras['identify'], str(index), str(pos))
         filename = "{}.com".format(name)
         filepath = '{0}/{1}/{2}'.format(paras['path'], str(index), filename)
-        geom = pos
+        geom = '{}_{:d}'.format(calc['geom'], pos)
+        print "geom in filewriter:", geom
         Job = GaussianJob(filepath, calc)
         Job.pos = pos
     else:
@@ -149,7 +150,10 @@ def filewriter(mol, calc, pos=None):
         except KeyError:
             geom = None
         Job = GaussianJob(filepath, calc)
+
+
     mol.addjob(Job)
+
 
     fid = open(filepath, 'w')
 

@@ -1,3 +1,5 @@
+#!/bin/env python
+
 from pprint import pprint
 #from writings import log_io
 from CINDES.utils.writings import log_io, print_title, sprint
@@ -18,9 +20,17 @@ def setEAHs(molecule):
     Npos = []  # positions with a nitrogen in here
     for job in molecule.jobs:
         if hasattr(job, 'pos'):
-            EAHs[job.pos] = {'eAH': molecule.props.pop('eAH_P{}'.format(str(job.pos))), 'N': job.N}
+            EAHs[job.pos] = {
+                'eAH': molecule.props.pop('eAH_P{}'.format(str(job.pos))),
+                'N': job.N,
+                'Aatom': job.Aatom}
+            try:
+                EAHs[job.pos]['tcAH'] = molecule.props.pop('tcAH_P{}'.format(str(job.pos)))
+            except KeyError:
+                pass
     if EAHs:
         molecule.props['EAHs'] = EAHs
+        print "EAHs:", EAHs
     return
 
 
@@ -31,30 +41,61 @@ def calculate_stab(results, molecule):
     bde_b = -218.1  # kJ/mol
     stab_h = 235.8  # kJ/mol
     Dw_h = 0.063  # eV
+
+    # here the chi terms. The only relevant chi's are the ones higher than 3!
+    # values come from Freija's radical stability scale paper!
     chi_h = 2.20
     chi_c = 2.60
     chi_n = 3.05
+    chi_o = 3.50
+    chi_f = 4.00
+    chi_s = 2.60
+    chi_cl= 3.15
+    chi_br= 2.85
     H_h = -0.516817233  # a.u.
     kJmol = 2625.5
     eV = 27.2113838
     avtc = -28.1290706  # kJ/mol #average thermal correction for 5 random structures kJ/mol
-    chi_term = bde_b * (chi_h - 3) * (chi_n - 3)  # term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
     #gasconstant = 8.3144621
     # ----- end of parameters
     EAHs = results['EAHs']
     minpos = min(EAHs, key=lambda x: EAHs[x]['eAH'])
     E_ah = EAHs[minpos]['eAH']
+    try:
+        tc_ah = EAHs[minpos]['tcAH']
+    except KeyError:
+        pass
 
     Domega = results['omega'] - 2.
-    results['BDE_ah'] = (results['eA'] + H_h - E_ah) * kJmol + avtc  # avtc is AVerage Thermal Correction.
-    if EAHs[minpos]['N']:
+
+    if 'tcA' in results:
+        print "applying thermal corrections", results['tcA'], 'and', tc_ah
+        results['BDE_ah'] = (results['eA'] + results['tcA'] + H_h - ( E_ah + tc_ah )) * kJmol
+    else:
+        results['BDE_ah'] = (results['eA'] + H_h - E_ah) * kJmol  # avtc is AVerage Thermal Correction.
+
+    #if EAHs[minpos]['N']:
+    if EAHs[minpos]['Aatom']==7:
+        chi_term = bde_b * (chi_h - 3) * (chi_n - 3)  # term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
         print "electronegativity correction for nitrogen is used"
+        stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
+    elif EAHs[minpos]['Aatom']==6:
+        chi_term = bde_b * (chi_h - 3) * (chi_o - 3)  # term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
+        print "electronegativity correction for OXYGEN is used"
         stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
     else:
         stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h
     results['H_pos'] = minpos
     results['stab'] = stab
     return results
+
+def calculate_EAHs(results, molecule):
+    EAHs = results['EAHs']
+    minpos = min(EAHs, key=lambda x: EAHs[x]['eAH'])
+    E_ah = EAHs[minpos]['eAH']
+    results['eAH'] = E_ah
+    return results
+
 
 
 def normaltermination(mols, run):
@@ -191,15 +232,16 @@ def zzztester(mols):
 @log_io()
 def datareader(mols, run):
     # 1. test normal termination
-    #mols_toread = normaltermination(mols, debug=run.debug, ignore=run.ignore)
     mols_toread = normaltermination(mols, run=run)
 
     # 2. obtain data for each molecule
     for molecule in mols_toread:
         print "><" * 15, molecule,
         for job in molecule.jobs:
+            # 2.1 read the job
             readings = read_file(job)
 
+            # 2.2 if there are multiple variants of the job, give each variant a different index _P#
             if hasattr(job, 'pos'):
                 for old_key in readings.keys():  # the .keys is very important here. iterkeys or for just readings do not work!
                     readings["{}_P{}".format(old_key, str(job.pos))] = readings.pop(old_key)
@@ -208,7 +250,8 @@ def datareader(mols, run):
         molecule.predicted = False
 
         # only relevant for stab calculations
-        setEAHs(molecule)
+        if True:
+            setEAHs(molecule)
 
     return
 
@@ -264,6 +307,9 @@ def read_file(Job):
                 # note that scfenergies are given in eV by cclib but free energy in hartree
                 datadict[inf] = job_data.freeenergy
                 print "free energy found:", job_data.freeenergy
+            elif inf.startswith('tc'):
+                #datadict[inf] = job_data.freeenergy - ( job_data.scfenergies[-1] / 27.2238505 )
+                datadict[inf] = job_data.thermalcorrectionG
             elif inf in ['homo', 'lumo']:
                 datadict['homo'] = job_data.moenergies[-1][job_data.homos[0]]
                 datadict['lumo'] = job_data.moenergies[-1][job_data.homos[0] + 1]
@@ -281,9 +327,10 @@ def read_file(Job):
                 #    print job_data.atomspins
                 # except AttributeError:
                 #    pass
-            elif inf == 'spindensities':
-                spiden = map(lambda x: round(x[0] - x[1], 8), zip(job_data.npaa, job_data.npab))
-                datadict['spindensities'] = spiden
+            elif inf.startswith('spindensities'):
+                # NB charge-beta - charge-alpha because spindensity is a positive value but electron charge is negative!
+                spiden = map(lambda x: round(x[1] - x[0], 8), zip(job_data.npaa, job_data.npab))
+                datadict[inf] = spiden
             elif any(prop in inf for prop in ['pcharges', 'partialcharges']):
                 print "partial charges", job_data.atomcharges
 
@@ -293,7 +340,7 @@ def read_file(Job):
                 except KeyError:
                     pcharges = zip(map(int, job_data.atomnos), map(round8, job_data.atomcharges['natural']))
                 datadict[inf] = pcharges
-            elif 'xyz' in inf:
+            elif inf.startswith('xyz'):
                 datadict[inf] = job_data.atomcoords[-1]
                 datadict['atomnos'] = job_data.atomnos
             elif inf.startswith('dipolealpha'):
@@ -325,8 +372,10 @@ def set_combined_variables(mol, to_read_props):
         results['omega'] = ((results['ip'] + results['ea'])**2) / (8 * (results['ip'] - results['ea']))
     if 'stab' in to_read_props:
         results = calculate_stab(results, mol)
+    #elif 'EAHs' in to_read_props:
+    #    results = calculate_EAHs(results, mol)
     if any(i in to_read_props for i in ['ipfukui', 'radfukui']):
-        print "results:", results
+        #print "results:", results
         results['ipfukui'] = [-(q_ip[1] - q_0[1]) for q_ip, q_0 in zip(results['pchargesIP'], results['pcharges0'])]
     if any(i in to_read_props for i in ['eafukui', 'radfukui']):
         results['eafukui'] = [-(q_0[1] - q_ea[1]) for q_0, q_ea in zip(results['pcharges0'], results['pchargesEA'])]

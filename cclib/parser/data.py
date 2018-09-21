@@ -83,69 +83,70 @@ class ccData(object):
 
     # The expected types for all supported attributes.
     _attrtypes = {
-        "aonames":         list,
-        "aooverlaps":      numpy.ndarray,
-        "atombasis":       list,
-        "atomcharges":     dict,
-        "atomcoords":      numpy.ndarray,
-        "atommasses":      numpy.ndarray,
-        "atomnos":         numpy.ndarray,
-        "atomspins":       dict,
-        "ccenergies":      numpy.ndarray,
-        "charge":          int,
-        "coreelectrons":   numpy.ndarray,
-        "dipole":          float,
-        "dipolealpha":     dict,
-        "dipolebeta":      dict,
-        "electricdipole":  float,
-        "enthalpy":        float,
-        "entropy":         float,
-        "etenergies":      numpy.ndarray,
-        "etoscs":          numpy.ndarray,
-        "etrotats":        numpy.ndarray,
-        "etsecs":          list,
-        "etsyms":          list,
-        "freeenergy":      float,
-        "fonames":         list,
-        "fooverlaps":      numpy.ndarray,
-        "fragnames":       list,
-        "frags":           list,
-        'gbasis':          list,
-        "geotargets":      numpy.ndarray,
-        "geovalues":       numpy.ndarray,
-        "grads":           numpy.ndarray,
-        "hessian":         numpy.ndarray,
-        "homos":           numpy.ndarray,
-        "mocoeffs":        list,
-        "moenergies":      list,
-        "moments":         list,
-        "mosyms":          list,
-        "mpenergies":      numpy.ndarray,
-        "myhomos":         list,
-        "mymos":           list,
-        "mult":            int,
-        "natom":           int,
-        "nbasis":          int,
-        "nmo":             int,
-        "nocoeffs":        numpy.ndarray,
-        "nooccnos":        numpy.ndarray,
-        "npab":            list,
-        "npaa":            list,
-        "optdone":         bool,
-        "scancoords":      numpy.ndarray,
-        "scanenergies":    list,
-        "scannames":       list,
-        "scanparm":        list,
-        "scfenergies":     numpy.ndarray,
-        "scftargets":      numpy.ndarray,
-        "scfvalues":       list,
-        "temperature":     float,
-        "vibanharms":      numpy.ndarray,
-        "vibdisps":        numpy.ndarray,
-        "vibfreqs":        numpy.ndarray,
-        "vibirs":          numpy.ndarray,
-        "vibramans":       numpy.ndarray,
-        "vibsyms":         list,
+        "aonames":           list,
+        "aooverlaps":        numpy.ndarray,
+        "atombasis":         list,
+        "atomcharges":       dict,
+        "atomcoords":        numpy.ndarray,
+        "atommasses":        numpy.ndarray,
+        "atomnos":           numpy.ndarray,
+        "atomspins":         dict,
+        "ccenergies":        numpy.ndarray,
+        "charge":            int,
+        "coreelectrons":     numpy.ndarray,
+        "dipole":            float,
+        "dipolealpha":       dict,
+        "dipolebeta":        dict,
+        "electricdipole":    float,
+        "enthalpy":          float,
+        "entropy":           float,
+        "etenergies":        numpy.ndarray,
+        "etoscs":            numpy.ndarray,
+        "etrotats":          numpy.ndarray,
+        "etsecs":            list,
+        "etsyms":            list,
+        "freeenergy":        float,
+        "fonames":           list,
+        "fooverlaps":        numpy.ndarray,
+        "fragnames":         list,
+        "frags":             list,
+        'gbasis':            list,
+        "geotargets":        numpy.ndarray,
+        "geovalues":         numpy.ndarray,
+        "grads":             numpy.ndarray,
+        "hessian":           numpy.ndarray,
+        "homos":             numpy.ndarray,
+        "mocoeffs":          list,
+        "moenergies":        list,
+        "moments":           list,
+        "mosyms":            list,
+        "mpenergies":        numpy.ndarray,
+        "myhomos":           list,
+        "mymos":             list,
+        "mult":              int,
+        "natom":             int,
+        "nbasis":            int,
+        "nmo":               int,
+        "nocoeffs":          numpy.ndarray,
+        "nooccnos":          numpy.ndarray,
+        "npab":              list,
+        "npaa":              list,
+        "optdone":           bool,
+        "scancoords":        numpy.ndarray,
+        "scanenergies":      list,
+        "scannames":         list,
+        "scanparm":          list,
+        "scfenergies":       numpy.ndarray,
+        "scftargets":        numpy.ndarray,
+        "scfvalues":         list,
+        "temperature":       float,
+        "thermalcorrectionG":float,
+        "vibanharms":        numpy.ndarray,
+        "vibdisps":          numpy.ndarray,
+        "vibfreqs":          numpy.ndarray,
+        "vibirs":            numpy.ndarray,
+        "vibramans":         numpy.ndarray,
+        "vibsyms":           list,
     }
 
     # The name of all attributes can be generated from the dictionary above.
@@ -156,25 +157,25 @@ class ccData(object):
 
     # Attributes that should be lists of arrays (double precision).
     _listsofarrays = ['mocoeffs', 'moenergies', 'moments', 'scfvalues']
-    
+
     # Attributes that should be dictionaries of arrays (double precision).
     _dictsofarrays = ["atomcharges", "atomspins"]
 
     def __init__(self, attributes={}):
         """Initialize the cclibData object.
-        
+
         Normally called in the parse() method of a Logfile subclass.
-        
+
         Inputs:
             attributes - optional dictionary of attributes to load as data
         """
 
         if attributes:
             self.setattributes(attributes)
-        
+
     def listify(self):
         """Converts all attributes that are arrays or lists/dicts of arrays to lists."""
-        
+
         attrlist = [k for k in self._attrlist if hasattr(self, k)]
         for k in attrlist:
             v = self._attrtypes[k]
@@ -186,7 +187,7 @@ class ccData(object):
                 items = getattr(self, k).iteritems()
                 pairs = [(key, val.tolist()) for key, val in items]
                 setattr(self, k, dict(pairs))
-    
+
     def arrayify(self):
         """Converts appropriate attributes to arrays or lists/dicts of arrays."""
         
