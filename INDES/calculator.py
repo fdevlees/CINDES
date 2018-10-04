@@ -209,9 +209,9 @@ def geommaker(mols_tocal, myrun):
             import sys
             from CINDES.utils.ga_dihedrals import reduce_conflicts
             # this function sets molecule.conf with optimized dihedrals in the conf attribute
-            c = deepcopy(core)
-            a = deepcopy(active)
-            p = deepcopy(passive)
+            c = deepcopy(myrun.TZmat['core'])
+            a = deepcopy(myrun.TZmat['active'])
+            p = deepcopy(myrun.TZmat['passive'])
 
             with open('optga.out', 'a') as out:
                 with custom_redirection(out):
@@ -624,6 +624,8 @@ def set_target_properties(molecules, myrun):
         -Pvalue
         -boundaries
     '''
+    if myrun.property == '_':
+        return
     for mol in molecules:
         if mol.ignoremol:
             print mol, 'ignored'

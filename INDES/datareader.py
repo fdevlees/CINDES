@@ -349,6 +349,10 @@ def read_file(Job):
                 datadict[inf] = datadict[inf] = job_data.dipolebeta
             elif inf.startswith('electricdipole'):
                 datadict[inf] = datadict[inf] = job_data.electricdipole
+            elif inf.startswith('vibfreqs'):
+                datadict[inf] = job_data.vibfreqs
+            elif inf.startswith('hasimagfreq'):
+                datadict[inf] = any( freq<0.0 for freq in job_data.vibfreqs )
             else:
                 print "value not recognized:", inf
     print

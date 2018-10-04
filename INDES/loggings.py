@@ -15,9 +15,13 @@ import pandas as pd
 
 def formatitem(opt, item, maxlenconf=49):
     def formatter(item):
+        if isinstance(item, bool):
+            return str(item).rjust(15)
         try:  # float
             return '{:15.8f}'.format(item)
         except ValueError:  # str
+            if item is None:
+                return " "*15
             try:
                 return item.rjust(15)
             except AttributeError:
@@ -114,7 +118,7 @@ def log_table(mols, table, tablename='table'):
 
 def log_screen(mols):
     def issinglevalued(x):
-        return any([isinstance(x, t) for t in (str, int, float)])
+        return any([isinstance(x, t) for t in (str, int, float, bool)])
 
     # first print the properties of the first molecule
     try:
@@ -147,7 +151,8 @@ def log_screen(mols):
             #props.update(mol.props.keys())
         except AttributeError:
             pass
-    props = list(props)
+    if isinstance(props, set):
+        props = list(props)
     print "Properties that cannot be represented as a single value are:", ", ".join(noprintprops)
 
     # try to find the target property by looking for the Pvalue in all props such that
@@ -177,7 +182,7 @@ def log_screen(mols):
             break
         except ValueError:
             j += 1
-
+    print "props:", props
     # print everything:
     # .1 decide max conf lenght
     maxlenconf = max(map(lambda x: len(x.index), mols))
@@ -194,7 +199,9 @@ def log_screen(mols):
         if not props[-1] in propsets[-1]:
             propsets[-1].append(props[-1])
     else:
-        propsets=props
+        propsets=[props]
+
+    print "propsets:", propsets
 
     # then print a table for every propset
     for i, propset in enumerate(propsets):
@@ -292,7 +299,7 @@ def pstats(predinfo):
 
 
 @log_io()
-def loggings(mols, table, count, k, l, made_pred=False, tablename='tablebin'):
+def loggings(mols, table, count, k, l, made_pred=False, tablename='table'):
 
     # --- LOGGINGS: CYCLESINFO
     log_cyclesinfo(mols, count, k, l)

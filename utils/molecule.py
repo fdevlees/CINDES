@@ -284,6 +284,10 @@ class Molecule(BaseMolecule):
             if debug: print "self.xyz",self.xyz
             self.set_OBMol()
         if debug: print "self.OBxyz:", self.OBMol
+        try:
+            self.OBMol.OBMol.Kekulize()
+        except Exception as e:
+            raise
         return self.OBMol.write(form)
 
     def optimize(self,set=False):

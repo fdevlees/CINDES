@@ -689,7 +689,10 @@ def generate_procedure(param, array):
     #print_title("COUNT: " + str(count),outline='l',signator="-")
 
     count = 0
-    if False:
+    if True:
+        print "molecules:"
+        for i, mol in enumerate(mols):
+            print i, mol.index
         if not myrun.nosub == 1:
             mols_all = submittingprocedure(mols_tocal,
                                            mols_nocal,
@@ -734,8 +737,7 @@ def generate_procedure(param, array):
         calculator.filemaker(mols_tocal, myrun)  # ----------------------------------HERE IS THE FILEWRITER CALL
 
     print "mols_all:", mols_all
-    table = loggings(mols_all, table, count, 1, 1, made_pred=made_pred)
-
+    table = loggings(mols_all, table, count, 1, 1, made_pred=made_pred, tablename=myrun.tablename)
     print "DONE"
     return
 
@@ -753,12 +755,8 @@ def get_all_molecules(array):
                 conf = item + [group]
                 D.append(conf)
         C = D
-    print "molecules:"
-    for i, item in enumerate(C):
-        print i, item
     mols = [Molecule(conf=conf, dihedral=True) for conf in C]
 
-    print mols
     return mols
 
 

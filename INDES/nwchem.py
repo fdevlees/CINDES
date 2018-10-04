@@ -225,18 +225,18 @@ def filewriter(mol, calc, pos=None):
     # write info
     fid.write("echo\nstart {filename}\n".format(filename=filename))
     #fid.write("memory 1500 mb\n")
-    fid.write("memory total 8 stack 2 heap 2 global 4 mb\n")
+    fid.write("memory total 800 stack 200 heap 200 global 400 mb\n")
 
     # set scratchdir:
     #hash = ''.join(random.choice(string.ascii_lowercase) for _ in range(4))
-    spath = "/scratch/leuven/100/vsc10010/REDOX/CALC/{}".format(filename.rsplit('_',1)[1])
-    try: 
-        os.makedirs(spath)
-    except OSError:
-        if not os.path.isdir(spath):
-            raise
+    #spath = "/scratch/leuven/100/vsc10010/REDOX/CALC/{}".format(filename.rsplit('_',1)[1])
+    #try: 
+    #    os.makedirs(spath)
+    #except OSError:
+    #    if not os.path.isdir(spath):
+    #        raise
 
-    fid.write('scratch_dir ' + spath + '\n')
+    #fid.write('scratch_dir ' + spath + '\n')
     fid.write("title \"{filename}\"\n".format(filename=filename))
     # here the zmat
     write_geom(mol, fid, geom)
