@@ -625,6 +625,7 @@ def genconf(param):
     param = myrun.__dict__
     conf = zcon.indtocon(param['startind'])
     mol = Molecule(conf=conf)
+    print "defaultgroups:", myrun.defaultgroups
     print "in GENCONF: conf is:", conf
     param['workdir'] = os.getcwd()
     path = param['workdir']
