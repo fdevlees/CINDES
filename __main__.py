@@ -54,6 +54,10 @@ if True:
         from INDES import GA
         GA.main(param, array)
 
+    elif param['procedure'] in ['PSO', 'pso', 'particleswarm']:
+        from INDES import PSO
+        PSO.main(param, array)
+
     elif param['procedure'] == 'test':
         from INDES.procedures import testrun
         testrun(param, array)

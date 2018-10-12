@@ -1242,8 +1242,8 @@ class Gaussian(logfileparser.Logfile):
                 line = next(inputfile)
             for _ in xrange(6):
                 line= next(inputfile)
-            if hasattr(self, "npaa"):#already
-                print("2nd npaa", end="")
+            #if hasattr(self, "npaa"):#already
+            #    print("2nd npaa", end="")
             self.npaa = []
             while not '=' in line:
                 self.npaa.append(float(line.split()[2]))
@@ -1254,8 +1254,8 @@ class Gaussian(logfileparser.Logfile):
                 line = next(inputfile)
             for _ in xrange(6):
                 line= next(inputfile)
-            if hasattr(self, "npab"):#already
-                print("2nd npab", end="")
+            #if hasattr(self, "npab"):#already
+            #    print("2nd npab", end="")
             #if not hasattr(self, "npab"):
             self.npab = []
             while not '=' in line:
@@ -1423,7 +1423,8 @@ class Gaussian(logfileparser.Logfile):
                 #print("alpha_data:", alpha_data)
                 self.set_attribute('dipolealpha', alpha_data)
             except IndexError:
-                print("NO NLO ALPHA", end=' ')
+                pass
+                #print("NO NLO ALPHA", end=' ')
 
         if ' First dipole hyperpolarizability, Beta (dipole orientation)' in line:
             from CINDES.utils import NLO_TW
@@ -1433,6 +1434,35 @@ class Gaussian(logfileparser.Logfile):
                 self.set_attribute('dipolebeta', beta_data)
             except IndexError:
                 print("NO NLO BETA", end=' ')
+
+        if 'Magnetic susceptibility (cgs-ppm):' in line:
+            line = next(inputfile)
+            splitted = line.split()
+            chi_0 = float(splitted[2])
+            self.set_attribute('chi_0', chi_0)
+            matrix = numpy.zeros([3,3])
+            for i in range(3):
+                line = next(inputfile)
+                splitted = line.split('=')
+                matrix[i] = [ float(item.split()[0]) for item in splitted[1:] ]
+            # now I choose to only be interested in the ZZ component but this might change later
+            self.set_attribute('chi_zz', matrix[2][2])
+            shieldings = dict()
+            n=0
+            while not 'Current density tensor' in line:
+                if 'Bq' in line.split():
+                    shieldings[n]=dict()
+                    splitted = line.split()
+                    shieldings[n]['Isotropic'] = float(splitted[4])
+                    matrix = numpy.zeros([3,3])
+                    for i in range(3):
+                        line = next(inputfile)
+                        splitted = line.split('=')
+                        matrix[i] = [ float(item.split()[0]) for item in splitted[1:] ]
+                    shieldings[n]['matrix'] = matrix
+                    n+=1
+                line = next(inputfile)
+            self.set_attribute('shieldings', shieldings)
 
 
 

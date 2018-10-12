@@ -14,6 +14,7 @@ import construction
 
 corresp = {2: 46, 6: 18, 7: 42, 9: 34, 11: 22, 12: 30}
 
+def round8(x): return round(float(x), 8)
 
 def setEAHs(molecule):
     EAHs = dict()
@@ -22,7 +23,7 @@ def setEAHs(molecule):
         if hasattr(job, 'pos'):
             EAHs[job.pos] = {
                 'eAH': molecule.props.pop('eAH_P{}'.format(str(job.pos))),
-                'N': job.N,
+                #'N': job.N,
                 'Aatom': job.Aatom}
             try:
                 EAHs[job.pos]['tcAH'] = molecule.props.pop('tcAH_P{}'.format(str(job.pos)))
@@ -66,7 +67,11 @@ def calculate_stab(results, molecule):
     except KeyError:
         pass
 
-    Domega = results['omega'] - 2.
+    try:
+        Domega = results['omega'] - 2.
+    except KeyError:
+        Domega = 0.0
+        print "No electrophilicity term found so stab is calculated without omega term"
 
     if 'tcA' in results:
         print "applying thermal corrections", results['tcA'], 'and', tc_ah
@@ -308,7 +313,6 @@ def read_file(Job):
                 datadict[inf] = job_data.freeenergy
                 print "free energy found:", job_data.freeenergy
             elif inf.startswith('tc'):
-                #datadict[inf] = job_data.freeenergy - ( job_data.scfenergies[-1] / 27.2238505 )
                 datadict[inf] = job_data.thermalcorrectionG
             elif inf in ['homo', 'lumo']:
                 datadict['homo'] = job_data.moenergies[-1][job_data.homos[0]]
@@ -321,24 +325,19 @@ def read_file(Job):
                 datadict['mw'] = float(sum(job_data.atomnos))
             elif inf == 'rdv':
                 spiden = map(lambda x: x[0] - x[1], zip(job_data.npaa, job_data.npab))
-                # spiden=job_data.atomcharges['natural']
                 datadict['rdv'] = sum([item**2 for item in spiden if abs(item) > 0.05])
-                # try:
-                #    print job_data.atomspins
-                # except AttributeError:
-                #    pass
             elif inf.startswith('spindensities'):
                 # NB charge-beta - charge-alpha because spindensity is a positive value but electron charge is negative!
                 spiden = map(lambda x: round(x[1] - x[0], 8), zip(job_data.npaa, job_data.npab))
                 datadict[inf] = spiden
             elif any(prop in inf for prop in ['pcharges', 'partialcharges']):
-                print "partial charges", job_data.atomcharges
+                #print "partial charges", job_data.atomcharges
 
-                def round8(x): return round(float(x), 8)
                 try:
-                    pcharges = zip(map(int, job_data.atomnos), map(round8, job_data.atomcharges['mulliken']))
-                except KeyError:
                     pcharges = zip(map(int, job_data.atomnos), map(round8, job_data.atomcharges['natural']))
+                except KeyError:
+                    print "partial charges not found for natural orbitals so Mulliken charges are used"
+                    pcharges = zip(map(int, job_data.atomnos), map(round8, job_data.atomcharges['mulliken']))
                 datadict[inf] = pcharges
             elif inf.startswith('xyz'):
                 datadict[inf] = job_data.atomcoords[-1]
@@ -368,23 +367,30 @@ def set_combined_variables(mol, to_read_props):
         results['gap'] = results['lumo'] - results['homo']
     if 'solv' in to_read_props:
         results['solv'] = (results['e1_solv'] - results['e0_solv']) * 627.5
-    if any(i in to_read_props for i in ['ip', 'omega', 'stab']):
-        results['ip'] = (results['eIP'] - results['e0']) * 27.2113838
-    if any(i in to_read_props for i in ['ea', 'omega', 'stab']):
-        results['ea'] = (results['e0'] - results['eEA']) * 27.2113838
-    if any(i in to_read_props for i in ['omega', 'stab']):
-        results['omega'] = ((results['ip'] + results['ea'])**2) / (8 * (results['ip'] - results['ea']))
+
+    # the next properties are possible but not always calculated for radical stability values:
+    try:
+        if any(i in to_read_props for i in ['ip', 'omega', 'stab']):
+            results['ip'] = (results['eIP'] - results['e0']) * 27.2113838
+        if any(i in to_read_props for i in ['ea', 'omega', 'stab']):
+            results['ea'] = (results['e0'] - results['eEA']) * 27.2113838
+        if any(i in to_read_props for i in ['omega', 'stab']):
+            results['omega'] = ((results['ip'] + results['ea'])**2) / (8 * (results['ip'] - results['ea']))
+    except KeyError:
+        if not 'stab' in to_read_props:
+            raise
+
     if 'stab' in to_read_props:
         results = calculate_stab(results, mol)
     #elif 'EAHs' in to_read_props:
     #    results = calculate_EAHs(results, mol)
     if any(i in to_read_props for i in ['ipfukui', 'radfukui']):
         #print "results:", results
-        results['ipfukui'] = [-(q_ip[1] - q_0[1]) for q_ip, q_0 in zip(results['pchargesIP'], results['pcharges0'])]
+        results['ipfukui'] = map(round8, [-(q_ip[1] - q_0[1]) for q_ip, q_0 in zip(results['pchargesIP'], results['pcharges0'])])
     if any(i in to_read_props for i in ['eafukui', 'radfukui']):
-        results['eafukui'] = [-(q_0[1] - q_ea[1]) for q_0, q_ea in zip(results['pcharges0'], results['pchargesEA'])]
+        results['eafukui'] = map(round8, [-(q_0[1] - q_ea[1]) for q_0, q_ea in zip(results['pcharges0'], results['pchargesEA'])])
     if 'radfukui' in to_read_props:
-        results['radfukui'] = [.5 * (ipf + eaf) for ipf, eaf in zip(results['ipfukui'], results['eafukui'])]
+        results['radfukui'] = map(round8, [.5 * (ipf + eaf) for ipf, eaf in zip(results['ipfukui'], results['eafukui'])])
 
     return results
 
