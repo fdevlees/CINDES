@@ -22,6 +22,7 @@ import random as rrandom
 from CINDES.utils.writings import log_io, sprint, print_title
 from CINDES.utils.molecule import Molecule
 from CINDES.utils.table import set_table, get_property_table
+from CINDES.utils.utils import skipper
 from CINDES import INDES
 from predictions import predictor
 from CINDES.predictor import learning_int as ml_i
@@ -470,10 +471,9 @@ def run_pyevolve(array, table, options):
     genome.setParams(allele=setOfAlleles)
 
     # 3. Set evaluator function (objective function) or set precalculation is True! this circumvents serial evaluation
-    precalculation = True
+    precalculation = options.nosub != 1
     if not precalculation:
         genome.evaluator.set(skipper)
-        # if precalculation a self defined evaluator is used that calls CINDES also an FF instance
         # is made that moment.
 
     # 4. Set mutator function

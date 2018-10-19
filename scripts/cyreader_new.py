@@ -332,7 +332,7 @@ def read_cyclesinfo(filename):
     # plot of property vs dopant/substituent
     if args.pplot:
         from CINDES.utils.plotters import prop_substituent_last_cycle
-        prop_substituent_last_cycle(totalsites, maxnsites, datacolumn)
+        prop_substituent_last_cycle(totalsites, maxnsites, args.datacolumn)
         plt.show()
 
     if args.tplot: #get a tablebin like plot

@@ -25,7 +25,10 @@ from CINDES.utils.writings import log_io
 def read_input(siteinput):
     subinp = openfile(siteinput)  # this is the fileID
     param = readfile(subinp)  # inputline is a tuple with all kind of input variables
-    # here for a new link feature. nsites is len(line1) - nlinks
+
+
+    # here we set some extra parameters:
+    # 1. if there is symmetry the real number of sites is smaller than the number of changeable sites
     if param['nlinks']:
         param['nsites'] = len(param['sites']) - param['nlinks']
     else:
@@ -33,7 +36,8 @@ def read_input(siteinput):
             param['nsites'] = len(param['sites'])
         except KeyError:
             param['nsites'] = 0
-    #####################
+
+    # here we set the fragment library per site, called array
     if param['procedure'] in ['genconf']:
         print "Generate Configuration Procedure Active"
         array = []
@@ -51,6 +55,9 @@ def read_input(siteinput):
         logging.info("INPUT PARAMETERS:")
         for key, value in param.iteritems():
             logging.info(key + ' : ' + str(value))
+
+    # This is new and not yet fully functional
+    param['array'] = array
     return param, array
 
 
@@ -249,6 +256,7 @@ def readfile(subinp):
 
         #          GLOBAL RUN PARAMETERS
         'adjust_dihedrals': False,
+        'batchsize': None,
         'bc': False,
         'cutoff': 0,  # this cutoff has to apply to the final target property value only
         'debug': False,
@@ -357,6 +365,8 @@ def readfile(subinp):
         line = line.split('#')[0].lower()
         if 'adjust_dihedrals' in line:
             paras['adjust_dihedrals'] = True
+        elif 'batchsize' in line:
+            paras['batchsize'] = int(line.split()[1])
         elif 'bc' in line:
             paras['bc'] = True
             paras['bcprop'] = line.split()[1]
@@ -442,7 +452,14 @@ def readfile(subinp):
             paras['prejobs'] = get_jobs(subinp, line)
         elif 'property' in line:
             prop = line.split()[1]
-            if 'func' in prop:
+            print "prop", prop
+            if 'load_func' in prop:
+                paras['property'] = 'func'
+                functionscript = __import__('function')
+                paras['function'] = functionscript.function
+                assert callable(paras['function'])
+                paras['func_args'] = functionscript.arguments
+            elif 'func' in prop:
                 paras['property'] = 'func'
                 subinp, paras['function'], paras['func_args'] = get_prop_function(subinp, line)
             else:

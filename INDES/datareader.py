@@ -12,9 +12,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 import construction
 
-corresp = {2: 46, 6: 18, 7: 42, 9: 34, 11: 22, 12: 30}
-
 def round8(x): return round(float(x), 8)
+
 
 def setEAHs(molecule):
     EAHs = dict()
@@ -23,7 +22,6 @@ def setEAHs(molecule):
         if hasattr(job, 'pos'):
             EAHs[job.pos] = {
                 'eAH': molecule.props.pop('eAH_P{}'.format(str(job.pos))),
-                #'N': job.N,
                 'Aatom': job.Aatom}
             try:
                 EAHs[job.pos]['tcAH'] = molecule.props.pop('tcAH_P{}'.format(str(job.pos)))
@@ -94,13 +92,13 @@ def calculate_stab(results, molecule):
     results['stab'] = stab
     return results
 
+
 def calculate_EAHs(results, molecule):
     EAHs = results['EAHs']
     minpos = min(EAHs, key=lambda x: EAHs[x]['eAH'])
     E_ah = EAHs[minpos]['eAH']
     results['eAH'] = E_ah
     return results
-
 
 
 def normaltermination(mols, run):
@@ -352,6 +350,17 @@ def read_file(Job):
                 datadict[inf] = job_data.vibfreqs
             elif inf.startswith('hasimagfreq'):
                 datadict[inf] = any( freq<0.0 for freq in job_data.vibfreqs )
+            elif inf.startswith('nics0'):
+                datadict[inf] = shieldings[0]['Isotropic']
+            elif inf.startswith('nicszz0'):
+                datadict[inf] = shieldings[0]['matrix'][3,3]
+            elif inf.startswith('nics1'):
+                shieldings = job_data.shieldings
+                datadict[inf] = 0.5 * ( shieldings[1]['Isotropic'] + shieldings[2]['Isotropic'] )
+            elif inf.startswith('nicszz1'):
+                datadict[inf] = 0.5 * ( shieldings[1]['matrix'][3,3] + shieldings[2]['matrix'][3,3] )
+            elif inf.startswith('chi_0'):
+                datadict[inf] = job_data['chi_0']
             else:
                 print "value not recognized:", inf
     print
@@ -392,41 +401,11 @@ def set_combined_variables(mol, to_read_props):
     if 'radfukui' in to_read_props:
         results['radfukui'] = map(round8, [.5 * (ipf + eaf) for ipf, eaf in zip(results['ipfukui'], results['eafukui'])])
 
+    if False: # this part can probably be removed
+        if 'delta_hardness' in to_read_props:
+            results['delta_hardness'] = ( results['lumo_CH3'] - results['homo_CH3'] ) - ( results['lumo_CH2'] - results['homo_CH2'] )
+        if 'exaltation' in to_read_props:
+            results['exaltation'] = results['chi_0_CH3'] - results['chi_0_CH2']
+
     return results
 
-
-if __name__ == "__main__":
-    if hasattr(mymol, 'spindensities'):
-        print "Mulliken spin densities:"
-        pprint(mymol.spindensities)
-        spiden = mymol.spindensities[0]
-        # next line calculates in one line the Radical delocalisation value
-        RDV = sum([float(item[2])**2 for item in spiden if abs(item[2]) > 0.05])
-        print "RDV value is: ", RDV
-    if hasattr(mymol, 'npa'):
-        print "npa:"
-        pprint(mymol.npa)
-    if hasattr(mymol, 'npab'):
-        print "npab:"
-        pprint(mymol.npa)
-        snpa = [a - b for a, b in zip(mymol.npa, mymol.npab)]
-        print "----- npa spin densities -----"
-        for item in snpa:
-            print '{:>8.5f}'.format(float(item))
-    if hasattr(mymol, 'polvibr'):
-        print "Diagonal vibrational polarisability:", mymol.polvibr
-    if hasattr(mymol, 'hypolvibr'):
-        if not mymol.hypolvibr == []:
-            print "Diagonal vibrational hyperpolarisability:", mymol.hypolvibr
-    if True:
-        from CINDES.cclib.parser import ccopen
-        myfile = ccopen(filename).parse()
-        HOMO = myfile.myhomos[index]
-        Ehomo = myfile.mymos[index]['alpha'][0][HOMO]
-        Elumo = myfile.mymos[index]['alpha'][0][HOMO + 1]
-
-        Egap = Elumo - Ehomo
-        print "E-HOMO :", Ehomo, Ehomo / 27.2113838
-        print "E-LUMO :", Elumo, Elumo / 27.2113838
-        print "BANDGAP:", Egap
-        print Ehomo, Elumo, Egap
