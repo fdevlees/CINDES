@@ -8,8 +8,8 @@ replacements = {
         '(':'d', ')':'e',
         '[':'g', ']':'i',
         '\\':'j','/':'k',
-        '@':'m','-':'q', '+':'r',
-        '.':'t','#':'u'
+        '@':'m', '-':'q', '+':'r',
+        '.':'t', '#':'u'
         }
 
 # helper function
@@ -157,6 +157,7 @@ class SmiMolecule(BaseMolecule):
         super(SmiMolecule, self).__init__()
         self.smiles=smiles
         self.set_index()
+        self.props['smiles']=self.smiles
         return
 
     def __str__(self):
