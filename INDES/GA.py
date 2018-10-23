@@ -508,7 +508,7 @@ def run_pyevolve(array, table, options):
     ga.setGenerations(options.genalg['ngenerations'])
 
     # 10. set min / max (optimize to a maximum or to a minimum)
-    if options.genalg['optimum'] in ['min', 'minimize', 'minimum']:
+    if options.optimum in ['min', 'minimize', 'minimum']:
         ga.setMinimax(Consts.minimaxType["minimize"])
 
     # 11. set MUP (mutation probability)

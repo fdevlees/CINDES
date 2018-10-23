@@ -25,7 +25,6 @@ def LinearScaling(pop):
    pop_rawAve = pop.stats["rawAve"]
    pop_rawMax = pop.stats["rawMax"]
    pop_rawMin = pop.stats["rawMin"]
-   
    if pop_rawAve == pop_rawMax:
       a = 1.0
       b = 0.0

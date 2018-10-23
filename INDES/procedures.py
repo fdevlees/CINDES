@@ -90,7 +90,7 @@ class BaseRun(object):
                 else:
                     sb.append("{key:20}= lambda function".format(key=key))
             elif key in ['adj']:
-                sb.append("{key:20}=\n".format(key=key))
+                sb.append("{key:20}=".format(key=key))
 
                 def f(v): return ''.join([('0', '1')[int(item)] for item in v])
                 sb.append('\n'.join(map(f, value)))
@@ -251,10 +251,6 @@ class FrameRun(BaseRun):
     def set_corresp(self, active, passive):
         '''makes a dictionary that gives the correspondance of sites with position in core matrix'''
         corresp = dict()
-        print "active:"
-        pprint.pprint(active)
-        print "passive:"
-        pprint.pprint(passive)
         for site in active:
             corresp[int(site[0][1])] = int(site[1][1])
         for site in passive:

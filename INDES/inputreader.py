@@ -212,7 +212,6 @@ def get_genalg_params(subinp, line):
                 'CXP': 0.8,  # crossover probability
                 'MUP': 0.2,  # mutation probability
                 'elitism': True,
-                'optimum': 'maximum',
                 'nelitism': 1,
                 'scaling': 'sigmatrunc',
                 'db_identify': 'ex' + str(np.random.randint(0, 90)),
@@ -233,20 +232,37 @@ def get_genalg_params(subinp, line):
                 raise SystemExit('program stopped')
             value_type = type(defaults[key])
             defaults[key] = value_type(line.split()[1])
-            # if key in [ 'ngenerations', 'npopulation', 'nelitism', 'freq_stats' ]:
-            #    defaults[key] = int(line.split()[1])
-            # elif key in ['CXP', 'MUP']:
-            #    defaults[key] = float(line.split()[1])
-            # elif key in ['elitism']:
-            #    defaults[key] = bool(line.split()[1])
-            # elif key in [ 'scaling', 'db_identify', 'optimum' ]:
-            #    defaults[key] = line.split()[1]
-            # else:
-            #    print "line not interpreted:", line
         print " defaults of genetic algorithm are changed. new values:"
     print defaults
     return subinp, defaults
 
+def get_pso_params(subinp, line):
+    defaults = {'ngenerations': 20,
+                'npopulation': 20,
+                'w1': 1.0,  # local optimum factor
+                'w2': 1.0,  # global optimum factor
+                'c1': 0.2,  # random factor
+                'db_identify': 'ex' + str(np.random.randint(0, 90)),
+                'freq_stats': 10,
+                'seed': 0,
+                'type':'concrete'
+                }
+    try:
+        n_extra_lines = int(line.split()[2])
+    except IndexError:
+        print "WARNING: all default values for the genetic algorithms will be used:"
+    else:  # execute only when no exception is thrown
+        for _ in range(n_extra_lines):
+            line = subinp.readline()
+            key = line.split()[0]
+            if not key in defaults:
+                print "keyword in PSO section not recognized:", key
+                raise SystemExit('program stopped')
+            value_type = type(defaults[key])
+            defaults[key] = value_type(line.split()[1])
+        print " defaults for particle swarm optimization are changed. new values:"
+    print defaults
+    return subinp, defaults
 
 def readfile(subinp):
     '''this method reads all the inputkeywords'''
@@ -374,8 +390,8 @@ def readfile(subinp):
             try:
                 paras['bcoptimum'] = line.split()[3]
             except IndexError:
-                paras['bcoptimum'] = 'min'
-            assert paras['bcoptimum'] in ['min', 'max']
+                paras['bcoptimum'] = 'minimum'
+            assert paras['bcoptimum'] in ['min', 'max', 'minimum', 'maximum']
         elif 'startcalcs' in line:
             paras['calcs'] = get_calcs(subinp, line)
         # elif 'basisset' in line: paras['basisset'] = line.split()[1]
@@ -440,8 +456,9 @@ def readfile(subinp):
             paras['nprocs'] = int(line.split()[1])
         elif 'optimum' in line:
             if 'max' in line.split()[1]:
-                print "changed optimization to maximum instead of minimum!"
                 paras['optimum'] = 'maximum'
+            else:
+                paras['optimum'] = 'minimum'
         elif 'optga' in line:
             paras['optga'] = True
         elif 'positions' in line:
@@ -473,7 +490,8 @@ def readfile(subinp):
                     raise SystemExit("NO number of random structures specified!")
             elif paras['procedure'] in ['ga', 'genalg']:
                 subinp, paras['genalg'] = get_genalg_params(subinp, line)
-                pass
+            elif paras['procedure'] in ['pso', 'particleswarm']:
+                subinp, paras['pso'] = get_pso_params(subinp, line)
             elif paras['procedure'] in ['testpred', 'makepred']:
                 try:
                     paras['datacolumn'] = int(line.split()[2])
@@ -594,18 +612,9 @@ def readfile(subinp):
         pass
     props.extend(paras['extra_props'])
     paras['props'] = set(props)
-    # for prop in ['stab', 'polar', 'ip', 'aip', 'ea', 'aea', 'solv' ]:
     for prop in ['stab']:
         if prop in paras['props']:
             paras[prop] = True
-
-    # extra sanity checks on input
-    # sanity check 1: optimum in ga and bfs input similar
-    if hasattr(paras, 'genalg'):
-        if not paras['genalg']['optimum'] == paras['optimum']:
-            print "WARNING OPTIMUM KEYWORDS ARE NOT THE SAME. \n    Please check carefully if program is working correctly!"
-            print "set optimum to genalg.optimum", paras['genalg']['optimum']
-            paras['optimum'] = paras['genalg']['optimum']
 
     return paras
 
