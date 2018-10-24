@@ -52,7 +52,7 @@ if True:
         GA.main(param, array)
 
     elif param['procedure'] in ['pso', 'cpso', 'particleswarm']:
-        from INDES import PSO
+        from PSO import PSO
         PSO.main(param)
 
     elif param['procedure'] == 'test':

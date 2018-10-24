@@ -245,7 +245,7 @@ def get_pso_params(subinp, line):
                 'db_identify': 'ex' + str(np.random.randint(0, 90)),
                 'freq_stats': 10,
                 'seed': 0,
-                'type':'concrete'
+                'type':'probability'
                 }
     try:
         n_extra_lines = int(line.split()[2])
