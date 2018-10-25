@@ -241,11 +241,14 @@ def get_pso_params(subinp, line):
                 'npopulation': 20,
                 'w1': 1.0,  # local optimum factor
                 'w2': 1.0,  # global optimum factor
-                'c1': 0.2,  # random factor
+                'w':0.8,
+                'c1': 0.2,  # random factor1
+                'c2': 0.2,  # random factor2
+                'epsilon': 0.7,  # random factor2
                 'db_identify': 'ex' + str(np.random.randint(0, 90)),
                 'freq_stats': 10,
                 'seed': 0,
-                'type':'probability'
+                'type':'concrete'
                 }
     try:
         n_extra_lines = int(line.split()[2])
@@ -261,6 +264,13 @@ def get_pso_params(subinp, line):
             value_type = type(defaults[key])
             defaults[key] = value_type(line.split()[1])
         print " defaults for particle swarm optimization are changed. new values:"
+
+    # change defaults of c1/c2 for PPSO
+    if not defaults['type'] == 'concrete':
+        for key in ['c1', 'c2']:
+            if defaults[key]==0.2:
+                defaults[key]=1.4
+
     print defaults
     return subinp, defaults
 
@@ -604,6 +614,8 @@ def readfile(subinp):
     if paras['property'] == 'func':
         props = []
         props.extend(paras['func_args'])
+    elif paras['property'] == '_':
+        props = []
     else:
         props = [paras['property']]
     try:

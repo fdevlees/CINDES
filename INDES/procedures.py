@@ -78,6 +78,7 @@ class BaseRun(object):
                     continue
             except ValueError:
                 pass
+            if key=='array':continue
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append(dump(value))
@@ -681,6 +682,7 @@ def generate_procedure(param, array):
         def chunks(l, n):
             '''yields successive n-sized chunks of l'''
             for i in range(0, len(l), n):
+                print "    yielding:", i, "to:", i+n, "from total:", len(l)
                 yield l[i:i + n]
 
         mols_all = []

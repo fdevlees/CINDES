@@ -132,7 +132,19 @@ def set_table(myrun, array=[]):
                 raise
         print "loaded json database with {} molecules".format(len(db))
         # myrun.props has to be a subset of value.viewkeys(): set operations <= means "is subset of"
-        table = { key:value for key,value in db.iteritems() if myrun.props <= value.viewkeys() }
+        required_props = set()
+        for prop in myrun.props:
+            if prop=='solv':
+                required_props.add('e0_solv')
+                required_props.add('e1_solv')
+            elif prop=='gap':
+                required_props.add('homo')
+                required_props.add('lumo')
+            else:
+                required_props.add(prop)
+        print "required properties:", required_props
+
+        table = { key:value for key,value in db.iteritems() if required_props <= value.viewkeys() }
         print "made a table with {} molecules that have the required properties".format(len(table))
 
         # should the function value be included in the table? otherwise here is the place ;)

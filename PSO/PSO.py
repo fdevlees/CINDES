@@ -29,6 +29,13 @@ np.set_printoptions(linewidth=120)
 # 1. setup system
 from CINDES.INDES import procedures
 
+def rounder(history):
+    n=2
+    roundn = lambda x:round(x, n)
+    for i in range(len(history)):
+        history[i] = map(roundn, history[i])
+    return history
+
 def stringify_array(array):
     newarray = []
     for site in array:
@@ -71,15 +78,17 @@ def main(param):
                             parallel=True,
                             minimize=minimize)
     else:
-        from categoricalPSO import CategoricalPSO
-        mypso = CategoricalPSO(array=mprms.array,
-                            npop =mprims.pso['npopulation'],
-                            function = FF
+        options = { k:v for k,v in mprms.pso.iteritems() if k in ('w', 'c1', 'c2', 'epsilon') }
+        from probabilityPSO import ProbabilityPSO
+        mypso = ProbabilityPSO(array=mprms.array,
+                            npop =mprms.pso['npopulation'],
+                            function = FF,
                             maxiter=mprms.pso['ngenerations'],
                             parallel=True,
-                            minimize=minimize)
+                            minimize=minimize,
+                            options = options)
     print mypso
-    print mypso.swarm
+    #print mypso.swarm
 
     # 4. Run Algorithm:
     mypso.evolve()
