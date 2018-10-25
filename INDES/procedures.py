@@ -16,10 +16,12 @@ import pprint  # pretty printer for printing lists
 import os  # for getting window width and testing existence of files
 import re
 from re import findall  # now only needed in construction.py
+import inspect # to see if function is a class
 import sys  # for getting command line input
 import random  # for obtaining random geometry
 import logging  # instead of the large amount of print statements not using it at the moment
 from copy import deepcopy  # for keeping matrices while changing others
+import string
 
 # import my own modules
 import construction as zcon  # all functions needed for constructing new geometries
@@ -54,9 +56,16 @@ class BaseRun(object):
         self.directory = os.getcwd()
         self.pid = os.getpid()
         self.ppid = os.getppid()
-        # for self.setup_filesystem one needs to have: self.(-nosub / -program)
-        self.setup_filesystem()
-        self.set_calcs()
+
+        if not self.nosub==1:
+            self.setup_filesystem()
+            self.set_calcs()
+
+        # sometimes complicated property functions have to be initialized:
+        if self.property=='func' and inspect.isclass(self.function):
+            print "initializing function..."
+            self.function = self.function(self)
+            assert callable(self.function)
         return
 
     def __str__(self):
@@ -81,7 +90,7 @@ class BaseRun(object):
                 else:
                     sb.append("{key:20}= lambda function".format(key=key))
             elif key in ['adj']:
-                sb.append("{key:20}=\n".format(key=key))
+                sb.append("{key:20}=".format(key=key))
 
                 def f(v): return ''.join([('0', '1')[int(item)] for item in v])
                 sb.append('\n'.join(map(f, value)))
@@ -242,10 +251,6 @@ class FrameRun(BaseRun):
     def set_corresp(self, active, passive):
         '''makes a dictionary that gives the correspondance of sites with position in core matrix'''
         corresp = dict()
-        print "active:"
-        pprint.pprint(active)
-        print "passive:"
-        pprint.pprint(passive)
         for site in active:
             corresp[int(site[0][1])] = int(site[1][1])
         for site in passive:
@@ -433,37 +438,6 @@ def runtest(run, optimum, optsite, count, bcok, mctable=[], array=[]):
     return optimum, optsite, converged
 
 
-# DATA GETTING:
-# A: fake data for testing (skipper)
-def skipper(mols_tocal, mols_nocal, iprint=True):
-    ''' generate random data '''
-    if iprint:
-        print "submit is skipped! random data is generated"
-    import string
-    for molecule in mols_tocal:
-        item = molecule.index
-        #propx= sum([ string.uppercase.index(itempje)+1 for itempje in list(item.replace('_',''))])
-        output = 0
-        replaced = item.replace('_', '')
-        replaced = filter(lambda x: x.isalpha(), replaced)
-        for i in replaced:
-            try:
-                output += string.uppercase.index(i)
-            except ValueError:
-                output += string.lowercase.index(i)
-        propx = float(output)
-        try:
-            if 'bcprop' in param:
-                propy = len(item.replace('_', ''))
-                molecule.boundaries = [float(propy)]
-        except NameError:
-            pass
-
-        molecule.Pvalue = propx
-        molecule.predicted = False
-
-    mols_all = mols_tocal + mols_nocal
-    return mols_all
 
 
 def restriction1(mols_todo, mols_nodo, run):
@@ -582,7 +556,7 @@ def BFS(param, array):
                                                myrun,
                                                )  # here call submitting procedure
             else:
-                mols_all = skipper(mols_tocal, mols_nocal)
+                mols_all = skipper(mols_tocal, mols_nocal, myrun)
 
             # STEP 4: UPDATE OPTIMUM STRUCTURE
             # decide what the optimum site is and if the bc if fullfilled
@@ -690,7 +664,7 @@ def generate_procedure(param, array):
     #print_title("COUNT: " + str(count),outline='l',signator="-")
 
     count = 0
-    if True:
+    if myrun.batchsize is None:
         print "molecules:"
         for i, mol in enumerate(mols):
             print i, mol.index
@@ -700,10 +674,9 @@ def generate_procedure(param, array):
                                            myrun,
                                            )  # here call submitting procedure
         else:
-            mols_all = skipper(mols_tocal, mols_nocal)
-    elif False:
+            mols_all = skipper(mols_tocal, mols_nocal, myrun)
+    elif myrun.batchsize:
         # use batches
-        batchsize = 49
 
         def chunks(l, n):
             '''yields successive n-sized chunks of l'''
@@ -711,7 +684,7 @@ def generate_procedure(param, array):
                 yield l[i:i + n]
 
         mols_all = []
-        for i, batch in enumerate(chunks(mols_tocal, batchsize)):
+        for i, batch in enumerate(chunks(mols_tocal, myrun.batchsize)):
             print "chunk nr:", i, "with ", len(batch), "structures"
             if not myrun.nosub == 1:
                 batch = submittingprocedure(batch,
@@ -719,10 +692,9 @@ def generate_procedure(param, array):
                                             myrun,
                                             )  # here call submitting procedure
             else:
-                batch = skipper(batch, [])
+                batch = skipper(batch, [], myrun)
             mols_all.extend(batch)
-
-    elif True:
+    else:
         # use job arrays.
         # make a jobscript with the line:
         # qsub -t 1-njobs
@@ -885,11 +857,11 @@ def SteepestDescent(param, array):
                                            myrun,
                                           )  # here call submitting procedure
         else:
-            mols_all = skipper(mols_tocal, mols_nocal)
+            mols_all = skipper(mols_tocal, mols_nocal, myrun)
 
         # STEP 5: UPDATE DATABASE and LOG results of microiteration
         # logs new elements in data to table and tablebin and whole data to cyclesinfo
-        table = loggings(mols_all, table, count, 1, 1, made_pred=made_pred)
+        table = loggings(mols_all, table, count, 1, 1, made_pred=made_pred, tablename=myrun.tablename)
 
         # STEP 6: UPDATE OPTIMUM STRUCTURE
         # decide what the optimum site is and if the bc if fullfilled

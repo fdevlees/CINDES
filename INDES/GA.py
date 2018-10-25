@@ -1,5 +1,6 @@
 #!/bin/env python
 debug = False
+verbose = False
 # python modules
 import numpy as np
 random = np.random.random
@@ -22,6 +23,7 @@ import random as rrandom
 from CINDES.utils.writings import log_io, sprint, print_title
 from CINDES.utils.molecule import Molecule
 from CINDES.utils.table import set_table, get_property_table
+from CINDES.utils.utils import skipper
 from CINDES import INDES
 from predictions import predictor
 from CINDES.predictor import learning_int as ml_i
@@ -94,20 +96,17 @@ class Fitness_Function():
         i probably should also already get a self.kernel here such that the evaluatefunction only should call predict
         '''
         self.run = run
+        self.skip = self.run.nosub==1
         self.table = table
         self.array = array
         return
 
-    def predict_via_submit_multi(self, confs, gen=0):
+    def evaluate_multi(self, confs, gen=0):
         ''' this function is used by my_GSimpleGA class.my_evaluate '''
-        # 0. I have to deal with the fact that there can be similar configurations!
-        # it does that before calling this function
-        pass
-
         # 1. convert configuration lists to molecule instances
-        print "confs:", confs
+        if verbose: print "confs:", confs
         individuals = [Molecule(conf=conf) for conf in confs]  # list of molecules
-        print "individuals:", individuals
+        if verbose: print "individuals:", individuals
 
         # 2. check which molecules are already calculated and add them to data_nocal
         mols_todo, mols_nodo = INDES.construction.check_in_table(individuals, self.table, self.run.props)
@@ -126,16 +125,14 @@ class Fitness_Function():
 
         # 4. calculate configurations
         myrun = self.run
-        mols_all = INDES.procedures.submittingprocedure(mols_tocal,
-                                                        mols_nocal,
-                                                        myrun,
-                                                        )  # here call submitting procedure
-        #newy = [ molecule.log() for molecule in mols_all ]
+        if self.skip:
+            mols_all = skipper(mols_tocal, mols_nocal, myrun)
+        else:
+            mols_all = INDES.procedures.submittingprocedure(mols_tocal,
+                                                            mols_nocal,
+                                                            myrun)
 
         # 4. log new results
-        if debug:
-            print "newy:", newy
-        #self.table = INDES.loggings.log_table( mols_all , table=self.table)
         self.table = INDES.loggings.loggings(mols_all,
                                              self.table,
                                              gen,
@@ -143,6 +140,7 @@ class Fitness_Function():
                                              made_pred=False,
                                              tablename=myrun.tablename)
         return mols_all
+
 
     @log_io()
     def evaluate_skip_multi(self, confs):
@@ -152,7 +150,7 @@ class Fitness_Function():
         fitnesses = [[index, skipper(index)] for index in indices]
         for conf, fitness in zip(confs, fitnesses):
             fitness[0] = conf
-        sprint(10, fitnesses)
+        if verbose: sprint(10, fitnesses)
         return fitnesses
 
 
@@ -184,15 +182,14 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
         #print "unique_confs:", unique_confs
 
         # 2. call CINDES via FF to calculate the configurations
-        print "self.bestIndividual:", self.bestIndividual()
-        print self.bestIndividual().score
-        mols = self.FF.predict_via_submit_multi(unique_confs, gen=self.currentGeneration)
+        print "BestIndividual (score): {} ({})".format(self.bestIndividual().genomeList, self.bestIndividual().score)
+        mols = self.FF.evaluate_multi(unique_confs, gen=self.currentGeneration)
 
         # 3. set the calculations to the correct indivual score
         y_dict = {mol.index: mol.Pvalue for mol in mols}
         for ind in population:
             index = INDES.procedures.zcon.contoind(ind.genomeList)
-            print "individual:", ind.genomeList, "y:", y_dict[index], index
+            if verbose: print "individual:", ind.genomeList, "y:", y_dict[index], index
             #ind.score = y_dict[index][1]
             ind.score = y_dict[index]
             ind.index = index
@@ -314,7 +311,7 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
                 self.__gp_catch_functions(gp_function_prefix)
 
         self.initialize()
-        print "Jos in evolve"
+        #print "Jos in evolve"
         #print "self.internalPop:", self.internalPop
         #print "self.internalPop.internalPop[0]", self.internalPop.internalPop
         #print "self.internalPop.internalPop.genomeList", self.internalPop.internalPop[0].genomeList
@@ -473,7 +470,6 @@ def run_pyevolve(array, table, options):
     precalculation = True
     if not precalculation:
         genome.evaluator.set(skipper)
-        # if precalculation a self defined evaluator is used that calls CINDES also an FF instance
         # is made that moment.
 
     # 4. Set mutator function
@@ -512,7 +508,7 @@ def run_pyevolve(array, table, options):
     ga.setGenerations(options.genalg['ngenerations'])
 
     # 10. set min / max (optimize to a maximum or to a minimum)
-    if options.genalg['optimum'] in ['min', 'minimize', 'minimum']:
+    if options.optimum in ['min', 'minimize', 'minimum']:
         ga.setMinimax(Consts.minimaxType["minimize"])
 
     # 11. set MUP (mutation probability)

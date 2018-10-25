@@ -10,9 +10,12 @@ def get_property_table(table, myrun):
     db=dict()
     for key,value in table.iteritems():
         if myrun.property=='func':
-            kwargs = { prop:value[prop] for prop in myrun.func_args }
-            Pvalue = myrun.function(**kwargs)
-            db[key]=Pvalue
+            if myrun.nosub==1:
+                db[key] = value[ myrun.func_args[0] ]
+            else:
+                kwargs = { prop:value[prop] for prop in myrun.func_args }
+                Pvalue = myrun.function(**kwargs)
+                db[key]=Pvalue
         else:
             Pvalue = value[ myrun.property ]
             db[key]=Pvalue

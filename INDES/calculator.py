@@ -246,6 +246,9 @@ def geommaker(mols_tocal, myrun):
 def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to pass here)
     '''jkl'''
 
+    if debug:
+        print "DEBUG: calc", calc
+
     # 1. Decide program
     if calc['program'] == 'gaussian':
         import gaussian as program
@@ -293,7 +296,8 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
                 for i, conformer in enumerate(conformers, 1):  # enumerate starts at 1!
                     setattr(molecule, 'xyz{}'.format(i), conformer.GetProp('xyz'))
                     program.filewriter(molecule, calc, i)
-        elif 'geom' in calc and isinstance(getattr(molecule, calc['geom']), list):
+        elif 'geom' in calc and calc['geom'][-1]=='s':
+            # it is assumed that there are multiple geometries when the geometries attribute ends with an s!
             # 1. make a folder with the indexname in /data/indices[i]
             if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
                 os.makedirs(calc['path'] + '/' + molecule.index)
