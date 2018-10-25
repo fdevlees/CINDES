@@ -53,7 +53,8 @@ def calculate_stab(results, molecule):
     chi_s = 2.60
     chi_cl= 3.15
     chi_br= 2.85
-    H_h = -0.516817233  # a.u.
+    H_h = -0.514457233  # a.u.
+    E_h = -0.516817233  # a.u.
     kJmol = 2625.5
     eV = 27.2113838
     avtc = -28.1290706  # kJ/mol #average thermal correction for 5 random structures kJ/mol
@@ -77,7 +78,7 @@ def calculate_stab(results, molecule):
         print "applying thermal corrections", results['tcA'], 'and', tc_ah
         results['BDE_ah'] = (results['eA'] + results['tcA'] + H_h - ( E_ah + tc_ah )) * kJmol
     else:
-        results['BDE_ah'] = (results['eA'] + H_h - E_ah) * kJmol  # avtc is AVerage Thermal Correction.
+        results['BDE_ah'] = (results['eA'] + E_h - E_ah) * kJmol  # avtc is AVerage Thermal Correction.
 
     #if EAHs[minpos]['N']:
     if EAHs[minpos]['Aatom']==7:
