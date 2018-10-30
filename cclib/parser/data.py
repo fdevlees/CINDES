@@ -144,6 +144,7 @@ class ccData(object):
         "shieldings":        dict,
         "temperature":       float,
         "thermalcorrectionG":float,
+        "thermalcorrectionH":float,
         "vibanharms":        numpy.ndarray,
         "vibdisps":          numpy.ndarray,
         "vibfreqs":          numpy.ndarray,
