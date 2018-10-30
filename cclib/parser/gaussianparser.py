@@ -1398,6 +1398,8 @@ class Gaussian(logfileparser.Logfile):
         #Sum of electronic and thermal Free Energies=         -563.689037
         if "Sum of electronic and thermal Enthalpies" in line:
             self.set_attribute('enthalpy', float(line.split()[6]))
+        if "Thermal correction to Enthalpy" in line:
+            self.set_attribute('thermalcorrectionH', float(line.split()[4]))
         if "Thermal correction to Gibbs Free Energy" in line:
             self.set_attribute('thermalcorrectionG', float(line.split()[6]))
         if "Sum of electronic and thermal Free Energies=" in line:

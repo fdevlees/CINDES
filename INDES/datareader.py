@@ -24,7 +24,7 @@ def setEAHs(molecule):
                 'eAH': molecule.props.pop('eAH_P{}'.format(str(job.pos))),
                 'Aatom': job.Aatom}
             try:
-                EAHs[job.pos]['tcAH'] = molecule.props.pop('tcAH_P{}'.format(str(job.pos)))
+                EAHs[job.pos]['tchAH'] = molecule.props.pop('tchAH_P{}'.format(str(job.pos)))
             except KeyError:
                 pass
     if EAHs:
@@ -62,7 +62,7 @@ def calculate_stab(results, molecule):
     minpos = min(EAHs, key=lambda x: EAHs[x]['eAH'])
     E_ah = EAHs[minpos]['eAH']
     try:
-        tc_ah = EAHs[minpos]['tcAH']
+        tch_ah = EAHs[minpos]['tchAH']
     except KeyError:
         pass
 
@@ -72,9 +72,9 @@ def calculate_stab(results, molecule):
         Domega = 0.0
         print "No electrophilicity term found so stab is calculated without omega term"
 
-    if 'tcA' in results:
-        print "applying thermal corrections", results['tcA'], 'and', tc_ah
-        results['BDE_ah'] = (results['eA'] + results['tcA'] + H_h - ( E_ah + tc_ah )) * kJmol
+    if 'tchA' in results:
+        print "applying thermal corrections", results['tchA'], 'and', tch_ah
+        results['BDE_ah'] = (results['eA'] + results['tchA'] + H_h - ( E_ah + tch_ah )) * kJmol
     else:
         results['BDE_ah'] = (results['eA'] + E_h - E_ah) * kJmol  # avtc is AVerage Thermal Correction.
 
@@ -311,6 +311,8 @@ def read_file(Job):
                 # note that scfenergies are given in eV by cclib but free energy in hartree
                 datadict[inf] = job_data.freeenergy
                 print "free energy found:", job_data.freeenergy
+            elif inf.startswith('tch'):
+                datadict[inf] = job_data.thermalcorrectionH
             elif inf.startswith('tc'):
                 datadict[inf] = job_data.thermalcorrectionG
             elif inf in ['homo', 'lumo']:
