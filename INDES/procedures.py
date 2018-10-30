@@ -82,7 +82,7 @@ class BaseRun(object):
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append(dump(value))
-            elif key in ['TZmat', 'TZmatrices', 'genalg', 'jobs', 'stabjobs', 'prejobs', 'extrajobs', 'calcs']:
+            elif key in ['TZmat', 'TZmatrices', 'genalg', 'jobs', 'stabjobs', 'prejobs', 'extrajobs', 'calcs', 'pso']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append(pprint.pformat(value, width=150))
             elif key == 'function' and callable(value):  # i.e. the value is a lambda function
@@ -655,9 +655,14 @@ def generate_procedure(param, array):
     # get all structures
     print "len table:", len(table)
 
-    mols = get_all_molecules(array)
+    if hasattr(myrun, 'ngenerate'):
+        from CINDES.utils.molecule import Molecule
+        mols = [ Molecule(conf=zcon.indtocon(ind)) for ind in myrun.generatemols ]
+        print "mols:", mols
+    else:
+        mols = get_all_molecules(array)
     # 1b check already in database
-    mols_todo, mols_nodo = zcon.check_in_table(mols, table, myrun)
+    mols_todo, mols_nodo = zcon.check_in_table(mols, table, myrun.props)
     # 1c eventueel predictions
     mols_nocal, mols_tocal, made_pred = predictor(myrun, table, mols_todo, mols_nodo, 0, array=array)
 
@@ -695,6 +700,9 @@ def generate_procedure(param, array):
                                             )  # here call submitting procedure
             else:
                 batch = skipper(batch, [], myrun)
+
+            # intermediate logging:
+            table = loggings(batch, table, i, 1, 1, tablename=myrun.tablename)
             mols_all.extend(batch)
     else:
         # use job arrays.
@@ -711,6 +719,7 @@ def generate_procedure(param, array):
         calculator.geommaker(mols_tocal, myrun)
         calculator.filemaker(mols_tocal, myrun)  # ----------------------------------HERE IS THE FILEWRITER CALL
 
+    # final logging
     print "mols_all:", mols_all
     table = loggings(mols_all, table, count, 1, 1, made_pred=made_pred, tablename=myrun.tablename)
     print "DONE"
