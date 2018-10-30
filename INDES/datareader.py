@@ -83,7 +83,7 @@ def calculate_stab(results, molecule):
         chi_term = bde_b * (chi_h - 3) * (chi_n - 3)  # term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
         print "electronegativity correction for nitrogen is used"
         stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
-    elif EAHs[minpos]['Aatom']==6:
+    elif EAHs[minpos]['Aatom']==8:
         chi_term = bde_b * (chi_h - 3) * (chi_o - 3)  # term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
         print "electronegativity correction for OXYGEN is used"
         stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
