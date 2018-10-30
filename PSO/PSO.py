@@ -19,10 +19,50 @@ from CINDES.predictor import learning_int as ml_i
 from CINDES.INDES.GA import Fitness_Function
 from CINDES.INDES.construction import indtocon, contoind
 
+from CINDES.pyevolve import DBAdapters
+
 ###### Set global variables:
 debug = False
 pp = pprint.PrettyPrinter(width=200)
 np.set_printoptions(linewidth=120)
+
+class MyDBSQLiteAdapter(DBAdapters.DBSQLite):
+    '''This class only overwrites the insert method of the normal DBAdapters given in pyevolve'''
+
+    def insert(self, pso_engine):
+        """ Inserts the statistics data to database
+
+        :param ga_engine: the GA Engine
+
+        .. versionchanged:: 0.6
+           The method now receives the *ga_engine* parameter.
+        """
+        stats      = pso_engine.getStatistics()
+        generation = pso_engine.iter
+
+
+        c = self.getCursor()
+
+        print "in insert with:", stats, c
+
+        pstmt = "insert into %s values (?, ?, " % ("statistics")
+        for i in xrange(len(stats)):
+            pstmt += "?, "
+        pstmt = pstmt[:-2] + ")"
+        c.execute(pstmt, (self.getIdentify(), generation) + stats)
+
+        pstmt = "insert into %s values(?, ?, ?, ?, ?, ?)" % ("population",)
+        tups = []
+        for particle in pso_engine.swarm:
+            tups.append((self.getIdentify(), generation, particle.index, particle.localbestP, particle.P, "_".join(particle.localbestsample)))
+        tups.sort(key=lambda x:x[4])
+
+        c.executemany(pstmt, tups)
+
+        if (generation % self.commitFreq == 0):
+            self.commit()
+        return
+
 
 ###### CALL(s) from __main__.py ###########
 
@@ -89,6 +129,16 @@ def main(param):
                             options = options)
     print mypso
     #print mypso.swarm
+
+    # initialize DB:
+    sqlite_adapter = MyDBSQLiteAdapter(
+            dbname='psostats.db',
+            identify=mprms.pso['db_identify'],
+            resetDB=False,
+            resetIdentify=True,
+            commit_freq=1)
+    mypso.setDBAdapter(sqlite_adapter)
+
 
     # 4. Run Algorithm:
     mypso.evolve()

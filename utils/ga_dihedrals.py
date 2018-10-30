@@ -31,7 +31,10 @@ def reduce_conflicts(molecule, core=[], active=[], passive=[]):
     import pickle
     TZMat={'core':core, 'passive':passive, 'active':active}
     #with open('TZMat','w') as f: pickle.dump(TZMat, f)
-    run_pyevolve(molecule, **TZMat)
+    try:
+        run_pyevolve(molecule, **TZMat)
+    except ValueError:
+        print "\t Error in run_pyevolve to reduce conflicts"
     if DE:
         print "final conf:", molecule.conf
         print "final index", molecule.index

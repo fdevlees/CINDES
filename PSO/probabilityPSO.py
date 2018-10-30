@@ -35,6 +35,7 @@ class Particle(object):
 
         self.localbestX = deepcopy(X)
         self.localbestP = None
+        self.localbestsample = None
         self.localhistory = []
 
     def __repr__(self):
@@ -72,6 +73,7 @@ class Particle(object):
     def update_local_best(self, array, epsilon):
 
         self.localbestP = self.P
+        self.localbestsample = self.sample
         #pp.pprint(self.localbestX)
 
         # for every site
@@ -193,7 +195,7 @@ class ProbabilityPSO(object):
         if options:
             self.options.update(options)
 
-        self.DB = []
+        self.dbAdapter = None
 
         # initiate swarm with positions and velocities
         self.init_swarm()
@@ -297,10 +299,10 @@ class ProbabilityPSO(object):
         return len(unique_confs)==1
 
     def evolve(self):
-        iter=1
+        self.iter=1
         nconvergence=0
         while True:
-            print "----------- Generation {} -----------".format(iter)
+            print "----------- Generation {} -----------".format(self.iter)
 
             # evaluate and set global best
             if self.parallel:
@@ -330,6 +332,7 @@ class ProbabilityPSO(object):
             self.globalhistory.append(self.globalbestP)
             for particle in self.swarm:
                 particle.localhistory.append(particle.localbestP)
+            self.log()
 
             # update velocities and position
             for particle in self.swarm:
@@ -341,13 +344,35 @@ class ProbabilityPSO(object):
             print "global best sample:", self.globalbestsample
 
             # decide if last iteration    
-            iter+=1
-            if iter>self.maxiter:
+            self.iter+=1
+            if self.iter>self.maxiter:
                 print "Run terminated. Max number of generations"
                 break
             if nconvergence>1:
                 print "Run Terminated due to onvergence criteria"
                 break
+
+        self.dbAdapter.commitAndClose()
         return
+
+    def getStatistics(self):
+        scores = [ particle.P for particle in self.swarm ]
+        rawMin = np.min(scores)
+        rawVar = np.var(scores)
+        rawDev = np.std(scores)
+        rawAve = np.average(scores)
+        rawMax = np.max(scores)
+        localscores = [ particle.localbestP for particle in self.swarm ]
+        fitAve = np.average(localscores)
+        fitMin = np.min(localscores)
+        fitMax = np.max(localscores)
+        return (rawMin, fitAve, fitMin, rawVar, rawDev, rawAve, fitMax, rawMax)
+
+    def log(self):
+        self.dbAdapter.insert(self)
+
+    def setDBAdapter(self, dbAdapter):
+        self.dbAdapter = dbAdapter
+        self.dbAdapter.open(self)
 
 
