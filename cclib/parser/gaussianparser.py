@@ -1464,6 +1464,25 @@ class Gaussian(logfileparser.Logfile):
                 line = next(inputfile)
             self.set_attribute('shieldings', shieldings)
 
+        if 'SCF GIAO Magnetic shielding tensor (ppm):' in line:
+            shieldings = dict()
+            line = next(inputfile)
+            n=0
+            while line.startswith('   '):
+                if 'Bq' in line.split():
+                    shieldings[n]=dict()
+                    splitted = line.split()
+                    shieldings[n]['Isotropic'] = float(splitted[4])
+                    matrix = numpy.zeros([3,3])
+                    for i in range(3):
+                        line = next(inputfile)
+                        splitted = line.split('=')
+                        matrix[i] = [ float(item.split()[0]) for item in splitted[1:] ]
+                    shieldings[n]['matrix'] = matrix
+                    n+=1
+                line = next(inputfile)
+            self.set_attribute('shieldings', shieldings)
+
 
 
 if __name__ == "__main__":
