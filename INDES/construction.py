@@ -115,8 +115,9 @@ def matrixmerger2(core, active, passive):
     try:
         actpas = C((V(active), V(passive)))
     except (UnboundLocalError, ValueError):
-        if passive == []:
-            #print "passive is empty"
+        if active==[] and passive==[]:
+            actpas = []
+        elif passive==[]:
             actpas = V(active)
         elif active == []:
             actpas = V(passive)

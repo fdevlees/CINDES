@@ -267,6 +267,7 @@ def pythonify(json_data):
         json_data[key] = value
     return json_data
 
+
 # custom function evaluation
 def skipper(mols_tocal, mols_nocal, myrun, iprint=True):
     ''' generate random data '''
@@ -275,7 +276,7 @@ def skipper(mols_tocal, mols_nocal, myrun, iprint=True):
         if myrun.property=='func':
             # evaluate function and set to arguments
             molecule.props.update({ func_arg:value for func_arg,value in zip(myrun.func_args, myrun.function(molecule)) })
-            print "molecule.props:", molecule.props
+            #print "molecule.props:", molecule.props
             molecule.Pvalue = molecule.props[myrun.func_args[0]]
         else:
             item = molecule.index
