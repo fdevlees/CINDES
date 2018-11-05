@@ -213,7 +213,12 @@ class Fitness_Function():
         return
 
 def GoodEnoughDistance(ga_engine):
-    distance_goal = 1.8
+    '''This function determines the convergence. After 50 generations we release the criterium
+    for a faster convergence'''
+    if ga_engine.currentGeneration > 50:
+        distance_goal = 1.2
+    else:
+        distance_goal = 1.8
     return ga_engine.bestIndividual().score > distance_goal
 
 #def run_pyevolve(molecule, TZMat):
@@ -251,7 +256,7 @@ def run_pyevolve(molecule, **kwargs):
     # 8. set Selector
     ga.selector.set(Selectors.GRouletteWheel)
     # 9. set NGEN (number of generations)
-    ga.setGenerations(50)
+    ga.setGenerations(100)
     # 10. set min / max (optimize to a maximum or to a minimum)
     ga.setMinimax(Consts.minimaxType["maximize"])
     # 11. set MUP (mutation probability)

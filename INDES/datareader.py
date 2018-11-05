@@ -342,7 +342,7 @@ def read_file(Job):
                 datadict[inf] = pcharges
             elif inf.startswith('xyz'):
                 datadict[inf] = job_data.atomcoords[-1]
-                datadict['atomnos'] = job_data.atomnos
+                datadict['atomnos' + a.lstrip('xyz')] = job_data.atomnos
             elif inf.startswith('dipolealpha'):
                 datadict[inf] = datadict[inf] = job_data.dipolealpha
             elif inf.startswith('dipolebeta'):

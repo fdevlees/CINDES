@@ -520,7 +520,7 @@ def readfile(subinp):
                         line = subinp.readline()
                         indices.append(line.strip())
                     paras['generatemols'] = indices
-                print "read {:d} indices to generate".format(paras['ngenerate'])
+                    print "read {:d} indices to generate".format(paras['ngenerate'])
         elif 'regression' in line:
             paras['regression'] = 1
         elif 'restart' in line:

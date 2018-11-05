@@ -187,7 +187,10 @@ class ProbabilityPSO(object):
         self.parallel = parallel
         self.maxiter = maxiter
         self.minimize = minimize
-        self.globalbestX = None
+        if True:
+            self.globalbestX = None
+        else:
+            self.globalbestX = normalize(np.zeros([self.nDim, self.nGroups]))
         self.globalbestP = None
         self.globalbestsample = None
         self.globalhistory = []
