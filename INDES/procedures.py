@@ -479,8 +479,9 @@ def submittingprocedure(mols_tocal, mols_nocal, myrun):
 # 6: Steepest Descent algorithm. Looks like BFS but there is no loop over sites
 # 7: Generate database based on farthest point selection. (based on diversity index)
 
-def BFS(param, array):
+def BFS(param, array=None):
     """ 1. This is the standard BFS procedure """
+    if array is None: array = param['array']
 
     bcok = 0  # TO REMOVE LATER
     param['bcok'] = 0
@@ -590,8 +591,9 @@ def BFS(param, array):
     # ---------------------------- #
     # ------ END OF LOOPING ------ #
     # ---------------------------- #
+    results = {'optimum':optimum, 'count':count}
     print "DONE"
-    return
+    return results
 
 def genconf(param):
     """ 2. Procedure to generate the inputfiles for a single index """

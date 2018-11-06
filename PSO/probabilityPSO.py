@@ -344,7 +344,7 @@ class ProbabilityPSO(object):
                 particle.reset()
 
             print "global best Pvalue:", self.globalbestP
-            print "global best sample:", self.globalbestsample
+            print "global best sample:", "_".join(self.globalbestsample)
 
             # decide if last iteration    
             self.iter+=1

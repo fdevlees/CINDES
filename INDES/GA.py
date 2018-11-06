@@ -430,17 +430,17 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
 from CINDES.INDES import procedures
 
 
-def main(param, array):
+def main(param, array=None):
+    if array is None:
+        array = param['array']
     GArun = procedures.FrameRun(**param)
     table = set_table(GArun, array)
-    #print "run object:\n", GArun
     final_genome = run_pyevolve(array, table, GArun)
     best = final_genome.bestIndividual()
     print "final_genome:", final_genome
     print "best:", best
     print "best.~ score fitness genomelist :", best.score, best.fitness, best.genomeList
-
-    return
+    return final_genome
 
 
 def run_pyevolve(array, table, options):

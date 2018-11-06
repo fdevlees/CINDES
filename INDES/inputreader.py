@@ -23,8 +23,8 @@ from CINDES.utils.writings import log_io
 
 
 @log_io()
-def read_input(siteinput):
-    subinp = openfile(siteinput)  # this is the fileID
+def read_input(inputfilename='INPUT'):
+    subinp = openfile(inputfilename)  # this is the fileID
     param = readfile(subinp)  # inputline is a tuple with all kind of input variables
 
 
