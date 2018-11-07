@@ -7,16 +7,6 @@ import random
 from pprint import pprint
 import re
 
-inrlog = logging.getLogger('substireader')
-inrlog.setLevel(logging.INFO)
-# set handler
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-# set formatter
-formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-inrlog.addHandler(ch)
-
 from CINDES.utils.writings import log_io
 
 # MAIN FUNCTION
@@ -650,8 +640,8 @@ def substireader(nsit, subinp):
         except IndexError:
             print "no functional groups present or wrong formatted"
             break
-        inrlog.debug("site number: " + str(i + 1))
-        inrlog.debug("nsubsit: " + str(nsubsit))
+        logging.debug("site number: " + str(i + 1))
+        logging.debug("nsubsit: " + str(nsubsit))
         site = [subinp.readline().split() for line in range(nsubsit)]
         # for j in range(nsubsit):
         #    atoms = subinp.readline().split()

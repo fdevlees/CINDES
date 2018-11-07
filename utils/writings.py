@@ -4,12 +4,22 @@
    It's main part consist of building a decorator that logs the start and the end
    of a function to the screen. This is done by preceding the function definition by the line:
    @log_io()
-   
+
    possible argument: signator='<character>'
    character has to have a length of 1
 
 '''
+from __future__ import print_function
 import numpy as np
+import logging
+#logging.basicConfig(format='%(levelname)s:%(message)s')
+#logging.basicConfig(format='%(message)s')
+
+#logger = logging.getLogger()
+#handler = logging.StreamHandler()
+#logger.addHandler(handler)
+#handler.setFormatter(logging.Formatter('%(message)s'))
+print = logging.info
 
 def pre(f,**kwargs):
     printname("BEFORE: " + f.__name__,**kwargs)
@@ -24,16 +34,16 @@ def post(f, time=None, **kwargs):
     return
 
 def printname(name,signator='*',space='\n'*1):
+    message = []
     maxl=100
     l = len(name)
     rest = (l + 8)
     sides = (maxl-rest)/2
     side = sides*' '
-    print space,
-    print side + rest*signator
-    print side + 2*signator + '  ' + str(name) + '  ' + 2*signator
-    print side + rest*signator
-    print space,
+    message.append(space + side + rest*signator)
+    message.append(side + 2*signator + '  ' + str(name) + '  ' + 2*signator)
+    message.append(side + rest*signator + space)
+    print("\n".join(message))
 
 
 from functools import wraps
@@ -60,34 +70,34 @@ def print_title(message, outline='c',signator='=',newlines=False):
     lines = message.split('\n')
     l = max([ len(line) for line in lines ])
     maxl=100
-    if newlines:print
+    out = []
+    if newlines:out.append('')
     if outline=='l':
-        print signator*(l+4)
+        out.append(signator*(l+4))
         for line in lines:
-            print '  '+line+'  '
-        print signator*(l+4)
+            print('  '+line+'  ')
+        out.append(signator*(l+4))
     elif outline=='c':
         rest = ( l + 8 )
-     
         sides = (maxl - rest)/2
         side = sides*' '
         if rest/2 == float(rest)/2:
-            print side + rest*signator
+            out.append(side + rest*signator)
         else:
-            print side + (rest+1)*signator
+            out.append(side + (rest+1)*signator)
         for line in lines:
             m = len(line)
             nspace = 2 + (l - m)/2
             if m/2 == float(m)/2:
-               print side + 2*signator + nspace*' ' + str(line) + nspace*' ' + 2*signator
+               out.append(side + 2*signator + nspace*' ' + str(line) + nspace*' ' + 2*signator)
             else:
-               print side + 2*signator + nspace*' ' + str(line) + (nspace+1)*' ' + 2*signator
- 
+               out.append(side + 2*signator + nspace*' ' + str(line) + (nspace+1)*' ' + 2*signator)
         if rest/2 == float(rest)/2:
-            print side + rest*signator
+            out.append(side + rest*signator)
         else:
-            print side + (rest+1)*signator
-    if newlines:print
+            out.append(side + (rest+1)*signator)
+    if newlines:out.append('')
+    print("\n".join(out))
     return
 
 def sprint(n,*args,**kwargs):
@@ -96,13 +106,13 @@ def sprint(n,*args,**kwargs):
         if isinstance(item,float):
           try:
             if float(int(item))==item and item<10000.0: #for whole numbers as floats that are not too large
-                print '{:4.0f}.'.format(item),
+                print('{:4.0f}.'.format(item),end='')
             else:
-                print '{:10.4e}'.format(item),
+                print('{:10.4e}'.format(item),end='')
           except ValueError:
-            print '{:4.0f}.'.format(0.0),
+            print('{:4.0f}.'.format(0.0),end='')
         else:
-            print item,
+            print(item, end='')
     #if kwargs:
     #    dictlist = kwargs.items()
     #    args = tuple(dictlist) + args
@@ -120,7 +130,7 @@ def sprint(n,*args,**kwargs):
                         printitem(item)
                 else:
                     printitem(a)
-        print
+        print()
     return
 
 
@@ -130,7 +140,7 @@ def complexprint(data, func=lambda arg: arg, strfunc= lambda *s: s):
     a strfunc argument is available to be applied on each string encountered.
 
     example 1.
-    - I have a large nested list. with a lot of strings / tuples / nested list and i want to print each item on one line
+    - I have a large nested list. with a lot of strings / tuples / nested list and i want to print(each item on one line
     - I want also all strings that contain underscores to be splitted up:
     complexprint(data, strfunc= lambda x:x.split('_')
 
@@ -145,8 +155,8 @@ def complexprint(data, func=lambda arg: arg, strfunc= lambda *s: s):
     '''
     def printje(item, level=1):
         if level>10:
-            print "type was:", type(item)
-            print "max recursion reached"
+            print("type was:", type(item))
+            print("max recursion reached")
             raise SystemExit('stop')
         if type(item) in [list,tuple,dict]:
             for it in item:
@@ -154,9 +164,9 @@ def complexprint(data, func=lambda arg: arg, strfunc= lambda *s: s):
         else:
             if type(item)==str:
                 for it in strfunc(item): #string function. 
-                    print it,
+                    print(it, end='')
             else:
-                print item,
+                print(item, end='')
         return
 
     for totalcycle in data:
@@ -164,9 +174,9 @@ def complexprint(data, func=lambda arg: arg, strfunc= lambda *s: s):
         for siterun in totalcycle:
             item = func(siterun) # a function on first level
             printje(item)
-            print
+            print()
     else:
-        print "&"*20
+        print("&"*20)
     return
 
 import sys
@@ -202,9 +212,9 @@ def dump(obj, nested_level=0, ret=[], n=10):
 if __name__=='__main__':
     @log_io(signator='=')
     def A(x,y):
-       print 'in function A'
+       print('in function A')
        return x+y
-    print A(3,4)
+    print(A(3,4))
 
     print_title("C I N D E S\nAn Inverse Molecular Design Program\nwritten by Jos L. Teunissen",newlines=True)
     print_title("this would be a subtitle\nbut it is just a test",outline='l',signator='^')

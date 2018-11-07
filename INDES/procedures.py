@@ -13,6 +13,7 @@ from math import ceil
 import shutil  # module to copy files
 from platform import node
 import pprint  # pretty printer for printing lists
+from pprint import pformat
 import os  # for getting window width and testing existence of files
 import re
 from re import findall  # now only needed in construction.py
@@ -37,7 +38,8 @@ from CINDES.utils.utils import *
 from CINDES.utils.table import set_table, get_property_table
 
 # initial global variables
-logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+#logging.getLogger(__name__)
+#logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 once = 0
 
 print "time for imports:", time.clock() - start
@@ -210,7 +212,7 @@ class FrameRun(BaseRun):
     def __init__(self, **entries):
         super(FrameRun, self).__init__(**entries)
         # specific for FrameRun:
-        if self.nsites:
+        if self.nsites and not self.nosub==1:
             if isinstance(self.zmatrixfile, list):
                 self.TZmatrices={}
                 for zmatrixfile in self.zmatrixfile:
@@ -222,7 +224,7 @@ class FrameRun(BaseRun):
             self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
             self.corresp = self.set_corresp(self.TZmat['active'], self.TZmat['passive'])
         else:
-            print "NO ZMAT"
+            logging.info("NO ZMAT")
         return
 
     def set_adj(self, core, active):
@@ -293,7 +295,7 @@ def get_startconf(param, array):
             for i in range(len(array)):
                 startconf.append(random.choice(array[i]))
             logging.info("constructed random start configuration")
-    logging.warning("startconf:" + pprint.pformat(startconf))
+    logging.info("startconf:" + pprint.pformat(startconf))
     return startconf
 
 # 3 site order (sequence)
@@ -323,7 +325,7 @@ def get_sequence(count, myrun):
             print "sequence read from file"
             sequence = param['sequence']
     # output sequence
-    print "SEQUENCE: ", str(sequence)
+    logging.info("SEQUENCE: " + str(sequence))
     return sequence
 
 # 5 optimum at the start of the run
@@ -413,13 +415,11 @@ def testmax(myrun, mols, bcok):
 def runtest(run, optimum, optsite, count, bcok, mctable=[], array=[]):
     param = run.__dict__
     converged = 0
-    print
 
     #raise SystemExit('optimum and optsite should be Molecule instances now')
     if (count > 1 and bcok) or param['restart'] >= 3:  # BCOK is a test of the boundary condition is already fullfilled
         if optimum == optsite:  # test the property value! not 1 anymore!
-            print "optimum is the same!"
-            print "converged to a optimum configuration!"
+            logging.warning("optimum is the same! converged to a optimum configuration!")
             if param['montecarlo'] == 0:
                 converged = 1
             else:
@@ -427,13 +427,13 @@ def runtest(run, optimum, optsite, count, bcok, mctable=[], array=[]):
                     optsite = montecarloprocedure(run, array, optimum, mctable)
                 else:
                     optsite = montecarloprocedure(run, array, optimum, mctable, **run.TZmat)
-                print "optimal_after_this_site:", pprint.pformat(optsite, width=100)
+                logging.info("optimal_after_this_site:" + pformat(optsite, width=100))
         else:
-            print "Global_Iteration_optimum and optimum_after_this_site are not the same yet"
-            print "gi_optimum:", optimum
-            print "current optimum:", optsite
+            logging.info("Global_Iteration_optimum and optimum_after_this_site are not the same yet")
+            logging.info("gi_optimum:" + pformat(optimum))
+            logging.info("current optimum:" + pformat(optsite))
     else:  # except NameError:
-        print "NameError no optimal structure or BC not yet fullfilled."
+        logging.info("NameError no optimal structure or BC not yet fullfilled.")
         # pass
     optimum = optsite.copy()
     return optimum, optsite, converged
@@ -489,7 +489,7 @@ def BFS(param, array=None):
 
     # SET MYRUN CLASS and assign all necessary attributes
     myrun = FrameRun(**param)
-    print(myrun)  # this should print all the class elements via the __str__ function
+    logging.info(myrun)  # this should print all the class elements via the __str__ function
     # the table with all the results of all calculated configs
     table = set_table(myrun, array)
     property_table = get_property_table(table, myrun)
@@ -515,7 +515,7 @@ def BFS(param, array=None):
             print_title("k(site)= {} l(nsite)= {} (c={})".format(k, l, count), outline='l', signator='=')
             if not l == 0 or count > 1:  # define new startconfiguration if not first cycle
                 # define new starting geometry
-                print "optsite:", optsite
+                logging.info("optsite:" + pformat(optsite))
                 del startconf
                 startconf = zcon.indtocon(optsite.index)
 
@@ -526,19 +526,24 @@ def BFS(param, array=None):
             mols_todo, mols_nodo = zcon.classmaker2(startconf, array, k, table, myrun)
             if 1 in myrun.restrictions:  # this are actually filters!
                 mols_todo, mols_nodo = restriction1(mols_todo, mols_nodo, myrun)
-            print "|      NEW POPULATION CONSTRUCTED:"
-            print "|   mols_todo:"
+
+            # log population
+            logpop = []
+            p=logpop.append
+            p("|      NEW POPULATION CONSTRUCTED:")
+            p("|   mols_todo:")
             if mols_todo:
                 for mol in mols_todo:
-                    print "|      {}".format(mol)
+                    p("|      {}".format(mol))
             else:
-                print "|      -"
-            print "|   mols_nodo:"
+                p("|      -")
+            p("|   mols_nodo:")
             if mols_nodo:
                 for mol in mols_nodo:
-                    print "|      {}".format(mol)
+                    p("|      {}".format(mol))
             else:
-                print "|      -"
+                p("|      -")
+            logging.info('\n'.join(logpop))
 
             # STEP 2: PREDICTOR
             # perform prescreaning in a predictions.
@@ -562,7 +567,7 @@ def BFS(param, array=None):
 
             # STEP 4: UPDATE OPTIMUM STRUCTURE
             # decide what the optimum site is and if the bc if fullfilled
-            print "BCOK:", bcok
+            logging.info("BCOK:{:d}".format(bcok))
             optsite, bcok = testmax(myrun, mols_all, bcok)
 
             # STEP 5: UPDATE DATABASE and LOG results of microiteration
@@ -575,8 +580,8 @@ def BFS(param, array=None):
                              tablename=myrun.tablename)
             property_table = get_property_table(table, myrun)
 
-            print("--- %s seconds ---" % (time.time() - myrun.starttime))
-            print(myrun.currenttime())
+            logging.info("--- %s seconds ---" % (time.time() - myrun.starttime))
+            logging.info(myrun.currenttime())
         # HERE ENDS LOOP OVER SITES
 
         # get optimum and test convergence
@@ -585,14 +590,14 @@ def BFS(param, array=None):
             break
         count += 1
         if count > param['maxiter']:
-            print "maxiterations is reached"
-            print "optimum is: ", optimum
+            logging.warning("maxiterations is reached")
+            logging.warning("optimum is:"+ pformat(optimum))
             break
     # ---------------------------- #
     # ------ END OF LOOPING ------ #
     # ---------------------------- #
     results = {'optimum':optimum, 'count':count}
-    print "DONE"
+    logging.warning("BFS DONE")
     return results
 
 def genconf(param):

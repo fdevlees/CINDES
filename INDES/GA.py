@@ -26,7 +26,6 @@ from CINDES.utils.table import set_table, get_property_table
 from CINDES.utils.utils import skipper
 from CINDES import INDES
 from predictions import predictor
-from CINDES.predictor import learning_int as ml_i
 
 from CINDES.pyevolve import G1DList, GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters, Crossovers
 from CINDES.pyevolve import Scaling
@@ -178,11 +177,11 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
         # 1.1. make confs hashable to make it a set and make it list again
         new_confs = tuple(tuple(map(tuple, item)) for item in populationlist)
         unique_confs = [map(list, item) for item in set(new_confs)]
-        print "n unique_confs:", len(unique_confs)
+        logging.info("n unique_confs: {:d}".format(len(unique_confs)))
         #print "unique_confs:", unique_confs
 
         # 2. call CINDES via FF to calculate the configurations
-        print "BestIndividual (score): {} ({})".format(self.bestIndividual().genomeList, self.bestIndividual().score)
+        logging.info("BestIndividual (score): {} ({})".format(self.bestIndividual().genomeList, self.bestIndividual().score))
         mols = self.FF.evaluate_multi(unique_confs, gen=self.currentGeneration)
 
         # 3. set the calculations to the correct indivual score
@@ -342,7 +341,7 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
 
                 if freq_stats:
                     if (self.currentGeneration % freq_stats == 0) or (self.getCurrentGeneration() == 0):
-                        print "freq_stats:",
+                        #logging.info("freq_stats:",
                         self.printStats()
 
                 if self.dbAdapter:
@@ -391,7 +390,6 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
                                           "population": self.getPopulation(),
                                           "pyevolve": pyevolve,
                                           "it": Interaction}
-                        print
                         code.interact(interact_banner, local=session_locals)
 
                 b_max_iter = self.step()
@@ -443,7 +441,7 @@ def main(param, array=None):
     return final_genome
 
 
-def run_pyevolve(array, table, options):
+def run_pyevolve(array, table, options, level=None):
     '''options should be a Run instance having at least:
         options.nsites
         options.
@@ -452,10 +450,13 @@ def run_pyevolve(array, table, options):
     #raise SystemExit('new JSON table not yet implemented')
 
     # 0.
-    print "options:", options
+    logging.info("options:"+ repr(options))
 
     # 1. Enable the logging system:
-    pyevolve.logEnable()
+    if level is None:
+        pyevolve.logEnable()
+    else:
+        pyevolve.logEnable(level=level)
 
     # 2. Set Genome instance using as allelles the sites with the different functionalisations.
     setOfAlleles = GAllele.GAlleles()
@@ -483,12 +484,12 @@ def run_pyevolve(array, table, options):
     # 6. set Crossover function: types: G1DListCrossoverUniform, G1DListCrossoverSinglePoint, G1DListCrossoverTwoPoint
     if not options.genalg['CXP'] == 0.0:
         genome.crossover.set(Crossovers.G1DListCrossoverUniform)
-    print "genome:\n", genome
+    logging.info("genome:\n" + repr(genome))
 
     # 7. set Genetic Algorithm Instance using a defined random.seed()
     if not options.genalg['seed']:
         options.genalg['seed'] = np.random.randint(1, 9999)
-    print "seed to generate randomness:", options.genalg['seed']
+    logging.info("seed to generate randomness: {:d}".format(options.genalg['seed']))
     ga = My_GSimpleGA(run=options, genome=genome, precalculation=precalculation, table=table, seed=options.genalg['seed'],
                       array=array)
 
@@ -527,7 +528,7 @@ def run_pyevolve(array, table, options):
     # 15. set elitism
     if options.genalg['elitism']:
         ga.setElitism(options.genalg['elitism'])
-        print "n elitism:", options.genalg['nelitism']
+        logging.info("n elitism: {:d}".format(options.genalg['nelitism']))
         ga.nElitismReplacement = options.genalg['nelitism']
 
     # 16. set scaling: to allow for negative scores we have to use
@@ -541,7 +542,7 @@ def run_pyevolve(array, table, options):
         identify=options.genalg['db_identify'], resetDB=False, resetIdentify=True, commit_freq=1)
     ga.setDBAdapter(sqlite_adapter)
 
-    print "GenAlg:", ga
+    logging.info("GenAlg:"+ repr(ga))
 
     # Do the evolution, with stats dump
     ga.evolve(freq_stats=options.genalg['freq_stats'])

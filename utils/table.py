@@ -108,7 +108,6 @@ def set_table(myrun, array=[]):
             new_table[new_key]=table[key]
         return new_table
     # -------
-    print "------------"
     # try if tablename is given
     try:
         tablename = myrun.tablename

@@ -6,7 +6,7 @@ from re import findall
 import re
 import logging
 from CINDES.utils.writings import log_io
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+#logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 #
 debug = False
@@ -198,7 +198,7 @@ def check_in_table(individuals, table, props=set(), check_ignored=False):
                     i += 1
                     #print "already calculated:", individual.index
         if i:
-            print "{} molecules are already in database".format(i)
+            logging.info("{} molecules are already in database".format(i))
     if debug:
         print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
 

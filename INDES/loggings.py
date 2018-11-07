@@ -1,11 +1,13 @@
 debug = False
 #from writings import log_io, sprint
+import logging
 from CINDES.utils.writings import log_io, print_title, sprint
 from CINDES.utils.utils import run_once, jsonify
 from copy import deepcopy
 #import pickle
 import json
 import pprint
+from pprint import pformat
 import time
 
 import numpy as np
@@ -81,7 +83,7 @@ def log_table(mols, table, tablename='table'):
             with open(filename) as f:
                 json_table = json.load(f)
         except ValueError:
-            print "JSON file empty."
+            logging.info("JSON file empty.")
             json_table = dict()
 
         # 2 update (nested)
@@ -95,7 +97,7 @@ def log_table(mols, table, tablename='table'):
         # 3 write updated json object
         with open(filename, 'w') as f:
             json.dump(json_table, f, indent=None)
-        print "dumped table in {} with {} of the {} molecules".format(filename, len(table), len(json_table))
+        logging.info("dumped table in {} with {} of the {} molecules".format(filename, len(table), len(json_table)))
         return
     # -------------
 
@@ -121,17 +123,18 @@ def log_screen(mols):
         return any([isinstance(x, t) for t in (str, int, float, bool)])
 
     # first print the properties of the first molecule
-    try:
-        print "first molecule:", mols[0].index
-        for k, v in mols[0].props.iteritems():
-            print "{:15s}:".format(k),
-            if len(repr(v))>100:
-                print
-                pprint.pprint(v, indent=2, width=160)
-            else:
-                print v
-    except IndexError:
-        return
+    if logging.getLogger().isEnabledFor(logging.INFO):
+        try:
+            print "first molecule:", mols[0].index
+            for k, v in mols[0].props.iteritems():
+                print "{:15s}:".format(k),
+                if len(repr(v))>100:
+                    print
+                    pprint.pprint(v, indent=2, width=160)
+                else:
+                    print v
+        except IndexError:
+            return
 
     # get property line.
     # get all the props that possibly have to be printed
@@ -153,7 +156,7 @@ def log_screen(mols):
             pass
     if isinstance(props, set):
         props = list(props)
-    print "Properties that cannot be represented as a single value are:", ", ".join(noprintprops)
+    logging.debug("Properties that cannot be represented as a single value are: {}".format(", ".join(noprintprops)))
 
     # try to find the target property by looking for the Pvalue in all props such that
     # the target property is not printed twice.
@@ -182,7 +185,7 @@ def log_screen(mols):
             break
         except ValueError:
             j += 1
-    print "props:", props
+    logging.debug("props:" + pformat(props))
     # print everything:
     # .1 decide max conf lenght
     maxlenconf = max(map(lambda x: len(x.index), mols))
@@ -201,9 +204,10 @@ def log_screen(mols):
     else:
         propsets=[props]
 
-    print "propsets:", propsets
+    logging.debug("propsets: {}".format(pformat(propsets)))
 
     # then print a table for every propset
+    logtable=[]
     for i, propset in enumerate(propsets):
         lenh = maxlenconf + 26 + len(propset) * 16
         if i==0:
@@ -213,11 +217,10 @@ def log_screen(mols):
             lenh -= 16
             headers =  "| index" + (maxlenconf - 4) * " " + " pred?   ".format(p) + \
                 " ".join(('{:15s}'.format(prop) for prop in propset)) + "|"
-            print "    &"
-        print "+{}+".format(lenh * "-")
-        print headers
-        print "}}{}{{".format(lenh * "-")
-        # print data
+            logtable.append("    &")
+        logtable.append("+{}+".format(lenh * "-"))
+        logtable.append(headers)
+        logtable.append("}}{}{{".format(lenh * "-"))
         for molecule in mols:
             opt = "|"
             if molecule.opt:
@@ -232,8 +235,9 @@ def log_screen(mols):
 
             propvals = [molecule.props.get(prop, 'unknown') for prop in propset]
             item.extend(propvals)
-            print formatitem(opt, item, maxlenconf)
-        print "+{}+".format(lenh * "-")
+            logtable.append(formatitem(opt, item, maxlenconf))
+        logtable.append("+{}+".format(lenh * "-"))
+    logging.info("\n".join(logtable))
     return p
 
 
@@ -318,5 +322,5 @@ def loggings(mols, table, count, k, l, made_pred=False, tablename='table'):
             pstats(pred_frame)
 
     # -----
-    print "TIME:", time.strftime("%d %B %Y %H:%M:%S")
+    logging.info("TIME:", time.strftime("%d %B %Y %H:%M:%S"))
     return table
