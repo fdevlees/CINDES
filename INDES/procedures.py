@@ -44,13 +44,18 @@ once = 0
 
 print "time for imports:", time.clock() - start
 
-
 class BaseRun(object):
     ''' This is the main object for all the parameters used during any process
     this object is initiated with a dictionary from the inputreader '''
 
     def __init__(self, **entries):
         self.__dict__.update(entries)  # here all the key/value pairs in entries are converted to attributes.
+
+        # give some logging information:
+        logging.debug("loggers:" + pformat(logging.Logger.manager.loggerDict))
+        logging.debug("rootlogger level" + pformat(logging.getLogger().getEffectiveLevel()))
+        logging.debug("rootlogger handlers:" + pformat(logging.getLogger().handlers))
+
         # set system variables
         self.script = stack()[0][1]
         self.node = node()
@@ -102,7 +107,7 @@ class BaseRun(object):
 
         # now a table of items that are empty is printed in rows of 5 items
         l = 5
-        inrows = [ empty_attributes[l*i:l*i+l] for i in range(int(ceil(len(empty_attributes)/l))) ] 
+        inrows = [ empty_attributes[l*i:l*i+l] for i in range(int(ceil(len(empty_attributes)/l))) ]
         asstr = "\n".join([ "".join(map(" {:20}".format, item)) for item in inrows])
         sb.append("empty attributes    =\n{}".format(asstr))
         return '\n'.join(sb)
@@ -295,7 +300,7 @@ def get_startconf(param, array):
             for i in range(len(array)):
                 startconf.append(random.choice(array[i]))
             logging.info("constructed random start configuration")
-    logging.info("startconf:" + pprint.pformat(startconf))
+    logging.info("startconf:" + pprint.pformat(zcon.contoind(startconf)))
     return startconf
 
 # 3 site order (sequence)
@@ -481,124 +486,141 @@ def submittingprocedure(mols_tocal, mols_nocal, myrun):
 
 def BFS(param, array=None):
     """ 1. This is the standard BFS procedure """
-    if array is None: array = param['array']
 
-    bcok = 0  # TO REMOVE LATER
-    param['bcok'] = 0
-    startconf = get_startconf(param, array)
-
-    # SET MYRUN CLASS and assign all necessary attributes
+    if array is None:
+        self.array = param['array']
     myrun = FrameRun(**param)
     logging.info(myrun)  # this should print all the class elements via the __str__ function
-    # the table with all the results of all calculated configs
-    table = set_table(myrun, array)
-    property_table = get_property_table(table, myrun)
-    # set optimum
-    optimum = set_optimum(myrun, table)
-    # set calculation properties
-    # END MYRUN CLASS assignments. from now myrun should contain all the
-    # necessary information to work with during the whole program run.
+    mybfs = BestFirstSearch(myrun)
+    result = mybfs.evolve()
+    return result
 
-    # ------------------------------------- #
-    # --- HERE THE MAIN LOOP STARTS --- --- #
-    # ------------------------------------- #
-    count = 1  # so we start counting at 1!
-    while True:
-        print_title("COUNT: " + str(count), outline='l', signator="-")
 
-        # set site order in sequence INPUT: param, count
-        sequence = get_sequence(count, myrun)
+class BestFirstSearch(object):
+    def __init__(self, run):
+        self.run = run
+        self.array = self.run.array
+        self.bcok = 0  # TO REMOVE LATER
+        self.startconf = get_startconf(run.__dict__, self.run.array)
 
-        # for each site in sequence:
-        for l in range(len(sequence)):
-            k = sequence[l]
-            print_title("k(site)= {} l(nsite)= {} (c={})".format(k, l, count), outline='l', signator='=')
-            if not l == 0 or count > 1:  # define new startconfiguration if not first cycle
-                # define new starting geometry
-                logging.info("optsite:" + pformat(optsite))
-                del startconf
-                startconf = zcon.indtocon(optsite.index)
+        # the table with all the results of all calculated configs
+        self.table = set_table(self.run, self.run.array)
+        self.property_table = get_property_table(self.table, self.run)
 
-            # STEP 1: INDEXMAKER
-            # get indices_all and the indices that still need to be calculated
-            # if table is correctly formatted all second element item[1]==1. meaning they are ab-initio calculated
-            #indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker2(startconf,array,k,table )
-            mols_todo, mols_nodo = zcon.classmaker2(startconf, array, k, table, myrun)
-            if 1 in myrun.restrictions:  # this are actually filters!
-                mols_todo, mols_nodo = restriction1(mols_todo, mols_nodo, myrun)
+        # set initial optimum
+        self.optimum = set_optimum(self.run, self.table)
+        return
 
-            # log population
-            logpop = []
-            p=logpop.append
-            p("|      NEW POPULATION CONSTRUCTED:")
-            p("|   mols_todo:")
-            if mols_todo:
-                for mol in mols_todo:
-                    p("|      {}".format(mol))
-            else:
-                p("|      -")
-            p("|   mols_nodo:")
-            if mols_nodo:
-                for mol in mols_nodo:
-                    p("|      {}".format(mol))
-            else:
-                p("|      -")
-            logging.info('\n'.join(logpop))
+    def evolve(self):
+        # ------------------------------------- #
+        # --- HERE THE MAIN LOOP STARTS --- --- #
+        # ------------------------------------- #
+        count = 1  # so we start counting at 1!
+        while True:
+            print_title("COUNT: " + str(count), outline='l', signator="-")
 
-            # STEP 2: PREDICTOR
-            # perform prescreaning in a predictions.
-            mols_nocal, mols_tocal, made_pred = predictor(
-                myrun,
-                property_table,
-                mols_todo, mols_nodo,
-                count,
-                array=array,
-                nsite=l
-            )
+            # set site order in sequence INPUT: param, count
+            sequence = get_sequence(count, self.run)
 
-            # STEP 3: SUBMITTING PART
-            if not myrun.nosub == 1:
-                mols_all = submittingprocedure(mols_tocal,
-                                               mols_nocal,
-                                               myrun,
-                                               )  # here call submitting procedure
-            else:
-                mols_all = skipper(mols_tocal, mols_nocal, myrun)
+            # for each site in sequence:
+            for l in range(len(sequence)):
+                k = sequence[l]
+                print_title("k(site)= {} l(nsite)= {} (c={})".format(k, l, count), outline='l', signator='=')
+                if not l == 0 or count > 1:  # define new startconfiguration if not first cycle
+                    # define new starting geometry
+                    logging.info("optsite:" + pformat(optsite))
+                    del self.startconf
+                    self.startconf = zcon.indtocon(optsite.index)
 
-            # STEP 4: UPDATE OPTIMUM STRUCTURE
-            # decide what the optimum site is and if the bc if fullfilled
-            logging.info("BCOK:{:d}".format(bcok))
-            optsite, bcok = testmax(myrun, mols_all, bcok)
+                # STEP 1: INDEXMAKER
+                # get indices_all and the indices that still need to be calculated
+                # if table is correctly formatted all second element item[1]==1. meaning they are ab-initio calculated
+                #indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker2(startconf,array,k,table )
+                mols_todo, mols_nodo = zcon.classmaker2(self.startconf, self.array, k, self.table, self.run)
+                if 1 in self.run.restrictions:  # this are actually filters!
+                    mols_todo, mols_nodo = restriction1(mols_todo, mols_nodo, self.run)
 
-            # STEP 5: UPDATE DATABASE and LOG results of microiteration
-            # logs new elements in data to table and tablebin and whole data to cyclesinfo
-            table = loggings(mols_all,
-                             table,
-                             count,
-                             k, l,
-                             made_pred,
-                             tablename=myrun.tablename)
-            property_table = get_property_table(table, myrun)
+                self.logpopulation(mols_todo, mols_nodo)
 
-            logging.info("--- %s seconds ---" % (time.time() - myrun.starttime))
-            logging.info(myrun.currenttime())
-        # HERE ENDS LOOP OVER SITES
+                # STEP 2: PREDICTOR
+                # perform prescreaning in a predictions.
+                mols_nocal, mols_tocal, made_pred = predictor(
+                    self.run,
+                    self.property_table,
+                    mols_todo, mols_nodo,
+                    count,
+                    array=self.array,
+                    nsite=l
+                )
 
-        # get optimum and test convergence
-        optimum, optsite, converged = runtest(myrun, optimum, optsite, count, bcok, mctable=property_table, array=array)
-        if converged == 1:
-            break
-        count += 1
-        if count > param['maxiter']:
-            logging.warning("maxiterations is reached")
-            logging.warning("optimum is:"+ pformat(optimum))
-            break
-    # ---------------------------- #
-    # ------ END OF LOOPING ------ #
-    # ---------------------------- #
-    results = {'optimum':optimum, 'count':count}
-    logging.warning("BFS DONE")
-    return results
+                # STEP 3: SUBMITTING PART
+                if not self.run.nosub == 1:
+                    mols_all = submittingprocedure(mols_tocal,
+                                                   mols_nocal,
+                                                   self.run,
+                                                   )  # here call submitting procedure
+                else:
+                    mols_all = skipper(mols_tocal, mols_nocal, self.run)
+
+                # STEP 4: UPDATE OPTIMUM STRUCTURE
+                # decide what the optimum site is and if the bc if fullfilled
+                logging.info("BCOK:{:d}".format(self.bcok))
+                optsite, self.bcok = testmax(self.run, mols_all, self.bcok)
+
+                # STEP 5: UPDATE DATABASE and LOG results of microiteration
+                # logs new elements in data to table and tablebin and whole data to cyclesinfo
+                table = loggings(mols_all,
+                                 self.table,
+                                 count,
+                                 k, l,
+                                 made_pred,
+                                 tablename=self.run.tablename)
+                property_table = get_property_table(self.table, self.run)
+
+                logging.info("--- %s seconds ---" % (time.time() - self.run.starttime))
+                logging.debug(self.run.currenttime())
+            # HERE ENDS LOOP OVER SITES
+
+            # get optimum and test convergence
+            self.optimum, optsite, converged = runtest(self.run,
+                    self.optimum,
+                    optsite,
+                    count,
+                    self.bcok,
+                    mctable=self.property_table,
+                    array=self.array)
+            if converged == 1:
+                break
+            count += 1
+            if count > self.run.maxiter:
+                logging.warning("maxiterations is reached")
+                logging.warning("optimum is:"+ pformat(self.optimum))
+                break
+        # ---------------------------- #
+        # ------ END OF LOOPING ------ #
+        # ---------------------------- #
+        results = {'optimum':self.optimum, 'count':count}
+        logging.warning("BFS DONE")
+        return results
+
+    def logpopulation(self, mols_todo, mols_nodo):
+        logpop = []
+        p=logpop.append
+        p("|      NEW POPULATION CONSTRUCTED:")
+        p("|   mols_todo:")
+        if mols_todo:
+            for mol in mols_todo:
+                p("|      {}".format(mol))
+        else:
+            p("|      -")
+        p("|   mols_nodo:")
+        if mols_nodo:
+            for mol in mols_nodo:
+                p("|      {}".format(mol))
+        else:
+            p("|      -")
+        logging.info('\n'.join(logpop))
+        return
 
 def genconf(param):
     """ 2. Procedure to generate the inputfiles for a single index """

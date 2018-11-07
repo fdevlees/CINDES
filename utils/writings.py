@@ -75,7 +75,7 @@ def print_title(message, outline='c',signator='=',newlines=False):
     if outline=='l':
         out.append(signator*(l+4))
         for line in lines:
-            print('  '+line+'  ')
+            out.append('  '+line+'  ')
         out.append(signator*(l+4))
     elif outline=='c':
         rest = ( l + 8 )

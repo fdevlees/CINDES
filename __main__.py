@@ -7,6 +7,17 @@ import logging
 import sys
 import time
 
+#logger = logging.getLogger()
+#sh = logging.StreamHandler(sys.stdout)
+#sh.setLevel(logging.INFO)
+#sh.setFormatter(logging.Formatter('%(message)s'))
+#logger.addHandler(sh)
+#logger.setLevel(logging.INFO)
+
+#logging.basicConfig(level=logging.WARNING, format='%(message)s')
+logging.getLogger().setLevel(logging.INFO)
+#logging.getLogger().setFormatter(logging.Formatter('%(message)s'))
+
 from utils.writings import print_title
 from INDES.inputreader import read_input
 

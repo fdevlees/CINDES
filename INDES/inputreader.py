@@ -43,9 +43,9 @@ def read_input(inputfilename='INPUT'):
                     print "|",
                 print
     if not param['procedure'] in ['getrandom', 'genrandom']:
-        logging.info("INPUT PARAMETERS:")
+        logging.debug("INPUT PARAMETERS:")
         for key, value in param.iteritems():
-            logging.info(key + ' : ' + str(value))
+            logging.debug(key + ' : ' + str(value))
 
     # This is new and not yet fully functional
     param['array'] = array

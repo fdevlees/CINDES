@@ -333,5 +333,5 @@ def loggings(mols, table, count, k, l, made_pred=False, tablename='table'):
             pstats(pred_frame)
 
     # -----
-    logging.info("TIME:", time.strftime("%d %B %Y %H:%M:%S"))
+    logging.info("TIME:" + time.strftime("%d %B %Y %H:%M:%S"))
     return table
