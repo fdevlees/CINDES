@@ -55,7 +55,11 @@ def log_cyclesinfo(mols, count, k, l):
             item.append(molecule.Pvalue)  # predictions have only this one?
 
             def isSingleValue(x): return isinstance(x, int) or isinstance(x, float) or isinstance(x, str)
-            item.extend(filter(isSingleValue, molecule.props.values()))
+            #item.extend(filter(isSingleValue, molecule.props.values()))
+
+            for prop, value in sorted(molecule.props.items()):
+                if isSingleValue(value):
+                    item.append(value)
 
             # old pickle style:
             #item.append( molecule.Pvalue)
@@ -185,7 +189,14 @@ def log_screen(mols):
             break
         except ValueError:
             j += 1
+
+    # try to sort props
+    try:
+        props = sorted(props)
+    except Exception as e:
+        print 'failed props sort:', e
     logging.debug("props:" + pformat(props))
+
     # print everything:
     # .1 decide max conf lenght
     maxlenconf = max(map(lambda x: len(x.index), mols))
