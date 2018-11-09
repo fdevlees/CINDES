@@ -3,7 +3,7 @@ debug = False
 
 import pprint
 import logging
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+#logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 # compu chem. library
 
 

@@ -50,7 +50,7 @@ def custom_redirection(fileobj):
         sys.stdout = old
 
 
-def invoke_script(calc, namespace, ID=0):
+def invoke_script(calc, namespace, ID=0, start=True):
     if not isinstance(calc, dict):
         return
     if not 'script' in calc:

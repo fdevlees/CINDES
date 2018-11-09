@@ -3,18 +3,9 @@
 
 import logging
 import numpy as np
+import random
 from pprint import pprint
 import re
-
-inrlog = logging.getLogger('substireader')
-inrlog.setLevel(logging.INFO)
-# set handler
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-# set formatter
-formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-inrlog.addHandler(ch)
 
 from CINDES.utils.writings import log_io
 
@@ -22,8 +13,8 @@ from CINDES.utils.writings import log_io
 
 
 @log_io()
-def read_input(siteinput):
-    subinp = openfile(siteinput)  # this is the fileID
+def read_input(inputfilename='INPUT'):
+    subinp = openfile(inputfilename)  # this is the fileID
     param = readfile(subinp)  # inputline is a tuple with all kind of input variables
 
 
@@ -52,9 +43,9 @@ def read_input(siteinput):
                     print "|",
                 print
     if not param['procedure'] in ['getrandom', 'genrandom']:
-        logging.info("INPUT PARAMETERS:")
+        logging.debug("INPUT PARAMETERS:")
         for key, value in param.iteritems():
-            logging.info(key + ' : ' + str(value))
+            logging.debug(key + ' : ' + str(value))
 
     # This is new and not yet fully functional
     param['array'] = array
@@ -169,7 +160,6 @@ def get_calcs(subinp, line):
         if line=='endcalcs':
             break
         i, j = map(int, line.split('.'))
-    print "supercalcs:", supercalcs
     return supercalcs
 
 
@@ -233,7 +223,6 @@ def get_genalg_params(subinp, line):
             value_type = type(defaults[key])
             defaults[key] = value_type(line.split()[1])
         print " defaults of genetic algorithm are changed. new values:"
-    print defaults
     return subinp, defaults
 
 def get_pso_params(subinp, line):
@@ -241,10 +230,12 @@ def get_pso_params(subinp, line):
                 'npopulation': 20,
                 'w1': 1.0,  # local optimum factor
                 'w2': 1.0,  # global optimum factor
-                'c1': 0.2,  # random factor
-                'db_identify': 'ex' + str(np.random.randint(0, 90)),
+                'w':0.8,
+                'c1': 0.2,  # random factor1
+                'c2': 0.2,  # random factor2
+                'epsilon': 0.7,  # random factor2
+                'db_identify': 'ex' + str(random.randint(0, 90)),
                 'freq_stats': 10,
-                'seed': 0,
                 'type':'concrete'
                 }
     try:
@@ -261,7 +252,13 @@ def get_pso_params(subinp, line):
             value_type = type(defaults[key])
             defaults[key] = value_type(line.split()[1])
         print " defaults for particle swarm optimization are changed. new values:"
-    print defaults
+
+    # change defaults of c1/c2 for PPSO
+    if not defaults['type'] == 'concrete':
+        for key in ['c1', 'c2']:
+            if defaults[key]==0.2:
+                defaults[key]=1.4
+
     return subinp, defaults
 
 def readfile(subinp):
@@ -469,7 +466,6 @@ def readfile(subinp):
             paras['prejobs'] = get_jobs(subinp, line)
         elif 'property' in line:
             prop = line.split()[1]
-            print "prop", prop
             if 'load_func' in prop:
                 paras['property'] = 'func'
                 functionscript = __import__('function')
@@ -503,6 +499,18 @@ def readfile(subinp):
                 paras['divers_nmax'] = int(line.split()[2])
                 paras['divers_batchsize'] = int(line.split()[3])
                 paras['divers_divindex'] = int(line.split()[4])
+            elif paras['procedure'] in ['generate']:
+                try:
+                    paras['ngenerate'] = int(line.split()[2])
+                except IndexError:
+                    print "all possible molecules from site array will be calculated!"
+                else: # do only when no error catched
+                    indices = []
+                    for _ in range(paras['ngenerate']):
+                        line = subinp.readline()
+                        indices.append(line.strip())
+                    paras['generatemols'] = indices
+                    print "read {:d} indices to generate".format(paras['ngenerate'])
         elif 'regression' in line:
             paras['regression'] = 1
         elif 'restart' in line:
@@ -604,6 +612,8 @@ def readfile(subinp):
     if paras['property'] == 'func':
         props = []
         props.extend(paras['func_args'])
+    elif paras['property'] == '_':
+        props = []
     else:
         props = [paras['property']]
     try:
@@ -622,7 +632,6 @@ def readfile(subinp):
 def substireader(nsit, subinp):
     '''this one reads all the different substituents for all different positions'''
     substiarray = []
-    #print "nsit,subinp", nsit, subinp
     for i in range(nsit):
         # read number of substituents
         try:
@@ -631,10 +640,8 @@ def substireader(nsit, subinp):
         except IndexError:
             print "no functional groups present or wrong formatted"
             break
-        inrlog.debug("site number: " + str(i + 1))
-        inrlog.debug("nsubsit: " + str(nsubsit))
-        #print "site number: ", i+1
-        #print "nsubsit: ", nsubsit
+        logging.debug("site number: " + str(i + 1))
+        logging.debug("nsubsit: " + str(nsubsit))
         site = [subinp.readline().split() for line in range(nsubsit)]
         # for j in range(nsubsit):
         #    atoms = subinp.readline().split()

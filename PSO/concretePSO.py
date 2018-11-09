@@ -31,21 +31,7 @@ c1 = None
 ###### The algorithm:
 
 
-def rounder(history):
-    n=2
-    roundn = lambda x:round(x, n)
-    for i in range(len(history)):
-        history[i] = map(roundn, history[i])
-    return history
 
-def permutate(array):
-    nrows, ncols = array.shape
-    print "ncols:", ncols
-    raise NotImplementedError('this is too much!')
-    perms = np.array(list(itertools.permutations(range(ncols))))
-    choices = np.random.randint(len(perms), size=nrows)
-    i = np.arange(nrows).reshape(-1, 1)
-    return array[i, perms[choices]]
 
 def permutate(array):
     array = np.array(array)
@@ -64,9 +50,6 @@ def priority_score(dG, dL, dA, progress):
         score = 1./3. * float(dA)
         score -= w1 * (2./3. - 2/3*progress) * float(dL)
     score -= w2 * (2./3.* progress) * float(dG)
-    #score = (1.0-progress)*dA - w * progress * dG
-    # test only converge to global minimum
-    #print "score:", score,
     return score + c1*random.random()
 
 
@@ -91,7 +74,6 @@ class Particle(object):
     def __init__(self, X, index=None):
         self.X = X
         self.P = None
-        self.fitness = None
         self.index = index
         self.history = []
         self.nDim = len(X)
@@ -188,7 +170,7 @@ class ConcretePSO(object):
         return
 
     def __repr__(self):
-        return "<PSO object at {}>".format(id(self))
+        return "<Concrete-PSO object at {}>".format(id(self))
 
     def __getitem__(self, index):
         return self.swarm[index]
@@ -315,90 +297,3 @@ class ConcretePSO(object):
         return
 
 
-
-
-
-###### CALL(s) from __main__.py ###########
-
-# 1. setup system
-from CINDES.INDES import procedures
-
-def stringify_array(array):
-    newarray = []
-    for site in array:
-        newsite = []
-        for group in site:
-            newgroup = "".join(group)
-            newsite.append(newgroup)
-        newarray.append(newsite)
-    return newarray
-
-def main(param):
-    global w1, w2, c1
-
-    # -1. random seeds:
-    np.random.seed(param['seed'])
-    random.seed(param['seed'])
-
-    # 0. setup
-    mprms = procedures.FrameRun(**param)
-    print mprms
-    table = set_table(mprms, mprms.array)
-    mprms.array = stringify_array(mprms.array)
-
-    # 1. define fitness function
-    FF = Fitness_Function(mprms, table=table, array=mprms.array)
-
-    # 2.
-    w1 = mprms.pso['w1']
-    w2 = mprms.pso['w2']
-    c1 = mprms.pso['c1']
-
-    # 3. Initialize Algorithm:
-    minimize = mprms.optimum == 'minimum'
-    mypso = ConcretePSO(array=mprms.array,
-                        npop= mprms.pso['npopulation'],
-                        function=FF,
-                        maxiter=mprms.pso['ngenerations'],
-                        parallel=True,
-                        minimize=minimize)
-    print mypso
-    print mypso.swarm
-
-    # 4. Run Algorithm:
-    mypso.evolve()
-
-    # 5. Some Logging
-    print "global bestX:", mypso.globalbestX
-    print "global bestP:", mypso.globalbestP
-
-    print "particle history:"
-    totalhistory=[]
-    for particle in mypso.swarm:
-        totalhistory.append(particle.history)
-    print(rounder(totalhistory))
-
-    print "particle.localbest history:"
-    localhistory=[]
-    for particle in mypso.swarm:
-        localhistory.append(particle.localhistory)
-    print(rounder(localhistory))
-
-    print "global best history:"
-    print(map(lambda x:round(x,8), mypso.globalhistory))
-
-    if sys.stdin.isatty():
-        import matplotlib.pyplot as plt
-        for i, a in enumerate(totalhistory):
-            plt.plot(np.array(a)+i*0.05, alpha=0.9)
-        plt.show()
-        for i, a in enumerate(localhistory):
-            plt.plot(np.array(a)+i*0.05, alpha=0.9)
-        plt.show()
-
-
-    return mypso
-
-
-if __name__ == "__main__":
-    pass

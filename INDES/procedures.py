@@ -13,6 +13,7 @@ from math import ceil
 import shutil  # module to copy files
 from platform import node
 import pprint  # pretty printer for printing lists
+from pprint import pformat
 import os  # for getting window width and testing existence of files
 import re
 from re import findall  # now only needed in construction.py
@@ -37,11 +38,11 @@ from CINDES.utils.utils import *
 from CINDES.utils.table import set_table, get_property_table
 
 # initial global variables
-logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+#logging.getLogger(__name__)
+#logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 once = 0
 
 print "time for imports:", time.clock() - start
-
 
 class BaseRun(object):
     ''' This is the main object for all the parameters used during any process
@@ -49,6 +50,12 @@ class BaseRun(object):
 
     def __init__(self, **entries):
         self.__dict__.update(entries)  # here all the key/value pairs in entries are converted to attributes.
+
+        # give some logging information:
+        logging.debug("loggers:" + pformat(logging.Logger.manager.loggerDict))
+        logging.debug("rootlogger level" + pformat(logging.getLogger().getEffectiveLevel()))
+        logging.debug("rootlogger handlers:" + pformat(logging.getLogger().handlers))
+
         # set system variables
         self.script = stack()[0][1]
         self.node = node()
@@ -78,10 +85,11 @@ class BaseRun(object):
                     continue
             except ValueError:
                 pass
+            if key=='array':continue
             if key in ['predictions']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append(dump(value))
-            elif key in ['TZmat', 'TZmatrices', 'genalg', 'jobs', 'stabjobs', 'prejobs', 'extrajobs', 'calcs']:
+            elif key in ['TZmat', 'TZmatrices', 'genalg', 'jobs', 'stabjobs', 'prejobs', 'extrajobs', 'calcs', 'pso']:
                 sb.append("{key:20}=".format(key=key))
                 sb.append(pprint.pformat(value, width=150))
             elif key == 'function' and callable(value):  # i.e. the value is a lambda function
@@ -99,7 +107,7 @@ class BaseRun(object):
 
         # now a table of items that are empty is printed in rows of 5 items
         l = 5
-        inrows = [ empty_attributes[l*i:l*i+l] for i in range(int(ceil(len(empty_attributes)/l))) ] 
+        inrows = [ empty_attributes[l*i:l*i+l] for i in range(int(ceil(len(empty_attributes)/l))) ]
         asstr = "\n".join([ "".join(map(" {:20}".format, item)) for item in inrows])
         sb.append("empty attributes    =\n{}".format(asstr))
         return '\n'.join(sb)
@@ -209,7 +217,7 @@ class FrameRun(BaseRun):
     def __init__(self, **entries):
         super(FrameRun, self).__init__(**entries)
         # specific for FrameRun:
-        if self.nsites:
+        if self.nsites and not self.nosub==1:
             if isinstance(self.zmatrixfile, list):
                 self.TZmatrices={}
                 for zmatrixfile in self.zmatrixfile:
@@ -221,7 +229,7 @@ class FrameRun(BaseRun):
             self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
             self.corresp = self.set_corresp(self.TZmat['active'], self.TZmat['passive'])
         else:
-            print "NO ZMAT"
+            logging.info("NO ZMAT")
         return
 
     def set_adj(self, core, active):
@@ -292,7 +300,7 @@ def get_startconf(param, array):
             for i in range(len(array)):
                 startconf.append(random.choice(array[i]))
             logging.info("constructed random start configuration")
-    logging.warning("startconf:" + pprint.pformat(startconf))
+    logging.info("startconf:" + pprint.pformat(zcon.contoind(startconf)))
     return startconf
 
 # 3 site order (sequence)
@@ -322,7 +330,7 @@ def get_sequence(count, myrun):
             print "sequence read from file"
             sequence = param['sequence']
     # output sequence
-    print "SEQUENCE: ", str(sequence)
+    logging.info("SEQUENCE: " + str(sequence))
     return sequence
 
 # 5 optimum at the start of the run
@@ -412,13 +420,11 @@ def testmax(myrun, mols, bcok):
 def runtest(run, optimum, optsite, count, bcok, mctable=[], array=[]):
     param = run.__dict__
     converged = 0
-    print
 
     #raise SystemExit('optimum and optsite should be Molecule instances now')
     if (count > 1 and bcok) or param['restart'] >= 3:  # BCOK is a test of the boundary condition is already fullfilled
         if optimum == optsite:  # test the property value! not 1 anymore!
-            print "optimum is the same!"
-            print "converged to a optimum configuration!"
+            logging.warning("optimum is the same! converged to a optimum configuration!")
             if param['montecarlo'] == 0:
                 converged = 1
             else:
@@ -426,13 +432,13 @@ def runtest(run, optimum, optsite, count, bcok, mctable=[], array=[]):
                     optsite = montecarloprocedure(run, array, optimum, mctable)
                 else:
                     optsite = montecarloprocedure(run, array, optimum, mctable, **run.TZmat)
-                print "optimal_after_this_site:", pprint.pformat(optsite, width=100)
+                logging.info("optimal_after_this_site:" + pformat(optsite, width=100))
         else:
-            print "Global_Iteration_optimum and optimum_after_this_site are not the same yet"
-            print "gi_optimum:", optimum
-            print "current optimum:", optsite
+            logging.info("Global_Iteration_optimum and optimum_after_this_site are not the same yet")
+            logging.info("gi_optimum:" + pformat(optimum))
+            logging.info("current optimum:" + pformat(optsite))
     else:  # except NameError:
-        print "NameError no optimal structure or BC not yet fullfilled."
+        logging.info("NameError no optimal structure or BC not yet fullfilled.")
         # pass
     optimum = optsite.copy()
     return optimum, optsite, converged
@@ -478,119 +484,143 @@ def submittingprocedure(mols_tocal, mols_nocal, myrun):
 # 6: Steepest Descent algorithm. Looks like BFS but there is no loop over sites
 # 7: Generate database based on farthest point selection. (based on diversity index)
 
-def BFS(param, array):
+def BFS(param, array=None):
     """ 1. This is the standard BFS procedure """
 
-    bcok = 0  # TO REMOVE LATER
-    param['bcok'] = 0
-    startconf = get_startconf(param, array)
-
-    # SET MYRUN CLASS and assign all necessary attributes
+    if array is None:
+        self.array = param['array']
     myrun = FrameRun(**param)
-    print(myrun)  # this should print all the class elements via the __str__ function
-    # the table with all the results of all calculated configs
-    table = set_table(myrun, array)
-    property_table = get_property_table(table, myrun)
-    # set optimum
-    optimum = set_optimum(myrun, table)
-    # set calculation properties
-    # END MYRUN CLASS assignments. from now myrun should contain all the
-    # necessary information to work with during the whole program run.
+    logging.info(myrun)  # this should print all the class elements via the __str__ function
+    mybfs = BestFirstSearch(myrun)
+    result = mybfs.evolve()
+    return result
 
-    # ------------------------------------- #
-    # --- HERE THE MAIN LOOP STARTS --- --- #
-    # ------------------------------------- #
-    count = 1  # so we start counting at 1!
-    while True:
-        print_title("COUNT: " + str(count), outline='l', signator="-")
 
-        # set site order in sequence INPUT: param, count
-        sequence = get_sequence(count, myrun)
+class BestFirstSearch(object):
+    def __init__(self, run):
+        self.run = run
+        self.array = self.run.array
+        self.bcok = 0  # TO REMOVE LATER
+        self.startconf = get_startconf(run.__dict__, self.run.array)
 
-        # for each site in sequence:
-        for l in range(len(sequence)):
-            k = sequence[l]
-            print_title("k(site)= {} l(nsite)= {} (c={})".format(k, l, count), outline='l', signator='=')
-            if not l == 0 or count > 1:  # define new startconfiguration if not first cycle
-                # define new starting geometry
-                print "optsite:", optsite
-                del startconf
-                startconf = zcon.indtocon(optsite.index)
+        # the table with all the results of all calculated configs
+        self.table = set_table(self.run, self.run.array)
+        self.property_table = get_property_table(self.table, self.run)
 
-            # STEP 1: INDEXMAKER
-            # get indices_all and the indices that still need to be calculated
-            # if table is correctly formatted all second element item[1]==1. meaning they are ab-initio calculated
-            #indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker2(startconf,array,k,table )
-            mols_todo, mols_nodo = zcon.classmaker2(startconf, array, k, table, myrun)
-            if 1 in myrun.restrictions:  # this are actually filters!
-                mols_todo, mols_nodo = restriction1(mols_todo, mols_nodo, myrun)
-            print "|      NEW POPULATION CONSTRUCTED:"
-            print "|   mols_todo:"
-            if mols_todo:
-                for mol in mols_todo:
-                    print "|      {}".format(mol)
-            else:
-                print "|      -"
-            print "|   mols_nodo:"
-            if mols_nodo:
-                for mol in mols_nodo:
-                    print "|      {}".format(mol)
-            else:
-                print "|      -"
+        # set initial optimum
+        self.optimum = set_optimum(self.run, self.table)
+        return
 
-            # STEP 2: PREDICTOR
-            # perform prescreaning in a predictions.
-            mols_nocal, mols_tocal, made_pred = predictor(
-                myrun,
-                property_table,
-                mols_todo, mols_nodo,
-                count,
-                array=array,
-                nsite=l
-            )
+    def evolve(self):
+        # ------------------------------------- #
+        # --- HERE THE MAIN LOOP STARTS --- --- #
+        # ------------------------------------- #
+        count = 1  # so we start counting at 1!
+        while True:
+            print_title("COUNT: " + str(count), outline='l', signator="-")
 
-            # STEP 3: SUBMITTING PART
-            if not myrun.nosub == 1:
-                mols_all = submittingprocedure(mols_tocal,
-                                               mols_nocal,
-                                               myrun,
-                                               )  # here call submitting procedure
-            else:
-                mols_all = skipper(mols_tocal, mols_nocal, myrun)
+            # set site order in sequence INPUT: param, count
+            sequence = get_sequence(count, self.run)
 
-            # STEP 4: UPDATE OPTIMUM STRUCTURE
-            # decide what the optimum site is and if the bc if fullfilled
-            print "BCOK:", bcok
-            optsite, bcok = testmax(myrun, mols_all, bcok)
+            # for each site in sequence:
+            for l in range(len(sequence)):
+                k = sequence[l]
+                print_title("k(site)= {} l(nsite)= {} (c={})".format(k, l, count), outline='l', signator='=')
+                if not l == 0 or count > 1:  # define new startconfiguration if not first cycle
+                    # define new starting geometry
+                    logging.info("optsite:" + pformat(optsite))
+                    del self.startconf
+                    self.startconf = zcon.indtocon(optsite.index)
 
-            # STEP 5: UPDATE DATABASE and LOG results of microiteration
-            # logs new elements in data to table and tablebin and whole data to cyclesinfo
-            table = loggings(mols_all,
-                             table,
-                             count,
-                             k, l,
-                             made_pred,
-                             tablename=myrun.tablename)
-            property_table = get_property_table(table, myrun)
+                # STEP 1: INDEXMAKER
+                # get indices_all and the indices that still need to be calculated
+                # if table is correctly formatted all second element item[1]==1. meaning they are ab-initio calculated
+                #indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker2(startconf,array,k,table )
+                mols_todo, mols_nodo = zcon.classmaker2(self.startconf, self.array, k, self.table, self.run)
+                if 1 in self.run.restrictions:  # this are actually filters!
+                    mols_todo, mols_nodo = restriction1(mols_todo, mols_nodo, self.run)
 
-            print("--- %s seconds ---" % (time.time() - myrun.starttime))
-            print(myrun.currenttime())
-        # HERE ENDS LOOP OVER SITES
+                self.logpopulation(mols_todo, mols_nodo)
 
-        # get optimum and test convergence
-        optimum, optsite, converged = runtest(myrun, optimum, optsite, count, bcok, mctable=property_table, array=array)
-        if converged == 1:
-            break
-        count += 1
-        if count > param['maxiter']:
-            print "maxiterations is reached"
-            print "optimum is: ", optimum
-            break
-    # ---------------------------- #
-    # ------ END OF LOOPING ------ #
-    # ---------------------------- #
-    print "DONE"
-    return
+                # STEP 2: PREDICTOR
+                # perform prescreaning in a predictions.
+                mols_nocal, mols_tocal, made_pred = predictor(
+                    self.run,
+                    self.property_table,
+                    mols_todo, mols_nodo,
+                    count,
+                    array=self.array,
+                    nsite=l
+                )
+
+                # STEP 3: SUBMITTING PART
+                if not self.run.nosub == 1:
+                    mols_all = submittingprocedure(mols_tocal,
+                                                   mols_nocal,
+                                                   self.run,
+                                                   )  # here call submitting procedure
+                else:
+                    mols_all = skipper(mols_tocal, mols_nocal, self.run)
+
+                # STEP 4: UPDATE OPTIMUM STRUCTURE
+                # decide what the optimum site is and if the bc if fullfilled
+                logging.info("BCOK:{:d}".format(self.bcok))
+                optsite, self.bcok = testmax(self.run, mols_all, self.bcok)
+
+                # STEP 5: UPDATE DATABASE and LOG results of microiteration
+                # logs new elements in data to table and tablebin and whole data to cyclesinfo
+                table = loggings(mols_all,
+                                 self.table,
+                                 count,
+                                 k, l,
+                                 made_pred,
+                                 tablename=self.run.tablename)
+                property_table = get_property_table(self.table, self.run)
+
+                logging.info("--- %s seconds ---" % (time.time() - self.run.starttime))
+                logging.debug(self.run.currenttime())
+            # HERE ENDS LOOP OVER SITES
+
+            # get optimum and test convergence
+            self.optimum, optsite, converged = runtest(self.run,
+                    self.optimum,
+                    optsite,
+                    count,
+                    self.bcok,
+                    mctable=self.property_table,
+                    array=self.array)
+            if converged == 1:
+                break
+            count += 1
+            if count > self.run.maxiter:
+                logging.warning("maxiterations is reached")
+                logging.warning("optimum is:"+ pformat(self.optimum))
+                break
+        # ---------------------------- #
+        # ------ END OF LOOPING ------ #
+        # ---------------------------- #
+        results = {'optimum':self.optimum, 'count':count}
+        logging.warning("BFS DONE")
+        return results
+
+    def logpopulation(self, mols_todo, mols_nodo):
+        logpop = []
+        p=logpop.append
+        p("|      NEW POPULATION CONSTRUCTED:")
+        p("|   mols_todo:")
+        if mols_todo:
+            for mol in mols_todo:
+                p("|      {}".format(mol))
+        else:
+            p("|      -")
+        p("|   mols_nodo:")
+        if mols_nodo:
+            for mol in mols_nodo:
+                p("|      {}".format(mol))
+        else:
+            p("|      -")
+        logging.info('\n'.join(logpop))
+        return
 
 def genconf(param):
     """ 2. Procedure to generate the inputfiles for a single index """
@@ -654,9 +684,14 @@ def generate_procedure(param, array):
     # get all structures
     print "len table:", len(table)
 
-    mols = get_all_molecules(array)
+    if hasattr(myrun, 'ngenerate'):
+        from CINDES.utils.molecule import Molecule
+        mols = [ Molecule(conf=zcon.indtocon(ind)) for ind in myrun.generatemols ]
+        print "mols:", mols
+    else:
+        mols = get_all_molecules(array)
     # 1b check already in database
-    mols_todo, mols_nodo = zcon.check_in_table(mols, table, myrun)
+    mols_todo, mols_nodo = zcon.check_in_table(mols, table, myrun.props)
     # 1c eventueel predictions
     mols_nocal, mols_tocal, made_pred = predictor(myrun, table, mols_todo, mols_nodo, 0, array=array)
 
@@ -681,6 +716,7 @@ def generate_procedure(param, array):
         def chunks(l, n):
             '''yields successive n-sized chunks of l'''
             for i in range(0, len(l), n):
+                print "    yielding:", i, "to:", i+n, "from total:", len(l)
                 yield l[i:i + n]
 
         mols_all = []
@@ -693,6 +729,9 @@ def generate_procedure(param, array):
                                             )  # here call submitting procedure
             else:
                 batch = skipper(batch, [], myrun)
+
+            # intermediate logging:
+            table = loggings(batch, table, i, 1, 1, tablename=myrun.tablename)
             mols_all.extend(batch)
     else:
         # use job arrays.
@@ -709,6 +748,7 @@ def generate_procedure(param, array):
         calculator.geommaker(mols_tocal, myrun)
         calculator.filemaker(mols_tocal, myrun)  # ----------------------------------HERE IS THE FILEWRITER CALL
 
+    # final logging
     print "mols_all:", mols_all
     table = loggings(mols_all, table, count, 1, 1, made_pred=made_pred, tablename=myrun.tablename)
     print "DONE"

@@ -8,7 +8,7 @@ import re
 import numpy
 import time
 import logging
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 
 import construction
 
@@ -315,9 +315,10 @@ def read_file(Job):
                 datadict[inf] = job_data.thermalcorrectionH
             elif inf.startswith('tc'):
                 datadict[inf] = job_data.thermalcorrectionG
-            elif inf in ['homo', 'lumo']:
-                datadict['homo'] = job_data.moenergies[-1][job_data.homos[0]]
-                datadict['lumo'] = job_data.moenergies[-1][job_data.homos[0] + 1]
+            elif inf.startswith('homo'):
+                datadict[inf] = job_data.moenergies[-1][job_data.homos[0]]
+            elif inf.startswith('lumo'):
+                datadict[inf] = job_data.moenergies[-1][job_data.homos[0] + 1]
             elif inf == 'dipole':
                 datadict[inf] = job_data.dipole
             elif inf == 'polar':
@@ -342,7 +343,7 @@ def read_file(Job):
                 datadict[inf] = pcharges
             elif inf.startswith('xyz'):
                 datadict[inf] = job_data.atomcoords[-1]
-                datadict['atomnos'] = job_data.atomnos
+                datadict['atomnos' + inf.lstrip('xyz')] = job_data.atomnos
             elif inf.startswith('dipolealpha'):
                 datadict[inf] = datadict[inf] = job_data.dipolealpha
             elif inf.startswith('dipolebeta'):
@@ -354,16 +355,17 @@ def read_file(Job):
             elif inf.startswith('hasimagfreq'):
                 datadict[inf] = any( freq<0.0 for freq in job_data.vibfreqs )
             elif inf.startswith('nics0'):
-                datadict[inf] = shieldings[0]['Isotropic']
+                datadict[inf] = job_data.shieldings[0]['Isotropic']
             elif inf.startswith('nicszz0'):
-                datadict[inf] = shieldings[0]['matrix'][3,3]
+                datadict[inf] = job_data.shieldings[0]['matrix'][2,2]
             elif inf.startswith('nics1'):
                 shieldings = job_data.shieldings
                 datadict[inf] = 0.5 * ( shieldings[1]['Isotropic'] + shieldings[2]['Isotropic'] )
             elif inf.startswith('nicszz1'):
-                datadict[inf] = 0.5 * ( shieldings[1]['matrix'][3,3] + shieldings[2]['matrix'][3,3] )
+                shieldings = job_data.shieldings
+                datadict[inf] = 0.5 * ( shieldings[1]['matrix'][2,2] + shieldings[2]['matrix'][2,2] )
             elif inf.startswith('chi_0'):
-                datadict[inf] = job_data['chi_0']
+                datadict[inf] = job_data.chi_0
             else:
                 print "value not recognized:", inf
     print
