@@ -400,11 +400,11 @@ def set_combined_variables(mol, to_read_props):
     #    results = calculate_EAHs(results, mol)
     if any(i in to_read_props for i in ['ipfukui', 'radfukui']):
         #print "results:", results
-        results['ipfukui'] = map(round8, [-(q_ip[1] - q_0[1]) for q_ip, q_0 in zip(results['pchargesIP'], results['pcharges0'])])
+        results['ipfukui'] = map(round8, [(q_ip[1] - q_0[1]) for q_ip, q_0 in zip(results['pchargesIP'], results['pcharges0'])])
     if any(i in to_read_props for i in ['eafukui', 'radfukui']):
-        results['eafukui'] = map(round8, [-(q_0[1] - q_ea[1]) for q_0, q_ea in zip(results['pcharges0'], results['pchargesEA'])])
+        results['eafukui'] = map(round8, [(q_0[1] - q_ea[1]) for q_0, q_ea in zip(results['pcharges0'], results['pchargesEA'])])
     if 'radfukui' in to_read_props:
-        results['radfukui'] = map(round8, [.5 * (ipf + eaf) for ipf, eaf in zip(results['ipfukui'], results['eafukui'])])
+        results['radfukui'] = map(round8, [0.5 * (ipf + eaf) for ipf, eaf in zip(results['ipfukui'], results['eafukui'])])
 
     if False: # this part can probably be removed
         if 'delta_hardness' in to_read_props:
