@@ -19,7 +19,7 @@ __author__ = 'J.L. Teunissen'
 import sys
 import logging
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)  # This toggles all the logging
+logger.setLevel(logging.INFO)  # This toggles all the logging
 ch = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter('%(message)s')
 ch.setFormatter(formatter)

@@ -155,11 +155,13 @@ class Fitness_Function():
 
 class My_GSimpleGA(GSimpleGA.GSimpleGA):
 
-    def __init__(self, genome, run, precalculation=True, table=dict(), array=[], **kwargs):
+    def __init__(self, genome, function=None, precalculation=True, **kwargs):
         GSimpleGA.GSimpleGA.__init__(self, genome, **kwargs)
-        self.FF = Fitness_Function(run, table=table, array=array)
         self.precalculation = precalculation
+        if self.precalculation:
+            self.FF = function
         return
+
 
     @log_io()
     def my_evaluate(self, step=False, population=None):
@@ -433,7 +435,8 @@ def main(param, array=None):
         array = param['array']
     GArun = procedures.FrameRun(**param)
     table = set_table(GArun, array)
-    final_genome = run_pyevolve(array, table, GArun)
+    function = Fitness_Function(GArun, table=table, array=array)
+    final_genome = run_pyevolve(array, GArun, function=function)
     best = final_genome.bestIndividual()
     print "final_genome:", final_genome
     print "best:", best
@@ -441,13 +444,12 @@ def main(param, array=None):
     return final_genome
 
 
-def run_pyevolve(array, table, options, level=None):
+def run_pyevolve(array, options, level=None, function=None):
     '''options should be a Run instance having at least:
         options.nsites
         options.
 
     '''
-    #raise SystemExit('new JSON table not yet implemented')
 
     # 0.
     logging.info("options:"+ repr(options))
@@ -490,8 +492,7 @@ def run_pyevolve(array, table, options, level=None):
     if not options.genalg['seed']:
         options.genalg['seed'] = np.random.randint(1, 9999)
     logging.info("seed to generate randomness: {:d}".format(options.genalg['seed']))
-    ga = My_GSimpleGA(run=options, genome=genome, precalculation=precalculation, table=table, seed=options.genalg['seed'],
-                      array=array)
+    ga = My_GSimpleGA(function=function, genome=genome, precalculation=precalculation, seed=options.genalg['seed'])
 
     # 8. set Selector
     if options.genalg['selector'] == 'RouletteWheel':  # Default = GRouletteWheel

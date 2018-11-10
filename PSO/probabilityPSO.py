@@ -3,6 +3,7 @@ import random
 import pprint
 import sys
 from copy import deepcopy
+import logging
 
 from CINDES.utils.writings import log_io, sprint, print_title
 from CINDES.INDES.construction import indtocon, contoind
@@ -133,7 +134,7 @@ class Particle(object):
                 vel_cognitive = c1*r1*(self.localbestX[i][j]-self.X[i][j])
                 vel_social    = c2*r2*(globalbestX[i][j]    -self.X[i][j])
                 vel_inertia   =  w*self.V[i][j]
-                if abs(vel_cognitive)>1.0 or abs(vel_social)>1.0 or abs(vel_inertia)>1.0 and debug:
+                if (abs(vel_cognitive)>1.0 or abs(vel_social)>1.0 or abs(vel_inertia)>1.0) and debug:
                     print "inertia, cognitive, social, w, r1, r2, c1, c2"
                     print "vel corrections!:", vel_inertia, vel_cognitive, vel_social, w, r1, r2, c1, c2
                 newv  = vel_inertia + vel_cognitive + vel_social
@@ -217,7 +218,7 @@ class ProbabilityPSO(object):
         maxdim = max(map(len, self.array))
         div = list(divmod(self.n, maxdim)) # returns (n, rest)
         if div[1]: div[0]+=1 # if there is a rest an extra shuffle is needed
-        print "nshuffle", div[0]
+        logging.debug("nshuffle" + str(div[0]))
         for i in range(div[0]):
             newarray=deepcopy(self.array)
             for j in range(ndim):
@@ -281,23 +282,28 @@ class ProbabilityPSO(object):
         for particle in self.swarm:
             particle.setsample(self.array)
             populationlist.append(particle.sample)
-        print "len populationlist:", len(populationlist),
+        logging.info("len populationlist:" + str(len(populationlist)))
 
         # 1.1. make confs hashable to make it a set and make it list again
-        new_confs = tuple( '_'.join(item) for item in populationlist )
+        try:
+            new_confs = tuple( '_'.join(item) for item in populationlist )
+        except TypeError as e:
+            print populationlist
+            new_confs = tuple( contoind(item) for item in populationlist )
+            print new_confs
         unique_confs = [ indtocon(item) for item in set(new_confs)]
-        print "n unique_confs:", len(unique_confs)
-        print "new_confs:"
-        for mol in set(new_confs):print mol
+        logging.info("n unique_confs:" + str(len(unique_confs)))
+        logging.info("new_confs:" + "\n".join(map(repr, set(new_confs))))
+        #for mol in set(new_confs):print mol
 
         # 2. call CINDES via FF to calculate the configurations
         mols = self.function.evaluate_multi(unique_confs, gen=self.iter)
 
         # 3. set the calculations to the correct indivual score
         y_dict = {mol.index: mol.Pvalue for mol in mols}
-        print "y_dict:", y_dict
+        logging.debug("y_dict:" + repr(y_dict))
         for particle in self.swarm:
-            index = "_".join(particle.sample)
+            index = contoind(particle.sample)
             particle.setproperty(y_dict[index])
         return len(unique_confs)==1
 
@@ -305,7 +311,7 @@ class ProbabilityPSO(object):
         self.iter=1
         nconvergence=0
         while True:
-            print "----------- Generation {} -----------".format(self.iter)
+            logging.info("----------- Generation {:d} -----------".format(self.iter))
 
             # evaluate and set global best
             if self.parallel:
@@ -343,8 +349,8 @@ class ProbabilityPSO(object):
                 particle.updateX()
                 particle.reset()
 
-            print "global best Pvalue:", self.globalbestP
-            print "global best sample:", "_".join(self.globalbestsample)
+            logging.info("global best Pvalue:" + repr(self.globalbestP))
+            logging.info("global best sample:" + contoind(self.globalbestsample))
 
             # decide if last iteration    
             self.iter+=1
@@ -352,7 +358,7 @@ class ProbabilityPSO(object):
                 print "Run terminated. Max number of generations"
                 break
             if nconvergence>1:
-                print "Run Terminated due to onvergence criteria"
+                print "Run Terminated due to convergence criteria"
                 break
 
         self.dbAdapter.commitAndClose()

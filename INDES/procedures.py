@@ -306,48 +306,6 @@ def get_startconf(param, array):
 # 3 site order (sequence)
 
 
-def get_sequence(count, myrun):
-    # START set sequence INPUT: param
-    param = myrun.__dict__
-    #nsites = param['nsites'] - param['nlinks']
-    nsites = param['nsites']
-    if 'sequences' in param:
-        try:
-            sequence = param['sequences'][count - 1]  # accounting for the fact count starts counting at 1
-        except IndexError:
-            sequence = random.sample(range(nsites), nsites)
-        finally:
-            print "SEQUENCE: ", str(sequence)
-            return sequence
-    if count == 1 and param['restart'] == 4:
-        sequence = param['sequence']
-    else:
-        if param['norandom'] == 1:
-            sequence = range(nsites)
-        elif param['sequence'] == []:
-            sequence = random.sample(range(nsites), nsites)
-        else:
-            print "sequence read from file"
-            sequence = param['sequence']
-    # output sequence
-    logging.info("SEQUENCE: " + str(sequence))
-    return sequence
-
-# 5 optimum at the start of the run
-
-
-def set_optimum(myrun, table):
-    if myrun.restart >= 3:
-        raise SystemExit('deprecated functionality')
-        #tabledict = dict( [ item[0:2] for item in table ] )
-        optimum = molecule(conf=myrun.startconf)
-        optimum.props = table[molecule.index]
-        # set Pvalue?
-        #optimum = [ myrun.startconf, tabledict[myrun.startconf] ]
-        logging.info("optimum:" + str(optimum))
-    else:
-        optimum = None
-    return optimum
 
 # 6 optimum within the global iterations
 
@@ -456,8 +414,6 @@ def restriction1(mols_todo, mols_nodo, run):
                     return True
         return False
 
-    from itertools import combinations, ifilterfalse
-
     print "nmol:", len(mols_todo)
 
     for molecule in mols_todo:
@@ -508,7 +464,8 @@ class BestFirstSearch(object):
         self.property_table = get_property_table(self.table, self.run)
 
         # set initial optimum
-        self.optimum = set_optimum(self.run, self.table)
+        self.optimum = None
+        self.history = []
         return
 
     def evolve(self):
@@ -520,7 +477,7 @@ class BestFirstSearch(object):
             print_title("COUNT: " + str(count), outline='l', signator="-")
 
             # set site order in sequence INPUT: param, count
-            sequence = get_sequence(count, self.run)
+            sequence = self.get_sequence(count)
 
             # for each site in sequence:
             for l in range(len(sequence)):
@@ -569,16 +526,17 @@ class BestFirstSearch(object):
 
                 # STEP 5: UPDATE DATABASE and LOG results of microiteration
                 # logs new elements in data to table and tablebin and whole data to cyclesinfo
-                table = loggings(mols_all,
+                self.table = loggings(mols_all,
                                  self.table,
                                  count,
                                  k, l,
                                  made_pred,
                                  tablename=self.run.tablename)
-                property_table = get_property_table(self.table, self.run)
+                self.property_table = get_property_table(self.table, self.run)
 
                 logging.info("--- %s seconds ---" % (time.time() - self.run.starttime))
                 logging.debug(self.run.currenttime())
+                self.history.append({'count':count, 'p':optsite.Pvalue, 'index':optsite.index, 'site':k})
             # HERE ENDS LOOP OVER SITES
 
             # get optimum and test convergence
@@ -589,6 +547,7 @@ class BestFirstSearch(object):
                     self.bcok,
                     mctable=self.property_table,
                     array=self.array)
+
             if converged == 1:
                 break
             count += 1
@@ -599,7 +558,7 @@ class BestFirstSearch(object):
         # ---------------------------- #
         # ------ END OF LOOPING ------ #
         # ---------------------------- #
-        results = {'optimum':self.optimum, 'count':count}
+        results = {'optimum':self.optimum, 'count':count, 'history':self.history}
         logging.warning("BFS DONE")
         return results
 
@@ -621,6 +580,26 @@ class BestFirstSearch(object):
             p("|      -")
         logging.info('\n'.join(logpop))
         return
+
+    def get_sequence(self, count):
+        # START set sequence INPUT: param
+        param = self.run.__dict__
+        nsites = param['nsites']
+        if 'sequences' in param:
+            try:
+                sequence = param['sequences'][count - 1]  # accounting for the fact count starts counting at 1
+            except IndexError:
+                sequence = random.sample(range(nsites), nsites)
+            finally:
+                logging.warning("SEQUENCE: " + str(sequence))
+                return sequence
+        if param['norandom'] == 1:
+            sequence = range(nsites)
+        else:
+            sequence = random.sample(range(nsites), nsites)
+        # output sequence
+        logging.info("SEQUENCE: " + str(sequence))
+        return sequence
 
 def genconf(param):
     """ 2. Procedure to generate the inputfiles for a single index """
@@ -845,8 +824,8 @@ def testpred(param, array):
 
 # 6: steepest descent
 
-
 def SteepestDescent(param, array):
+    raise NotImplementedError('this method is too old and out of date compared to the BFS procedure')
     bcok = 0  # TO REMOVE LATER
     param['bcok'] = 0
 
@@ -856,7 +835,7 @@ def SteepestDescent(param, array):
     # the table with all the results of all calculated configs
     table = set_table(myrun)
     # set optimum
-    optimum = set_optimum(myrun, table)
+    optimum = None
     # set calculation properties
     startconf = get_startconf(param, array)
     # END MYRUN CLASS assignments. from now myrun should contain all the

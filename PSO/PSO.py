@@ -8,6 +8,7 @@ import pprint
 from copy import deepcopy
 import random
 import itertools
+import logging
 
 # my own modules
 from CINDES.utils.writings import log_io, sprint, print_title
@@ -43,7 +44,7 @@ class MyDBSQLiteAdapter(DBAdapters.DBSQLite):
 
         c = self.getCursor()
 
-        print "in insert with:", stats, c
+        logging.debug("in insert with:" + repr(stats) + repr(c))
 
         pstmt = "insert into %s values (?, ?, " % ("statistics")
         for i in xrange(len(stats)):
@@ -54,7 +55,7 @@ class MyDBSQLiteAdapter(DBAdapters.DBSQLite):
         pstmt = "insert into %s values(?, ?, ?, ?, ?, ?)" % ("population",)
         tups = []
         for particle in pso_engine.swarm:
-            tups.append((self.getIdentify(), generation, particle.index, particle.localbestP, particle.P, "_".join(particle.localbestsample)))
+            tups.append((self.getIdentify(), generation, particle.index, particle.localbestP, particle.P, contoind(particle.localbestsample)))
         tups.sort(key=lambda x:x[4])
 
         c.executemany(pstmt, tups)
@@ -86,6 +87,7 @@ def stringify_array(array):
         newarray.append(newsite)
     return newarray
 
+
 def main(param):
     global w1, w2, c1
 
@@ -102,6 +104,11 @@ def main(param):
     # 1. define fitness function
     FF = Fitness_Function(mprms, table=table, array=mprms.array)
 
+    mypso = run_pso(mprms, function=FF)
+    return mypso
+
+
+def run_pso(mprms, function):
     # 2.
     w1 = mprms.pso['w1']
     w2 = mprms.pso['w2']
@@ -122,13 +129,11 @@ def main(param):
         from probabilityPSO import ProbabilityPSO
         mypso = ProbabilityPSO(array=mprms.array,
                             npop =mprms.pso['npopulation'],
-                            function = FF,
+                            function = function,
                             maxiter=mprms.pso['ngenerations'],
                             parallel=True,
                             minimize=minimize,
                             options = options)
-    print mypso
-    #print mypso.swarm
 
     # initialize DB:
     sqlite_adapter = MyDBSQLiteAdapter(
@@ -139,30 +144,27 @@ def main(param):
             commit_freq=1)
     mypso.setDBAdapter(sqlite_adapter)
 
-
     # 4. Run Algorithm:
     mypso.evolve()
 
     # 5. Some Logging
-    print "global bestX:", mypso.globalbestX
-    print "global bestP:", mypso.globalbestP
+    logging.info("global bestX:" + repr(np.round(mypso.globalbestX, decimals=3)))
+    logging.warning("global bestP:" + repr(mypso.globalbestP))
 
-    print "particle history:"
     totalhistory=[]
     for particle in mypso.swarm:
         totalhistory.append(particle.history)
-    print(rounder(totalhistory))
+    logging.info("particle history:" + str(rounder(totalhistory)))
 
-    print "particle.localbest history:"
     localhistory=[]
     for particle in mypso.swarm:
         localhistory.append(particle.localhistory)
-    print(rounder(localhistory))
+    logging.info("particle.localbest history:" + str(rounder(localhistory)))
 
-    print "global best history:"
-    print(map(lambda x:round(x,8), mypso.globalhistory))
+    logging.info("global best history:" + str(map(lambda x:round(x,8), mypso.globalhistory)))
 
-    if sys.stdin.isatty():
+    # do only when run on commandline and logging level INFO/DEBUG
+    if sys.stdin.isatty() and logging.getLogger().isEnabledFor(logging.INFO):
         import matplotlib.pyplot as plt
         for i, a in enumerate(totalhistory):
             plt.plot(np.array(a)+i*0.05, alpha=0.9)

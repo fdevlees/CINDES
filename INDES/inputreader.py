@@ -281,6 +281,7 @@ def readfile(subinp):
         'function': lambda x: x,
         'ignore': 0,
         'jobs': [],
+        'logging':logging.INFO,
         'ml': 0,
         'maxiter': 10,
         'montecarlo': 0,  # Temperature at start
@@ -427,6 +428,17 @@ def readfile(subinp):
                 paras['stabjobs'] = jobs
         elif splitted[0] == 'jobs':
             paras['jobs'] = get_jobs(subinp, line)
+        elif splitted[0] == 'logging':
+            level = splitted[1].lower()
+            if level == 'debug':
+                logging.getLogger().setLevel(logging.DEBUG)
+            elif level == 'info':
+                logging.getLogger().setLevel(logging.INFO)
+            elif level == 'warning':
+                logging.getLogger().setLevel(logging.WARNING)
+            else:
+                raise SystemExit('logging level not recognized')
+            logging.info('set logging level to:' + level)
         elif 'maxcycles' in line:
             paras['maxcycles'] = str(int(line.split()[1]))
         elif 'maxiter' in line:
