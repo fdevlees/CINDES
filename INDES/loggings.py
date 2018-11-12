@@ -195,6 +195,9 @@ def log_screen(mols):
         props = sorted(props)
     except Exception as e:
         print 'failed props sort:', e
+    # remove 'smiles' from props:
+    if 'smiles' in props:
+        props.remove('smiles')
     logging.debug("props:" + pformat(props))
 
     # print everything:
@@ -203,7 +206,7 @@ def log_screen(mols):
 
     # decide how many props per line and how many table need to be printed
     propsets=[]
-    maxnpropsperline = 7
+    maxnpropsperline = 6
     nextralines = len(props) / maxnpropsperline
     if nextralines:
         npropsperline = len(props) / (nextralines+1)
@@ -215,6 +218,7 @@ def log_screen(mols):
     else:
         propsets=[props]
 
+    ntables = len(propsets)
     logging.debug("propsets: {}".format(pformat(propsets)))
 
     # then print a table for every propset
