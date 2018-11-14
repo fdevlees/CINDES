@@ -20,13 +20,19 @@ def setEAHs(molecule):
     Npos = []  # positions with a nitrogen in here
     for job in molecule.jobs:
         if hasattr(job, 'pos'):
+            eAH = molecule.props.pop('eAH_P{}'.format(str(job.pos)))
             EAHs[job.pos] = {
-                'eAH': molecule.props.pop('eAH_P{}'.format(str(job.pos))),
+                'eAH': eAH,
                 'Aatom': job.Aatom}
-            try:
-                EAHs[job.pos]['tchAH'] = molecule.props.pop('tchAH_P{}'.format(str(job.pos)))
-            except KeyError:
-                pass
+
+            tcAHkey = 'tchAH_P{}'.format(str(job.pos))
+            if tcAHkey in molecule.props:
+                tcAH = molecule.props.pop(tcAHkey)
+                EAHs[job.pos]['tchAH'] = tcAH
+                EAHs[job.pos]['enthalpy'] = eAH + tcAH
+            else:
+                print "no tch",
+                EAHs[job.pos]['enthalpy'] = eAH
     if EAHs:
         molecule.props['EAHs'] = EAHs
         print "EAHs:", EAHs
@@ -59,8 +65,8 @@ def calculate_stab(results, molecule):
     #gasconstant = 8.3144621
     # ----- end of parameters
     EAHs = results['EAHs']
-    minpos = min(EAHs, key=lambda x: EAHs[x]['eAH'])
-    E_ah = EAHs[minpos]['eAH']
+    minpos = min(EAHs, key=lambda x: EAHs[x]['enthalpy'])
+    H_ah = EAHs[minpos]['enthalpy']
     try:
         tch_ah = EAHs[minpos]['tchAH']
     except KeyError:
@@ -74,9 +80,9 @@ def calculate_stab(results, molecule):
 
     if 'tchA' in results:
         print "applying thermal corrections", results['tchA'], 'and', tch_ah
-        results['BDE_ah'] = (results['eA'] + results['tchA'] + H_h - ( E_ah + tch_ah )) * kJmol
+        results['BDE_ah'] = (results['eA'] + results['tchA'] + H_h - H_ah) * kJmol
     else:
-        results['BDE_ah'] = (results['eA'] + E_h - E_ah) * kJmol  # avtc is AVerage Thermal Correction.
+        results['BDE_ah'] = (results['eA'] + E_h - H_ah) * kJmol  # avtc is AVerage Thermal Correction.
 
     #if EAHs[minpos]['N']:
     if EAHs[minpos]['Aatom']==7:
@@ -111,6 +117,7 @@ def normaltermination(mols, run):
             job.normaltermination(debug=run.debug)
             if not job.IsReady:
                 notready += "{}.{}: {}\n".format(i, j, job.name)
+                mol.IsReady = False
     if notready:
         print "jobs not ready:\n", notready
 
