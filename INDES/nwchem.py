@@ -164,6 +164,9 @@ def write_subjob(fid, job):
         else:
             raise NameError('no valid functional')
         fid.write(' xc {}\n'.format(xc))
+        if 'pop=npa' in hotline:
+            #fid.write('property\n nbofile\nend\n')
+            fid.write("mulliken\nprint 'mulliken ao'\n")
         fid.write('end\n')
     if 'cosmo' in hotline:
         dielec = filter(lambda x: 'cosmo' in x, hotline.split())[0].split('=')[1]
@@ -173,8 +176,8 @@ def write_subjob(fid, job):
         fid.write("cosmo\n do_cosmo_smd true\n solvent {}\nend\n".format(solvent))
     if 'opt' in hotline:
         fid.write('driver\n maxiter 100\nend\n')
-    if 'pop=npa' in hotline:
-        fid.write('property\n nbofile\nend\n')
+    #if 'pop=npa' in hotline:
+    #    fid.write('property\n nbofile\nend\n')
 
     fid.write("task {}".format(theory))
     # functional mult
@@ -198,11 +201,12 @@ def filewriter(mol, calc, pos=None):
     paras = calc
     jobs = paras['jobs']
 
-    if pos:
+    if not pos is None:
         name = "{0}{1}_{2}".format(paras['identify'], str(index), str(pos))
         filename = name
         filepath = '{0}/{1}/{2}'.format(paras['path'], str(index), filename)
-        geom = pos
+        geom = '{}_{:d}'.format(calc['geom'], pos)
+        print "geom in filewriter:", geom
         Job = NWChemJob(filepath, calc)
         Job.pos = pos
     else:
@@ -225,18 +229,18 @@ def filewriter(mol, calc, pos=None):
     # write info
     fid.write("echo\nstart {filename}\n".format(filename=filename))
     #fid.write("memory 1500 mb\n")
-    fid.write("memory total 8 stack 2 heap 2 global 4 mb\n")
+    fid.write("memory total 800 stack 200 heap 200 global 400 mb\n")
 
     # set scratchdir:
     #hash = ''.join(random.choice(string.ascii_lowercase) for _ in range(4))
-    spath = "/scratch/leuven/100/vsc10010/REDOX/CALC/{}".format(filename.rsplit('_',1)[1])
-    try: 
-        os.makedirs(spath)
-    except OSError:
-        if not os.path.isdir(spath):
-            raise
+    #spath = "/scratch/leuven/100/vsc10010/REDOX/CALC/{}".format(filename.rsplit('_',1)[1])
+    #try: 
+    #    os.makedirs(spath)
+    #except OSError:
+    #    if not os.path.isdir(spath):
+    #        raise
 
-    fid.write('scratch_dir ' + spath + '\n')
+    #fid.write('scratch_dir ' + spath + '\n')
     fid.write("title \"{filename}\"\n".format(filename=filename))
     # here the zmat
     write_geom(mol, fid, geom)
@@ -249,7 +253,7 @@ def filewriter(mol, calc, pos=None):
         write_subjob(fid, job)
 
     fid.close()
-    return
+    return Job
 
 
 def get_paths(mols):

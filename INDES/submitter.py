@@ -24,9 +24,11 @@ def submit(job, script='ID_gauss'):
     time.sleep(1)
     return jobid
 
-def submitworker():
+def submitworker(n):
     #jobids = subprocess.check_output(['wsub', '-batch', 'myworker.pbs', '-data', 'loglist.csv'])
-    jobids = subprocess.check_output(['wsub', '-batch', 'myworker.pbs', '-data', 'loglist.csv'])
+    #jobids = subprocess.check_output(['wsub', '-batch', 'myworker.pbs', '-data', 'loglist.csv'])
+    arrayids= "1-{:d}".format(n)
+    jobids = subprocess.check_output(['qsub', '-t', arrayids, 'CINDES_ATOOLS.pbs'])
     return jobids
 
 def nosubmit_orca(path, index, identify):

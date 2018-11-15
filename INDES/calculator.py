@@ -425,7 +425,41 @@ def submit_normal(mols_tocal, myrun):
             for job in jobids:
                 f.write('{},{}\n'.format(job.filepath,job.logpath))
 
-        jobids = subm.submitworker()
+        atoolspbs = """#!/bin/bash -l
+#PBS -N CINDES_ATOOLS
+#PBS -l walltime=1:00:00,nodes={nnodes}:ppn=28
+#PBS -A lt1_starter-77
+#PBS -j oe
+
+module load atools/1.4.4
+alog --state start
+
+module load NWChem/6.6.r27746-intel-2016a
+
+source <(aenv --data {path}/loglist.csv )
+cd $VSC_SCRATCH
+echo "VSC_SCRATCH:" $VSC_SCRATCH
+#time mpirun -np {nprocs} /apps/leuven/broadwell/build/n/NWChem/nwchem-6.6/bin/LINUX64/nwchem $job>$log
+#time /apps/leuven/broadwell/build/n/NWChem/nwchem-6.6/bin/LINUX64/nwchem $job>$log
+
+alog --state end --exit $?
+"""
+        n = len(jobids)
+        nprocs  = jobids[0].calc['nprocs'] # should be the same for all jobs!
+        if n<28:
+            nnodes=1
+            nprocs=7
+        elif myrun.nprocs==1:
+            nnodes=n/28
+        elif myrun.nprocs==2:
+            nnodes=n/14
+        elif myrun.nprocs==7:
+            nnodes=n/4
+        
+        lpath = myrun.path.rsplit('/',1)[0]  
+        with open("CINDES_ATOOLS.pbs", 'w') as f:
+            f.write(atoolspbs.format(nprocs=nprocs , nnodes=nnodes, path=lpath))
+        jobids = [subm.submitworker(n=len(jobids))]
     return jobids
 
 # 3. testing
@@ -511,7 +545,8 @@ def test_ready2(mols_tocal, myrun):
 
     # 1. get the list of entries that are in the queue
     if myrun.worker:
-        files = ['my-gaussian-worker-job']
+        #files = ['my-gaussian-worker-job']
+        files = ['CINDES_ATOOLS']
     else:
         for mol in mols_tocal:
             jobnames = [job.filename for job in mol.jobs]
