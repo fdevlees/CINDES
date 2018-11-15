@@ -3,18 +3,9 @@
 
 import logging
 import numpy as np
+import random
 from pprint import pprint
 import re
-
-inrlog = logging.getLogger('substireader')
-inrlog.setLevel(logging.INFO)
-# set handler
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-# set formatter
-formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-inrlog.addHandler(ch)
 
 from CINDES.utils.writings import log_io
 
@@ -22,10 +13,13 @@ from CINDES.utils.writings import log_io
 
 
 @log_io()
-def read_input(siteinput):
-    subinp = openfile(siteinput)  # this is the fileID
+def read_input(inputfilename='INPUT'):
+    subinp = openfile(inputfilename)  # this is the fileID
     param = readfile(subinp)  # inputline is a tuple with all kind of input variables
-    # here for a new link feature. nsites is len(line1) - nlinks
+
+
+    # here we set some extra parameters:
+    # 1. if there is symmetry the real number of sites is smaller than the number of changeable sites
     if param['nlinks']:
         param['nsites'] = len(param['sites']) - param['nlinks']
     else:
@@ -33,7 +27,8 @@ def read_input(siteinput):
             param['nsites'] = len(param['sites'])
         except KeyError:
             param['nsites'] = 0
-    #####################
+
+    # here we set the fragment library per site, called array
     if param['procedure'] in ['genconf']:
         print "Generate Configuration Procedure Active"
         array = []
@@ -48,9 +43,12 @@ def read_input(siteinput):
                     print "|",
                 print
     if not param['procedure'] in ['getrandom', 'genrandom']:
-        logging.info("INPUT PARAMETERS:")
+        logging.debug("INPUT PARAMETERS:")
         for key, value in param.iteritems():
-            logging.info(key + ' : ' + str(value))
+            logging.debug(key + ' : ' + str(value))
+
+    # This is new and not yet fully functional
+    param['array'] = array
     return param, array
 
 
@@ -162,7 +160,6 @@ def get_calcs(subinp, line):
         if line=='endcalcs':
             break
         i, j = map(int, line.split('.'))
-    print "supercalcs:", supercalcs
     return supercalcs
 
 
@@ -205,7 +202,6 @@ def get_genalg_params(subinp, line):
                 'CXP': 0.8,  # crossover probability
                 'MUP': 0.2,  # mutation probability
                 'elitism': True,
-                'optimum': 'maximum',
                 'nelitism': 1,
                 'scaling': 'sigmatrunc',
                 'db_identify': 'ex' + str(np.random.randint(0, 90)),
@@ -226,20 +222,44 @@ def get_genalg_params(subinp, line):
                 raise SystemExit('program stopped')
             value_type = type(defaults[key])
             defaults[key] = value_type(line.split()[1])
-            # if key in [ 'ngenerations', 'npopulation', 'nelitism', 'freq_stats' ]:
-            #    defaults[key] = int(line.split()[1])
-            # elif key in ['CXP', 'MUP']:
-            #    defaults[key] = float(line.split()[1])
-            # elif key in ['elitism']:
-            #    defaults[key] = bool(line.split()[1])
-            # elif key in [ 'scaling', 'db_identify', 'optimum' ]:
-            #    defaults[key] = line.split()[1]
-            # else:
-            #    print "line not interpreted:", line
         print " defaults of genetic algorithm are changed. new values:"
-    print defaults
     return subinp, defaults
 
+def get_pso_params(subinp, line):
+    defaults = {'ngenerations': 20,
+                'npopulation': 20,
+                'w1': 1.0,  # local optimum factor
+                'w2': 1.0,  # global optimum factor
+                'w':0.8,
+                'c1': 0.2,  # random factor1
+                'c2': 0.2,  # random factor2
+                'epsilon': 0.7,  # random factor2
+                'db_identify': 'ex' + str(random.randint(0, 90)),
+                'freq_stats': 10,
+                'type':'concrete'
+                }
+    try:
+        n_extra_lines = int(line.split()[2])
+    except IndexError:
+        print "WARNING: all default values for the genetic algorithms will be used:"
+    else:  # execute only when no exception is thrown
+        for _ in range(n_extra_lines):
+            line = subinp.readline()
+            key = line.split()[0]
+            if not key in defaults:
+                print "keyword in PSO section not recognized:", key
+                raise SystemExit('program stopped')
+            value_type = type(defaults[key])
+            defaults[key] = value_type(line.split()[1])
+        print " defaults for particle swarm optimization are changed. new values:"
+
+    # change defaults of c1/c2 for PPSO
+    if not defaults['type'] == 'concrete':
+        for key in ['c1', 'c2']:
+            if defaults[key]==0.2:
+                defaults[key]=1.4
+
+    return subinp, defaults
 
 def readfile(subinp):
     '''this method reads all the inputkeywords'''
@@ -249,6 +269,7 @@ def readfile(subinp):
 
         #          GLOBAL RUN PARAMETERS
         'adjust_dihedrals': False,
+        'batchsize': None,
         'bc': False,
         'cutoff': 0,  # this cutoff has to apply to the final target property value only
         'debug': False,
@@ -260,6 +281,7 @@ def readfile(subinp):
         'function': lambda x: x,
         'ignore': 0,
         'jobs': [],
+        'logging':logging.INFO,
         'ml': 0,
         'maxiter': 10,
         'montecarlo': 0,  # Temperature at start
@@ -357,6 +379,8 @@ def readfile(subinp):
         line = line.split('#')[0].lower()
         if 'adjust_dihedrals' in line:
             paras['adjust_dihedrals'] = True
+        elif 'batchsize' in line:
+            paras['batchsize'] = int(line.split()[1])
         elif 'bc' in line:
             paras['bc'] = True
             paras['bcprop'] = line.split()[1]
@@ -364,8 +388,8 @@ def readfile(subinp):
             try:
                 paras['bcoptimum'] = line.split()[3]
             except IndexError:
-                paras['bcoptimum'] = 'min'
-            assert paras['bcoptimum'] in ['min', 'max']
+                paras['bcoptimum'] = 'minimum'
+            assert paras['bcoptimum'] in ['min', 'max', 'minimum', 'maximum']
         elif 'startcalcs' in line:
             paras['calcs'] = get_calcs(subinp, line)
         # elif 'basisset' in line: paras['basisset'] = line.split()[1]
@@ -404,6 +428,17 @@ def readfile(subinp):
                 paras['stabjobs'] = jobs
         elif splitted[0] == 'jobs':
             paras['jobs'] = get_jobs(subinp, line)
+        elif splitted[0] == 'logging':
+            level = splitted[1].lower()
+            if level == 'debug':
+                logging.getLogger().setLevel(logging.DEBUG)
+            elif level == 'info':
+                logging.getLogger().setLevel(logging.INFO)
+            elif level == 'warning':
+                logging.getLogger().setLevel(logging.WARNING)
+            else:
+                raise SystemExit('logging level not recognized')
+            logging.info('set logging level to:' + level)
         elif 'maxcycles' in line:
             paras['maxcycles'] = str(int(line.split()[1]))
         elif 'maxiter' in line:
@@ -430,8 +465,9 @@ def readfile(subinp):
             paras['nprocs'] = int(line.split()[1])
         elif 'optimum' in line:
             if 'max' in line.split()[1]:
-                print "changed optimization to maximum instead of minimum!"
                 paras['optimum'] = 'maximum'
+            else:
+                paras['optimum'] = 'minimum'
         elif 'optga' in line:
             paras['optga'] = True
         elif 'positions' in line:
@@ -442,7 +478,13 @@ def readfile(subinp):
             paras['prejobs'] = get_jobs(subinp, line)
         elif 'property' in line:
             prop = line.split()[1]
-            if 'func' in prop:
+            if 'load_func' in prop:
+                paras['property'] = 'func'
+                functionscript = __import__('function')
+                paras['function'] = functionscript.function
+                assert callable(paras['function'])
+                paras['func_args'] = functionscript.arguments
+            elif 'func' in prop:
                 paras['property'] = 'func'
                 subinp, paras['function'], paras['func_args'] = get_prop_function(subinp, line)
             else:
@@ -456,7 +498,8 @@ def readfile(subinp):
                     raise SystemExit("NO number of random structures specified!")
             elif paras['procedure'] in ['ga', 'genalg']:
                 subinp, paras['genalg'] = get_genalg_params(subinp, line)
-                pass
+            elif paras['procedure'] in ['pso', 'particleswarm']:
+                subinp, paras['pso'] = get_pso_params(subinp, line)
             elif paras['procedure'] in ['testpred', 'makepred']:
                 try:
                     paras['datacolumn'] = int(line.split()[2])
@@ -468,6 +511,18 @@ def readfile(subinp):
                 paras['divers_nmax'] = int(line.split()[2])
                 paras['divers_batchsize'] = int(line.split()[3])
                 paras['divers_divindex'] = int(line.split()[4])
+            elif paras['procedure'] in ['generate']:
+                try:
+                    paras['ngenerate'] = int(line.split()[2])
+                except IndexError:
+                    print "all possible molecules from site array will be calculated!"
+                else: # do only when no error catched
+                    indices = []
+                    for _ in range(paras['ngenerate']):
+                        line = subinp.readline()
+                        indices.append(line.strip())
+                    paras['generatemols'] = indices
+                    print "read {:d} indices to generate".format(paras['ngenerate'])
         elif 'regression' in line:
             paras['regression'] = 1
         elif 'restart' in line:
@@ -569,6 +624,8 @@ def readfile(subinp):
     if paras['property'] == 'func':
         props = []
         props.extend(paras['func_args'])
+    elif paras['property'] == '_':
+        props = []
     else:
         props = [paras['property']]
     try:
@@ -577,18 +634,9 @@ def readfile(subinp):
         pass
     props.extend(paras['extra_props'])
     paras['props'] = set(props)
-    # for prop in ['stab', 'polar', 'ip', 'aip', 'ea', 'aea', 'solv' ]:
     for prop in ['stab']:
         if prop in paras['props']:
             paras[prop] = True
-
-    # extra sanity checks on input
-    # sanity check 1: optimum in ga and bfs input similar
-    if hasattr(paras, 'genalg'):
-        if not paras['genalg']['optimum'] == paras['optimum']:
-            print "WARNING OPTIMUM KEYWORDS ARE NOT THE SAME. \n    Please check carefully if program is working correctly!"
-            print "set optimum to genalg.optimum", paras['genalg']['optimum']
-            paras['optimum'] = paras['genalg']['optimum']
 
     return paras
 
@@ -596,7 +644,6 @@ def readfile(subinp):
 def substireader(nsit, subinp):
     '''this one reads all the different substituents for all different positions'''
     substiarray = []
-    #print "nsit,subinp", nsit, subinp
     for i in range(nsit):
         # read number of substituents
         try:
@@ -605,10 +652,8 @@ def substireader(nsit, subinp):
         except IndexError:
             print "no functional groups present or wrong formatted"
             break
-        inrlog.debug("site number: " + str(i + 1))
-        inrlog.debug("nsubsit: " + str(nsubsit))
-        #print "site number: ", i+1
-        #print "nsubsit: ", nsubsit
+        logging.debug("site number: " + str(i + 1))
+        logging.debug("nsubsit: " + str(nsubsit))
         site = [subinp.readline().split() for line in range(nsubsit)]
         # for j in range(nsubsit):
         #    atoms = subinp.readline().split()

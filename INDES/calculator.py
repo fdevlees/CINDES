@@ -50,7 +50,7 @@ def custom_redirection(fileobj):
         sys.stdout = old
 
 
-def invoke_script(calc, namespace, ID=0):
+def invoke_script(calc, namespace, ID=0, start=True):
     if not isinstance(calc, dict):
         return
     if not 'script' in calc:
@@ -209,9 +209,9 @@ def geommaker(mols_tocal, myrun):
             import sys
             from CINDES.utils.ga_dihedrals import reduce_conflicts
             # this function sets molecule.conf with optimized dihedrals in the conf attribute
-            c = deepcopy(core)
-            a = deepcopy(active)
-            p = deepcopy(passive)
+            c = deepcopy(myrun.TZmat['core'])
+            a = deepcopy(myrun.TZmat['active'])
+            p = deepcopy(myrun.TZmat['passive'])
 
             with open('optga.out', 'a') as out:
                 with custom_redirection(out):
@@ -245,6 +245,9 @@ def geommaker(mols_tocal, myrun):
 @log_io()
 def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to pass here)
     '''jkl'''
+
+    if debug:
+        print "DEBUG: calc", calc
 
     # 1. Decide program
     if calc['program'] == 'gaussian':
@@ -293,7 +296,8 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
                 for i, conformer in enumerate(conformers, 1):  # enumerate starts at 1!
                     setattr(molecule, 'xyz{}'.format(i), conformer.GetProp('xyz'))
                     program.filewriter(molecule, calc, i)
-        elif 'geom' in calc and isinstance(getattr(molecule, calc['geom']), list):
+        elif 'geom' in calc and calc['geom'][-1]=='s':
+            # it is assumed that there are multiple geometries when the geometries attribute ends with an s!
             # 1. make a folder with the indexname in /data/indices[i]
             if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
                 os.makedirs(calc['path'] + '/' + molecule.index)
@@ -659,6 +663,8 @@ def set_target_properties(molecules, myrun):
         -Pvalue
         -boundaries
     '''
+    if myrun.property == '_':
+        return
     for mol in molecules:
         if mol.ignoremol:
             print mol, 'ignored'

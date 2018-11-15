@@ -267,6 +267,42 @@ def pythonify(json_data):
         json_data[key] = value
     return json_data
 
+
+# custom function evaluation
+def skipper(mols_tocal, mols_nocal, myrun, iprint=True):
+    ''' generate random data '''
+    mols_all = mols_tocal + mols_nocal
+    for molecule in mols_all:
+        if myrun.property=='func':
+            # evaluate function and set to arguments
+            molecule.props.update({ func_arg:value for func_arg,value in zip(myrun.func_args, myrun.function(molecule)) })
+            #print "molecule.props:", molecule.props
+            molecule.Pvalue = molecule.props[myrun.func_args[0]]
+        else:
+            item = molecule.index
+            output = 0
+            replaced = item.replace('_', '')
+            replaced = filter(lambda x: x.isalpha(), replaced)
+            for i in replaced:
+                try:
+                    output += string.uppercase.index(i)
+                except ValueError:
+                    output += string.lowercase.index(i)
+            propx = float(output)
+            try:
+                if 'bcprop' in param:
+                    propy = len(item.replace('_', ''))
+                    molecule.boundaries = [float(propy)]
+            except NameError:
+                pass
+            molecule.Pvalue = propx
+            molecule.props[myrun.property] = propx
+        molecule.predicted = False
+
+    mols_all = mols_tocal + mols_nocal
+    return mols_all
+
+
 if __name__ == "__main__":
     import doctest, utils
     doctest.testmod(utils, verbose=False)

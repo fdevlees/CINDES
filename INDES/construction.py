@@ -6,11 +6,9 @@ from re import findall
 import re
 import logging
 from CINDES.utils.writings import log_io
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+#logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 #
-simple = 1
-semiempirical = 1
 debug = False
 
 
@@ -80,7 +78,7 @@ def demethyl(passive, defaultgroups):
                 for j, atom in enumerate(defaultconf[1:]):
                     passivesite[j][0]=atom
                 newpassive.append(passivesite)
-            #print "final passivesite:", passivesite
+            print "final passivesite:", passivesite
         else:
             # remove the hydrogens from the methyl groups
             passivesite = [passivesite[0]]
@@ -117,8 +115,9 @@ def matrixmerger2(core, active, passive):
     try:
         actpas = C((V(active), V(passive)))
     except (UnboundLocalError, ValueError):
-        if passive == []:
-            #print "passive is empty"
+        if active==[] and passive==[]:
+            actpas = []
+        elif passive==[]:
             actpas = V(active)
         elif active == []:
             actpas = V(passive)
@@ -199,7 +198,7 @@ def check_in_table(individuals, table, props=set(), check_ignored=False):
                     i += 1
                     #print "already calculated:", individual.index
         if i:
-            print "{} molecules are already in database".format(i)
+            logging.info("{} molecules are already in database".format(i))
     if debug:
         print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
 
@@ -528,6 +527,13 @@ def substituter2(group, geom0, count):
             zma = [['C', 1, '1.51'],
                    ['O', 2, '1.227', 1, '117.01', 0, '30.1'],
                    ['O', 2, '1.227', 1, '117.01', 3, '178.5']]
+            if dihedral:
+                zma[1][6] = dihedral
+            geom = geomfiller(zma, geom, count)
+        elif group == ['C', 'C', 'H', 'H']:
+            zma = [['C', 1, '1.51'],
+                   ['H', 2, '0.9', 1, '117.01', 0, '30.1'],
+                   ['H', 2, '0.9', 1, '117.01', 3, '178.5']]
             if dihedral:
                 zma[1][6] = dihedral
             geom = geomfiller(zma, geom, count)

@@ -414,7 +414,7 @@ class GPopulation:
       else:
          message = "Max/Min/Avg Raw [%(rawMax).2f/%(rawMin).2f/%(rawAve).2f]" % self.stats
       logging.info(message)
-      print message
+      #print message
       return message
 
    def copy(self, pop):

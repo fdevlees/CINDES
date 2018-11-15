@@ -8,11 +8,11 @@ import re
 import numpy
 import time
 import logging
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 
 import construction
 
-corresp = {2: 46, 6: 18, 7: 42, 9: 34, 11: 22, 12: 30}
+def round8(x): return round(float(x), 8)
 
 
 def setEAHs(molecule):
@@ -20,14 +20,19 @@ def setEAHs(molecule):
     Npos = []  # positions with a nitrogen in here
     for job in molecule.jobs:
         if hasattr(job, 'pos'):
+            eAH = molecule.props.pop('eAH_P{}'.format(str(job.pos)))
             EAHs[job.pos] = {
-                'eAH': molecule.props.pop('eAH_P{}'.format(str(job.pos))),
-                'N': job.N,
+                'eAH': eAH,
                 'Aatom': job.Aatom}
-            try:
-                EAHs[job.pos]['tcAH'] = molecule.props.pop('tcAH_P{}'.format(str(job.pos)))
-            except KeyError:
-                pass
+
+            tcAHkey = 'tchAH_P{}'.format(str(job.pos))
+            if tcAHkey in molecule.props:
+                tcAH = molecule.props.pop(tcAHkey)
+                EAHs[job.pos]['tchAH'] = tcAH
+                EAHs[job.pos]['enthalpy'] = eAH + tcAH
+            else:
+                print "no tch",
+                EAHs[job.pos]['enthalpy'] = eAH
     if EAHs:
         molecule.props['EAHs'] = EAHs
         print "EAHs:", EAHs
@@ -52,50 +57,52 @@ def calculate_stab(results, molecule):
     chi_s = 2.60
     chi_cl= 3.15
     chi_br= 2.85
-    H_h = -0.516817233  # a.u.
+    H_h = -0.514457233  # a.u.
+    E_h = -0.516817233  # a.u.
     kJmol = 2625.5
     eV = 27.2113838
     avtc = -28.1290706  # kJ/mol #average thermal correction for 5 random structures kJ/mol
     #gasconstant = 8.3144621
     # ----- end of parameters
-    EAHs = results['EAHs']
-    minpos = min(EAHs, key=lambda x: EAHs[x]['eAH'])
-    E_ah = EAHs[minpos]['eAH']
     try:
-        tc_ah = EAHs[minpos]['tcAH']
+        Domega = results['omega'] - 2.
     except KeyError:
-        pass
+        Domega = 0.0
+        print "No electrophilicity term found so stab is calculated without omega term"
 
-    Domega = results['omega'] - 2.
-
-    if 'tcA' in results:
-        print "applying thermal corrections", results['tcA'], 'and', tc_ah
-        results['BDE_ah'] = (results['eA'] + results['tcA'] + H_h - ( E_ah + tc_ah )) * kJmol
-    else:
-        results['BDE_ah'] = (results['eA'] + H_h - E_ah) * kJmol  # avtc is AVerage Thermal Correction.
-
-    #if EAHs[minpos]['N']:
-    if EAHs[minpos]['Aatom']==7:
-        chi_term = bde_b * (chi_h - 3) * (chi_n - 3)  # term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
-        print "electronegativity correction for nitrogen is used"
-        stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
-    elif EAHs[minpos]['Aatom']==6:
-        chi_term = bde_b * (chi_h - 3) * (chi_o - 3)  # term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
-        print "electronegativity correction for OXYGEN is used"
-        stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
-    else:
-        stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h
-    results['H_pos'] = minpos
-    results['stab'] = stab
-    return results
-
-def calculate_EAHs(results, molecule):
     EAHs = results['EAHs']
-    minpos = min(EAHs, key=lambda x: EAHs[x]['eAH'])
-    E_ah = EAHs[minpos]['eAH']
-    results['eAH'] = E_ah
-    return results
 
+    once = False
+    for i, EAH in EAHs.iteritems():
+        # 1. first set BDE for each AH molecule
+        if 'tchA' in results:
+            if not once:
+                print "applying thermal corrections", results['tchA'], 'and', EAH['tchAH']
+                # note that if tch_AH is present it is already present in the enthalpy term
+                once = True
+            EAH['BDE_ah'] = (results['eA'] + results['tchA'] + H_h - EAH['enthalpy']) * kJmol
+        else:
+            EAH['BDE_ah'] = (results['eA'] + E_h - EAH['enthalpy']) * kJmol
+
+        # 2. than set stab for each AH molecule
+        if EAH['Aatom']==7:
+            chi_term = bde_b * (chi_h - 3) * (chi_n - 3)
+            print "+Domega term for N",
+            EAH['stab'] = EAH['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
+        elif EAH['Aatom']==8:
+            chi_term = bde_b * (chi_h - 3) * (chi_o - 3)
+            print "+Domega term for O",
+            EAH['stab'] = EAH['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
+        else:
+            EAH['stab'] = EAH['BDE_ah'] - stab_h - bde_a * Domega * Dw_h
+
+    # now finally set the final values having the highest BDE
+    # get position of max EAH
+    maxpos = max(EAHs, key=lambda x: EAHs[x]['BDE_ah'])
+    #H_ah = EAHs[maxpos]['enthalpy']
+    results['H_pos'] = maxpos
+    results['stab'] = EAHs[maxpos]['stab']
+    return results
 
 
 def normaltermination(mols, run):
@@ -107,6 +114,7 @@ def normaltermination(mols, run):
             job.normaltermination(debug=run.debug)
             if not job.IsReady:
                 notready += "{}.{}: {}\n".format(i, j, job.name)
+                mol.IsReady = False
     if notready:
         print "jobs not ready:\n", notready
 
@@ -307,12 +315,14 @@ def read_file(Job):
                 # note that scfenergies are given in eV by cclib but free energy in hartree
                 datadict[inf] = job_data.freeenergy
                 print "free energy found:", job_data.freeenergy
+            elif inf.startswith('tch'):
+                datadict[inf] = job_data.thermalcorrectionH
             elif inf.startswith('tc'):
-                #datadict[inf] = job_data.freeenergy - ( job_data.scfenergies[-1] / 27.2238505 )
                 datadict[inf] = job_data.thermalcorrectionG
-            elif inf in ['homo', 'lumo']:
-                datadict['homo'] = job_data.moenergies[-1][job_data.homos[0]]
-                datadict['lumo'] = job_data.moenergies[-1][job_data.homos[0] + 1]
+            elif inf.startswith('homo'):
+                datadict[inf] = job_data.moenergies[-1][job_data.homos[0]]
+            elif inf.startswith('lumo'):
+                datadict[inf] = job_data.moenergies[-1][job_data.homos[0] + 1]
             elif inf == 'dipole':
                 datadict[inf] = job_data.dipole
             elif inf == 'polar':
@@ -321,34 +331,45 @@ def read_file(Job):
                 datadict['mw'] = float(sum(job_data.atomnos))
             elif inf == 'rdv':
                 spiden = map(lambda x: x[0] - x[1], zip(job_data.npaa, job_data.npab))
-                # spiden=job_data.atomcharges['natural']
                 datadict['rdv'] = sum([item**2 for item in spiden if abs(item) > 0.05])
-                # try:
-                #    print job_data.atomspins
-                # except AttributeError:
-                #    pass
             elif inf.startswith('spindensities'):
                 # NB charge-beta - charge-alpha because spindensity is a positive value but electron charge is negative!
                 spiden = map(lambda x: round(x[1] - x[0], 8), zip(job_data.npaa, job_data.npab))
                 datadict[inf] = spiden
             elif any(prop in inf for prop in ['pcharges', 'partialcharges']):
-                print "partial charges", job_data.atomcharges
+                #print "partial charges", job_data.atomcharges
 
-                def round8(x): return round(float(x), 8)
                 try:
-                    pcharges = zip(map(int, job_data.atomnos), map(round8, job_data.atomcharges['mulliken']))
-                except KeyError:
                     pcharges = zip(map(int, job_data.atomnos), map(round8, job_data.atomcharges['natural']))
+                except KeyError:
+                    print "partial charges not found for natural orbitals so Mulliken charges are used"
+                    pcharges = zip(map(int, job_data.atomnos), map(round8, job_data.atomcharges['mulliken']))
                 datadict[inf] = pcharges
             elif inf.startswith('xyz'):
                 datadict[inf] = job_data.atomcoords[-1]
-                datadict['atomnos'] = job_data.atomnos
+                datadict['atomnos' + inf.lstrip('xyz')] = job_data.atomnos
             elif inf.startswith('dipolealpha'):
                 datadict[inf] = datadict[inf] = job_data.dipolealpha
             elif inf.startswith('dipolebeta'):
                 datadict[inf] = datadict[inf] = job_data.dipolebeta
             elif inf.startswith('electricdipole'):
                 datadict[inf] = datadict[inf] = job_data.electricdipole
+            elif inf.startswith('vibfreqs'):
+                datadict[inf] = job_data.vibfreqs
+            elif inf.startswith('hasimagfreq'):
+                datadict[inf] = any( freq<0.0 for freq in job_data.vibfreqs )
+            elif inf.startswith('nics0'):
+                datadict[inf] = job_data.shieldings[0]['Isotropic']
+            elif inf.startswith('nicszz0'):
+                datadict[inf] = job_data.shieldings[0]['matrix'][2,2]
+            elif inf.startswith('nics1'):
+                shieldings = job_data.shieldings
+                datadict[inf] = 0.5 * ( shieldings[1]['Isotropic'] + shieldings[2]['Isotropic'] )
+            elif inf.startswith('nicszz1'):
+                shieldings = job_data.shieldings
+                datadict[inf] = 0.5 * ( shieldings[1]['matrix'][2,2] + shieldings[2]['matrix'][2,2] )
+            elif inf.startswith('chi_0'):
+                datadict[inf] = job_data.chi_0
             else:
                 print "value not recognized:", inf
     print
@@ -364,59 +385,34 @@ def set_combined_variables(mol, to_read_props):
         results['gap'] = results['lumo'] - results['homo']
     if 'solv' in to_read_props:
         results['solv'] = (results['e1_solv'] - results['e0_solv']) * 627.5
-    if any(i in to_read_props for i in ['ip', 'omega', 'stab']):
-        results['ip'] = (results['eIP'] - results['e0']) * 27.2113838
-    if any(i in to_read_props for i in ['ea', 'omega', 'stab']):
-        results['ea'] = (results['e0'] - results['eEA']) * 27.2113838
-    if any(i in to_read_props for i in ['omega', 'stab']):
-        results['omega'] = ((results['ip'] + results['ea'])**2) / (8 * (results['ip'] - results['ea']))
+
+    # the next properties are possible but not always calculated for radical stability values:
+    try:
+        if any(i in to_read_props for i in ['ip', 'omega', 'stab']):
+            results['ip'] = (results['eIP'] - results['e0']) * 27.2113838
+        if any(i in to_read_props for i in ['ea', 'omega', 'stab']):
+            results['ea'] = (results['e0'] - results['eEA']) * 27.2113838
+        if any(i in to_read_props for i in ['omega', 'stab']):
+            results['omega'] = ((results['ip'] + results['ea'])**2) / (8 * (results['ip'] - results['ea']))
+    except KeyError:
+        if not 'stab' in to_read_props:
+            raise
+
     if 'stab' in to_read_props:
         results = calculate_stab(results, mol)
-    #elif 'EAHs' in to_read_props:
-    #    results = calculate_EAHs(results, mol)
     if any(i in to_read_props for i in ['ipfukui', 'radfukui']):
         #print "results:", results
-        results['ipfukui'] = [-(q_ip[1] - q_0[1]) for q_ip, q_0 in zip(results['pchargesIP'], results['pcharges0'])]
+        results['ipfukui'] = map(round8, [(q_ip[1] - q_0[1]) for q_ip, q_0 in zip(results['pchargesIP'], results['pcharges0'])])
     if any(i in to_read_props for i in ['eafukui', 'radfukui']):
-        results['eafukui'] = [-(q_0[1] - q_ea[1]) for q_0, q_ea in zip(results['pcharges0'], results['pchargesEA'])]
+        results['eafukui'] = map(round8, [(q_0[1] - q_ea[1]) for q_0, q_ea in zip(results['pcharges0'], results['pchargesEA'])])
     if 'radfukui' in to_read_props:
-        results['radfukui'] = [.5 * (ipf + eaf) for ipf, eaf in zip(results['ipfukui'], results['eafukui'])]
+        results['radfukui'] = map(round8, [0.5 * (ipf + eaf) for ipf, eaf in zip(results['ipfukui'], results['eafukui'])])
+
+    if False: # this part can probably be removed
+        if 'delta_hardness' in to_read_props:
+            results['delta_hardness'] = ( results['lumo_CH3'] - results['homo_CH3'] ) - ( results['lumo_CH2'] - results['homo_CH2'] )
+        if 'exaltation' in to_read_props:
+            results['exaltation'] = results['chi_0_CH3'] - results['chi_0_CH2']
 
     return results
 
-
-if __name__ == "__main__":
-    if hasattr(mymol, 'spindensities'):
-        print "Mulliken spin densities:"
-        pprint(mymol.spindensities)
-        spiden = mymol.spindensities[0]
-        # next line calculates in one line the Radical delocalisation value
-        RDV = sum([float(item[2])**2 for item in spiden if abs(item[2]) > 0.05])
-        print "RDV value is: ", RDV
-    if hasattr(mymol, 'npa'):
-        print "npa:"
-        pprint(mymol.npa)
-    if hasattr(mymol, 'npab'):
-        print "npab:"
-        pprint(mymol.npa)
-        snpa = [a - b for a, b in zip(mymol.npa, mymol.npab)]
-        print "----- npa spin densities -----"
-        for item in snpa:
-            print '{:>8.5f}'.format(float(item))
-    if hasattr(mymol, 'polvibr'):
-        print "Diagonal vibrational polarisability:", mymol.polvibr
-    if hasattr(mymol, 'hypolvibr'):
-        if not mymol.hypolvibr == []:
-            print "Diagonal vibrational hyperpolarisability:", mymol.hypolvibr
-    if True:
-        from CINDES.cclib.parser import ccopen
-        myfile = ccopen(filename).parse()
-        HOMO = myfile.myhomos[index]
-        Ehomo = myfile.mymos[index]['alpha'][0][HOMO]
-        Elumo = myfile.mymos[index]['alpha'][0][HOMO + 1]
-
-        Egap = Elumo - Ehomo
-        print "E-HOMO :", Ehomo, Ehomo / 27.2113838
-        print "E-LUMO :", Elumo, Elumo / 27.2113838
-        print "BANDGAP:", Egap
-        print Ehomo, Elumo, Egap

@@ -1,5 +1,6 @@
 # python modules
 import pprint
+import logging
 
 # my own modules
 from CINDES.predictor import learning_skl as learning
@@ -428,8 +429,8 @@ def predictor(
             mols_nocal = mols_nodo
             mols_tocal = mols_todo
     else:
-        print "    no predictions will be made    len(table)={}".format(
-            len(table))
+        logging.info("    no predictions will be made    len(table)={}".format(
+            len(table)))
         mols_nocal = mols_nodo
         mols_tocal = mols_todo
 

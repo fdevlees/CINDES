@@ -8,8 +8,8 @@ replacements = {
         '(':'d', ')':'e',
         '[':'g', ']':'i',
         '\\':'j','/':'k',
-        '@':'m','-':'q', '+':'r',
-        '.':'t','#':'u'
+        '@':'m', '-':'q', '+':'r',
+        '.':'t', '#':'u'
         }
 
 # helper function
@@ -157,6 +157,7 @@ class SmiMolecule(BaseMolecule):
         super(SmiMolecule, self).__init__()
         self.smiles=smiles
         self.set_index()
+        self.props['smiles']=self.smiles
         return
 
     def __str__(self):
@@ -284,6 +285,10 @@ class Molecule(BaseMolecule):
             if debug: print "self.xyz",self.xyz
             self.set_OBMol()
         if debug: print "self.OBxyz:", self.OBMol
+        try:
+            self.OBMol.OBMol.Kekulize()
+        except Exception as e:
+            raise
         return self.OBMol.write(form)
 
     def optimize(self,set=False):

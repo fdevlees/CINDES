@@ -4,6 +4,10 @@
 from optparse import OptionParser
 from optparse import OptionGroup
 
+seaborn = False
+if seaborn:
+    import seaborn as sb
+
 add_one = True
 
 
@@ -34,12 +38,28 @@ def graph_pop_heatmap_raw(all, minimize, colormap="jet", filesave=None):
       pylab.show()
 
 def graph_pop_heatmap_fitness(all, minimize, colormap="jet", filesave=None):
-   pylab.imshow(all, aspect="equal", interpolation="gaussian", cmap=matplotlib.cm.__dict__[colormap])
+   #pylab.imshow(all, aspect="equal", interpolation="gaussian", cmap=matplotlib.cm.__dict__[colormap])
+   #pylab.grid(True)
+   if add_one:
+      npop = len(all[0])
+      print "len pop:", npop
+      ngen = len(all)
+      print "no generations:", ngen
+      if seaborn:
+          sb.heatmap(all, cmap=matplotlib.cm.__dict__[colormap], square=True)
+      else:
+          pylab.imshow(all, extent=[1,npop,ngen,1] ,aspect="auto", interpolation="gaussian", cmap=matplotlib.cm.__dict__[colormap])
+      pylab.xticks(range(1,npop+1))
+      pylab.yticks(range(1,ngen+1))
+      pylab.grid(True, linestyle=':', alpha=0.5)
+   else:
+      pylab.imshow(all, aspect="auto", interpolation="gaussian", cmap=matplotlib.cm.__dict__[colormap])
+      pylab.grid(True)
+
    pylab.title("Plot of pop. fitness scores along the generations")
    pylab.xlabel('Population')
    pylab.ylabel('Generations')
-   pylab.grid(True)
-   pylab.colorbar()
+   if not seaborn: pylab.colorbar()
 
    if filesave:
       pylab.savefig(filesave)
