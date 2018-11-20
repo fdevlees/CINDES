@@ -180,10 +180,13 @@ class ProbabilityPSO(object):
             minimize=True):
 
         # initiate variables
+        self.ncalcs=0
         self.iter = 0
         self.n = npop
         self.array = np.array(array)
-        self.nDim, self.nGroups = np.array(array).shape
+        #self.array = array
+        self.ngroups = len(array[0])
+        self.nDim = len(array)
         self.function = function
         self.parallel = parallel
         self.maxiter = maxiter
@@ -195,6 +198,7 @@ class ProbabilityPSO(object):
         self.globalbestP = None
         self.globalbestsample = None
         self.globalhistory = []
+        self.history = []
         self.options = {'epsilon':0.75, 'w':0.8, 'c1':1.4, 'c2':1.4}
         if options:
             self.options.update(options)
@@ -234,7 +238,14 @@ class ProbabilityPSO(object):
 
             # change the ones to twos if position matches group
             for i, group in enumerate(Cparticle):
-                index = list(self.array[i]).index(group)
+                try:
+                    index = list(self.array[i]).index(group)
+                except ValueError:
+                    try:
+                        index = list(map(tuple, self.array[i])).index(group)
+                    except ValueError as e:
+                        print self.array, i, group
+                        raise e
                 X[i][index]=3.0
 
             X = normalize(X)
@@ -288,12 +299,13 @@ class ProbabilityPSO(object):
         try:
             new_confs = tuple( '_'.join(item) for item in populationlist )
         except TypeError as e:
-            print populationlist
+            #print populationlist
             new_confs = tuple( contoind(item) for item in populationlist )
-            print new_confs
+            #print new_confs
         unique_confs = [ indtocon(item) for item in set(new_confs)]
         logging.info("n unique_confs:" + str(len(unique_confs)))
         logging.info("new_confs:" + "\n".join(map(repr, set(new_confs))))
+        self.ncalcs += len(unique_confs)
         #for mol in set(new_confs):print mol
 
         # 2. call CINDES via FF to calculate the configurations
@@ -379,6 +391,13 @@ class ProbabilityPSO(object):
 
     def log(self):
         self.dbAdapter.insert(self)
+        self.history.append({
+            'gen':self.iter,
+            'ncalcs':self.ncalcs,
+            'index':contoind(self.globalbestsample),
+            'p':self.globalbestP
+            })
+
 
     def setDBAdapter(self, dbAdapter):
         self.dbAdapter = dbAdapter

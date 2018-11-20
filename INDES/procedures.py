@@ -473,6 +473,7 @@ class BestFirstSearch(object):
         # --- HERE THE MAIN LOOP STARTS --- --- #
         # ------------------------------------- #
         count = 1  # so we start counting at 1!
+        ncalcs = 0
         while True:
             print_title("COUNT: " + str(count), outline='l', signator="-")
 
@@ -511,6 +512,7 @@ class BestFirstSearch(object):
                 )
 
                 # STEP 3: SUBMITTING PART
+                ncalcs += len(mols_tocal)
                 if not self.run.nosub == 1:
                     mols_all = submittingprocedure(mols_tocal,
                                                    mols_nocal,
@@ -533,10 +535,15 @@ class BestFirstSearch(object):
                                  made_pred,
                                  tablename=self.run.tablename)
                 self.property_table = get_property_table(self.table, self.run)
-
+                self.history.append({
+                    'count':count, 
+                    'p':optsite.Pvalue,
+                    'index':optsite.index,
+                    'site':k,
+                    'ncalcs':ncalcs,
+                    'startind':zcon.contoind(self.startconf)})
                 logging.info("--- %s seconds ---" % (time.time() - self.run.starttime))
                 logging.debug(self.run.currenttime())
-                self.history.append({'count':count, 'p':optsite.Pvalue, 'index':optsite.index, 'site':k})
             # HERE ENDS LOOP OVER SITES
 
             # get optimum and test convergence
@@ -558,7 +565,12 @@ class BestFirstSearch(object):
         # ---------------------------- #
         # ------ END OF LOOPING ------ #
         # ---------------------------- #
-        results = {'optimum':self.optimum, 'count':count, 'history':self.history}
+        results = {
+                'index':self.optimum.index,
+                'gen':count,
+                'history':self.history,
+                'ncalcs':ncalcs,
+                'p':self.optimum.Pvalue}
         logging.warning("BFS DONE")
         return results
 

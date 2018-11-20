@@ -72,7 +72,7 @@ def log_cyclesinfo(mols, count, k, l):
     return
 
 
-def log_table(mols, table, tablename='table'):
+def log_table(mols, table, tablename='table', write=True):
     ''' this function updates the table-dictionary used inside the program
     and updates the database.json file.
     '''
@@ -118,7 +118,8 @@ def log_table(mols, table, tablename='table'):
                 #if debug: print "tableitem:", tableitem
                 # table.append(tableitem)
 
-    update_json(table, tablename)
+    if write:
+        update_json(table, tablename)
     return table
 
 
@@ -318,13 +319,13 @@ def pstats(predinfo):
 
 
 @log_io()
-def loggings(mols, table, count, k, l, made_pred=False, tablename='table'):
+def loggings(mols, table, count, k, l, made_pred=False, tablename='table', write=True):
 
     # --- LOGGINGS: CYCLESINFO
     log_cyclesinfo(mols, count, k, l)
 
     # ---- LOGGINGS: TABLE.JSON
-    table = log_table(mols, table, tablename=tablename)
+    table = log_table(mols, table, tablename=tablename, write=write)
 
     # ---- LOGGINGS: to screen
     log_screen(mols)

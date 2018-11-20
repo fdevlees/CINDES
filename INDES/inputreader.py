@@ -311,6 +311,7 @@ def readfile(subinp):
         'try_ready': 0,
         'secret_file': '',
         'worker': False,
+        'write':True,
         'TZmat': {},
         'zmatrixfile': 'ZMAT',
 
@@ -602,6 +603,8 @@ def readfile(subinp):
             continue
         elif key=='worker':
             paras['worker'] = True
+        elif key=='write':
+            paras['write'] = bool(int(line.split()[1]))
         elif any(item in line.split()[0] for item in ('program', 'ai', 'program', 'prog', 'programma')):
             if line.split()[1] in ['gaussian', 'g09']:
                 paras['program'] = 'gaussian'
