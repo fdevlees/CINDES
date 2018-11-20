@@ -20,13 +20,19 @@ def setEAHs(molecule):
     Npos = []  # positions with a nitrogen in here
     for job in molecule.jobs:
         if hasattr(job, 'pos'):
+            eAH = molecule.props.pop('eAH_P{}'.format(str(job.pos)))
             EAHs[job.pos] = {
-                'eAH': molecule.props.pop('eAH_P{}'.format(str(job.pos))),
+                'eAH': eAH,
                 'Aatom': job.Aatom}
-            try:
-                EAHs[job.pos]['tchAH'] = molecule.props.pop('tchAH_P{}'.format(str(job.pos)))
-            except KeyError:
-                pass
+
+            tcAHkey = 'tchAH_P{}'.format(str(job.pos))
+            if tcAHkey in molecule.props:
+                tcAH = molecule.props.pop(tcAHkey)
+                EAHs[job.pos]['tchAH'] = tcAH
+                EAHs[job.pos]['enthalpy'] = eAH + tcAH
+            else:
+                print "no tch",
+                EAHs[job.pos]['enthalpy'] = eAH
     if EAHs:
         molecule.props['EAHs'] = EAHs
         print "EAHs:", EAHs
@@ -58,47 +64,44 @@ def calculate_stab(results, molecule):
     avtc = -28.1290706  # kJ/mol #average thermal correction for 5 random structures kJ/mol
     #gasconstant = 8.3144621
     # ----- end of parameters
-    EAHs = results['EAHs']
-    minpos = min(EAHs, key=lambda x: EAHs[x]['eAH'])
-    E_ah = EAHs[minpos]['eAH']
-    try:
-        tch_ah = EAHs[minpos]['tchAH']
-    except KeyError:
-        pass
-
     try:
         Domega = results['omega'] - 2.
     except KeyError:
         Domega = 0.0
         print "No electrophilicity term found so stab is calculated without omega term"
 
-    if 'tchA' in results:
-        print "applying thermal corrections", results['tchA'], 'and', tch_ah
-        results['BDE_ah'] = (results['eA'] + results['tchA'] + H_h - ( E_ah + tch_ah )) * kJmol
-    else:
-        results['BDE_ah'] = (results['eA'] + E_h - E_ah) * kJmol  # avtc is AVerage Thermal Correction.
-
-    #if EAHs[minpos]['N']:
-    if EAHs[minpos]['Aatom']==7:
-        chi_term = bde_b * (chi_h - 3) * (chi_n - 3)  # term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
-        print "electronegativity correction for nitrogen is used"
-        stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
-    elif EAHs[minpos]['Aatom']==8:
-        chi_term = bde_b * (chi_h - 3) * (chi_o - 3)  # term is independent of the molecule itself. ongeveer 8.4 kJ/mol?
-        print "electronegativity correction for OXYGEN is used"
-        stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
-    else:
-        stab = results['BDE_ah'] - stab_h - bde_a * Domega * Dw_h
-    results['H_pos'] = minpos
-    results['stab'] = stab
-    return results
-
-
-def calculate_EAHs(results, molecule):
     EAHs = results['EAHs']
-    minpos = min(EAHs, key=lambda x: EAHs[x]['eAH'])
-    E_ah = EAHs[minpos]['eAH']
-    results['eAH'] = E_ah
+
+    once = False
+    for i, EAH in EAHs.iteritems():
+        # 1. first set BDE for each AH molecule
+        if 'tchA' in results:
+            if not once:
+                print "applying thermal corrections", results['tchA'], 'and', EAH['tchAH']
+                # note that if tch_AH is present it is already present in the enthalpy term
+                once = True
+            EAH['BDE_ah'] = (results['eA'] + results['tchA'] + H_h - EAH['enthalpy']) * kJmol
+        else:
+            EAH['BDE_ah'] = (results['eA'] + E_h - EAH['enthalpy']) * kJmol
+
+        # 2. than set stab for each AH molecule
+        if EAH['Aatom']==7:
+            chi_term = bde_b * (chi_h - 3) * (chi_n - 3)
+            print "+Domega term for N",
+            EAH['stab'] = EAH['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
+        elif EAH['Aatom']==8:
+            chi_term = bde_b * (chi_h - 3) * (chi_o - 3)
+            print "+Domega term for O",
+            EAH['stab'] = EAH['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
+        else:
+            EAH['stab'] = EAH['BDE_ah'] - stab_h - bde_a * Domega * Dw_h
+
+    # now finally set the final values having the highest BDE
+    # get position of max EAH
+    maxpos = max(EAHs, key=lambda x: EAHs[x]['BDE_ah'])
+    #H_ah = EAHs[maxpos]['enthalpy']
+    results['H_pos'] = maxpos
+    results['stab'] = EAHs[maxpos]['stab']
     return results
 
 
@@ -111,6 +114,7 @@ def normaltermination(mols, run):
             job.normaltermination(debug=run.debug)
             if not job.IsReady:
                 notready += "{}.{}: {}\n".format(i, j, job.name)
+                mol.IsReady = False
     if notready:
         print "jobs not ready:\n", notready
 
@@ -396,8 +400,6 @@ def set_combined_variables(mol, to_read_props):
 
     if 'stab' in to_read_props:
         results = calculate_stab(results, mol)
-    #elif 'EAHs' in to_read_props:
-    #    results = calculate_EAHs(results, mol)
     if any(i in to_read_props for i in ['ipfukui', 'radfukui']):
         #print "results:", results
         results['ipfukui'] = map(round8, [(q_ip[1] - q_0[1]) for q_ip, q_0 in zip(results['pchargesIP'], results['pcharges0'])])

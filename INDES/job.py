@@ -108,6 +108,7 @@ class BaseJob(object):
         except IOError:
             ret = 0
 
+
         if self.errorpath:
             try:
                 ret_zzz = self.termination(self.errorpath)
@@ -115,6 +116,7 @@ class BaseJob(object):
                 ret_zzz = 0
         else:
             ret_zzz = 0
+
 
         if ret == 1:
             self.IsReady = True
