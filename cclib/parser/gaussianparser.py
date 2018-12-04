@@ -422,7 +422,7 @@ class Gaussian(logfileparser.Logfile):
             if line[1:10] == "Requested":
                 try:
                     scftargets.append(self.float(line.strip().split('=')[1][:-1]))
-                except ValueError:
+                except (ValueError, IndexError) as e:
                     scftargets.append(numpy.nan)
 
             self.scftargets.append(scftargets)

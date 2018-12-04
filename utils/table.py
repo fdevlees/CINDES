@@ -42,6 +42,7 @@ def set_table(myrun, array=[]):
         #tableprops=['omega']
         tableprops=['stab']
         tableprops=['gap', 'homo', 'lumo', 'E0' ]
+        tableprops=['gap', 'homo', 'lumo' ]
         for item in pickle_db:
             key=item[0]
             value={prop:prop_value for prop,prop_value in zip(tableprops,item[1:])}
