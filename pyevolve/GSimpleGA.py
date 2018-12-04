@@ -61,6 +61,7 @@ Class
 debug=False
 
 from CINDES.pyevolve.GPopulation  import GPopulation
+from CINDES.INDES.construction import contoind
 from FunctionSlot import FunctionSlot
 from Migration    import MigrationScheme
 from GenomeBase   import GenomeBase
@@ -209,7 +210,7 @@ class GSimpleGA:
    generation.
    """
 
-   def __init__(self, genome, seed=None, interactiveMode=True):
+   def __init__(self, genome, seed=None, interactiveMode=True, trackhistory=False):
       """ Initializator of GSimpleGA """
       if seed: random.seed(seed)
 
@@ -252,6 +253,11 @@ class GSimpleGA:
          if  isinstance(self.internalPop.oneSelfGenome, classes):
             self.setGPMode(True)
             break
+
+      # history tracking
+      if trackhistory:
+          self.track=True
+          self.history=[]
       
       logging.debug("A GA Engine was created, nGenerations=%d", self.nGenerations)
 
@@ -719,6 +725,13 @@ class GSimpleGA:
       logging.debug("Dumping stats to the DB Adapter")
       self.internalPop.statistics()
       self.dbAdapter.insert(self)
+      if self.track:
+          self.history.append({
+              'gen':self.currentGeneration,
+              'ncalcs':self.ncalcs,
+              'index':contoind(self.bestIndividual().genomeList),
+              'p':self.bestIndividual().score
+              })
 
    def evolve(self, freq_stats=0):
       """ Do all the generations until the termination criteria, accepts

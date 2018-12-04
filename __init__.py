@@ -19,11 +19,11 @@ __author__ = 'J.L. Teunissen'
 import sys
 import logging
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)  # This toggles all the logging
+logger.setLevel(logging.WARNING)  # This toggles all the logging
 ch = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter('%(message)s')
 ch.setFormatter(formatter)
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.WARNING)
 logger.addHandler(ch)
 
 # exclude scripts/tests/old_modules from "from CINDES import *
