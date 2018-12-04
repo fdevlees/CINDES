@@ -199,7 +199,7 @@ def get_jobs(subinp, line, index=1):
 def get_genalg_params(subinp, line):
     defaults = {'ngenerations': 20,
                 'npopulation': 20,
-                'CXP': 0.8,  # crossover probability
+                'CXP': 0.0,  # crossover probability
                 'MUP': 0.2,  # mutation probability
                 'elitism': True,
                 'nelitism': 1,

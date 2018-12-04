@@ -559,7 +559,7 @@ def run_pyevolve(array, options, level=None, function=None):
     pop.scaleMethod.set(Scaling.SigmaTruncScaling)
 
     # 17. for plotting / logging
-    if options.write:
+    if options.write or True:
         sqlite_adapter = DBAdapters.DBSQLite(
             identify=options.genalg['db_identify'], resetDB=False, resetIdentify=True, commit_freq=1)
         ga.setDBAdapter(sqlite_adapter)
