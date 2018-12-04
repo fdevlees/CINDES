@@ -259,11 +259,14 @@ class FrameRun(BaseRun):
     def set_corresp(self, active, passive):
         '''makes a dictionary that gives the correspondance of sites with position in core matrix'''
         corresp = dict()
+        correspI= dict()
         for site in active:
             corresp[int(site[0][1])] = int(site[1][1])
+            correspI[int(site[1][1])] = int(site[0][1])
         for site in passive:
             corresp[int(site[0][1])] = int(site[1][1])
-        return corresp
+            correspI[int(site[1][1])] = int(site[0][1])
+        return correspI
 
 # END CLASS RUN -----------------------------------------
 
