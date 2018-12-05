@@ -138,7 +138,9 @@ class Experiment(object):
             except IOError as e:
                 print "tried to load model but not found:", e
                 print "going to train model:"
+                print "setting X,y...",
                 self.X, self.y = self.get_XY(**kwargs)
+                print "done",
                 self.reoptimize = True
 
         if self.multiple:
