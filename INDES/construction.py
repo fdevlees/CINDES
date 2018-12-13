@@ -179,6 +179,10 @@ def classmaker2_SD(startconf, array, table, run=None):
 
 
 def check_in_table(individuals, table, props=set(), check_ignored=False):
+    ''' this function checks if molecules are already present in the table
+    if not it is optionally checked if molecules are already flagged as discarded or
+    if the molecule is already ignored earlier, i.e., the molecule name is present in the IGNORED file
+    '''
     mols_todo = individuals[:]
     mols_nodo = []
     neglect_dihedrals = True
@@ -204,13 +208,21 @@ def check_in_table(individuals, table, props=set(), check_ignored=False):
 
     if check_ignored:
         try:
+            # open the file 
             with open('IGNORED', 'r') as f:
                 ignored = set(f.read().split('\n'))
+
+            # check for every mol if:
+                # - already in IGNORED file
+                # - already flagged as discarded
             for mol in mols_todo[:]:
                 if mol.index in ignored:
                     print mol, 'in IGNORE'
                     mol.ignore = True
                     mol.IsDiscarded = True
+                    mols_nodo.append(mol)
+                    mols_todo.remove(mol)
+                elif mol.IsDiscarded is True:
                     mols_nodo.append(mol)
                     mols_todo.remove(mol)
         except IOError:

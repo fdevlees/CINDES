@@ -112,15 +112,18 @@ class Fitness_Function():
 
         # STEP 2: PREDICTOR
         # perform prescreaning in a predictions.
-        property_table = get_property_table(self.table, self.run)
-        mols_nocal, mols_tocal, made_pred = predictor(
-            self.run,
-            property_table,
-            mols_todo, mols_nodo,
-            gen,
-            array=self.array,
-            nsite=0
-        )
+        if self.run.predictions:
+            property_table = get_property_table(self.table, self.run)
+            mols_nocal, mols_tocal, made_pred = predictor(
+                self.run,
+                property_table,
+                mols_todo, mols_nodo,
+                gen,
+                array=self.array,
+                nsite=0
+            )
+        else:
+            mols_nocal, mols_tocal = mols_nodo, mols_todo
 
         # 4. calculate configurations
         myrun = self.run
@@ -137,7 +140,8 @@ class Fitness_Function():
                                              gen,
                                              1, 1,
                                              made_pred=False,
-                                             tablename=myrun.tablename)
+                                             tablename=myrun.tablename,
+                                             write=myrun.write)
         return mols_all
 
 
@@ -180,6 +184,11 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
         new_confs = tuple(tuple(map(tuple, item)) for item in populationlist)
         unique_confs = [map(list, item) for item in set(new_confs)]
         logging.info("n unique_confs: {:d}".format(len(unique_confs)))
+        if self.track:
+            try:
+                self.ncalcs += len(unique_confs)
+            except AttributeError:
+                self.ncalcs = len(unique_confs)
         #print "unique_confs:", unique_confs
 
         # 2. call CINDES via FF to calculate the configurations
@@ -488,11 +497,22 @@ def run_pyevolve(array, options, level=None, function=None):
         genome.crossover.set(Crossovers.G1DListCrossoverUniform)
     logging.info("genome:\n" + repr(genome))
 
-    # 7. set Genetic Algorithm Instance using a defined random.seed()
-    if not options.genalg['seed']:
+    # 7.1 set Genetic Algorithm Instance using a defined random.seed()
+    if not 'seed' in options.genalg:
         options.genalg['seed'] = np.random.randint(1, 9999)
     logging.info("seed to generate randomness: {:d}".format(options.genalg['seed']))
-    ga = My_GSimpleGA(function=function, genome=genome, precalculation=precalculation, seed=options.genalg['seed'])
+
+    # 7.2 set trackinghistory flag
+    if not 'trackhistory' in options.genalg:
+        options.genalg['trackhistory']=False
+
+    # 7.3 set Genetic Algorithm Instance
+    ga = My_GSimpleGA(
+            function=function,
+            genome=genome,
+            precalculation=precalculation,
+            seed=options.genalg['seed'],
+            trackhistory=options.genalg['trackhistory'] )
 
     # 8. set Selector
     if options.genalg['selector'] == 'RouletteWheel':  # Default = GRouletteWheel
@@ -539,9 +559,10 @@ def run_pyevolve(array, options, level=None, function=None):
     pop.scaleMethod.set(Scaling.SigmaTruncScaling)
 
     # 17. for plotting / logging
-    sqlite_adapter = DBAdapters.DBSQLite(
-        identify=options.genalg['db_identify'], resetDB=False, resetIdentify=True, commit_freq=1)
-    ga.setDBAdapter(sqlite_adapter)
+    if options.write or True:
+        sqlite_adapter = DBAdapters.DBSQLite(
+            identify=options.genalg['db_identify'], resetDB=False, resetIdentify=True, commit_freq=1)
+        ga.setDBAdapter(sqlite_adapter)
 
     logging.info("GenAlg:"+ repr(ga))
 

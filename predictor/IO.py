@@ -5,6 +5,7 @@ from CINDES.utils.utils import processify
 from CINDES.INDES import construction as zcon
 
 import numpy as np
+import logging
 import os
 import pickle
 from copy import deepcopy
@@ -19,6 +20,7 @@ def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='x_', array
     #### MAKE Y
     # get input from inputfile table
     y = get_y(table, tableindex)
+    print "made y",
 
     #### MAKE X
     ## X.1: get indices from table
@@ -38,6 +40,7 @@ def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='x_', array
 
 def get_X(indices, descriptor='BoB',array=None, identify='x_', **TZmat):
     if TZmat:
+        print "making ", descriptor, "...",
         if descriptor=='BoB':
             X = get_X_BoB(indices=indices, **TZmat )
         elif 'int' in descriptor:
@@ -78,7 +81,10 @@ def get_X_qml_xyz(indices, descriptor, **TZmat):
     return get_X_qml(xyzs, descriptor)
 
 def get_X_qml(xyzs,descriptor='bob', **kwargs):
+    print 'in get_X_qml'
     if descriptor=='bob':
+        print "Jos is here"
+        print "nxyz:", len(xyzs)
         X = np.array([BoB_qml(xyz, **kwargs) for xyz in xyzs])
     elif descriptor=='slatm':
         X = np.array([slatm(xyz) for xyz in xyzs])

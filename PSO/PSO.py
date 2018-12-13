@@ -109,11 +109,6 @@ def main(param):
 
 
 def run_pso(mprms, function):
-    # 2.
-    w1 = mprms.pso['w1']
-    w2 = mprms.pso['w2']
-    c1 = mprms.pso['c1']
-
     # 3. Initialize Algorithm:
     minimize = mprms.optimum == 'minimum'
     if mprms.pso['type']=='concrete':
