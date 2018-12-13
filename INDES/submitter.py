@@ -24,11 +24,16 @@ def submit(job, script='ID_gauss'):
     time.sleep(1)
     return jobid
 
-def submitworker(n):
-    #jobids = subprocess.check_output(['wsub', '-batch', 'myworker.pbs', '-data', 'loglist.csv'])
-    #jobids = subprocess.check_output(['wsub', '-batch', 'myworker.pbs', '-data', 'loglist.csv'])
-    arrayids= "1-{:d}".format(n)
-    jobids = subprocess.check_output(['qsub', '-t', arrayids, 'CINDES_ATOOLS.pbs'])
+def submitworker(nprocs):
+    # command to submit on 2 procs: wsub --batch myworker9.pbs --data loglist.csv -threaded 2 -master
+    if nprocs==1:
+        jobids = subprocess.check_output(['wsub', '-batch', 'CINDES_worker.pbs', '-data', 'loglist.csv'])
+    elif nprocs==2:
+        jobids = subprocess.check_output(['wsub', '-batch', 'CINDES_worker.pbs', '-data', 'loglist.csv', '-threaded', '2', '-master'])
+    else:
+        raise NotImplementedError('more processors than 2 is currently not allowed via worker submission')
+    #arrayids= "1-{:d}".format(n)
+    #jobids = subprocess.check_output(['qsub', '-t', arrayids, 'CINDES_ATOOLS.pbs'])
     return jobids
 
 def nosubmit_orca(path, index, identify):

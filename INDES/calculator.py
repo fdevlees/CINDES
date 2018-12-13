@@ -314,6 +314,14 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
                 job.N = None
         else:  # so single job
             program.filewriter(molecule, calc)
+
+        if myrun.worker: # set worker attribute to all jobs
+            for mol in mols:
+                try:
+                    for job in mol.jobs:
+                        job.worker = True
+                except AttributeError:
+                    pass
     return
 
 
@@ -396,14 +404,13 @@ def submit_normal(mols_tocal, myrun):
         '''
 
     jobids = []
-    arrayjob = False
     worker = myrun.worker
     for molecule in mols_tocal:
         for job in molecule.jobs:
 
             # 1. try ready part
             if myrun.try_ready:
-                if arrayjob:
+                if worker:
                     name = job.logpath
                     if glob.glob(name):
                         print "already calculated:", name
@@ -423,47 +430,24 @@ def submit_normal(mols_tocal, myrun):
                 jobids.append(jobid)
                 time.sleep(1)
 
-    if worker:
+    if worker and len(jobids)>0:
+        nprocs  = jobids[0].calc['nprocs'] # should be the same for all jobs!
+        
+        # 1. write csv file with job paths
         with open('loglist.csv', 'w') as f:
             f.write('job,log\n')
             for job in jobids:
                 f.write('{},{}\n'.format(job.filepath,job.logpath))
 
-        atoolspbs = """#!/bin/bash -l
-#PBS -N CINDES_ATOOLS
-#PBS -l walltime=1:00:00,nodes={nnodes}:ppn=28
-#PBS -A lt1_starter-77
-#PBS -j oe
+        # 2. write pbs file with custom number of nodes:
+        # always use at least one node and otherwise use njobs/28 or njobs/14 if nprocs==2
+        nnodes= max(1, len(jobids)/(28/nprocs))
+        with open('CINDES_worker.template','r') as f:
+            template = f.read()
+        with open('CINDES_worker.pbs','w') as f:
+            f.write(template.format(nnodes=nnodes, identifier=myrun.identify.strip('_')))
 
-module load atools/1.4.4
-alog --state start
-
-module load NWChem/6.6.r27746-intel-2016a
-
-source <(aenv --data {path}/loglist.csv )
-cd $VSC_SCRATCH
-echo "VSC_SCRATCH:" $VSC_SCRATCH
-#time mpirun -np {nprocs} /apps/leuven/broadwell/build/n/NWChem/nwchem-6.6/bin/LINUX64/nwchem $job>$log
-#time /apps/leuven/broadwell/build/n/NWChem/nwchem-6.6/bin/LINUX64/nwchem $job>$log
-
-alog --state end --exit $?
-"""
-        n = len(jobids)
-        nprocs  = jobids[0].calc['nprocs'] # should be the same for all jobs!
-        if n<28:
-            nnodes=1
-            nprocs=7
-        elif myrun.nprocs==1:
-            nnodes=n/28
-        elif myrun.nprocs==2:
-            nnodes=n/14
-        elif myrun.nprocs==7:
-            nnodes=n/4
-        
-        lpath = myrun.path.rsplit('/',1)[0]  
-        with open("CINDES_ATOOLS.pbs", 'w') as f:
-            f.write(atoolspbs.format(nprocs=nprocs , nnodes=nnodes, path=lpath))
-        jobids = [subm.submitworker(n=len(jobids))]
+        jobids = [ subm.submitworker(nprocs) ]
     return jobids
 
 # 3. testing
@@ -550,7 +534,8 @@ def test_ready2(mols_tocal, myrun):
     # 1. get the list of entries that are in the queue
     if myrun.worker:
         #files = ['my-gaussian-worker-job']
-        files = ['CINDES_ATOOLS']
+        #files = ['CINDES_ATOOLS']
+        files = ['my-CINDES-g9-worker-job']
     else:
         for mol in mols_tocal:
             jobnames = [job.filename for job in mol.jobs]
