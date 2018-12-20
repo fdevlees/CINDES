@@ -34,6 +34,7 @@ import re
 import os
 import shutil
 once = 0
+counter = 0
 
 # this function to redirect the output of the optga keyword
 import sys
@@ -442,12 +443,17 @@ def submit_normal(mols_tocal, myrun):
         # 2. write pbs file with custom number of nodes:
         # always use at least one node and otherwise use njobs/28 or njobs/14 if nprocs==2
         nnodes= max(1, len(jobids)/(28/nprocs))
+        # to prevent using similar names in queue
+        global counter
+        identifier = "{}{}".format(myrun.identify,str(counter))
+        counter += 1
         with open('CINDES_worker.template','r') as f:
             template = f.read()
         with open('CINDES_worker.pbs','w') as f:
-            f.write(template.format(nnodes=nnodes, identifier=myrun.identify.strip('_')))
+            f.write(template.format(nnodes=nnodes, identifier=identifier))
 
-        jobids = [ subm.submitworker(nprocs) ]
+        subm.submitworker(nprocs)
+        jobids = [ identifier ]
     return jobids
 
 # 3. testing
@@ -474,7 +480,7 @@ def jobtester(mols_tocal, myrun, jobids=None):
     if test_ready == 1:
         test_ready1(mols_tocal, myrun)
     elif test_ready == 2:  # default
-        test_ready2(mols_tocal, myrun)
+        test_ready2(mols_tocal, myrun, jobids)
     elif test_ready == 3:
         test_ready3(mols_tocal, myrun)
     else:
@@ -516,7 +522,7 @@ def test_ready1(indices, myrun):
     return
 
 
-def test_ready2(mols_tocal, myrun):
+def test_ready2(mols_tocal, myrun, jobids=None):
     """
     this function tests if the jobs are still queing or running based on the output of the 'qsta' command
     function needs:
@@ -535,7 +541,7 @@ def test_ready2(mols_tocal, myrun):
     if myrun.worker:
         #files = ['my-gaussian-worker-job']
         #files = ['CINDES_ATOOLS']
-        files = ['my-CINDES-g9-worker-job']
+        files = jobids
     else:
         for mol in mols_tocal:
             jobnames = [job.filename for job in mol.jobs]
