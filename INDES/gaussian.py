@@ -68,9 +68,12 @@ class GaussianJob(BaseJob):
                                 newfile.extend(xyz_f)
                                 newfile.extend(['\n'])
                                 break
+                    elif self.worker and 'nprocshared' in line:
+                        # change %nprocshared=* to %nprocsared=28
+                        newfile.append('%nprocshared=28\n')
+                        raise NotImplementedError('and what if there is not a nprocshared in file??!')
                     else:
                         newfile.append(line)  # copy that line because it is not the zmat found in the inputfile
-                print "=" * 20
                 newfilepath = "{}/{}zzz.com".format(self.path, self.name)
                 self.errorfile = newfilepath
                 open(newfilepath, 'w').writelines(newfile)

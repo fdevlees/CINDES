@@ -9,7 +9,7 @@ class BaseJob(object):
     '''BaseJob of any kind of submittable job'''
     script = ''
 
-    def __init__(self, filepath, calc=dict()):
+    def __init__(self, filepath, calc=dict(), worker=False):
         '''There are different combinations of path and file to be set:
         -filepath = full path to INPUT file
         -path     = path where file is located
@@ -23,6 +23,7 @@ class BaseJob(object):
         self.filepath = filepath
         self.path = path
         self.filename = filename
+        self.worker = worker
 
         if '.' in filename:
             self.name = filename.split('.')[0]
@@ -90,6 +91,7 @@ class BaseJob(object):
             print "open-new-file submit-problem. trying to resubmit"
             self.submit()
         elif not ret == 1:
+            print "================="
             print "Error termination:", self.logpath
             self.errortermination(debug)
         else:
