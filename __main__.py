@@ -56,6 +56,10 @@ if True:
         from PSO import PSO
         PSO.main(param)
 
+    elif param['procedure'] in ['gp']:
+        from INDES.procedures import GP
+        GP(param, array)
+
     elif param['procedure'] == 'test':
         from INDES.procedures import testrun
         testrun(param, array)
