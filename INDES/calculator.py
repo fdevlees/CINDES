@@ -68,7 +68,7 @@ def get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun):
         -props (set)
     '''
     import json
-    with open(tablefilename, 'rb') as f:
+    with open(tablefilename, 'r') as f:
         db = json.load(f)
     if debug:
         print "secret_table:"
@@ -396,14 +396,13 @@ def submit_normal(mols_tocal, myrun):
         '''
 
     jobids = []
-    arrayjob = False
     worker = myrun.worker
     for molecule in mols_tocal:
         for job in molecule.jobs:
 
             # 1. try ready part
             if myrun.try_ready:
-                if arrayjob:
+                if worker:
                     name = job.logpath
                     if glob.glob(name):
                         print "already calculated:", name

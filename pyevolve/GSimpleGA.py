@@ -258,6 +258,8 @@ class GSimpleGA:
       if trackhistory:
           self.track=True
           self.history=[]
+      else:
+          self.track=False
       
       logging.debug("A GA Engine was created, nGenerations=%d", self.nGenerations)
 
