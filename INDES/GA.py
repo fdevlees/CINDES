@@ -130,9 +130,10 @@ class Fitness_Function():
         if self.skip:
             mols_all = skipper(mols_tocal, mols_nocal, myrun)
         else:
-            mols_all = INDES.procedures.submittingprocedure(mols_tocal,
-                                                            mols_nocal,
-                                                            myrun)
+            mols_all = INDES.calculator.procedure(myrun, mols_tocal, mols_nocal)
+            #mols_all = INDES.procedures.submittingprocedure(mols_tocal,
+            #                                                mols_nocal,
+            #                                                myrun)
 
         # 4. log new results
         self.table = INDES.loggings.loggings(mols_all,
