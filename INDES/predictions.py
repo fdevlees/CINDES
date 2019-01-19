@@ -445,23 +445,3 @@ def predictor(
     run.function = store_function
     return mols_nocal, mols_tocal, made_pred
 
-    # Splitting part
-    # if run_object.ml==2 and not mols_todo==[]: #prescrean calculate only the best 50 %
-    #    preds_data = zip(mols_todo, preds_ml) #get indices and predictions in same list
-    #    preds_data = map(list,preds_data)
-    #    preds_ml_sorted = sorted(preds_data,key=lambda x:x[1] ) #sort them based on prediction
-    #    if run_object.optimum=='maximum': preds_ml_sorted = preds_ml_sorted[::-1] #when not optimum minimum reverse the list
-    #    for item in preds_ml_sorted:
-    #        item.insert(1,0)
-    #    if debug#:
-    #        print "preds_ml_sorted:"
-    #        for item in preds_ml_sorted: print item
-    #    half = len(preds_ml_sorted) / 2
-    #    print "half:", half
-    #    preds_tocal = preds_ml_sorted[:half]
-    #    preds_nocal = preds_ml_sorted[half:]
-    #    indices_tocal = [ item[0] for item in preds_tocal ] # the first entries are the indices
-    #    data_nocal = data_nodo + preds_nocal # merge the already known and the predictions
-    # elif run_object.regression==2:
-    #    raise SystemExit('prescreaning not implemented')
-    #    pass

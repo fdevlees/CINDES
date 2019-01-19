@@ -25,59 +25,13 @@ from CINDES.utils.molecule import Molecule
 from CINDES.utils.table import set_table, get_property_table
 from CINDES.utils.utils import skipper
 from CINDES import INDES
+from CINDES.INDES.run import FrameRun
 from predictions import predictor
+from calculator import evaluate_mols
 
 from CINDES.pyevolve import G1DList, GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters, Crossovers
 from CINDES.pyevolve import Scaling
 import CINDES.pyevolve as pyevolve
-
-
-def my_mutator(conf):
-    pos_to_mutate = np.random.randint(0, len(individual) - 1)
-    conf[pos_to_mutate] = np.random.choice(array[pos_to_mutate])
-    return conf
-
-
-def make_individual(array, *args, **kwargs):
-    arlen = len(array)
-    conf = []
-    for i in range(arlen):
-        conf.append(np.random.choice(array[i]))
-    return conf
-
-
-def make_population(count, array):
-    population = []
-    for _ in xrange(count):
-        individual = make_individual(array)
-        population.append(individual)
-    return population
-
-
-def get_database():
-    import pickle
-    try:
-        # with open('table_unbiased','rb') as f:
-        with open('table_new3.dat', 'rb') as f:
-            table = json.load(f)
-    except IOError as e:
-        print "NO TABLE ONLY VALID IF SKIPPER IS USED:,", e
-        table = dict()
-    return table
-
-
-def get_input():
-    options, subs_array = INDES.inputreader.read_input('INPUTBC')
-    if debug:
-        print "len(subs_array)", len(subs_array)
-    return options, subs_array
-
-
-@log_io()
-def get_geometry(options):
-    '''zmatrixfile should be in options'''
-    zmatrix = INDES.reader.geometry(**options)
-    return zmatrix
 
 
 class Fitness_Function():
@@ -95,67 +49,25 @@ class Fitness_Function():
         i probably should also already get a self.kernel here such that the evaluatefunction only should call predict
         '''
         self.run = run
-        self.skip = self.run.nosub==1
         self.table = table
         self.array = array
         return
 
     def evaluate_multi(self, confs, gen=0):
         ''' this function is used by my_GSimpleGA class.my_evaluate '''
-        # 1. convert configuration lists to molecule instances
-        if verbose: print "confs:", confs
         individuals = [Molecule(conf=conf) for conf in confs]  # list of molecules
-        if verbose: print "individuals:", individuals
 
-        # 2. check which molecules are already calculated and add them to data_nocal
-        mols_todo, mols_nodo = INDES.construction.check_in_table(individuals, self.table, self.run.props)
+        mols, nnewcalcs, made_pred = evaluate_mols(self.run, individuals, self.table, gen, nsite=0)
 
-        # STEP 2: PREDICTOR
-        # perform prescreaning in a predictions.
-        if self.run.predictions:
-            property_table = get_property_table(self.table, self.run)
-            mols_nocal, mols_tocal, made_pred = predictor(
-                self.run,
-                property_table,
-                mols_todo, mols_nodo,
-                gen,
-                array=self.array,
-                nsite=0
-            )
-        else:
-            mols_nocal, mols_tocal = mols_nodo, mols_todo
-
-        # 4. calculate configurations
-        myrun = self.run
-        if self.skip:
-            mols_all = skipper(mols_tocal, mols_nocal, myrun)
-        else:
-            mols_all = INDES.calculator.procedure(myrun, mols_tocal, mols_nocal)
-            #mols_all = INDES.procedures.submittingprocedure(mols_tocal,
-            #                                                mols_nocal,
-            #                                                myrun)
-
-        # 4. log new results
-        self.table = INDES.loggings.loggings(mols_all,
+        self.table = INDES.loggings.loggings(mols,
                                              self.table,
                                              gen,
                                              1, 1,
-                                             made_pred=False,
-                                             tablename=myrun.tablename,
-                                             write=myrun.write)
-        return mols_all
+                                             made_pred=made_pred,
+                                             tablename=self.run.tablename,
+                                             write=self.run.write)
 
-
-    @log_io()
-    def evaluate_skip_multi(self, confs):
-        indices = []
-        for conf in confs:
-            indices.append(INDES.procedures.zcon.contoind(conf))
-        fitnesses = [[index, skipper(index)] for index in indices]
-        for conf, fitness in zip(confs, fitnesses):
-            fitness[0] = conf
-        if verbose: sprint(10, fitnesses)
-        return fitnesses
+        return mols
 
 
 class My_GSimpleGA(GSimpleGA.GSimpleGA):
@@ -443,7 +355,7 @@ from CINDES.INDES import procedures
 def main(param, array=None):
     if array is None:
         array = param['array']
-    GArun = procedures.FrameRun(**param)
+    GArun = FrameRun(**param)
     table = set_table(GArun, array)
     function = Fitness_Function(GArun, table=table, array=array)
     final_genome = run_pyevolve(array, GArun, function=function)

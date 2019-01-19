@@ -1,4 +1,12 @@
 #!/bin/env python
+''' This module contains some other procedures that can be useful exept for searching:
+    1. genconf: to make inputfiles for a single molecular index given by startind
+    2. generate all molecules given in input
+    3. generate all possible molecules
+    4. get n random structures
+    5. test predictions from a dataset
+    6. do a Steepest Descent algorithm.
+'''
 # this line must be at the beginning of the file!
 from __future__ import division
 
@@ -8,43 +16,28 @@ debug = 1
 # import python libraries
 import time  # for getting time/date and time delays
 start = time.clock()
-from inspect import stack
-from math import ceil
-import shutil  # module to copy files
-from platform import node
 import pprint  # pretty printer for printing lists
-from pprint import pformat
 import os  # for getting window width and testing existence of files
-import re
-from re import findall  # now only needed in construction.py
-import inspect # to see if function is a class
-import sys  # for getting command line input
 import random  # for obtaining random geometry
 import logging  # instead of the large amount of print statements not using it at the moment
 from copy import deepcopy  # for keeping matrices while changing others
-import string
-import pickle
-import numpy as np
 
 # import my own modules
 import construction as zcon  # all functions needed for constructing new geometries
-import reader as r  # this reads the zmatrix in gaussian format
 from predictions import predictor
-from montecarlo import montecarloprocedure
 from loggings import loggings
 import calculator
 
 # import utils
-from CINDES.utils.writings import log_io, print_title, sprint, dump
-from CINDES.utils.utils import *
+from CINDES.utils.writings import print_title
+from CINDES.utils.utils import skipper
 from CINDES.utils.table import set_table, get_property_table
+from BFS import testmax, runtest
 
-# initial global variables
-#logging.getLogger(__name__)
-#logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 once = 0
 
 print "time for imports:", time.clock() - start
+
 
 
 def genconf(param):
@@ -68,7 +61,6 @@ def genconf(param):
             mtzmat = zcon.constructor2(mol.conf, c, a, p, links=myrun.symlinks, defaultgroups=myrun.defaultgroups)
             setattr(mol, zmatfile, mtzmat)
     else:
-        #TZmat = r.geometry(zmatfile=param['zmatrixfile'], **param)
         TZmat = myrun.TZmat
         c = deepcopy(TZmat['core'])
         a = deepcopy(TZmat['active'])
@@ -95,8 +87,6 @@ def genconf(param):
             print "\n\tprinter file with:"
             pprint.pprint(calc)
     return
-
-# 3: generate
 
 
 def generate_procedure(param, array):
@@ -265,7 +255,6 @@ def testpred(param, array):
     print myrun
     table = set_table(myrun)
     property_table = get_property_table(table, myrun)
-    # sprint(10,property_table)
     mols_todo, mols_nodo = ([Mol(), ], [Mol(), ])
     mols_nocal, mols_tocal, made_pred = predictor(myrun, property_table, mols_todo, mols_nodo, 99, array=array, nsite=0)
     return
@@ -296,6 +285,7 @@ def SteepestDescent(param, array):
     # --- HERE THE MAIN LOOP STARTS --- --- #
     # ------------------------------------- #
     count = 1  # so we start counting at 1!
+    ncalcs = 0
     while True:
         print_title("COUNT: " + str(count), outline='l', signator="-")
 
@@ -310,28 +300,17 @@ def SteepestDescent(param, array):
         # STEP 1: INDEXMAKER
         # get indices_all and the indices that still need to be calculated
         #indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker_SD(startconf, array, table, myrun )
-        mols_todo, mols_nodo = zcon.classmaker2_SD(startconf, array, table, myrun)
+        mols = get_molecules_SD(startconf, array, myrun)
 
-        # STEP 2: PREDICTOR
-        # perform prescreaning in a predictions.
-        mols_nocal, mols_tocal, made_pred = predictor(myrun, table, mols_todo, mols_nodo, count, array=array)
-        #data_nocal,indices_tocal, predict = predictor(myrun, table, indices_todo,data_nodo, count, array=array)
+        # STEP 2&3: predict and calculate
+        mols_all, nnewcalcs, made_pred = calculator.evaluate_mols(myrun, mols, table, property_table, count, nsite=0)
+        ncalcs += nnewcalcs
 
-        # STEP 3: SUBMITTING PART
-        if not myrun.nosub == 1:
-            mols_all = calculator.procedure(myrun, mols_tocal, mols_nocal)
-            #mols_all = submittingprocedure(mols_tocal,
-            #                               mols_nocal,
-            #                               myrun,
-            #                              )  # here call submitting procedure
-        else:
-            mols_all = skipper(mols_tocal, mols_nocal, myrun)
-
-        # STEP 5: UPDATE DATABASE and LOG results of microiteration
+        # STEP 4: UPDATE DATABASE and LOG results of microiteration
         # logs new elements in data to table and tablebin and whole data to cyclesinfo
         table = loggings(mols_all, table, count, 1, 1, made_pred=made_pred, tablename=myrun.tablename)
 
-        # STEP 6: UPDATE OPTIMUM STRUCTURE
+        # STEP 5: UPDATE OPTIMUM STRUCTURE
         # decide what the optimum site is and if the bc if fullfilled
         print "BCOK:", bcok
         optsite, bcok = testmax(myrun, mols_all, bcok)

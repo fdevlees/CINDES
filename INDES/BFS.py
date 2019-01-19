@@ -1,15 +1,19 @@
-
+'''This is the module containing the Best First Search algorithm'''
 
 import logging
 import random
 import pprint
+import time
+
+from CINDES.utils.writings import print_title
 
 from montecarlo import montecarloprocedure
 import construction as zcon
-from predictions import predictor
 import calculator
 from loggings import loggings
+from CINDES.utils.table import set_table, get_property_table
 
+from run import FrameRun
 
 def get_startconf(param, array):
     logging.info("random start molecule: ")
@@ -100,7 +104,7 @@ def testmax(myrun, mols, bcok=None):
 # 7 set global optimum and define convergence and redirect to Monte Carlo component
 
 
-def runtest(run, optimum, optsite, count, bcok, mctable=[], array=[]):
+def runtest(run, optimum, optsite, count, bcok, table=[], array=[]):
     param = run.__dict__
     converged = 0
 
@@ -111,10 +115,11 @@ def runtest(run, optimum, optsite, count, bcok, mctable=[], array=[]):
             if param['montecarlo'] == 0:
                 converged = 1
             else:
+                property_table = get_property_table(table, run)
                 if param['ml'] == 0:
-                    optsite = montecarloprocedure(run, array, optimum, mctable)
+                    optsite = montecarloprocedure(run, array, optimum, property_table)
                 else:
-                    optsite = montecarloprocedure(run, array, optimum, mctable, **run.TZmat)
+                    optsite = montecarloprocedure(run, array, optimum, property_table, **run.TZmat)
                 logging.info("optimal_after_this_site:" + pprint.pformat(optsite, width=100))
         else:
             logging.info("Global_Iteration_optimum and optimum_after_this_site are not the same yet")
@@ -126,28 +131,6 @@ def runtest(run, optimum, optsite, count, bcok, mctable=[], array=[]):
     optimum = optsite.copy()
     return optimum, optsite, converged
 
-
-def restriction1(mols_todo, mols_nodo, run):
-    ''' test if not B-B A or N-N bond present in molecules '''
-    def has_forbidden_combination(conf, adj):
-        for i in range(len(conf)):
-            for j in range(i, len(conf)):
-                if conf[i] == conf[j] and adj[i][j] == 1.0 and conf[i] in [['N'], ['B']]:
-                    print "forbidden combination: ", i, conf[i], j, conf[j], adj[i]
-                    return True
-        return False
-
-    print "nmol:", len(mols_todo)
-
-    for molecule in mols_todo:
-        print "mol.conf:", molecule.conf
-        if has_forbidden_combination(molecule.conf, run.adj):
-            molecule.discard()
-            #mols_todo.remove(molecule)
-
-    print "nmol:", len(mols_todo)
-
-    return mols_todo, mols_nodo
 
 
 # THERE ARE DIFFERENT GLOBAL PROGRAM FLOW PROCEDURES:
@@ -171,28 +154,9 @@ def BFS(param, array=None):
     return result
 
 
-class Algorithm(object):
-    def logpopulation(self, mols_todo, mols_nodo):
-        logpop = []
-        p=logpop.append
-        p("|      NEW POPULATION CONSTRUCTED:")
-        p("|   mols_todo:")
-        if mols_todo:
-            for mol in mols_todo:
-                p("|      {}".format(mol))
-        else:
-            p("|      -")
-        p("|   mols_nodo:")
-        if mols_nodo:
-            for mol in mols_nodo:
-                p("|      {}".format(mol))
-        else:
-            p("|      -")
-        logging.info('\n'.join(logpop))
-        return
 
 
-class BestFirstSearch(Algorithm):
+class BestFirstSearch(object):
     def __init__(self, run):
         self.run = run
         self.array = self.run.array
@@ -201,7 +165,6 @@ class BestFirstSearch(Algorithm):
 
         # the table with all the results of all calculated configs
         self.table = set_table(self.run, self.run.array)
-        self.property_table = get_property_table(self.table, self.run)
 
         # set initial optimum
         self.optimum = None
@@ -215,7 +178,7 @@ class BestFirstSearch(Algorithm):
         count = 1  # so we start counting at 1!
         ncalcs = 0
         while True:
-            print_title("COUNT: " + str(count), outline='l', signator="-")
+            print_title("Global Iteration No.: " + str(count), outline='l', signator="-")
 
             # set site order in sequence INPUT: param, count
             sequence = self.get_sequence(count)
@@ -234,37 +197,15 @@ class BestFirstSearch(Algorithm):
                 # get indices_all and the indices that still need to be calculated
                 # if table is correctly formatted all second element item[1]==1. meaning they are ab-initio calculated
                 #indices_todo,data_nodo,configurations,indices_all = zcon.indexmaker2(startconf,array,k,table )
-                mols_todo, mols_nodo = zcon.classmaker2(self.startconf, self.array, k, self.table, self.run)
-                if 1 in self.run.restrictions:  # this are actually filters!
-                    mols_todo, mols_nodo = restriction1(mols_todo, mols_nodo, self.run)
+                mols = zcon.get_molecules(self.startconf, self.array, k, self.run)
 
-                self.logpopulation(mols_todo, mols_nodo)
+                # STEP 2&3: predict and calculate
+                mols_all, nnewcalcs, made_pred = calculator.evaluate_mols(self.run, mols, self.table, count, nsite=l)
+                ncalcs += nnewcalcs
 
-                # STEP 2: PREDICTOR
-                # perform prescreaning in a predictions.
-                mols_nocal, mols_tocal, made_pred = predictor(
-                    self.run,
-                    self.property_table,
-                    mols_todo, mols_nodo,
-                    count,
-                    array=self.array,
-                    nsite=l
-                )
-
-                # STEP 3: SUBMITTING PART
-                ncalcs += len(mols_tocal)
-                if not self.run.nosub == 1:
-                    mols_all = calculator.procedure(self.run, mols_tocal, mols_nocal)
-                    #mols_all = submittingprocedure(mols_tocal,
-                    #                               mols_nocal,
-                    #                               self.run,
-                    #                               )  # here call submitting procedure
-                else:
-                    mols_all = skipper(mols_tocal, mols_nocal, self.run)
 
                 # STEP 4: UPDATE OPTIMUM STRUCTURE
                 # decide what the optimum site is and if the bc if fullfilled
-                logging.info("BCOK:{:d}".format(self.bcok))
                 optsite, self.bcok = testmax(self.run, mols_all, self.bcok)
 
                 # STEP 5: UPDATE DATABASE and LOG results of microiteration
@@ -275,9 +216,10 @@ class BestFirstSearch(Algorithm):
                                  k, l,
                                  made_pred,
                                  tablename=self.run.tablename)
-                self.property_table = get_property_table(self.table, self.run)
+
+                logging.info("BCOK:{:d}".format(self.bcok))
                 self.history.append({
-                    'count':count, 
+                    'count':count,
                     'p':optsite.Pvalue,
                     'index':optsite.index,
                     'site':k,
@@ -293,7 +235,7 @@ class BestFirstSearch(Algorithm):
                     optsite,
                     count,
                     self.bcok,
-                    mctable=self.property_table,
+                    table=self.table,
                     array=self.array)
 
             if converged == 1:
@@ -334,4 +276,5 @@ class BestFirstSearch(Algorithm):
         # output sequence
         logging.info("SEQUENCE: " + str(sequence))
         return sequence
+
 

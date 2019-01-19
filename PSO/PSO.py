@@ -19,6 +19,7 @@ from CINDES.INDES.predictions import predictor
 from CINDES.predictor import learning_int as ml_i
 from CINDES.INDES.GA import Fitness_Function
 from CINDES.INDES.construction import indtocon, contoind
+from CINDES.INDES.run import FrameRun
 
 from CINDES.pyevolve import DBAdapters
 
@@ -96,7 +97,7 @@ def main(param):
     random.seed(param['seed'])
 
     # 0. setup
-    mprms = procedures.FrameRun(**param)
+    mprms = FrameRun(**param)
     print mprms
     table = set_table(mprms, mprms.array)
     mprms.array = stringify_array(mprms.array)

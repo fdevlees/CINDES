@@ -8,19 +8,25 @@ debug = 1
 # import python libraries
 import logging  # instead of the large amount of print statements not using it at the moment
 import numpy as np
+import pickle
+import time
 
 # import my own modules
 import construction as zcon  # all functions needed for constructing new geometries
 from predictions import predictor
 from loggings import loggings
-import calculator
+from BFS import testmax
 from run import FrameRun
+from calculator import evaluate_mols
 
 # import utils
 from CINDES.utils.writings import print_title
 from CINDES.utils.table import set_table, get_property_table
 from CINDES.utils.molecule import Molecule
+from CINDES.utils.utils import skipper
 
+from skopt.utils import normalize_dimensions
+from skopt import Optimizer
 
 class Algorithm(object):
     def logpopulation(self, mols_todo, mols_nodo):
@@ -78,7 +84,6 @@ class GaussianProcess(Algorithm):
 
     def set_space(self):
         print "array:", self.array
-        from skopt.utils import normalize_dimensions
         space = normalize_dimensions(self.array_joined)
         print "space:", space
         self.space = space
@@ -91,40 +96,15 @@ class GaussianProcess(Algorithm):
         unique_confs = [ zcon.indtocon(item) for item in set(indices)]
 
         # 2. make molecules
-        individuals = [Molecule(conf=conf) for conf in unique_confs]
+        mols = [Molecule(conf=conf) for conf in unique_confs]
 
         # 3. check if already in table
-        mols_todo, mols_nodo = zcon.check_in_table(individuals, self.table, self.run.props)
-        self.logpopulation(mols_todo, mols_nodo)
-
-        # irrelevant for now, just renaming:
-        if self.run.predictions:
-            property_table = get_property_table(self.table, self.run)
-            mols_nocal, mols_tocal, made_pred = predictor(
-                self.run,
-                property_table,
-                mols_todo, mols_nodo,
-                gen,
-                array=self.array,
-                nsite=0
-            )
-        else:
-            mols_nocal, mols_tocal = mols_nodo, mols_todo
-
-        # 4. calculate configurations
-        self.ncalcs += len(mols_tocal)
-        if self.skip:
-            mols_all = skipper(mols_tocal, mols_nocal, self.run)
-        else:
-            mols_all = calculator.procedure(self.run, mols_tocal, mols_nocal)
-            #mols_all = submittingprocedure(mols_tocal,
-            #                               mols_nocal,
-            #                               self.run)
-        self.optimum, _ = testmax(self.run, mols_all)
-        print "mols_all:", mols_all
+        mols, nnewcalcs, made_pred = evaluate_mols(self.run, mols, self.table, gen, nsite=0)
+        self.optimum, _ = testmax(self.run, mols)
+        print "mols_all:", mols
 
         # 5. log new results
-        self.table = loggings(mols_all,
+        self.table = loggings(mols,
                               self.table,
                               gen,
                               1, 1,
@@ -139,8 +119,7 @@ class GaussianProcess(Algorithm):
                     })
 
         # 6. set Y
-        y_dict = {mol.index: mol.Pvalue for mol in mols_all}
-        #print "y_dict:", y_dict, "indices:", indices
+        y_dict = {mol.index: mol.Pvalue for mol in mols}
         Y=[]
         for index in indices:
             Y.append(y_dict[index])
@@ -150,7 +129,6 @@ class GaussianProcess(Algorithm):
         batchsize=10
         self.set_space()
 
-        from skopt import Optimizer
         optimizer = Optimizer(
             dimensions=self.space,
             base_estimator="GP",

@@ -1,4 +1,8 @@
 #!/bin/env python
+''' This file contains a parameter class called BaseRun and FrameRun which holds all the input parameters
+
+'''
+
 # this line must be at the beginning of the file!
 from __future__ import division
 
