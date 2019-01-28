@@ -431,7 +431,8 @@ def submit_normal(mols_tocal, myrun):
                 jobids.append(jobid)
                 time.sleep(1)
 
-    if worker and len(jobids)>0:
+    minimum_number_worker_jobs = 10
+    if worker and len(jobids)>minimum_number_worker_jobs:
         nprocs  = jobids[0].calc['nprocs'] # should be the same for all jobs!
         
         # 1. write csv file with job paths
@@ -453,8 +454,18 @@ def submit_normal(mols_tocal, myrun):
             f.write(template.format(nnodes=nnodes, identifier=identifier))
 
         subm.submitworker(nprocs)
-        jobids = [ identifier ]
-    return jobids
+        jobfiles = [ identifier ]
+        return jobfiles 
+    elif worker and len(jobids)>0:
+        print "there are too few jobs to use the worker efficiently so jobs will be submitted to full nodes"
+        jobfiles = []
+        for job in jobids:
+            job.submit()
+            jobfiles.append(job.filename)
+            time.sleep(1)
+        return jobfiles
+    else:
+        return jobids
 
 # 3. testing
 
