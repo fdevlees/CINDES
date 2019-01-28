@@ -83,6 +83,11 @@ def qsta():
         print "subprocess.CalledProcessError"
         print repr(e)
         p1 = False
+    except LookupError as e:
+        # This error occurred on VSC in subprocess module calling pickle using 'string_escape'
+        print "LookupError"
+        print repr(e)
+        p1 = False
     return p1
 
 

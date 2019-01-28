@@ -11,8 +11,6 @@ from pprint import pformat
 import time
 
 import numpy as np
-from scipy import stats
-import pandas as pd
 
 
 def formatitem(opt, item, maxlenconf=49):
@@ -258,6 +256,7 @@ def log_screen(mols):
 
 
 def log_screen_pred(mols):
+    import pandas as pd
     print
     preds = [mol.predictions for mol in mols]
     indices = [mol.index for mol in mols]
