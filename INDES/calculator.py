@@ -69,7 +69,7 @@ def get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun):
         -props (set)
     '''
     import json
-    with open(tablefilename, 'rb') as f:
+    with open(tablefilename, 'r') as f:
         db = json.load(f)
     if debug:
         print "secret_table:"

@@ -105,11 +105,13 @@ def montecarloprocedure(run, subarray, maxi, Dtable, **kwargs):
 
     Tcount = 0  # temperature counter. to zero after increased.
     Rcount = 0  # number of random confs tested
-    Tcountmax = int(10 ** (float(1 + fileparameters['nrandsites'])))
+    #Tcountmax = int(10 ** (float(1 + fileparameters['nrandsites'])))
+    Tcount = 0
+    Tcountmax = 1000
     print "Number of tested configurations per temperature:", Tcountmax
 
     # 3. FOR ML
-    if fileparameters['ml'] == 2 or fileparameters['predictions']:
+    if fileparameters['ml'] > 0 or fileparameters['predictions']:
         if not hasattr(run, 'best_pred'):
             run.best_pred = run.predictions[0]
         ml_instance = ML_init(table=Dtable, array=subarray, run=run, prediction=run.best_pred, **kwargs)
@@ -122,7 +124,7 @@ def montecarloprocedure(run, subarray, maxi, Dtable, **kwargs):
         rind = zcon.contoind(rconf)
 
         # 4.2a predict property via difference algorithm
-        if True:
+        if not (fileparameters['ml'] > 0 or fileparameters['predictions']):
             deltaetje = 0
             for i in range(
                     len(rconf)):  # now we want to have a value erandom for this configuration and test it with a certain probability

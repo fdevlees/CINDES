@@ -40,7 +40,7 @@ def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='x_', array
 
 def get_X(indices, descriptor='BoB',array=None, identify='x_', **TZmat):
     if TZmat:
-        print "making ", descriptor, "...",
+        #print "making ", descriptor, "...",
         if descriptor=='BoB':
             X = get_X_BoB(indices=indices, **TZmat )
         elif 'int' in descriptor:
@@ -82,10 +82,28 @@ def get_X_qml_xyz(indices, descriptor, **TZmat):
 
 def get_X_qml(xyzs,descriptor='bob', **kwargs):
     print 'in get_X_qml'
+    if True:
+        from molml.features import BagOfBonds
+        feat = BagOfBonds()
+        newxyzs=[]
+        for xyz in xyzs:
+            atoms, coords, _ = zip(*xyz)
+            atoms = map(str, atoms)
+            newxyzs.append([atoms, coords])
+        #feat.fit(newxyzs)
+        X = feat.fit_transform(newxyzs)
+        print "bag-sizes:", feat._bag_sizes
+        print [ x.shape for x in X ]
+        return X
     if descriptor=='bob':
         print "Jos is here"
         print "nxyz:", len(xyzs)
-        X = np.array([BoB_qml(xyz, **kwargs) for xyz in xyzs])
+        #X = np.array([BoB_qml(xyz, **kwargs) for xyz in xyzs])
+        x0 = BoB_qml(xyzs[0], **kwargs)
+        print "x0:", x0
+        print "x0.shape", x0.shape
+        print "x0.dtype:", x0.dtype
+        X = np.fromiter((BoB_qml(xyz, **kwargs) for xyz in xyzs))
     elif descriptor=='slatm':
         X = np.array([slatm(xyz) for xyz in xyzs])
     elif descriptor=='arad':
@@ -276,12 +294,14 @@ def BoB_qml(xyz, **kwargs):
     #if 'size' in kwargs: size=kwargs['size']
     #else: size=56 #max n adamantane with all COOH groups
     size=56
-    #if 'asize' in kwargs: asize=kwargs['asize']
-    #else:
-        #asize = OrderedDict((( 'H' , 36 ),( 'C' , 20 ),( 'O' , 20 ),( 'N' , 10 ),( 'F' , 30 ),( 'S' , 10 ),
-        #                     ( 'Cl', 10 ),( 'Br',  5 )) )
-    asize = OrderedDict((( 'H' , 40 ),( 'C' , 25 ),( 'O' , 8 ),( 'N' , 8 )))
+    if 'asize' in kwargs: asize=kwargs['asize']
+    else:
+        asize = OrderedDict((( 'H' , 36 ),( 'C' , 20 ),( 'O' , 20 ),( 'N' , 10 ),( 'F' , 30 ),( 'S' , 10 ),
+                             ( 'Cl', 10 ),( 'Br',  5 )) )
+    #asize = OrderedDict((( 'H' , 40 ),( 'C' , 25 ),( 'O' , 8 ),( 'N' , 8 )))
+    print "Jos 4"
     ret = mol.generate_bob(asize=asize)
+    print "Jos 5"
     if not hasattr(mol, 'representation'):
         print mol.coordinates
         print mol.atomtypes
