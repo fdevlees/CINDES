@@ -216,11 +216,13 @@ class GSimpleGA:
 
       if type(interactiveMode) != BooleanType:
          Util.raiseException("Interactive Mode option must be True or False", TypeError)
-      
+
       if not isinstance(genome, GenomeBase):
          Util.raiseException("The genome must be a GenomeBase subclass", TypeError)
 
       self.internalPop  = GPopulation(genome)
+      self.currentGeneration = 0
+
       self.nGenerations = Consts.CDefGAGenerations
       self.pMutation    = Consts.CDefGAMutationRate
       self.pCrossover   = Consts.CDefGACrossoverRate
@@ -246,7 +248,6 @@ class GSimpleGA:
 
       self.internalParams = {}
 
-      self.currentGeneration = 0
 
       # GP Testing
       for classes in Consts.CDefGPGenomes:
@@ -600,7 +601,7 @@ class GSimpleGA:
       """ Initializes the GA Engine. Create and initialize population """
       self.internalPop.create(minimax=self.minimax)
       self.internalPop.initialize(ga_engine=self)
-      logging.debug("The GA Engine was initialized !")      
+      logging.debug("The GA Engine was initialized !")
 
    def getPopulation(self):
       """ Return the internal population of GA Engine

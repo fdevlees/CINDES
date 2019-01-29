@@ -442,6 +442,17 @@ class DBSQLite(DBBaseAdapter):
       if (generation % self.commitFreq == 0):
          self.commit()
 
+   def getLastPopulation(self):
+        c = self.getCursor()
+        statement1 = 'select max(generation) from population where identify = "{}"'.format(self.getIdentify())
+        # only fetch one!
+        generation = c.execute(statement1).fetchone()[0]
+        print "new generation:", generation
+        statement2 = 'select molindex from population where identify = "{}" and generation={}'.format(self.getIdentify(), generation)
+        rawPop = c.execute(statement2).fetchall()
+        population = [str(item[0]) for item in rawPop]
+        return generation, population
+
 class DBXMLRPC(DBBaseAdapter):
    """ DBXMLRPC Class - Adapter to dump statistics to a XML Remote Procedure Call
 

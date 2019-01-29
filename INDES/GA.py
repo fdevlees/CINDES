@@ -72,8 +72,11 @@ class Fitness_Function():
 
 class My_GSimpleGA(GSimpleGA.GSimpleGA):
 
-    def __init__(self, genome, function=None, precalculation=True, **kwargs):
+    def __init__(self, genome, function=None, precalculation=True, restart=False, **kwargs):
         GSimpleGA.GSimpleGA.__init__(self, genome, **kwargs)
+
+        self.restart = restart
+
         self.precalculation = precalculation
         if self.precalculation:
             self.FF = function
@@ -234,10 +237,21 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
                 self.__gp_catch_functions(gp_function_prefix)
 
         self.initialize()
+
         #print "Jos in evolve"
         #print "self.internalPop:", self.internalPop
-        #print "self.internalPop.internalPop[0]", self.internalPop.internalPop
-        #print "self.internalPop.internalPop.genomeList", self.internalPop.internalPop[0].genomeList
+        #print "self.internalPop.internalPop", self.internalPop.internalPop[0]
+        print "self.internalPop.internalPop.genomeList", self.internalPop.internalPop[1].genomeList
+        print "n start Individuals:", len(self.internalPop)
+
+        if self.restart:
+            restartPop = self.getLastPopulation()
+            for startInd, restartInd in zip(self.internalPop, restartPop):
+                print "i:", startInd.genomeList
+                startInd.genomeList = restartInd
+            print "n restart Individuals:", len(restartPop)
+            print "self.internalPop:", self.internalPop
+            #raise NotImplementedError('bla')
 
         if self.precalculation:
             self.my_evaluate(population=self.internalPop)
@@ -345,6 +359,13 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
 
         return self.bestIndividual()
 
+    def getLastPopulation(self):
+        generation, rawPop = self.dbAdapter.getLastPopulation()
+        self.currentGeneration = generation
+        pop = [ INDES.construction.indtocon(ind) for ind in rawPop ]
+        print "new Pop", pop
+        return pop
+
 ###### CALL(s) from __main__.py ###########
 
 
@@ -420,12 +441,14 @@ def run_pyevolve(array, options, level=None, function=None):
         options.genalg['trackhistory']=False
 
     # 7.3 set Genetic Algorithm Instance
+    restart = options.genalg['restart']
     ga = My_GSimpleGA(
             function=function,
             genome=genome,
             precalculation=precalculation,
             seed=options.genalg['seed'],
-            trackhistory=options.genalg['trackhistory'] )
+            trackhistory=options.genalg['trackhistory'],
+            restart=restart )
 
     # 8. set Selector
     if options.genalg['selector'] == 'RouletteWheel':  # Default = GRouletteWheel
@@ -473,8 +496,12 @@ def run_pyevolve(array, options, level=None, function=None):
 
     # 17. for plotting / logging
     if options.write or True:
+        if restart:
+            resetIdentify=False
+        else:
+            resetIdentify=True
         sqlite_adapter = DBAdapters.DBSQLite(
-            identify=options.genalg['db_identify'], resetDB=False, resetIdentify=True, commit_freq=1)
+            identify=options.genalg['db_identify'], resetDB=False, resetIdentify=resetIdentify, commit_freq=1)
         ga.setDBAdapter(sqlite_adapter)
 
     logging.info("GenAlg:"+ repr(ga))

@@ -206,6 +206,7 @@ def get_genalg_params(subinp, line):
                 'scaling': 'sigmatrunc',
                 'db_identify': 'ex' + str(np.random.randint(0, 90)),
                 'freq_stats': 10,
+                'restart':False,
                 'seed': 0,
                 'selector': 'RouletteWheel'
                 }
@@ -221,7 +222,10 @@ def get_genalg_params(subinp, line):
                 print "keyword in GA section not recognized:", key
                 raise SystemExit('program stopped')
             value_type = type(defaults[key])
-            defaults[key] = value_type(line.split()[1])
+            if value_type is bool:
+                defaults[key] = True
+            else:
+                defaults[key] = value_type(line.split()[1])
         print " defaults of genetic algorithm are changed. new values:"
     return subinp, defaults
 
@@ -306,6 +310,7 @@ def readfile(subinp):
         'symlinks': [],
         'tablename': 'table.json',
         'test_ready': 2,
+        'threading': False,
         'timelimit': 250000,
         'timestep': 300,
         'try_ready': 0,
@@ -575,6 +580,8 @@ def readfile(subinp):
             paras['try_ready'] = 1
         elif 'test_ready' in line:
             paras['test_ready'] = int(line.split()[1])
+        elif 'threading' in line:
+            paras['threading'] = True
         # elif 'twojob' in line:
         #    try:
         #        paras['twojob'] = int(line.split()[1])
