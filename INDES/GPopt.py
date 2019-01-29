@@ -163,7 +163,9 @@ class GaussianProcess(Algorithm):
     @staticmethod
     def only_finite(X, Y):
         print "X, Y before:", X, Y
-        X, Y = zip(*[ (x,y) for x,y in zip(X,Y) if np.isfinite(y) ])
+        # Y  is converted to np.float array so None values become np.nan values since
+        # isfinite cannot handle None's
+        X, Y = zip(*[ (x,y) for x,y in zip(X,np.array(Y, dtype=np.float)) if np.isfinite(y) ])
         print "X, Y after:", X, Y
         return X, Y
 

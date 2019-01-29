@@ -157,10 +157,13 @@ def runjobs(mols_tocal, myrun, i):
 
     return
 
-
 def do_calcs(mols_tocal, myrun):
     for i, calc in enumerate(myrun.calcs):
-        runjobs(mols_tocal, myrun, i)
+        if myrun.threading:
+            from threading_util import runjubs_threading
+            runjobs_threading(mols_tocal, myrun, i)
+        else:
+            runjobs(mols_tocal, myrun, i)
         # if there need to be set some new geometries for new calculation.
         invoke_script(calc, locals(), (i+1)*100)
         # delete jobs such that new jobs can be set up.

@@ -7,9 +7,11 @@ import string
 import tempfile
 import subprocess
 import logging
+import glob
 
 from CINDES.utils.writings import log_io
 once = 0
+debug = False
 safe = False
 
 def submit(job, script='ID_gauss'):
@@ -162,7 +164,7 @@ def submit_normal(mols_tocal, myrun):
         with open('CINDES_worker.pbs','w') as f:
             f.write(template.format(nnodes=nnodes, identifier=identifier))
 
-        subm.submitworker(nprocs)
+        submitworker(nprocs)
         jobids = [ identifier ]
     return jobids
 
@@ -267,7 +269,7 @@ def test_ready2(mols_tocal, myrun, jobids=None):
             break
         filescopy = files[:]
         njobs = len(filescopy)
-        qsta_raw = subm.qsta()
+        qsta_raw = qsta()
         if qsta_raw == False:
             print "qsta not working!"
             time.sleep(fileparameters['timestep'])

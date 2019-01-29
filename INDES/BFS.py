@@ -122,7 +122,7 @@ def runtest(run, optimum, optsite, count, bcok, table=[], array=[]):
                     optsite = montecarloprocedure(run, array, optimum, property_table, **run.TZmat)
                 logging.info("optimal_after_this_site:" + pprint.pformat(optsite, width=100))
         else:
-            logging.info("Global_Iteration_optimum and optimum_after_this_site are not the same yet")
+            logging.info("global_iteration_optimum and optimum_after_this_site are not the same yet")
             logging.info("gi_optimum:" + pprint.pformat(optimum))
             logging.info("current optimum:" + pprint.pformat(optsite))
     else:  # except NameError:

@@ -371,7 +371,15 @@ def read_file(Job):
             elif inf.startswith('chi_0'):
                 datadict[inf] = job_data.chi_0
             else:
-                print "value not recognized:", inf
+                # try to see if there is an attribute from job_data matching inf. 
+                # NB: the else statement of a for loop is executed when the for loop finishes without break statement!
+                for attribute in dir(job_data):
+                    if inf.startswith(attribute):
+                        print "cclib attribute recognized:", attribute
+                        datadict[inf] = getattr(job_data, attribute)
+                        break
+                else:
+                    print "value not recognized:", inf
     print
 
     return datadict
