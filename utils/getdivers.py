@@ -1,7 +1,8 @@
 from writings import print_title, log_io
 import pickle
 from CINDES.INDES import construction as zcon
-from CINDES.INDES.procedures import Run, set_table, submittingprocedure
+from CINDES.INDES.procedures import Run, set_table
+from CINDES.INDES import calculator
 from CINDES.INDES.predictions import predictor
 from CINDES.INDES.loggings import loggings
 
@@ -43,10 +44,11 @@ def database_construction(param,array):
         #1c eventueel predictions
         mols_nocal, mols_tocal, made_pred = predictor(myrun, table, mols_todo,mols_nodo, count, array=array)
         #2. run new structure
-        mols_all = submittingprocedure(mols_tocal,
-                                       mols_nocal,
-                                       myrun,
-                                     **myrun.TZmat     ) # here call submitting procedure
+        mols_all = calculator.procedure(myrun, mols_tocal, mols_nocal)
+        #mols_all = submittingprocedure(mols_tocal,
+        #                               mols_nocal,
+        #                               myrun,
+        #                             **myrun.TZmat     ) # here call submitting procedure
         #3. add structure to table
         if debug: print "after calculation:"
         if debug: print mols_all

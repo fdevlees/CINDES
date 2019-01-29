@@ -17,8 +17,11 @@ def get_property_table(table, myrun):
                 Pvalue = myrun.function(**kwargs)
                 db[key]=Pvalue
         else:
-            Pvalue = value[ myrun.property ]
-            db[key]=Pvalue
+            try:
+                Pvalue = value[ myrun.property ]
+                db[key]=Pvalue
+            except KeyError:
+                print "molecule is missing!", key
     return db
 
 # 4 table (database)

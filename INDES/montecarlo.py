@@ -6,6 +6,7 @@ from CINDES.utils.writings import log_io, print_title, sprint, dump
 from CINDES.utils.molecule import Molecule
 from CINDES.predictor import learning_skl as learning
 import random
+random.seed(123)
 from math import exp  # exp(x) returns e^x
 #from operator import mul
 

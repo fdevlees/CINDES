@@ -41,7 +41,7 @@ if True:
 
     #START PROGRAM PROCEDURE
     if param['procedure'] in ['standard', 'bfs']:
-        from INDES.procedures import BFS
+        from INDES.BFS import BFS
         BFS(param, array)
 
     elif 'steepest' in param['procedure']:  # can be steepest1 or steepest2
@@ -57,7 +57,7 @@ if True:
         PSO.main(param)
 
     elif param['procedure'] in ['gp']:
-        from INDES.procedures import GP
+        from INDES.GPopt import GP
         GP(param, array)
 
     elif param['procedure'] == 'test':

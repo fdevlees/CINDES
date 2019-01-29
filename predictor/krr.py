@@ -138,6 +138,8 @@ class KernelRidgeWithPCAExperiment(KernelRidgeExperiment):
             F.fit(X)
             print "\tLeast explained variance:", F.explained_variance_[-1]
             self.F = F
+        elif not hasattr(self, 'F'):
+            self.F = None
         X_F = self.F.transform(X)
         print "\tDimensionality reduction: ", X_F.shape
         return X_F

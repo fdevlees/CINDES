@@ -148,32 +148,23 @@ def get_configurations(startconf, array, k, run=None):
     configurations = [startconf[0:k] + [array[k][i]] + startconf[k + 1:] for i in range(len(array[k]))]
     return configurations
 
-
-def classmaker2(startconf, array, k, table, run=None):
-    '''checks for confs already calculated'''
-    confs = get_configurations(startconf, array, k, run=run)
-
+def get_molecules(startconf, array, k, run):
     from CINDES.utils.molecule import Molecule, Population
+    confs = get_configurations(startconf, array, k, run)
     individuals = [Molecule(conf=conf) for conf in confs]  # list of molecules
-    #population = Population( population = individuals )
-    mols_todo, mols_nodo = check_in_table(individuals, table, run.props)
-    # set here (*mols_nodo).Pvalue
-    return mols_todo, mols_nodo  # indicesfull are all the indices.
+    return individuals
 
-
-def classmaker2_SD(startconf, array, table, run=None):
-    '''checks for confs already calculated'''
-    print "IN CLASSMAKER", type(run)
-    from CINDES.utils.molecule import Molecule, Population
-    # make configurations
+def get_molecules_SD(startconf, array, run):
+    ''' same as get_molecules but now every single mutation '''
     confs = []
     for i in run.restingsites:
         confs.extend(get_configurations(startconf, array, i, run=run))
+
     # remove duplicates by sorting and subsequently only adding when the previous one is not similar
     sortedconfs = sorted(confs)
     confs = [sortedconfs[i] for i in xrange(len(sortedconfs)) if i == 0 or sortedconfs[i] != sortedconfs[i - 1]]
+
     individuals = [Molecule(conf=conf) for conf in confs]  # list of molecules
-    #population = Population( population = individuals )
     mols_todo, mols_nodo = check_in_table(individuals, table, run.props)
     return mols_todo, mols_nodo
 
@@ -318,8 +309,6 @@ def doper2(group, geom, core, passive):
                 del passive[i]
                 break
     return core, passive
-
-# @profile
 
 
 def geomfiller(zma, geom, count):
