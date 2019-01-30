@@ -18,23 +18,13 @@ from run import FrameRun
 def get_startconf(param, array):
     logging.info("random start molecule: ")
     startconf = []
-    if param['restart'] >= 2:
-        logging.info("I am restarting from this configuration:")
-        if 'startconf' in param:
-            logging.info("read from input file:")
-            startconf = zcon.indtocon(param['startconf'])
-        else:
-            logging.info("read hard coded in main file")
-            startconf = [['C', 'N', 'H', 'H'], ['C', 'C', 'O', 'O', 'H'],
-                         ['C', 'C', 'N'], ['C', 'O', 'H'], ['S'], ['C', 'O']]
+    if not param['startind'] == '':
+        startconf = zcon.indtocon(param['startind'])
+        logging.info("read startconf from input")
     else:
-        if not param['startind'] == '':
-            startconf = zcon.indtocon(param['startind'])
-            logging.info("read startconf from input")
-        else:
-            for i in range(len(array)):
-                startconf.append(random.choice(array[i]))
-            logging.info("constructed random start configuration")
+        for i in range(len(array)):
+            startconf.append(random.choice(array[i]))
+        logging.info("constructed random start configuration")
     logging.info("startconf:" + pprint.pformat(zcon.contoind(startconf)))
     return startconf
 
@@ -109,7 +99,7 @@ def runtest(run, optimum, optsite, count, bcok, table=[], array=[]):
     converged = 0
 
     #raise SystemExit('optimum and optsite should be Molecule instances now')
-    if (count > 1 and bcok) or param['restart'] >= 3:  # BCOK is a test of the boundary condition is already fullfilled
+    if (count > 1 and bcok):  # BCOK is a test of the boundary condition is already fullfilled
         if optimum == optsite:  # test the property value! not 1 anymore!
             logging.warning("optimum is the same! converged to a optimum configuration!")
             if param['montecarlo'] == 0:

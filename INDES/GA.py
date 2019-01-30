@@ -483,8 +483,8 @@ def run_pyevolve(array, options, level=None, function=None):
     ga.setPopulationSize(options.genalg['npopulation'])
 
     # 15. set elitism
-    if options.genalg['elitism']:
-        ga.setElitism(options.genalg['elitism'])
+    if options.genalg['nelitism']:
+        ga.setElitism(bool(options.genalg['nelitism']))
         logging.info("n elitism: {:d}".format(options.genalg['nelitism']))
         ga.nElitismReplacement = options.genalg['nelitism']
 

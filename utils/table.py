@@ -120,7 +120,7 @@ def set_table(myrun, array=[]):
     # look if extension is used otherwise set it automatically
     if not tablename[-5:]=='.json': tablename='{}.json'.format(tablename)
 
-    if myrun.restart>0:
+    if myrun.restart>0 or myrun.readtable:
         # look if tablename is given in INPUT otherwise default
         try:
             with open(tablename,'rb') as f:

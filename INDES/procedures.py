@@ -222,7 +222,6 @@ def generate2(core, active, passive, converter, **kwargs):
 
 def genrandom(param, array):
     ''' generate random structures and print '''
-    # set restart and startind to default:
     print
     for _ in xrange(param['nrandom']):
         conf = []

@@ -347,7 +347,7 @@ def predictor(
     enoughdata = (
         (
             len(table) > 30 and (
-                count > 1 or run.restart > 0
+                count > 1 or run.readtable
             )
         ) and
         not mols_todo == []
