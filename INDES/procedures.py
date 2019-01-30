@@ -39,7 +39,6 @@ once = 0
 print "time for imports:", time.clock() - start
 
 
-
 def genconf(param):
     """ 2. Procedure to generate the inputfiles for a single index """
     from CINDES.utils.molecule import Molecule

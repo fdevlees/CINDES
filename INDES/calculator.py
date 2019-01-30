@@ -160,7 +160,7 @@ def runjobs(mols_tocal, myrun, i):
 def do_calcs(mols_tocal, myrun):
     for i, calc in enumerate(myrun.calcs):
         if myrun.threading:
-            from threading_util import runjubs_threading
+            from threading_utils import runjobs_threading
             runjobs_threading(mols_tocal, myrun, i)
         else:
             runjobs(mols_tocal, myrun, i)

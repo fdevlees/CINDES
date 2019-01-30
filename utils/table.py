@@ -18,7 +18,12 @@ def get_property_table(table, myrun):
                 db[key]=Pvalue
         else:
             try:
-                Pvalue = value[ myrun.property ]
+                if myrun.property == 'solv':
+                    Pvalue = value['e1_solv'] - value['e0_solv']
+                elif myrun.property == 'gap':
+                    Pvalue = value['lumo'] - value['homo']
+                else:
+                    Pvalue = value[ myrun.property ]
                 db[key]=Pvalue
             except KeyError:
                 print "molecule is missing!", key

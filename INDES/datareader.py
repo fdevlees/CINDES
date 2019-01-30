@@ -423,4 +423,3 @@ def set_combined_variables(mol, to_read_props):
             results['exaltation'] = results['chi_0_CH3'] - results['chi_0_CH2']
 
     return results
-
