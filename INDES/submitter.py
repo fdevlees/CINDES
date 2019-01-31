@@ -13,6 +13,7 @@ from CINDES.utils.writings import log_io
 once = 0
 debug = False
 safe = False
+counter = 0
 
 def submit(job, script='ID_gauss'):
     #print('filename:'),

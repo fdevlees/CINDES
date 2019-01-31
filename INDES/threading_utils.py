@@ -11,10 +11,12 @@ logging.basicConfig(level=logging.DEBUG,
 
 qsta_out = dict()
 
-def runjobs_threading(mols_tocal, myrun, i):
+debug = True
+
+def runjobs_threading(mols_tocal, run, i):
     global qsta_out
 
-    calc = myrun.calcs[i]
+    calc = run.calcs[i]
 
     def call(function, calc, *args, **kwargs):
         if isinstance(calc, list) or isinstance(calc, tuple):
@@ -29,14 +31,14 @@ def runjobs_threading(mols_tocal, myrun, i):
     mols_calc = filter(lambda x: not x.ignoremol, mols_tocal)
 
     # 1. Make the jobs and add them to the molecules:
-    call(jobmaker, mols=mols_calc, myrun=myrun, calc=calc)
+    call(jobmaker, mols=mols_calc, run=run, calc=calc)
 
-    jobs = get_jobs(myrun, mols_calc)
+    jobs = get_jobs(run, mols_calc)
 
     # From here can be threaded:
 
     # 1. make a list of Threads. one for each Job
-    T = [ MyThread(job=job) for job in jobs ]
+    T = [ MyThread(runparam=run, job=job) for job in jobs ]
     print T
 
     # 2. run each thread
@@ -46,6 +48,7 @@ def runjobs_threading(mols_tocal, myrun, i):
     # 3. check the state of each job:
     while True:
         n=0
+        print "current threads:", threading.enumerate()
         for t in T:
             if t.isAlive():n+=1
         logging.debug("{:d} threads are alive".format(n))
@@ -57,17 +60,17 @@ def runjobs_threading(mols_tocal, myrun, i):
             break
         time.sleep(2)
 
+    # now combine all information from the jobs:
+    for molecule in mols_calc:
+        molecule.predicted = False
+        for job in molecule.jobs:
+            molecule.props.update(job.readings)
+
     print T
     print "jobs:", jobs
 
-    # 3. test of all jobs are ready
-    if jobids:
-        subm.jobtester(mols_calc, myrun, jobids)
-    else:
-        print "no jobids so assume no jobs submitted"
-
-    # 4. test normal termination and read jobs (only myrun variable used is actually debug)
-    datareader.datareader(mols_calc, myrun)
+    # 4. test normal termination and read jobs (only run variable used is actually debug)
+    datareader.datareader(mols_calc, run)
 
     # until here
 
@@ -91,10 +94,13 @@ def get_jobs(run, mols):
 
 class MyThread(threading.Thread):
     def __init__(self, group=None, target=None, name=None,
-             job=None, verbose=None):
+             job=None,
+             runparam=None,
+             verbose=None):
         threading.Thread.__init__(self, group=group, target=target, name=name,
                               verbose=verbose)
         self.job = job
+        self.runparam = runparam
         return
 
     def run(self):
@@ -105,14 +111,35 @@ class MyThread(threading.Thread):
 
         # check if ready()
         while True:
+            time.sleep(5)
             if self.test_ready():
                 print "job = ready"
                 break
             else:
+                if debug: print 'not ready {}'.format(self.job.filename)
+
+        # check if normal termination. If not a zzz.log is tried to be made and submitted
+        self.job.normaltermination(debug=self.runparam.debug)
+        if self.job.IsReady:
+            print "normal termination for:", self.job.filename
+        else:
+            print "no normal termination?!", self.job.filename
+            # test normal termination and errorjob are ready or molecule is ignored
+            while True:
+                self.job.ready(ignore=self.runparam.ignore)
+                if job.IsReady:
+                    break
                 time.sleep(5)
 
-        # check if normal termination.
-        
+        # read data
+        readings = datareader.read_file(self.job)
+
+        # 2.2 if there are multiple variants of the job, give each variant a different index _P#
+        if hasattr(self.job, 'pos'):
+            for old_key in readings.keys():  # the .keys is very important here. iterkeys or for just readings do not work!
+                readings["{}_P{}".format(old_key, str(job.pos))] = readings.pop(old_key)
+
+        self.job.readings = readings
 
         logging.debug('Exiting')
         return True
@@ -153,3 +180,68 @@ def get_qsta_out():
             output[job]=state
         break
     return output
+
+
+    return mols_toread
+
+
+def zzztester(mols):
+    """
+    this function tests if the jobs are still queing or running based on the output of the 'qsta' command
+    function needs:
+    mols:
+    -jobs
+    -run:
+    -timestep
+    """
+    files = []
+    for mol in mols:
+        jobnames = [job.errorfile for job in mol.jobs if not job.errorfile is None]
+        files.extend(jobnames)
+    if files:
+        #print "zzz-files:", files
+        print "n zzz files:", len(files),
+    else:  # here return so we don't need the qsta
+        return False
+
+    # get qstat
+    while True:
+        qsta_raw = qsta()
+        if qsta_raw == False:
+            print "qsta not working! trying again after 1 minute"
+            time.sleep(60)
+        else:
+            break
+
+    # get list of jobs and list of their states
+    qsta_out = [item.split() for item in qsta_raw.split('\n')]
+    states = []
+    jobs = []
+    for item in qsta_out:
+        if len(item) == 4:
+            states.append(item[1])
+            jobs.append(item[3])
+        elif len(item) == 5:
+            states.append(item[2])
+            jobs.append(item[4])
+
+    # inefficient loop
+    #print "files:", files
+    #print "jobs:", jobs
+    #print "states:", states
+    count = 0
+    for filetje in files:
+        for state, job in zip(states, jobs):
+            if job in filetje:  # so there is a zzzjob in the queue!
+                # filetje is whole path so job in filetje or filetje.split('/')[-1]==job
+                if state in ['Q', 'R', 'H', 'E']:  # so if job still in queue and not has state=='C'
+                    count += 1  # so count all the jobs still in queue
+                else:
+                    assert state == 'C'
+
+    # return answer
+    if count > 0:
+        return True
+    else:
+        print "no zzzs (anymore) in queue",
+        return False

@@ -98,7 +98,7 @@ class BaseJob(object):
             self.IsReady = True
         return
 
-    def ready(self, ignore=0, extratime=0, **kwargs):
+    def ready(self, ignore=0, extratime=10, **kwargs):
         ''' if job had no normal termination, this function checks how to proceed:
             1. by a normal termination of the logfile
             2. by a normal termination of the errorlogfile (*zzz.log)

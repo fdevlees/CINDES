@@ -37,7 +37,6 @@ import re
 import os
 import shutil
 once = 0
-counter = 0
 
 def evaluate_mols(run, mols, table, count, nsite=0):
 
@@ -142,7 +141,7 @@ def runjobs(mols_tocal, myrun, i):
     mols_calc = filter(lambda x: not x.ignoremol, mols_tocal)
 
     # 1. Make the jobs and add them to the molecules:
-    call(jobmaker, mols=mols_calc, myrun=myrun, calc=calc)
+    call(jobmaker, mols=mols_calc, run=myrun, calc=calc)
     # 2. now the jobs have to be submitted (this function contains a try_ready test)
     jobids = subm.submission(mols_calc, myrun)
 
@@ -287,7 +286,7 @@ def geommaker(mols_tocal, myrun):
 
 
 @log_io()
-def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to pass here)
+def jobmaker(mols, run, calc):  # ----- dict with info for filewriter has to pass here)
     '''jkl'''
 
     if debug:
@@ -309,11 +308,11 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
             if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
                 os.makedirs(calc['path'] + '/' + molecule.index)
                 # and make sure ID_gauss is in the folder!
-                shutil.copy(calc['path'] + '/' + myrun.script, calc['path'] + '/' + molecule.index)
+                shutil.copy(calc['path'] + '/' + run.script, calc['path'] + '/' + molecule.index)
             # 2. use zmat to make the AH files with the positions stored in fileparameters['positions']
             for pos in calc['positions']:
                 zmat2 = deepcopy(molecule.zmat)
-                zmat2, h, N = add_hydrogen(zmat2, pos, myrun.ncore)
+                zmat2, h, N = add_hydrogen(zmat2, pos, run.ncore)
                 attr = 'zmat{}_{:d}'.format(calc['geom'], pos)
                 setattr(molecule, attr, zmat2)
                 job = program.filewriter(molecule, calc, pos)
@@ -334,7 +333,7 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
                 if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
                     os.makedirs(calc['path'] + '/' + molecule.index)
                     # and make sure ID_gauss is in the folder!
-                    shutil.copy(calc['path'] + '/' + myrun.script, calc['path'] + '/' + molecule.index)
+                    shutil.copy(calc['path'] + '/' + run.script, calc['path'] + '/' + molecule.index)
                 # find a set of conformers
                 conformers = fafoom_utils.GetConformers(molecule)
                 for i, conformer in enumerate(conformers, 1):  # enumerate starts at 1!
@@ -346,7 +345,7 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
             if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
                 os.makedirs(calc['path'] + '/' + molecule.index)
                 # and make sure ID_gauss is in the folder!
-                shutil.copy(calc['path'] + '/' + myrun.script, calc['path'] + '/' + molecule.index)
+                shutil.copy(calc['path'] + '/' + run.script, calc['path'] + '/' + molecule.index)
             # 2. 
             for i, geom in enumerate(getattr(molecule, calc['geom'])):
                 geomattr = 'xyz{}_{:d}'.format(calc['geom'], i)
@@ -359,7 +358,7 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
         else:  # so single job
             program.filewriter(molecule, calc)
 
-        if myrun.worker: # set worker attribute to all jobs
+        if run.worker: # set worker attribute to all jobs
             for mol in mols:
                 try:
                     for job in mol.jobs:
