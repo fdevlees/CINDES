@@ -430,7 +430,7 @@ def submit_normal(mols_tocal, myrun):
                 jobid = job.submit()
                 jobids.append(jobid)
                 time.sleep(1)
-
+    
     minimum_number_worker_jobs = 10
     if worker and len(jobids)>minimum_number_worker_jobs:
         nprocs  = jobids[0].calc['nprocs'] # should be the same for all jobs!
@@ -460,6 +460,8 @@ def submit_normal(mols_tocal, myrun):
         print "there are too few jobs to use the worker efficiently so jobs will be submitted to full nodes"
         jobfiles = []
         for job in jobids:
+            #rewrite job to change nprocs to 28
+            job.rewrite(nprocs=28)
             job.submit()
             jobfiles.append(job.filename)
             time.sleep(1)
