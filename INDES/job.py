@@ -3,6 +3,7 @@
 
 import time
 import submitter as subm
+import logging
 
 
 class BaseJob(object):
@@ -65,7 +66,7 @@ class BaseJob(object):
             print "retry submit after 5s..."
             time.sleep(5)
             jobid = subm.submit(self, self.script).strip()
-        print '{} submitted'.format(self)
+        logging.info('{} submitted'.format(self))
         return jobid
 
     def read(self):

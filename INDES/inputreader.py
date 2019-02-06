@@ -274,6 +274,7 @@ def readfile(subinp):
         'adjust_dihedrals': False,
         'batchsize': None,
         'bc': False,
+        'calcs':[],
         'cutoff': 0,  # this cutoff has to apply to the final target property value only
         'debug': False,
         'defaultgroups':None,
@@ -502,7 +503,7 @@ def readfile(subinp):
                     paras['nrandom'] = int(line.split()[2])
                 except IndexError:
                     raise SystemExit("NO number of random structures specified!")
-            elif paras['procedure'] in ['ga', 'genalg']:
+            elif paras['procedure'] in ['ga', 'genalg', 'deap']:
                 subinp, paras['genalg'] = get_genalg_params(subinp, line)
             elif paras['procedure'] in ['pso', 'particleswarm']:
                 subinp, paras['pso'] = get_pso_params(subinp, line)
@@ -601,6 +602,9 @@ def readfile(subinp):
             paras['geom2'] = line.split()[1]
         elif 'identify' in line:
             paras['identify'] = line.split()[1]
+            if not paras['identify'].endswith('_'):
+                print "underscore appended to identify"
+                paras['identify'] += '_'
             continue
         elif key=='worker':
             paras['worker'] = True
