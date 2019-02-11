@@ -24,7 +24,10 @@ from pprint import pprint
 import pprint
 import time
 #from writings import log_io, sprint
-from CINDES.utils.writings import log_io, print_title, sprint
+from CINDES.utils.writings import log_io, print_title, sprint, logpopulation
+from CINDES.utils.utils import custom_redirection, skipper
+from CINDES.utils.table import get_property_table
+from predictions import predictor
 import logging
 import construction as zcon
 import datareader
@@ -34,21 +37,58 @@ import re
 import os
 import shutil
 once = 0
-counter = 0
 
-# this function to redirect the output of the optga keyword
-import sys
-from contextlib import contextmanager
+def evaluate_mols(run, mols, table, count, nsite=0):
 
+    # 1. check in table
+    mols_todo, mols_nodo = zcon.check_in_table(mols, table, run.props)
 
-@contextmanager
-def custom_redirection(fileobj):
-    old = sys.stdout
-    sys.stdout = fileobj
-    try:
-        yield fileobj
-    finally:
-        sys.stdout = old
+    # 2. apply restrictions
+    if 1 in run.restrictions:  # these are actually filters!
+        mols_todo, mols_nodo = restriction1(mols_todo, mols_nodo, run)
+
+    logpopulation(mols_todo, mols_nodo)
+
+    # 3. perform prescreaning in a predictions.
+    property_table = get_property_table(table, run)
+    mols_nocal, mols_tocal, made_pred = predictor(
+        run,
+        property_table,
+        mols_todo, mols_nodo,
+        count,
+        array=run.array,
+        nsite=nsite
+    )
+
+    # 4. SUBMITTING PART
+    nnewcalcs = len(mols_tocal)
+    if not run.nosub == 1:
+        mols_all = procedure(run, mols_tocal, mols_nocal)
+    else:
+        mols_all = skipper(mols_tocal, mols_nocal, run)
+    return mols_all, nnewcalcs, made_pred
+
+def restriction1(mols_todo, mols_nodo, run):
+    ''' test if not B-B A or N-N bond present in molecules '''
+    def has_forbidden_combination(conf, adj):
+        for i in range(len(conf)):
+            for j in range(i, len(conf)):
+                if conf[i] == conf[j] and adj[i][j] == 1.0 and conf[i] in [['N'], ['B']]:
+                    print "forbidden combination: ", i, conf[i], j, conf[j], adj[i]
+                    return True
+        return False
+
+    print "nmol:", len(mols_todo)
+
+    for molecule in mols_todo:
+        print "mol.conf:", molecule.conf
+        if has_forbidden_combination(molecule.conf, run.adj):
+            molecule.discard()
+            #mols_todo.remove(molecule)
+
+    print "nmol:", len(mols_todo)
+
+    return mols_todo, mols_nodo
 
 
 def invoke_script(calc, namespace, ID=0, start=True):
@@ -101,25 +141,28 @@ def runjobs(mols_tocal, myrun, i):
     mols_calc = filter(lambda x: not x.ignoremol, mols_tocal)
 
     # 1. Make the jobs and add them to the molecules:
-    call(jobmaker, mols=mols_calc, myrun=myrun, calc=calc)
+    call(jobmaker, mols=mols_calc, run=myrun, calc=calc)
     # 2. now the jobs have to be submitted (this function contains a try_ready test)
-    jobids = submission(mols_calc, myrun)
+    jobids = subm.submission(mols_calc, myrun)
 
     # 3. test of all jobs are ready
     if jobids:
-        jobtester(mols_calc, myrun, jobids)
+        subm.jobtester(mols_calc, myrun, jobids)
     else:
         print "no jobids so assume no jobs submitted"
 
     # 4. test normal termination and read jobs (only myrun variable used is actually debug)
     datareader.datareader(mols_calc, myrun)
 
-    return mols_tocal
-
+    return
 
 def do_calcs(mols_tocal, myrun):
     for i, calc in enumerate(myrun.calcs):
-        runjobs(mols_tocal, myrun, i)
+        if myrun.threading:
+            from threading_utils import runjobs_threading
+            runjobs_threading(mols_tocal, myrun, i)
+        else:
+            runjobs(mols_tocal, myrun, i)
         # if there need to be set some new geometries for new calculation.
         invoke_script(calc, locals(), (i+1)*100)
         # delete jobs such that new jobs can be set up.
@@ -207,7 +250,6 @@ def geommaker(mols_tocal, myrun):
             pass  # only the last error is printed after the whole molecule loop
 
         if myrun.optga:
-            import sys
             from CINDES.utils.ga_dihedrals import reduce_conflicts
             # this function sets molecule.conf with optimized dihedrals in the conf attribute
             c = deepcopy(myrun.TZmat['core'])
@@ -244,7 +286,7 @@ def geommaker(mols_tocal, myrun):
 
 
 @log_io()
-def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to pass here)
+def jobmaker(mols, run, calc):  # ----- dict with info for filewriter has to pass here)
     '''jkl'''
 
     if debug:
@@ -266,11 +308,11 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
             if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
                 os.makedirs(calc['path'] + '/' + molecule.index)
                 # and make sure ID_gauss is in the folder!
-                shutil.copy(calc['path'] + '/' + myrun.script, calc['path'] + '/' + molecule.index)
+                shutil.copy(calc['path'] + '/' + run.script, calc['path'] + '/' + molecule.index)
             # 2. use zmat to make the AH files with the positions stored in fileparameters['positions']
             for pos in calc['positions']:
                 zmat2 = deepcopy(molecule.zmat)
-                zmat2, h, N = add_hydrogen(zmat2, pos, myrun.ncore)
+                zmat2, h, N = add_hydrogen(zmat2, pos, run.ncore)
                 attr = 'zmat{}_{:d}'.format(calc['geom'], pos)
                 setattr(molecule, attr, zmat2)
                 job = program.filewriter(molecule, calc, pos)
@@ -291,7 +333,7 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
                 if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
                     os.makedirs(calc['path'] + '/' + molecule.index)
                     # and make sure ID_gauss is in the folder!
-                    shutil.copy(calc['path'] + '/' + myrun.script, calc['path'] + '/' + molecule.index)
+                    shutil.copy(calc['path'] + '/' + run.script, calc['path'] + '/' + molecule.index)
                 # find a set of conformers
                 conformers = fafoom_utils.GetConformers(molecule)
                 for i, conformer in enumerate(conformers, 1):  # enumerate starts at 1!
@@ -303,7 +345,7 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
             if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data
                 os.makedirs(calc['path'] + '/' + molecule.index)
                 # and make sure ID_gauss is in the folder!
-                shutil.copy(calc['path'] + '/' + myrun.script, calc['path'] + '/' + molecule.index)
+                shutil.copy(calc['path'] + '/' + run.script, calc['path'] + '/' + molecule.index)
             # 2. 
             for i, geom in enumerate(getattr(molecule, calc['geom'])):
                 geomattr = 'xyz{}_{:d}'.format(calc['geom'], i)
@@ -316,7 +358,7 @@ def jobmaker(mols, myrun, calc):  # ----- dict with info for filewriter has to p
         else:  # so single job
             program.filewriter(molecule, calc)
 
-        if myrun.worker: # set worker attribute to all jobs
+        if run.worker: # set worker attribute to all jobs
             for mol in mols:
                 try:
                     for job in mol.jobs:
@@ -378,278 +420,6 @@ def add_hydrogen(zmat, pos, ncore):
 #    filewriterAH(zmatnew,spos + '_2',index,**fileparameters)
 #    return
 
-
-# 2. submission
-@log_io()
-def submission(mols_tocal, myrun):
-    global once
-    if once == 1 and myrun.no1sub == 1:
-        print "submit skipped"
-        once = 2
-        jobids = None
-    else:
-        jobids = submit_normal(mols_tocal, myrun)  # In here is decided to run on shell or to really submit!
-    logging.info("----- END all jobs are submitted ----------")
-    if safe:
-        time.sleep(15)  # wait 15 seconds. to be sure that the jobs appear in the qstat command
-    return jobids
-
-
-def submit_normal(mols_tocal, myrun):
-    ''' this function submits all the jobs of every mol.jobs list
-    when worker=True the worker framework will be used:
-        first a list of jobs is gathered in jobids and this list is used
-        to submit the jobs simultaneously
-
-        worker/1.6.8-intel-2018a
-        '''
-
-    jobids = []
-    worker = myrun.worker
-    for molecule in mols_tocal:
-        for job in molecule.jobs:
-
-            # 1. try ready part
-            if myrun.try_ready:
-                if worker:
-                    name = job.logpath
-                    if glob.glob(name):
-                        print "already calculated:", name
-                        continue
-                else:
-                    name1 = job.filepath[:-4] + '.o[0-9][0-9][0-9][0-9]*'
-                    name2 = job.filepath + '.o[0-9][0-9][0-9][0-9]*'
-                    if glob.glob(name1) or glob.glob(name2):
-                        print "already calculated:", name2
-                        continue
-
-            # 2. submit part
-            if worker:
-                jobids.append(job)
-            else:
-                jobid = job.submit()
-                jobids.append(jobid)
-                time.sleep(1)
-    
-    minimum_number_worker_jobs = 10
-    if worker and len(jobids)>minimum_number_worker_jobs:
-        nprocs  = jobids[0].calc['nprocs'] # should be the same for all jobs!
-        
-        # 1. write csv file with job paths
-        with open('loglist.csv', 'w') as f:
-            f.write('job,log\n')
-            for job in jobids:
-                f.write('{},{}\n'.format(job.filepath,job.logpath))
-
-        # 2. write pbs file with custom number of nodes:
-        # always use at least one node and otherwise use njobs/28 or njobs/14 if nprocs==2
-        nnodes= max(1, len(jobids)/(28/nprocs))
-        # to prevent using similar names in queue
-        global counter
-        identifier = "{}{}".format(myrun.identify,str(counter))
-        counter += 1
-        with open('CINDES_worker.template','r') as f:
-            template = f.read()
-        with open('CINDES_worker.pbs','w') as f:
-            f.write(template.format(nnodes=nnodes, identifier=identifier))
-
-        subm.submitworker(nprocs)
-        jobfiles = [ identifier ]
-        return jobfiles 
-    elif worker and len(jobids)>0:
-        print "there are too few jobs to use the worker efficiently so jobs will be submitted to full nodes"
-        jobfiles = []
-        for job in jobids:
-            #rewrite job to change nprocs to 28
-            job.rewrite(nprocs=28)
-            job.submit()
-            jobfiles.append(job.filename)
-            time.sleep(1)
-        return jobfiles
-    else:
-        return jobids
-
-# 3. testing
-
-
-@log_io(signator='=')
-def jobtester(mols_tocal, myrun, jobids=None):
-    """ this tester tests if the jobs are ready by looking for a file <name><.extension>.o<6digits>.
-
-        - even if try_ready is activated all indices are used. And the already ready ones are immediately recognized as ready.
-        - they are just not submitted again.
-        - note that jobids are not used!
-        - function returns nothing but returns when all jobs are ready! this function therefore can take very long!
-    """
-    if jobids is None:
-        jobids = []  # this to avoid the mutable default gotcha
-    if myrun.nosub == 2 or len(mols_tocal) == 0:
-        print "Job tester skipped because jobs are evaluated on login node or no jobs to be calculated"
-        return
-    print "len(mols_tocal):", len(mols_tocal)
-    test_ready = myrun.test_ready
-    path = myrun.path
-    fileparameters = myrun.__dict__
-    if test_ready == 1:
-        test_ready1(mols_tocal, myrun)
-    elif test_ready == 2:  # default
-        test_ready2(mols_tocal, myrun, jobids)
-    elif test_ready == 3:
-        test_ready3(mols_tocal, myrun)
-    else:
-        raise SystemExit('no valid test_ready value')
-    return
-
-
-def test_ready1(indices, myrun):
-    ''' test ready based on the presence of inputfile.o$$ file '''
-    path = myrun.path
-    fileparameters = myrun.__dict__
-    tijdje = 0
-    paths = []  # here we are going to make a list of paths of the jobs
-    for i in range(len(indices)):
-        path1 = path + '/' + fileparameters['identify'] + indices[i] + \
-            myrun.extension + '.o[0-9][0-9][0-9][0-9][0-9][0-9]'
-        paths.append(path1)
-        if fileparameters['stab'] == 1:  # property is global variable
-            for pos in fileparameters['positions']:
-                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + \
-                    '_' + str(pos) + myrun.extension + '.o[0-9][0-9][0-9][0-9][0-9][0-9]'
-                paths.append(path2)
-    while True:  # then we remove each item of the paths that exists. If every path exists, all jobs are ready
-        if tijdje > fileparameters['timelimit']:
-            print "time is up"
-            break
-        pathscopy = paths[:]
-        for pathje in pathscopy:
-            if glob.glob(pathje):
-                paths.remove(pathje)
-                print "ready: ", pathje[:-25]
-        if paths == []:
-            break
-        print "time/h:", tijdje / 3600, "len paths:", len(paths),
-        time.sleep(fileparameters['timestep'])
-        tijdje += fileparameters['timestep']
-    logging.info("All jobs are READY")
-    time.sleep(fileparameters['extrawaittime'])  # just wait for the files to write back before opening them
-    return
-
-
-def test_ready2(mols_tocal, myrun, jobids=None):
-    """
-    this function tests if the jobs are still queing or running based on the output of the 'qsta' command
-    function needs:
-    mols:
-    -jobs
-    myrun:
-    -timelimit
-    -timestep
-    -extrawaittime
-    """
-    completedjobs = []
-    files = []
-    fileparameters = myrun.__dict__
-
-    # 1. get the list of entries that are in the queue
-    if myrun.worker:
-        #files = ['my-gaussian-worker-job']
-        #files = ['CINDES_ATOOLS']
-        files = jobids
-    else:
-        for mol in mols_tocal:
-            jobnames = [job.filename for job in mol.jobs]
-            files.extend(jobnames)
-    print "files:", files
-
-    # 2. and wait until all are completed or not anymore in queue
-    tijdje = 0
-    while True:
-        count = 0
-        if tijdje > fileparameters['timelimit']:
-            print "time is up"
-            break
-        filescopy = files[:]
-        njobs = len(filescopy)
-        qsta_raw = subm.qsta()
-        if qsta_raw == False:
-            print "qsta not working!"
-            time.sleep(fileparameters['timestep'])
-            continue
-        qsta_out = [item.split() for item in qsta_raw.split('\n')]
-        states = []
-        jobs = []
-        for item in qsta_out:
-            if len(item) == 4:
-                states.append(item[1])
-                jobs.append(item[3])
-            elif len(item) == 5:
-                states.append(item[2])
-                jobs.append(item[4])
-        if debug:
-            print "states:", states
-            print "jobs:", jobs
-            print "files:", files
-        for filetje in filescopy:
-            for state, job in zip(states, jobs):
-                if filetje == job:
-                    if state in ['Q', 'R']:  # so if job still in queue and not has state=='C'
-                        count += 1  # so count all the jobs still in queue
-                    elif state in ['H', 'E']:
-                        print "ERROR jobs on hold or Error"
-                        count += 1
-                    else:
-                        assert state == 'C'
-                        if job not in completedjobs:
-                            print 'JOB completed:', job
-                            completedjobs.append(job)
-                    if debug:
-                        print "found a job: ", state, job, filetje
-        t = "{:.2f}".format(tijdje / 3600.)
-        print "njobs -running: {:d} -ready: {:d} | waittime={} hrs".format(count, njobs - count, t)
-        if count == 0:  # so no jobs anymore in queue
-            break
-        time.sleep(fileparameters['timestep'])
-        tijdje += fileparameters['timestep']
-    logging.info("All jobs are READY")
-    time.sleep(fileparameters['extrawaittime'])  # just wait for the files to write back before opening them
-    return
-
-
-def test_ready3(indices, myrun):
-    '''this could be something using a line as :
-        touch ${PBS_JOBID}.completed
-    in the jobscript ID_gauss
-    '''
-    path = myrun.path
-    fileparameters = myrun.__dict__
-    tijdje = 0
-    paths = []  # here we are going to make a list of paths of the jobs
-    for i in range(len(indices)):
-        path1 = path + '/' + fileparameters['identify'] + indices[i] + '.completed'
-        paths.append(path1)
-        if fileparameters['stab'] == 1:  # property is global variable
-            for pos in fileparameters['positions']:
-                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + \
-                    indices[i] + '_' + str(pos) + '.completed'
-                paths.append(path2)
-    while True:  # then we remove each item of the paths that exists. If every path exists, all jobs are ready
-        if tijdje > fileparameters['timelimit']:
-            print "time is up"
-            break
-        pathscopy = paths[:]
-        for pathje in pathscopy:
-            if glob.glob(pathje):
-                paths.remove(pathje)
-                print "ready: ", pathje[:-25]
-        if paths == []:
-            break
-        print "time/h:", tijdje / 3600, "len paths:", len(paths),
-        time.sleep(fileparameters['timestep'])
-        tijdje += fileparameters['timestep']
-    logging.info("All jobs are READY")
-    time.sleep(fileparameters['extrawaittime'])  # just wait for the files to write back before opening them
-    return
-    pass
 
 # 6. set molecular property attributes
 

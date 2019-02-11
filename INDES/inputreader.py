@@ -201,11 +201,11 @@ def get_genalg_params(subinp, line):
                 'npopulation': 20,
                 'CXP': 0.0,  # crossover probability
                 'MUP': 0.2,  # mutation probability
-                'elitism': True,
                 'nelitism': 1,
                 'scaling': 'sigmatrunc',
                 'db_identify': 'ex' + str(np.random.randint(0, 90)),
                 'freq_stats': 10,
+                'restart':False,
                 'seed': 0,
                 'selector': 'RouletteWheel'
                 }
@@ -221,7 +221,10 @@ def get_genalg_params(subinp, line):
                 print "keyword in GA section not recognized:", key
                 raise SystemExit('program stopped')
             value_type = type(defaults[key])
-            defaults[key] = value_type(line.split()[1])
+            if value_type is bool:
+                defaults[key] = True
+            else:
+                defaults[key] = value_type(line.split()[1])
         print " defaults of genetic algorithm are changed. new values:"
     return subinp, defaults
 
@@ -299,6 +302,7 @@ def readfile(subinp):
         'property': 'gap',
         'regression': 0,
         'restart': 0,
+        'readtable':False,
         'restrictions': [],
         'seed': randomseed,
         'sequence': [],
@@ -306,6 +310,7 @@ def readfile(subinp):
         'symlinks': [],
         'tablename': 'table.json',
         'test_ready': 2,
+        'threading': False,
         'timelimit': 250000,
         'timestep': 300,
         'try_ready': 0,
@@ -508,6 +513,7 @@ def readfile(subinp):
                     print "first column of table is taken as datacolumn. (default)"
                     paras['datacolumn'] = 1
                 paras['restart'] = 1
+                paras['readtable'] = True
             elif paras['procedure'] == 'getdivers':
                 paras['divers_nmax'] = int(line.split()[2])
                 paras['divers_batchsize'] = int(line.split()[3])
@@ -526,20 +532,13 @@ def readfile(subinp):
                     print "read {:d} indices to generate".format(paras['ngenerate'])
         elif 'regression' in line:
             paras['regression'] = 1
+        elif 'readtable' in line:
+            paras['readtable'] = True
         elif 'restart' in line:
+            print "RESTART KEYWORD IS DEPRECATED: USE READTABLE INSTEAD"
             paras['restart'] = int(line.split()[1])
-            if paras['restart'] > 1:
-                try:
-                    paras['startconf'] = line.split()[2]
-                except IndexError:
-                    logging.warning("no startconf given while expected!")
-            if paras['restart'] > 3:  # sequence to do in first run
-                line = subinp.readline()
-                # line=next(subinp)
-                paras['sequence'] = [int(item) for item in line.split()]
-        # example:
-        # restart 4 CH_COH_CCHHH_N_CCOOH
-        # 3 4 5
+            if paras['restart'] >= 1:
+                paras['readtable'] = True
         elif 'restrictions' in line:
             paras['restrictions'] = [int(item) for item in line.split()[1:]]
         elif 'seed' in line:
@@ -575,6 +574,8 @@ def readfile(subinp):
             paras['try_ready'] = 1
         elif 'test_ready' in line:
             paras['test_ready'] = int(line.split()[1])
+        elif 'threading' in line:
+            paras['threading'] = True
         # elif 'twojob' in line:
         #    try:
         #        paras['twojob'] = int(line.split()[1])

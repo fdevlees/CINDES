@@ -40,8 +40,8 @@ def geometry(zmatfile, **param):
     logging.debug("zmat:\n" + pprint.pformat(zmat))
     (coremat, activemat, passivemat) = sitesplitter(zmat, param['ncore'], param['sites'], param['nch3'])
     # now i save here the matrices for later use, and then the others are allowed to change for each molecule
-    logging.info('activemat:' + pprint.pformat(activemat))
-    logging.info('passivemat:' + pprint.pformat(passivemat))
+    logging.debug('activemat:' + pprint.pformat(activemat))
+    logging.debug('passivemat:' + pprint.pformat(passivemat))
     logging.info("----- END FORMATTING & SPLITTING -----")
     Total_Zmat = {'core': coremat, 'active': activemat, 'passive': passivemat}
     return Total_Zmat
@@ -126,7 +126,7 @@ def sitesplitter(zmatrix, natomscore, index, nsites):  # here nsites is number o
     logging.debug('sitemat' + pprint.pformat(sitemat))
     # now split in passive and active part
     activeindex = [((x - natomscore + 3) / 4) - 1 for x in index]
-    logging.info('activeindex: ' + str(activeindex))
+    logging.debug('activeindex: ' + str(activeindex))
     logging.debug('len(sitemat)' + str(len(sitemat)))
     active = []
     passive = []

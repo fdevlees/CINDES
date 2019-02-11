@@ -21,6 +21,27 @@ import logging
 #handler.setFormatter(logging.Formatter('%(message)s'))
 print = logging.info
 
+
+def logpopulation(mols_todo, mols_nodo):
+    logpop = []
+    p=logpop.append
+    p("|      NEW POPULATION CONSTRUCTED:")
+    p("|   mols_todo:")
+    if mols_todo:
+        for mol in mols_todo:
+            p("|      {}".format(mol))
+    else:
+        p("|      -")
+    p("|   mols_nodo:")
+    if mols_nodo:
+        for mol in mols_nodo:
+            p("|      {}".format(mol))
+    else:
+        p("|      -")
+    logging.info('\n'.join(logpop))
+    return
+
+
 def pre(f,**kwargs):
     printname("BEFORE: " + f.__name__,**kwargs)
     return

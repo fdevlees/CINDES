@@ -303,8 +303,12 @@ def read_file(Job):
     jobfiles = map(StringIO, jobslines)
     datadict = dict()
     for jobfile, job in zip(jobfiles, jobs):
-        job_data = Logfile(jobfile).parse()
-        #print "job_data:", job_data
+
+        try:
+            job_data = Logfile(jobfile).parse()
+        except Exception as e:
+            print "parsing error with:", jobfile
+            raise e
 
         for inf in job['info']:
             if inf == '_':
@@ -371,7 +375,15 @@ def read_file(Job):
             elif inf.startswith('chi_0'):
                 datadict[inf] = job_data.chi_0
             else:
-                print "value not recognized:", inf
+                # try to see if there is an attribute from job_data matching inf. 
+                # NB: the else statement of a for loop is executed when the for loop finishes without break statement!
+                for attribute in dir(job_data):
+                    if inf.startswith(attribute):
+                        print "cclib attribute recognized:", attribute
+                        datadict[inf] = getattr(job_data, attribute)
+                        break
+                else:
+                    print "value not recognized:", inf
     print
 
     return datadict
@@ -415,4 +427,3 @@ def set_combined_variables(mol, to_read_props):
             results['exaltation'] = results['chi_0_CH3'] - results['chi_0_CH2']
 
     return results
-

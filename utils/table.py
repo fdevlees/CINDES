@@ -17,8 +17,16 @@ def get_property_table(table, myrun):
                 Pvalue = myrun.function(**kwargs)
                 db[key]=Pvalue
         else:
-            Pvalue = value[ myrun.property ]
-            db[key]=Pvalue
+            try:
+                if myrun.property == 'solv':
+                    Pvalue = value['e1_solv'] - value['e0_solv']
+                elif myrun.property == 'gap':
+                    Pvalue = value['lumo'] - value['homo']
+                else:
+                    Pvalue = value[ myrun.property ]
+                db[key]=Pvalue
+            except KeyError:
+                print "molecule is missing!", key
     return db
 
 # 4 table (database)
@@ -117,7 +125,7 @@ def set_table(myrun, array=[]):
     # look if extension is used otherwise set it automatically
     if not tablename[-5:]=='.json': tablename='{}.json'.format(tablename)
 
-    if myrun.restart>0:
+    if myrun.restart>0 or myrun.readtable:
         # look if tablename is given in INPUT otherwise default
         try:
             with open(tablename,'rb') as f:
