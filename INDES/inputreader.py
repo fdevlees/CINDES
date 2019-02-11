@@ -207,7 +207,8 @@ def get_genalg_params(subinp, line):
                 'freq_stats': 10,
                 'restart':False,
                 'seed': 0,
-                'selector': 'RouletteWheel'
+                'selector': 'RouletteWheel',
+                'weights': (1.0,)
                 }
     try:
         n_extra_lines = int(line.split()[2])
@@ -223,6 +224,8 @@ def get_genalg_params(subinp, line):
             value_type = type(defaults[key])
             if value_type is bool:
                 defaults[key] = True
+            elif value_type is tuple:
+                defaults[key] = tuple(map(float, line.split()[1:]))
             else:
                 defaults[key] = value_type(line.split()[1])
         print " defaults of genetic algorithm are changed. new values:"

@@ -103,7 +103,7 @@ class BaseRun(object):
                 def f(v): return ''.join([('0', '1')[int(item)] for item in v])
                 sb.append('\n'.join(map(f, value)))
             else:
-                sb.append("{key:20}='{value}'".format(key=key, value=value))
+                sb.append("{key:20}= {value}".format(key=key, value=value))
 
         # now a table of items that are empty is printed in rows of 5 items
         l = 5
