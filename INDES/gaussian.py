@@ -19,12 +19,12 @@ class GaussianJob(BaseJob):
     # ----- might as well be a static method
     def termination(self, logpath, raise_errors=True):
         with open(logpath, 'r') as fid:
-            text = fid.readlines()[-3:]
-            if re.search('Normal termination', ''.join(text)):
+            text = ''.join(fid.readlines()[-3:])
+            if re.search('Normal termination', text) and not re.search('Initial command', text):
                 ret = 1
-            elif re.search('IGNORE', ''.join(text)):
+            elif re.search('IGNORE', text):
                 ret = 2
-            elif re.search('open-new-file', ''.join(text)):
+            elif re.search('open-new-file', text):
                 ret = 3
             else:
                 ret = 0
@@ -85,6 +85,22 @@ class GaussianJob(BaseJob):
                 return True
         else:
             return False
+
+    def rewrite(self, nprocs=None):
+        with open(self.filepath, 'r') as f:
+             oldfile = f.readlines()
+        newfile = []
+        for line in oldfile:
+            if not nprocs is None and 'nprocshared' in line:
+                newfile.append('%nprocshared=28\n')
+            else:
+                newfile.append(line)
+        with open(self.filepath, 'w') as f:
+            f.writelines(newfile)
+        print "jobfile rewritten"
+        return
+            
+        
 
 
 def writegeom(mol, fid, geom=None):

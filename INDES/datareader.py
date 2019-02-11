@@ -303,8 +303,12 @@ def read_file(Job):
     jobfiles = map(StringIO, jobslines)
     datadict = dict()
     for jobfile, job in zip(jobfiles, jobs):
-        job_data = Logfile(jobfile).parse()
-        #print "job_data:", job_data
+
+        try:
+            job_data = Logfile(jobfile).parse()
+        except Exception as e:
+            print "parsing error with:", jobfile
+            raise e
 
         for inf in job['info']:
             if inf == '_':

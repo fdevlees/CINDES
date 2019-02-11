@@ -37,10 +37,10 @@ def submitworker(nprocs):
         jobids = subprocess.check_output(['wsub', '-batch', 'CINDES_worker.pbs', '-data', 'loglist.csv'])
     elif nprocs==2:
         jobids = subprocess.check_output(['wsub', '-batch', 'CINDES_worker.pbs', '-data', 'loglist.csv', '-threaded', '2', '-master'])
+    elif nprocs==4:
+        jobids = subprocess.check_output(['wsub', '-batch', 'CINDES_worker.pbs', '-data', 'loglist.csv', '-threaded', '4', '-master'])
     else:
-        raise NotImplementedError('more processors than 2 is currently not allowed via worker submission')
-    #arrayids= "1-{:d}".format(n)
-    #jobids = subprocess.check_output(['qsub', '-t', arrayids, 'CINDES_ATOOLS.pbs'])
+        raise NotImplementedError('other than 1,2,4 procs is currently not allowed via worker submission')
     return jobids
 
 def nosubmit_orca(path, index, identify):
@@ -178,6 +178,8 @@ def submit_normal(mols_tocal, myrun):
         print "there are too few jobs to use the worker efficiently so jobs will be submitted to full nodes"
         jobfiles = []
         for job in jobids:
+            #rewrite job to have %nprocshared=28
+            job.rewrite()
             job.submit()
             jobfiles.append(job.filename)
             time.sleep(1)
