@@ -380,3 +380,4 @@ if __name__=="__main__":
                 print indtosmi(index)
     except IOError:
         print indtosmi(sys.argv[1])
+        print "".join([replacements.get(c, c) for c in sys.argv[1]])
