@@ -442,10 +442,21 @@ def set_target_properties(molecules, myrun):
     for mol in molecules:
         if mol.ignoremol:
             print mol, 'ignored'
-            if myrun.optimum == 'maximum':
-                mol.Pvalue = -float("inf")
+
+            # if multi-objective. for now only in deap
+            if myrun.procedure == 'deap':
+                Pvalue = []
+                for w in myrun.genalg['weights']:
+                    if w>0.0:
+                        Pvalue.append(-float('inf'))
+                    else:
+                        Pvalue.append(float('inf'))
+                mol.Pvalue = Pvalue
             else:
-                mol.Pvalue = float("inf")
+                if myrun.optimum == 'maximum':
+                    mol.Pvalue = -float("inf")
+                else:
+                    mol.Pvalue = float("inf")
             continue
         if mol.Pvalue:
             print "molecular target property already set. Predicted?", mol

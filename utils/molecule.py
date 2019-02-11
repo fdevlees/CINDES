@@ -192,6 +192,9 @@ class Molecule(BaseMolecule):
         elif type(conf)==str:
             self.conf = indtocon(conf)
             self.index= conf
+        else:
+            print "wrong type:", type(conf)
+            raise TypeError
         self.mat = None
         return
 

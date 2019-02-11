@@ -55,7 +55,11 @@ class Fitness_Function():
 
     def evaluate_multi(self, confs, gen=0):
         ''' this function is used by my_GSimpleGA class.my_evaluate '''
+        print "confs:", confs
+
         individuals = [Molecule(conf=conf) for conf in confs]  # list of molecules
+
+        print "indivuals:", individuals
 
         mols, nnewcalcs, made_pred = evaluate_mols(self.run, individuals, self.table, gen, nsite=0)
 

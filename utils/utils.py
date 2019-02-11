@@ -283,7 +283,10 @@ def skipper(mols_tocal, mols_nocal, myrun, iprint=True):
     for molecule in mols_all:
         if myrun.property=='func':
             # evaluate function and set to arguments
-            molecule.props.update({ func_arg:value for func_arg,value in zip(myrun.func_args, myrun.function(molecule)) })
+
+            result = { func_arg:value for func_arg,value in zip(myrun.func_args, myrun.function(molecule)) }
+            print 'result', result, myrun.function(molecule)
+            molecule.props.update(result)
             #print "molecule.props:", molecule.props
             molecule.Pvalue = molecule.props[myrun.func_args[0]]
         else:

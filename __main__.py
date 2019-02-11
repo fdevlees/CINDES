@@ -52,6 +52,10 @@ if True:
         from INDES import GA
         GA.main(param, array)
 
+    elif param['procedure'] in ['deap']:
+        from INDES import DEAP
+        DEAP.main(param, array)
+
     elif param['procedure'] in ['pso', 'cpso', 'particleswarm']:
         from PSO import PSO
         PSO.main(param)

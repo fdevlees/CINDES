@@ -587,8 +587,8 @@ def substituter2(group, geom0, count):
         if group == ['C', 'O', 'H']:
             geom[0][2] = '1.42'
             geom[1][2] = '0.97'
-            if dihedral:
-                geom[1][6] = dihedral
+        if dihedral:
+            geom[1][6] = dihedral
     elif len(group) == 2:
         # it is an C-H,C-F,Si-H or C-Cl group. # or it is C Ph
         if group == ['C', 'Ph']:
