@@ -27,9 +27,7 @@ ch.setLevel(logging.INFO) # This also toggles all the logging
 logger.addHandler(ch)
 
 # exclude scripts/tests/old_modules from "from CINDES import *
-__all__ = ['INDES', 'cclib', 'pyevolve', 'PSO', 'utils', 'predictor']
+__all__ = ['algorithms', 'evaluation', 'utils']
 from CINDES import *
 
-# move all module in INDES to top namespace
-from INDES import *
 

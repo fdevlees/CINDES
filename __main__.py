@@ -7,7 +7,7 @@ import logging
 import sys
 import time
 from CINDES.utils.writings import print_title
-from CINDES.INDES.inputreader import read_input
+from CINDES.inputreader import read_input
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -36,57 +36,57 @@ if True:
     #zmatrixfile is a global variable
     logging.info("name of input-file:" + args.inputfile)
     # INPUT READING
-    param, array = read_input(args.inputfile)
+    run = read_input(args.inputfile)
     # END INPUT READING
 
     #START PROGRAM PROCEDURE
-    if param['procedure'] in ['standard', 'bfs']:
-        from INDES.BFS import BFS
-        BFS(param, array)
+    if run.procedure in ['standard', 'bfs']:
+        from algorithms.BFS import BFS
+        BFS(run)
 
-    elif 'steepest' in param['procedure']:  # can be steepest1 or steepest2
-        from INDES.procedures import SteepestDescent
-        SteepestDescent(param, array)
+    elif run.procedure in ['steepest', 'sd']:  # can be steepest1 or steepest2
+        from algorithms.procedures import SteepestDescent
+        SteepestDescent(run)
 
-    elif param['procedure'] in ['ga', 'genetic algorithm', 'genalg']:
-        from INDES import GA
-        GA.main(param, array)
+    elif run.procedure in ['ga', 'genetic algorithm', 'genalg']:
+        from algorithms import GA
+        GA.main(run)
 
-    elif param['procedure'] in ['deap']:
-        from INDES import DEAP
-        DEAP.main(param, array)
+    elif run.procedure in ['deap']:
+        from algorithms import DEAP
+        DEAP.main(run)
 
-    elif param['procedure'] in ['pso', 'cpso', 'particleswarm']:
-        from PSO import PSO
-        PSO.main(param)
+    elif run.procedure in ['pso', 'cpso', 'particleswarm']:
+        from algorithms import PSO
+        PSO.main(run)
 
-    elif param['procedure'] in ['gp']:
-        from INDES.GPopt import GP
-        GP(param, array)
+    elif run.procedure in ['gp']:
+        from algorithms import GPopt
+        GPopt.GP(run)
 
-    elif param['procedure'] == 'test':
-        from INDES.procedures import testrun
-        testrun(param, array)
+    elif run.procedure == 'test':
+        from algorithms.procedures import testrun
+        testrun(run)
 
-    elif param['procedure'] == 'generate':
-        from INDES.procedures import generate_procedure
-        generate_procedure(param, array)
+    elif run.procedure == 'generate':
+        from algorithms.procedures import generate_procedure
+        generate_procedure(run)
 
-    elif param['procedure'] == 'genconf':
-        from INDES.procedures import genconf
-        genconf(param)
+    elif run.procedure == 'genconf':
+        from algorithms.procedures import genconf
+        genconf(run)
 
-    elif param['procedure'] in ['getrandom', 'genrandom']:
-        from INDES.procedures import genrandom
-        genrandom(param, array)
+    elif run.procedure in ['getrandom', 'genrandom']:
+        from algorithms.procedures import genrandom
+        genrandom(run)
 
-    elif param['procedure'] == "testpred":
-        from INDES.procedures import testpred
-        testpred(param, array)
+    elif run.procedure == "testpred":
+        from algorithms.procedures import testpred
+        testpred(run)
 
-    elif param['procedure'] == 'getdivers':
+    elif run.procedure == 'getdivers':
         from utils.getdivers import database_construction
-        database_construction(param, array)
+        database_construction(run)
 
     else:
         logging.warning('proceduretype not recognized')
