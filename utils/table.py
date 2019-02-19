@@ -8,25 +8,29 @@ from utils import pythonify
 def get_property_table(table, myrun):
     '''set a dict with {'index1':prop1, etc. } to use for montecarlo and prediction making '''
     db=dict()
+
+    def get(value, prop):
+        try:
+            p = value[prop]
+        except KeyError:
+            if prop == 'solv':
+                p = value['e1_solv'] - value['e0_solv']
+            elif key == 'gap':
+                p = value['lumo'] - value['homo']
+            else:
+                print "molecule is missing in database:", key
+        return p
+
     for key,value in table.iteritems():
         if myrun.property=='func':
             if myrun.nosub==1:
                 db[key] = value[ myrun.func_args[0] ]
             else:
-                kwargs = { prop:value[prop] for prop in myrun.func_args }
+                kwargs = { prop:get(value, prop) for prop in myrun.func_args }
                 Pvalue = myrun.function(**kwargs)
                 db[key]=Pvalue
         else:
-            try:
-                if myrun.property == 'solv':
-                    Pvalue = value['e1_solv'] - value['e0_solv']
-                elif myrun.property == 'gap':
-                    Pvalue = value['lumo'] - value['homo']
-                else:
-                    Pvalue = value[ myrun.property ]
-                db[key]=Pvalue
-            except KeyError:
-                print "molecule is missing!", key
+            db[key] = get(value, myrun.property)
     return db
 
 # 4 table (database)
