@@ -225,16 +225,19 @@ class Gaussian(logfileparser.Logfile):
             self.skip_lines(inputfile, ['d', 'cols', 'cols', 'd'])
             atomcoords = []
             line = next(inputfile)
-            while list(set(line.strip())) != ["-"]:
-                broken = line.split()
-                self.inputatoms.append(int(broken[1]))
-                atomcoords.append(list(map(float, broken[3:6])))
-                line = next(inputfile)
-
-            self.inputcoords.append(atomcoords)
-
-            self.set_attribute('atomnos', self.inputatoms)
-            self.set_attribute('natom', len(self.inputatoms))
+            try:
+                while list(set(line.strip())) != ["-"]:
+                    broken = line.split()
+                    self.inputatoms.append(int(broken[1]))
+                    atomcoords.append(list(map(float, broken[3:6])))
+                    line = next(inputfile)
+            except Exception as e:
+                print(e)
+                print(line)
+            finally:
+                self.inputcoords.append(atomcoords)
+                self.set_attribute('atomnos', self.inputatoms)
+                self.set_attribute('natom', len(self.inputatoms))
 
         # Extract the atomic masses.
         # Typical section:
@@ -282,15 +285,19 @@ class Gaussian(logfileparser.Logfile):
             atomnos = []
             atomcoords = []
             line = next(inputfile)
-            while list(set(line.strip())) != ["-"]:
-                broken = line.split()
-                atomnos.append(int(broken[1]))
-                atomcoords.append(list(map(float, broken[-3:])))
-                line = next(inputfile)
-            self.atomcoords.append(atomcoords)
-
-            self.set_attribute('natom', len(atomnos))
-            self.set_attribute('atomnos', atomnos)
+            try:
+                while list(set(line.strip())) != ["-"]:
+                    broken = line.split()
+                    atomnos.append(int(broken[1]))
+                    atomcoords.append(list(map(float, broken[-3:])))
+                    line = next(inputfile)
+            except Exception as e:
+                print(e)
+                print(line)
+            finally:
+                self.atomcoords.append(atomcoords)
+                self.set_attribute('natom', len(atomnos))
+                self.set_attribute('atomnos', atomnos)
 
         # This is a bit of a hack for regression Gaussian09/BH3_fragment_guess.pop_minimal.log
         # to skip output for all fragments, assuming the supermolecule is always printed first.

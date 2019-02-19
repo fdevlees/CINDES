@@ -35,11 +35,10 @@ def submitworker(nprocs):
     # command to submit on 2 procs: wsub --batch myworker9.pbs --data loglist.csv -threaded 2 -master
     if nprocs==1:
         jobids = subprocess.check_output(['wsub', '-batch', 'CINDES_worker.pbs', '-data', 'loglist.csv'])
-    elif nprocs==2:
-        jobids = subprocess.check_output(['wsub', '-batch', 'CINDES_worker.pbs', '-data', 'loglist.csv', '-threaded', '2', '-master'])
-    elif nprocs==4:
-        jobids = subprocess.check_output(['wsub', '-batch', 'CINDES_worker.pbs', '-data', 'loglist.csv', '-threaded', '4', '-master'])
+    elif nprocs<1:
+        jobids = subprocess.check_output(['wsub', '-batch', 'CINDES_worker.pbs', '-data', 'loglist.csv', '-threaded', nprocs, '-master'])
     else:
+        print "procs:", procs
         raise NotImplementedError('other than 1,2,4 procs is currently not allowed via worker submission')
     return jobids
 
