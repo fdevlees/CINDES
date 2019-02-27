@@ -6,32 +6,29 @@ import numpy as np
 random = np.random.random
 #import pickle
 import json
-from itertools import izip
-import pprint
 
 # needed by evolve
 from time import time
 import logging
 from sys import platform as sys_platform
 from sys import stdout as sys_stdout
-from CINDES.pyevolve.GPopulation import GPopulation
-from CINDES.pyevolve.GPopulation import Util
 import random as rrandom
 
 # my own modules
 #from writings import log_io, sprint, print_title
 from CINDES.utils.writings import log_io, sprint, print_title
 from CINDES.utils.molecule import Molecule
-from CINDES.utils.table import set_table, get_property_table
+from CINDES.utils.table import set_table
 from CINDES.utils.utils import skipper
-from CINDES import INDES
-from CINDES.INDES.run import FrameRun
-from predictions import predictor
-from calculator import evaluate_mols
+from CINDES.evaluation.calculator import evaluate_mols
+from CINDES.evaluation.construction import contoind
 
-from CINDES.pyevolve import G1DList, GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters, Crossovers
-from CINDES.pyevolve import Scaling
-import CINDES.pyevolve as pyevolve
+from CINDES.algorithms import loggings
+from CINDES.algorithms.pyevolve.GPopulation import GPopulation
+from CINDES.algorithms.pyevolve.GPopulation import Util
+from CINDES.algorithms.pyevolve import G1DList, GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters, Crossovers
+from CINDES.algorithms.pyevolve import Scaling
+import CINDES.algorithms.pyevolve as pyevolve
 
 
 class Fitness_Function():
@@ -63,7 +60,7 @@ class Fitness_Function():
 
         mols, nnewcalcs, made_pred = evaluate_mols(self.run, individuals, self.table, gen, nsite=0)
 
-        self.table = INDES.loggings.loggings(mols,
+        self.table = loggings.loggings(mols,
                                              self.table,
                                              gen,
                                              1, 1,
@@ -118,9 +115,8 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
         # 3. set the calculations to the correct indivual score
         y_dict = {mol.index: mol.Pvalue for mol in mols}
         for ind in population:
-            index = INDES.procedures.zcon.contoind(ind.genomeList)
+            index = contoind(ind.genomeList)
             if verbose: print "individual:", ind.genomeList, "y:", y_dict[index], index
-            #ind.score = y_dict[index][1]
             ind.score = y_dict[index]
             ind.index = index
         return
@@ -309,7 +305,7 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
                                 print "Loading modules for Interactive Mode...",
                                 logging.debug("Windows Interactive Mode key detected ! generation=%d",
                                               self.getCurrentGeneration())
-                                from pyevolve import Interaction
+                                from CINDES.algorithms.pyevolve import Interaction
                                 print " done !"
                                 interact_banner = "## Pyevolve v.%s - Interactive Mode ##\nPress CTRL-Z to quit interactive mode." % (
                                     pyevolve.__version__,)
@@ -325,7 +321,7 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
                         print "Loading modules for Interactive Mode...",
                         logging.debug("Manual Interactive Mode key detected ! generation=%d",
                                       self.getCurrentGeneration())
-                        from pyevolve import Interaction
+                        from CINDES.algorithms.pyevolve import Interaction
                         print " done !"
                         interact_banner = "## Pyevolve v.%s - Interactive Mode ##" % (pyevolve.__version__,)
                         session_locals = {"ga_engine": self,
@@ -373,17 +369,11 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
 ###### CALL(s) from __main__.py ###########
 
 
-# 1. setup system
-from CINDES.INDES import procedures
 
-
-def main(param, array=None):
-    if array is None:
-        array = param['array']
-    GArun = FrameRun(**param)
-    table = set_table(GArun, array)
-    function = Fitness_Function(GArun, table=table, array=array)
-    final_genome = run_pyevolve(array, GArun, function=function)
+def main(GArun):
+    table = set_table(GArun, GArun.array)
+    function = Fitness_Function(GArun, table=table, array=GArun.array)
+    final_genome = run_pyevolve(GArun.array, GArun, function=function)
     best = final_genome.bestIndividual()
     print "final_genome:", final_genome
     print "best:", best
@@ -453,9 +443,11 @@ def run_pyevolve(array, options, level=None, function=None):
             seed=options.genalg['seed'],
             trackhistory=options.genalg['trackhistory'],
             restart=restart )
+    pop = ga.getPopulation()
 
     # 8. set Selector
-    if options.genalg['selector'] == 'RouletteWheel':  # Default = GRouletteWheel
+    #if options.genalg['selector'] == 'RouletteWheel':  # Default = GRouletteWheel
+    if any(item in options.genalg['selector'] for item in ['Roulette', 'roulette','wheel']):
         ga.selector.set(Selectors.GRouletteWheel)
     elif any(item in options.genalg['selector'] for item in ['Rank', 'rank']):
         ga.selector.set(Selectors.GRankSelector)
@@ -463,6 +455,7 @@ def run_pyevolve(array, options, level=None, function=None):
         ga.selector.set(Selectors.GUniformSelector)
     elif any(item in options.genalg['selector'] for item in ['Tour', 'tour']):
         ga.selector.set(Selectors.GTournamentSelector)
+        pop.setParams(tournamentPool=options.genalg['tournamentPoolsize'])
     else:
         raise SystemExit('no valid selector is chosen')
 
@@ -495,7 +488,6 @@ def run_pyevolve(array, options, level=None, function=None):
     # 16. set scaling: to allow for negative scores we have to use
     # SigmaTruncScaling. otherwise also LinearScaling or PowerLawScaling could
     # be used
-    pop = ga.getPopulation()
     pop.scaleMethod.set(Scaling.SigmaTruncScaling)
 
     # 17. for plotting / logging

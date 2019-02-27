@@ -6,6 +6,7 @@ import numpy as np
 import random
 from pprint import pprint
 import re
+from CINDES import run
 
 from CINDES.utils.writings import log_io
 
@@ -49,7 +50,15 @@ def read_input(inputfilename='INPUT'):
 
     # This is new and not yet fully functional
     param['array'] = array
-    return param, array
+
+    # even newer. There is only one common input-object. i.e. a Run object
+    # so this can be initiated here:
+    if param['procedure'] is None:
+        myrun = run.BaseRun(**param)
+    else:
+        myrun = run.FrameRun(**param)
+
+    return myrun
 
 
 def openfile(filename):
@@ -208,6 +217,7 @@ def get_genalg_params(subinp, line):
                 'restart':False,
                 'seed': 0,
                 'selector': 'RouletteWheel',
+                'tournamentPoolsize':2,
                 'weights': (1.0,)
                 }
     try:
@@ -292,8 +302,8 @@ def readfile(subinp):
         'ml': 0,
         'maxiter': 10,
         'montecarlo': 0,  # Temperature at start
-        'nch3': 16,
-        'ncore': 10,
+        'nch3': Ellipsis,
+        'ncore': Ellipsis,
         'nlinks': False,
         'no1sub': 0,
         'norandom': 0,
@@ -302,7 +312,7 @@ def readfile(subinp):
         'optga': False,
         'predictions': [],
         'prejobs': None,
-        'procedure': 'standard',
+        'procedure': None,
         'property': 'gap',
         'regression': 0,
         'restart': 0,

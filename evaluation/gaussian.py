@@ -33,7 +33,7 @@ class GaussianJob(BaseJob):
 
     def errortermination(self, debug=False):
         import time
-        from CINDES.cclib.parser.gaussianparser import Gaussian
+        from CINDES.evaluation.cclib.parser.gaussianparser import Gaussian
         mymol = Gaussian(self.logpath).parse()
         from CINDES.utils import utils
         t = utils.PeriodicTable()

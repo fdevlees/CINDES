@@ -3,8 +3,8 @@ import pprint
 import logging
 
 # my own modules
-from CINDES.predictor import learning_skl as learning
-from CINDES.predictor import learning_int as ml_int
+from predictor import learning_skl as learning
+from predictor import learning_int as ml_int
 from CINDES.utils.writings import log_io, print_title, dump
 from CINDES.utils.utils import processify
 

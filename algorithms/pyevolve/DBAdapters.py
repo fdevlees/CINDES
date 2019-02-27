@@ -17,7 +17,7 @@ module, you'll find the adapters above cited.
 
 """
 
-from CINDES.pyevolve import __version__
+from CINDES.algorithms.pyevolve import __version__
 import Consts
 import Util
 import logging

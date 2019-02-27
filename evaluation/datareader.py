@@ -127,6 +127,7 @@ def normaltermination(mols, run):
     while True:
         # CHECK READY:
         print "not ready:",
+        counter = 0
         for i, mol in enumerate(mols):
             # i. check if mol is ignored or ready
             if mol.ignoremol or mol.IsReady:
@@ -138,6 +139,7 @@ def normaltermination(mols, run):
                 if job.IsReady or job.ignorejob:
                     continue
                 else:
+                    counter += 1
                     print "{}.{}".format(i, j),
 
                 # test ready. when extratime is too high job is ignored
@@ -152,6 +154,9 @@ def normaltermination(mols, run):
                 mol.IsReady = True
         print
         if all(mol.IsReady for mol in mols):
+            break
+        elif counter == 0:
+            print "there are no zzz files anymore?!"
             break
 
         # test if there are still uncompleted zzz_files in queue. If not count extra time
@@ -272,7 +277,7 @@ def read_file(Job):
 
     # 2. split logfile in different jobs
     if program == 'gaussian':
-        from CINDES.cclib.parser.gaussianparser import Gaussian as Logfile
+        from CINDES.evaluation.cclib.parser.gaussianparser import Gaussian as Logfile
         key = 'termination'
         # if keyword freq in line than there is an extra internal job!
         jobslines_v1 = open(filename).read().split(key)[:-1]
@@ -284,10 +289,10 @@ def read_file(Job):
             else:
                 jobslines.append(joblines_v1)
     elif program == 'orca':
-        from CINDES.cclib.parser.orcaparser import ORCA as Logfile
+        from CINDES.evaluation.cclib.parser.orcaparser import ORCA as Logfile
         raise SystemExit('ORCA interface not implemented')
     elif program == 'nwchem':
-        from CINDES.cclib.parser.nwchemparser import NWChem as Logfile
+        from CINDES.evaluation.cclib.parser.nwchemparser import NWChem as Logfile
         key = 'NWChem Input Module'
         splitted = open(filename).read().split(key)
         jobslines = splitted[1:-1]

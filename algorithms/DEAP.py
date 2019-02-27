@@ -14,8 +14,8 @@ from time import time
 import logging
 from sys import platform as sys_platform
 from sys import stdout as sys_stdout
-from CINDES.pyevolve.GPopulation import GPopulation
-from CINDES.pyevolve.GPopulation import Util
+from CINDES.algorithms.pyevolve.GPopulation import GPopulation
+from CINDES.algorithms.pyevolve.GPopulation import Util
 import random as rrandom
 
 # my own modules
@@ -24,22 +24,19 @@ from CINDES.utils.writings import log_io, sprint, print_title
 from CINDES.utils.molecule import Molecule
 from CINDES.utils.table import set_table, get_property_table
 from CINDES.utils.utils import skipper
-from CINDES import INDES
-from CINDES.INDES.run import FrameRun
-from CINDES.INDES.GA import Fitness_Function
-from predictions import predictor
-from calculator import evaluate_mols
-from CINDES.INDES import procedures
+from CINDES.run import FrameRun
+from CINDES.algorithms.GA import Fitness_Function
+from CINDES.evaluation.predictions import predictor
+from CINDES.evaluation.calculator import evaluate_mols
+from CINDES.evaluation.construction import indtocon
+import procedures
 
 
-def main(param, array=None):
-    if array is None:
-        array = param['array']
-    GArun = FrameRun(**param)
-    print GArun
-    table = set_table(GArun, array)
-    function = Fitness_Function(GArun, table=table, array=array)
-    final_genome = run_deap(array, GArun, function=function)
+def main(run):
+    print run
+    table = set_table(run, run.array)
+    function = Fitness_Function(run, table=table, array=run.array)
+    final_genome = run_deap(run.array, run, function=function)
     print "final genome"
     return final_genome
 
@@ -51,7 +48,7 @@ def run_deap(array, options, level=None, function=None):
 
     '''
     import numpy as np
-    np.random.seed(1)
+    np.random.seed(options.seed)
 
     from deap import base
     from deap import creator
@@ -60,10 +57,9 @@ def run_deap(array, options, level=None, function=None):
 
     minimize = options.optimum == 'minimize'
 
-    gen = 0
 
-    #creator.create("FitnessMulti", base.Fitness, weights=(-1.0,-1.0))
     creator.create("FitnessMulti", base.Fitness, weights=options.genalg['weights'])
+
     # this creates an inidivual class. instances will automatically be 'individual'
     creator.create("Individual", list, fitness=creator.FitnessMulti)
 
@@ -106,13 +102,25 @@ def run_deap(array, options, level=None, function=None):
             individual[i] = np.random.choice(groups_joined)
         return (individual,)
 
+    # register mutation
     toolbox.register("mutate", mutateF, MUP=options.genalg['MUP'])
 
     # uniform crossover from tools
     toolbox.register("mate", tools.cxUniform, indpb=options.genalg['CXP'])
     toolbox.register("select", tools.selNSGA2)
 
+    # make initial population
     population = toolbox.population()
+    if options.genalg['restart']:
+        startgen = restart_population(population)
+        print "start generation at:", startgen
+        print "with population:\n",
+        for i in population:
+            print i
+    else:
+        startgen = 1
+
+    # evaluate initial population
     fits = evaluate_multi(population)
     for fit, ind in zip(fits, population):
         try:
@@ -120,26 +128,31 @@ def run_deap(array, options, level=None, function=None):
         except TypeError as e:
             print "fit:", fit
 
-    for gen in range(1, options.genalg['ngenerations']):
+    for gen in range(startgen, options.genalg['ngenerations']):
         print_title("Generation No.: " + str(gen), outline='l', signator="-")
 
+        # 1. new generation
         offspring = algorithms.varOr(population, toolbox,
             lambda_=options.genalg['npopulation'],
             cxpb=options.genalg['CXP'],
             mutpb=options.genalg['MUP'])
 
+        # 2. evaluate fitness
         fits = evaluate_multi(offspring, gen=gen)
-
         print "fits:", fits
         for fit, ind in zip(fits, offspring):
             ind.fitness.values = fit
+
+        # 3. loggings
         halloffame.update(population)
         paretofront.update(population)
         print "hall of fame:", halloffame
+
         record = stats.compile(population)
         print "record:", record
         logbook.record(gen=gen, **record)
 
+        # 4. select new population
         population = toolbox.select(offspring + population,
             k=options.genalg['npopulation'])
 
@@ -148,6 +161,44 @@ def run_deap(array, options, level=None, function=None):
     print logbook
 
     return population
+
+def restart_population(population):
+
+    with open('cyclesinfo') as f:
+        data = [ line.strip().split() for line in f.readlines() ]
+
+    # get generation of last compound. always index -3
+    maxgen = int(data[-1][-3])
+
+    confs = []
+
+    i=0
+    while True:
+        # loop backwards getting indices -1, -2, -3 etc while i is going from 0, 1, 2, etc
+        newline = data[-(i+1)]
+
+        # take last lines until maxgen changes
+        if not int(newline[-3])==maxgen:
+            break
+
+        # get index from line and get as conf
+        conf = indtocon(newline[0].strip("'"))
+
+        confs.append(conf)
+
+        i+=1
+
+    # check if same size
+    if not len(population) == len(population):
+        raise NotImplementedError('length of old and new population do not match!')
+
+    # set old confs as new confs
+    for individual, conf in zip(population, confs):
+        individual[:] = conf
+
+    return maxgen
+
+
 
 
 if __name__ == "__main__":

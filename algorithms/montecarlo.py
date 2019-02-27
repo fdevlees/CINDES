@@ -1,10 +1,10 @@
 """ MONTE CARLO PROCEDURE """
 debug = 0
 
-import construction as zcon
+from CINDES.evaluation import construction as zcon
 from CINDES.utils.writings import log_io, print_title, sprint, dump
 from CINDES.utils.molecule import Molecule
-from CINDES.predictor import learning_skl as learning
+from CINDES.evaluation.predictor import learning_skl as learning
 import random
 random.seed(123)
 from math import exp  # exp(x) returns e^x

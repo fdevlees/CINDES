@@ -23,10 +23,10 @@ import logging  # instead of the large amount of print statements not using it a
 from copy import deepcopy  # for keeping matrices while changing others
 
 # import my own modules
-import construction as zcon  # all functions needed for constructing new geometries
-from predictions import predictor
-from loggings import loggings
-import calculator
+from CINDES.evaluation import construction as zcon  # all functions needed for constructing new geometries
+from CINDES.evaluation.predictions import predictor
+from CINDES.algorithms.loggings import loggings
+from CINDES.evaluation import calculator
 
 # import utils
 from CINDES.utils.writings import print_title
@@ -39,10 +39,9 @@ once = 0
 print "time for imports:", time.clock() - start
 
 
-def genconf(param):
+def genconf(myrun):
     """ 2. Procedure to generate the inputfiles for a single index """
     from CINDES.utils.molecule import Molecule
-    myrun = FrameRun(**param)
     param = myrun.__dict__
     conf = zcon.indtocon(param['startind'])
     mol = Molecule(conf=conf)

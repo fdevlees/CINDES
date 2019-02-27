@@ -1,8 +1,8 @@
 import numpy as np
 from copy import deepcopy
 
-from CINDES.pyevolve import G1DList , GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters, Crossovers
-import CINDES.pyevolve as pyevolve
+from CINDES.algorithms.pyevolve import G1DList , GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters, Crossovers
+import CINDES.algorithms.pyevolve as pyevolve
 
 DE=False
 
@@ -62,7 +62,7 @@ def slice_it(li, splits, ngps=None):
 #def get_xyz(molecule, core,active,passive):
 def get_xyz(molecule, core, active, passive):
     #print "core,active,passive:", core, active, passive
-    from CINDES.INDES.construction import constructor2
+    from CINDES.evaluation.construction import constructor2
     import pickle
     #with open('TZMat','r') as f: TZMAT=pickle.load(f)
     ncore = len(core)

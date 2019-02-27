@@ -60,8 +60,8 @@ Class
 """
 debug=False
 
-from CINDES.pyevolve.GPopulation  import GPopulation
-from CINDES.INDES.construction import contoind
+from CINDES.algorithms.pyevolve.GPopulation  import GPopulation
+from CINDES.evaluation.construction import contoind
 from FunctionSlot import FunctionSlot
 from Migration    import MigrationScheme
 from GenomeBase   import GenomeBase
@@ -79,7 +79,7 @@ from sys   import platform as sys_platform
 from sys   import stdout as sys_stdout
 
 import code
-import CINDES.pyevolve
+import CINDES.algorithms.pyevolve
 
 # Platform dependant code for the Interactive Mode
 if sys_platform[:3] == "win":

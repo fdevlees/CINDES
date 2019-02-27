@@ -22,7 +22,7 @@ from pprint import pprint
 
 from CINDES.utils.writings import log_io, sprint, print_title
 from CINDES.utils.converter import Converter
-from CINDES.INDES import construction as zcon
+from CINDES.evaluation import construction as zcon
 #from converter import Converter
 #import construction as zcon
 

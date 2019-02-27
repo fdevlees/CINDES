@@ -16,27 +16,16 @@ from inspect import stack
 from math import ceil
 import shutil  # module to copy files
 from platform import node
-import pprint  # pretty printer for printing lists
 from pprint import pformat
 import os  # for getting window width and testing existence of files
-import re
-from re import findall  # now only needed in construction.py
 import inspect # to see if function is a class
-import sys  # for getting command line input
-import random  # for obtaining random geometry
 import logging  # instead of the large amount of print statements not using it at the moment
 from copy import deepcopy  # for keeping matrices while changing others
-import string
-import pickle
 import numpy as np
 
 # import my own modules
-import construction as zcon  # all functions needed for constructing new geometries
-import reader as r  # this reads the zmatrix in gaussian format
-from predictions import predictor
-from montecarlo import montecarloprocedure
-from loggings import loggings
-import calculator
+from evaluation import construction as zcon  # all functions needed for constructing new geometries
+from evaluation import reader as r  # this reads the zmatrix in gaussian format
 
 # import utils
 from CINDES.utils.writings import dump
@@ -91,7 +80,7 @@ class BaseRun(object):
                 sb.append(dump(value))
             elif key in ['TZmat', 'TZmatrices', 'genalg', 'jobs', 'stabjobs', 'prejobs', 'extrajobs', 'calcs', 'pso']:
                 sb.append("{key:20}=".format(key=key))
-                sb.append(pprint.pformat(value, width=150))
+                sb.append(pformat(value, width=150))
             elif key == 'function' and callable(value):  # i.e. the value is a lambda function
                 if value.__doc__:
                     sb.append("{key:20}={value}".format(key=key, value=value.__doc__))
@@ -174,7 +163,6 @@ class BaseRun(object):
                     cal, i = check(cal, i)
             else:
                 calc, i = check(calc, i)
-        #print "calcs:", pprint.pprint(calcs)
         self.calcs = calcs
         return
 

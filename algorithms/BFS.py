@@ -7,13 +7,10 @@ import time
 
 from CINDES.utils.writings import print_title
 
-from montecarlo import montecarloprocedure
-import construction as zcon
-import calculator
-from loggings import loggings
+from CINDES.evaluation import construction as zcon
+from CINDES.evaluation import calculator
 from CINDES.utils.table import set_table, get_property_table
-
-from run import FrameRun
+from loggings import loggings
 
 def get_startconf(param, array):
     logging.info("random start molecule: ")
@@ -105,6 +102,7 @@ def runtest(run, optimum, optsite, count, bcok, table=[], array=[]):
             if param['montecarlo'] == 0:
                 converged = 1
             else:
+                from montecarlo import montecarloprocedure
                 property_table = get_property_table(table, run)
                 if param['ml'] == 0:
                     optsite = montecarloprocedure(run, array, optimum, property_table)
@@ -132,14 +130,11 @@ def runtest(run, optimum, optsite, count, bcok, table=[], array=[]):
 # 6: Steepest Descent algorithm. Looks like BFS but there is no loop over sites
 # 7: Generate database based on farthest point selection. (based on diversity index)
 
-def BFS(param, array=None):
+def BFS(run):
     """ 1. This is the standard BFS procedure """
 
-    if array is None:
-        self.array = param['array']
-    myrun = FrameRun(**param)
-    logging.info(myrun)  # this should print all the class elements via the __str__ function
-    mybfs = BestFirstSearch(myrun)
+    logging.info(run)  # this should print all the class elements via the __str__ function
+    mybfs = BestFirstSearch(run)
     result = mybfs.evolve()
     return result
 
