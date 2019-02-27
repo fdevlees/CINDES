@@ -184,6 +184,7 @@ class Gaussian(logfileparser.Logfile):
                 regex = ".*=(.*)Mul.*=\s*-?(\d+).*"
                 match = re.match(regex, line)
                 assert match, "Something unusual about the line: '%s'" % line
+                
                 self.set_attribute('charge', int(match.groups()[0]))
                 self.set_attribute('mult', int(match.groups()[1]))
 

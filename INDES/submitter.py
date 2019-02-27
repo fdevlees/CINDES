@@ -35,10 +35,10 @@ def submitworker(nprocs):
     # command to submit on 2 procs: wsub --batch myworker9.pbs --data loglist.csv -threaded 2 -master
     if nprocs==1:
         jobids = subprocess.check_output(['wsub', '-batch', 'CINDES_worker.pbs', '-data', 'loglist.csv'])
-    elif nprocs<1:
-        jobids = subprocess.check_output(['wsub', '-batch', 'CINDES_worker.pbs', '-data', 'loglist.csv', '-threaded', nprocs, '-master'])
+    elif nprocs>1:
+        jobids = subprocess.check_output(['wsub', '-batch', 'CINDES_worker.pbs', '-data', 'loglist.csv', '-threaded', str(nprocs), '-master'])
     else:
-        print "procs:", procs
+        print "nprocs:", nprocs
         raise NotImplementedError('other than 1,2,4 procs is currently not allowed via worker submission')
     return jobids
 
@@ -93,6 +93,9 @@ def qsta():
         # This error occurred on VSC in subprocess module calling pickle using 'string_escape'
         print "LookupError"
         print repr(e)
+        p1 = False
+    except OSError as e:
+        print "OS Error:", e
         p1 = False
     return p1
 
