@@ -100,6 +100,7 @@ class GaussianProcess(Algorithm):
 
         # 3. check if already in table
         mols, nnewcalcs, made_pred = evaluate_mols(self.run, mols, self.table, gen, nsite=0)
+        self.ncalcs += nnewcalcs
         self.optimum, _ = testmax(self.run, mols)
         print "mols_all:", mols
 
@@ -141,7 +142,6 @@ class GaussianProcess(Algorithm):
         print "optimizer model:", optimizer.base_estimator_
         print "eta: {}, acq-function: {}, acq-optimizer: {}".format(optimizer.eta, optimizer.acq_func, optimizer.acq_optimizer)
 
-
         for gen in range(self.run.maxiter):
             print_title("BATCH-NO: " + str(gen), outline='l', signator="-")
 
@@ -157,8 +157,9 @@ class GaussianProcess(Algorithm):
             logging.info("--- %s seconds ---" % (time.time() - self.run.starttime))
 
         print "\n\tOptimum:", min(zip(optimizer.yi, optimizer.Xi))
-
-        return
+        
+ 
+        return optimizer
 
     @staticmethod
     def only_finite(X, Y):
