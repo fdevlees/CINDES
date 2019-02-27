@@ -467,6 +467,7 @@ def set_target_properties(molecules, myrun):
         if myrun.property == 'func':
             try:
                 kwargs = {prop: mol.props[prop] for prop in myrun.func_args}
+                print "kwargs:", kwargs
             except KeyError:
                 print "error mol:", mol
                 print "props:", mol.props

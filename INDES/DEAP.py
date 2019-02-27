@@ -74,12 +74,14 @@ def run_deap(array, options, level=None, function=None):
     stats.register("max", np.max, axis=0)
     logbook = tools.Logbook()
     halloffame = tools.HallOfFame(maxsize=1)
+    paretofront= tools.ParetoFront()
 
     toolbox = base.Toolbox()
 
     # a function that gives a group. This function is called by initRepeat
     groups = options.array[0]
-    get_group = lambda : np.random.choice(groups)
+    groups_joined = [ "".join(item) for item in groups ]
+    get_group = lambda : np.random.choice(groups_joined)
     print "WARNING: assuming all sites have the same group!"
     toolbox.register("get_group", get_group)
     toolbox.register("individual", tools.initRepeat, creator.Individual,
@@ -89,7 +91,8 @@ def run_deap(array, options, level=None, function=None):
     toolbox.register("population", tools.initRepeat, list, toolbox.individual, n=options.genalg['npopulation'])
 
     def evaluate_multi(population, gen=None):
-        P = [ list(p) for p in population[:] ]
+        print "population:", population
+        P = [ map(list,p) for p in population[:] ]
         mols = function.evaluate_multi(P, gen=gen)
 
         print "props:", [ mol.props for mol in mols ]
@@ -100,7 +103,7 @@ def run_deap(array, options, level=None, function=None):
     def mutateF(individual, MUP):
         if np.random.random() < MUP:
             i = np.random.randint(0, len(individual))
-            individual[i] = np.random.choice(groups)
+            individual[i] = np.random.choice(groups_joined)
         return (individual,)
 
     toolbox.register("mutate", mutateF, MUP=options.genalg['MUP'])
@@ -112,7 +115,10 @@ def run_deap(array, options, level=None, function=None):
     population = toolbox.population()
     fits = evaluate_multi(population)
     for fit, ind in zip(fits, population):
-        ind.fitness.values = fit
+        try:
+            ind.fitness.values = fit
+        except TypeError as e:
+            print "fit:", fit
 
     for gen in range(1, options.genalg['ngenerations']):
         print_title("Generation No.: " + str(gen), outline='l', signator="-")
@@ -128,6 +134,7 @@ def run_deap(array, options, level=None, function=None):
         for fit, ind in zip(fits, offspring):
             ind.fitness.values = fit
         halloffame.update(population)
+        paretofront.update(population)
         print "hall of fame:", halloffame
         record = stats.compile(population)
         print "record:", record
@@ -136,6 +143,7 @@ def run_deap(array, options, level=None, function=None):
         population = toolbox.select(offspring + population,
             k=options.genalg['npopulation'])
 
+    print "pareto front", paretofront
     print population
     print logbook
 
