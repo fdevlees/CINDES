@@ -217,6 +217,7 @@ def get_genalg_params(subinp, line):
                 'restart':False,
                 'seed': 0,
                 'selector': 'RouletteWheel',
+                'tournamentPoolsize':2,
                 'weights': (1.0,)
                 }
     try:
@@ -301,8 +302,8 @@ def readfile(subinp):
         'ml': 0,
         'maxiter': 10,
         'montecarlo': 0,  # Temperature at start
-        'nch3': 16,
-        'ncore': 10,
+        'nch3': Ellipsis,
+        'ncore': Ellipsis,
         'nlinks': False,
         'no1sub': 0,
         'norandom': 0,

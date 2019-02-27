@@ -127,6 +127,7 @@ def normaltermination(mols, run):
     while True:
         # CHECK READY:
         print "not ready:",
+        counter = 0
         for i, mol in enumerate(mols):
             # i. check if mol is ignored or ready
             if mol.ignoremol or mol.IsReady:
@@ -138,6 +139,7 @@ def normaltermination(mols, run):
                 if job.IsReady or job.ignorejob:
                     continue
                 else:
+                    counter += 1
                     print "{}.{}".format(i, j),
 
                 # test ready. when extratime is too high job is ignored
@@ -152,6 +154,9 @@ def normaltermination(mols, run):
                 mol.IsReady = True
         print
         if all(mol.IsReady for mol in mols):
+            break
+        elif counter == 0:
+            print "there are no zzz files anymore?!"
             break
 
         # test if there are still uncompleted zzz_files in queue. If not count extra time

@@ -193,7 +193,8 @@ def procedure(myrun, mols_tocal, mols_nocal):
 
     if not mols_tocal == []:
         # 0. Set the molecular geometries
-        geommaker(mols_tocal, myrun)
+        if myrun.__class__.__name__=='FrameRun':
+            geommaker(mols_tocal, myrun)
         # 1. And perform the calculations
         do_calcs(mols_tocal, myrun)
 

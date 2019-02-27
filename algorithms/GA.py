@@ -443,9 +443,11 @@ def run_pyevolve(array, options, level=None, function=None):
             seed=options.genalg['seed'],
             trackhistory=options.genalg['trackhistory'],
             restart=restart )
+    pop = ga.getPopulation()
 
     # 8. set Selector
-    if options.genalg['selector'] == 'RouletteWheel':  # Default = GRouletteWheel
+    #if options.genalg['selector'] == 'RouletteWheel':  # Default = GRouletteWheel
+    if any(item in options.genalg['selector'] for item in ['Roulette', 'roulette','wheel']):
         ga.selector.set(Selectors.GRouletteWheel)
     elif any(item in options.genalg['selector'] for item in ['Rank', 'rank']):
         ga.selector.set(Selectors.GRankSelector)
@@ -453,6 +455,7 @@ def run_pyevolve(array, options, level=None, function=None):
         ga.selector.set(Selectors.GUniformSelector)
     elif any(item in options.genalg['selector'] for item in ['Tour', 'tour']):
         ga.selector.set(Selectors.GTournamentSelector)
+        pop.setParams(tournamentPool=options.genalg['tournamentPoolsize'])
     else:
         raise SystemExit('no valid selector is chosen')
 
@@ -485,7 +488,6 @@ def run_pyevolve(array, options, level=None, function=None):
     # 16. set scaling: to allow for negative scores we have to use
     # SigmaTruncScaling. otherwise also LinearScaling or PowerLawScaling could
     # be used
-    pop = ga.getPopulation()
     pop.scaleMethod.set(Scaling.SigmaTruncScaling)
 
     # 17. for plotting / logging
