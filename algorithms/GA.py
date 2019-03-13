@@ -21,7 +21,7 @@ from CINDES.utils.molecule import Molecule
 from CINDES.utils.table import set_table
 from CINDES.utils.utils import skipper
 from CINDES.evaluation.calculator import evaluate_mols
-from CINDES.evaluation.construction import contoind
+from CINDES.evaluation.construction import contoind, indtocon
 
 from CINDES.algorithms import loggings
 from CINDES.algorithms.pyevolve.GPopulation import GPopulation
@@ -362,7 +362,7 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
     def getLastPopulation(self):
         generation, rawPop = self.dbAdapter.getLastPopulation()
         self.currentGeneration = generation
-        pop = [ INDES.construction.indtocon(ind) for ind in rawPop ]
+        pop = [ indtocon(ind) for ind in rawPop ]
         print "new Pop", pop
         return pop
 

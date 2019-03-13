@@ -70,9 +70,15 @@ class Diversifier(object):
                 for conf in confs:
                     # if in the new selection of confs, the ith site of the gth conf has the jth substituent: add 1 to occupancy counter
                     #if site2[i][g] == substituent[j]:
-                    if conf[i] == seq[j]:
-                        # that is the occupancy of the ith site the jth substituent:
-                        occupancy_single[i][j]+=1
+                    try:
+                        if conf[i] == seq[j]:
+                            # that is the occupancy of the ith site the jth substituent:
+                            occupancy_single[i][j]+=1
+                    except IndexError:
+                        print "conf:", conf
+                        print "seq:", seq
+                        print "i,j", i,j
+                        raise
 
         # get summed occupancy 1D
         # now the occupancies for each site are added up. so we get a 1D list of occupancies of every substituent
