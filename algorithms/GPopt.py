@@ -48,13 +48,9 @@ class Algorithm(object):
         return
 
 
-def GP(param, array=None):
+def GP(run):
     """ This will be a Bayes Optimization: Gaussian Process """
-    if array is None:
-        self.array = param['array']
-    myrun = FrameRun(**param)
-    logging.info(myrun)
-    my_gp = GaussianProcess(myrun)
+    my_gp = GaussianProcess(run)
     result = my_gp.evolve()
     return result
 
