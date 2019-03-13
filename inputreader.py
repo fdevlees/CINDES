@@ -218,7 +218,8 @@ def get_genalg_params(subinp, line):
                 'seed': 0,
                 'selector': 'RouletteWheel',
                 'tournamentPoolsize':2,
-                'weights': (1.0,)
+                'weights': (1.0,),
+                'algorithm':'GA'
                 }
     try:
         n_extra_lines = int(line.split()[2])
@@ -498,9 +499,13 @@ def readfile(subinp):
             paras['prejobs'] = get_jobs(subinp, line)
         elif 'property' in line:
             prop = line.split()[1]
+            try:
+                functionfile = line.split()[2]
+            except IndexError:
+                functionfile = 'function'
             if 'load_func' in prop:
                 paras['property'] = 'func'
-                functionscript = __import__('function')
+                functionscript = __import__(functionfile)
                 paras['function'] = functionscript.function
                 assert callable(paras['function'])
                 paras['func_args'] = functionscript.arguments

@@ -47,7 +47,7 @@ def evaluate_mols(run, mols, table, count, nsite=0):
     if 1 in run.restrictions:  # these are actually filters!
         mols_todo, mols_nodo = restriction1(mols_todo, mols_nodo, run)
 
-    logpopulation(mols_todo, mols_nodo)
+    if run.write: logpopulation(mols_todo, mols_nodo)
 
     # 3. perform prescreaning in a predictions.
     property_table = get_property_table(table, run)

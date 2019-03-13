@@ -149,7 +149,7 @@ def get_configurations(startconf, array, k, run=None):
     return configurations
 
 def get_molecules(startconf, array, k, run):
-    from CINDES.utils.molecule import Molecule, Population
+    from CINDES.molecule import Molecule, Population
     confs = get_configurations(startconf, array, k, run)
     individuals = [Molecule(conf=conf) for conf in confs]  # list of molecules
     return individuals

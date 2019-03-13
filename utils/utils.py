@@ -287,7 +287,12 @@ def skipper(mols_tocal, mols_nocal, myrun, iprint=True):
             result = { func_arg:value for func_arg,value in zip(myrun.func_args, Pvalue) }
             print 'result', result, Pvalue
             molecule.props.update(result)
-            molecule.Pvalue = Pvalue
+            if isinstance(Pvalue, int) or isinstance(Pvalue, float):
+                molecule.Pvalue = Pvalue
+            elif len(Pvalue)==1:
+                molecule.Pvalue = Pvalue[0]
+            else:
+                molecule.Pvalue = Pvalue
             #molecule.Pvalue = molecule.props[myrun.func_args[0]]
         else:
             item = molecule.index

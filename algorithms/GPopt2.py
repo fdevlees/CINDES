@@ -83,9 +83,15 @@ class GaussianProcess(Algorithm):
 
     def set_space(self):
         print "array:", self.array
-        space = normalize_dimensions(self.array_joined)
-        print "space:", space
-        self.space = space
+        domain = []
+        for i, iarray in enumerate(self.array):
+            dimension = {'name': 'var{:d}'.format(i),
+                         'type': 'categorical',
+                         'domain':iarray,
+                         'dimensionality': 1}
+            domain.append(dimension)
+        print "space:", domain
+        self.space = domain
         return
 
     def get_Y(self, X, gen):
@@ -111,6 +117,13 @@ class GaussianProcess(Algorithm):
                               made_pred=False,
                               tablename=self.run.tablename,
                               write=self.run.write)
+        self.history.append({
+                    'count':gen,
+                    'p':self.optimum.Pvalue,
+                    'index':self.optimum.index,
+                    'ncalcs':self.ncalcs
+                    })
+
         # 6. set Y
         y_dict = {mol.index: mol.Pvalue for mol in mols}
         Y=[]
@@ -120,67 +133,20 @@ class GaussianProcess(Algorithm):
 
     def evolve(self):
         batchsize=10
-        best = None
         self.set_space()
 
-        if True:
-            algorithm = "GP"
-        else:
-            algorithm = "RF" #random forest
 
-        # algorithms: GP(default), RF, ET, GBRT
-        # acq_func: gp_hedge(default), LCB, EI, PI
-        # acq_optimizer: sampling(for categorical) lbfgs
-        if True:
-            acq_func = 'gp_hedge'
-        else:
-            acq_func = 'EI'
-
-        optimizer = Optimizer(
-            dimensions=self.space,
-            base_estimator=algorithm,
-            n_initial_points=batchsize,
-            acq_func=acq_func,
-            #random_state=1,
-            acq_optimizer='sampling'
-            )
+        myBopt = GPyOpt.methods.BayesianOptimization(f=self.run.function,                     # Objective function       
+                                             domain=self.space,          # Box-constraints of the problem
+                                             initial_design_numdata = 5,   # Number data initial design
+                                             acquisition_type='EI',        # Expected Improvement
+                                             exact_feval = True)           # True evaluations, no sample noise
+        myBopt.run_optimization(max_iter,eps=0)
 
 
-        print "optimizer model:", optimizer.base_estimator_
-        print "eta: {}, acq-function: {}, acq-optimizer: {}".format(optimizer.eta, optimizer.acq_func, optimizer.acq_optimizer)
+        print myBopt
 
-        for gen in range(self.run.maxiter):
-            print_title("BATCH-NO: " + str(gen), outline='l', signator="-")
-
-            X = optimizer.ask(n_points=batchsize)
-            Y = self.get_Y(X, gen=gen)
-            X, Y = self.only_finite(X, Y)
-            optimizer.tell(X, Y)
-
-            for x, y in zip(X, Y):
-                if best is None or best[1] > y:
-                    best = ('_'.join(x), y)
-
-            # save model:
-            with open('my-optimizer.pkl', 'wb') as f:
-                pickle.dump(optimizer, f)
-
-            # 
-            self.history.append({
-                    'count':gen,
-                    'p':best[1],
-                    'index':best[0],
-                    'ncalcs':self.ncalcs
-                    })
-
-
-            logging.info("--- %s seconds ---" % (time.time() - self.run.starttime))
-
-        print "\n\tOptimum:", min(zip(optimizer.yi, optimizer.Xi))
-        
-        result = {'p':best[1], 'index':best[0], 'history':self.history, 'ncalcs':self.ncalcs, 'count':self.run.maxiter}
- 
-        return result
+        return optimizer
 
     @staticmethod
     def only_finite(X, Y):

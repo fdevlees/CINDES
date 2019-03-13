@@ -17,7 +17,7 @@ import random as rrandom
 # my own modules
 #from writings import log_io, sprint, print_title
 from CINDES.utils.writings import log_io, sprint, print_title
-from CINDES.utils.molecule import Molecule
+from CINDES.molecule import Molecule
 from CINDES.utils.table import set_table
 from CINDES.utils.utils import skipper
 from CINDES.evaluation.calculator import evaluate_mols
@@ -48,17 +48,19 @@ class Fitness_Function():
         self.run = run
         self.table = table
         self.array = array
+        self.ncalcs = 0
         return
 
     def evaluate_multi(self, confs, gen=0):
         ''' this function is used by my_GSimpleGA class.my_evaluate '''
-        print "confs:", confs
+        if self.run.write: print "confs:", confs
 
         individuals = [Molecule(conf=conf) for conf in confs]  # list of molecules
 
-        print "indivuals:", individuals
+        if self.run.write: print "indivuals:", individuals
 
         mols, nnewcalcs, made_pred = evaluate_mols(self.run, individuals, self.table, gen, nsite=0)
+        self.ncalcs += nnewcalcs
 
         self.table = loggings.loggings(mols,
                                              self.table,

@@ -12,16 +12,14 @@ import logging
 
 # my own modules
 from CINDES.utils.writings import log_io, sprint, print_title
-from CINDES.utils.molecule import Molecule
+from CINDES.molecule import Molecule
 from CINDES.utils.table import set_table, get_property_table
-from CINDES import INDES
-from CINDES.INDES.predictions import predictor
-from CINDES.predictor import learning_int as ml_i
-from CINDES.INDES.GA import Fitness_Function
-from CINDES.INDES.construction import indtocon, contoind
-from CINDES.INDES.run import FrameRun
+from CINDES.evaluation.predictions import predictor
+from CINDES.evaluation.predictor import learning_int as ml_i
+from CINDES.algorithms.GA import Fitness_Function
+from CINDES.evaluation.construction import indtocon, contoind
 
-from CINDES.pyevolve import DBAdapters
+from CINDES.algorithms.pyevolve import DBAdapters
 
 ###### Set global variables:
 debug = False
@@ -69,7 +67,7 @@ class MyDBSQLiteAdapter(DBAdapters.DBSQLite):
 ###### CALL(s) from __main__.py ###########
 
 # 1. setup system
-from CINDES.INDES import procedures
+from CINDES.algorithms import procedures
 
 def rounder(history):
     n=2
@@ -89,7 +87,7 @@ def stringify_array(array):
     return newarray
 
 
-def main(param):
+def main(mprms):
     global w1, w2, c1
 
     # -1. random seeds:
@@ -97,7 +95,6 @@ def main(param):
     random.seed(param['seed'])
 
     # 0. setup
-    mprms = FrameRun(**param)
     print mprms
     table = set_table(mprms, mprms.array)
     mprms.array = stringify_array(mprms.array)
@@ -160,7 +157,7 @@ def run_pso(mprms, function):
     logging.info("global best history:" + str(map(lambda x:round(x,8), mypso.globalhistory)))
 
     # do only when run on commandline and logging level INFO/DEBUG
-    if sys.stdin.isatty() and logging.getLogger().isEnabledFor(logging.INFO):
+    if sys.stdin.isatty() and logging.getLogger().isEnabledFor(logging.INFO) and mprms.write:
         import matplotlib.pyplot as plt
         for i, a in enumerate(totalhistory):
             plt.plot(np.array(a)+i*0.05, alpha=0.9)

@@ -1,6 +1,6 @@
 """ a conveniece Molecule Class """
 import numpy as np
-from converter import Converter
+from CINDES.utils.converter import Converter
 from collections import MutableSequence
 
 replacements = {

@@ -3,7 +3,7 @@ debug = 0
 
 from CINDES.evaluation import construction as zcon
 from CINDES.utils.writings import log_io, print_title, sprint, dump
-from CINDES.utils.molecule import Molecule
+from CINDES.molecule import Molecule
 from CINDES.evaluation.predictor import learning_skl as learning
 import random
 random.seed(123)
@@ -77,7 +77,6 @@ def ML_init(prediction, run, table, retrain=True, array=[], count=100, nsite=0, 
 
 def ML_pred(regressor, conf, **kwargs):
     # 3. use model to predict
-    from CINDES.utils.molecule import Molecule
     mol = Molecule(conf)
     regressor.do_predict([mol], rstd=True, MC=True)
     #print mol.predictions

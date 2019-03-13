@@ -200,7 +200,8 @@ class BestFirstSearch(object):
                                  count,
                                  k, l,
                                  made_pred,
-                                 tablename=self.run.tablename)
+                                 tablename=self.run.tablename,
+                                 write = self.run.write)
 
                 logging.info("BCOK:{:d}".format(self.bcok))
                 self.history.append({

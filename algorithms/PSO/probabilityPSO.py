@@ -6,7 +6,7 @@ from copy import deepcopy
 import logging
 
 from CINDES.utils.writings import log_io, sprint, print_title
-from CINDES.INDES.construction import indtocon, contoind
+from CINDES.evaluation.construction import indtocon, contoind
 
 seed = 10
 np.random.seed(seed)

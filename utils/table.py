@@ -256,7 +256,7 @@ class Tablebin(object):
         return ngps
 
     def diversity_filter(self, n=10, divindex=1):
-        from CINDES.utils.diversity1 import Diversifier
+        from CINDES.utils.diversity import Diversifier
         self.diversifier = Diversifier(index=divindex)
         self.diversifier.set_filter(False)
         divalues, occupancy = self.diversifier.table_run(self, index=divindex)
