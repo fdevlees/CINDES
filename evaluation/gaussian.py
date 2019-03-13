@@ -176,10 +176,12 @@ def filewriter(mol, calc, pos=None):
 
     fid = open(filepath, 'w')
 
+    memoryline = "%mem={:d}MB\n".format(1800)
+
     # JOB 1
     job1 = jobs[0]
     fid.write("%chk=" + name + ".chk\n")
-    fid.write("%mem=1500MB\n")
+    fid.write(memoryline)
     if not paras['nprocs'] == 1:
         fid.write("%nprocshared=" + str(paras['nprocs']) + "\n")
     fid.write(job1['hotline'])  # first gaussianline
@@ -200,7 +202,7 @@ def filewriter(mol, calc, pos=None):
     for i, job in enumerate(jobs[1:]):
         fid.write("--link1--\n")
         fid.write("%chk=" + name + ".chk\n")
-        fid.write("%mem=1500MB\n")
+        fid.write(memoryline)
         if not paras['nprocs'] == 1:
             fid.write("%nprocshared=" + str(paras['nprocs']) + "\n")
         fid.write(job['hotline'])

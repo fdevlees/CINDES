@@ -59,16 +59,18 @@ def genconf(myrun):
             mtzmat = zcon.constructor2(mol.conf, c, a, p, links=myrun.symlinks, defaultgroups=myrun.defaultgroups)
             setattr(mol, zmatfile, mtzmat)
     else:
+        print "zmatrixfile = single file"
         TZmat = myrun.TZmat
         c = deepcopy(TZmat['core'])
         a = deepcopy(TZmat['active'])
         p = deepcopy(TZmat['passive'])
         zmat = zcon.constructor2(conf, c, a, p, links=myrun.symlinks, defaultgroups=myrun.defaultgroups)
         setattr(mol, myrun.zmatrixfile, zmat)
+        setattr(mol, 'zmat', zmat)
     if myrun.program == 'gaussian':
-        import gaussian as program
+        from CINDES.evaluation import gaussian as program
     elif myrun.program == 'nwchem':
-        import nwchem as program
+        from CINDES.evaluation import nwchem as program
     else:
         raise SystemExit('program not recognized')
     calcs = myrun.calcs
