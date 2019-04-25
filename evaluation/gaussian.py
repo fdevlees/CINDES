@@ -176,7 +176,8 @@ def filewriter(mol, calc, pos=None):
 
     fid = open(filepath, 'w')
 
-    memoryline = "%mem={:d}MB\n".format(1800)
+    mem = calc.get('mem', 1800)
+    memoryline = "%mem={:d}MB\n".format(mem)
 
     # JOB 1
     job1 = jobs[0]

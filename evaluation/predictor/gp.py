@@ -138,7 +138,7 @@ class GaussianProcessExperiment_skl(Experiment):
         self.white_noise = white_noise
         self.hparam = { 'alpha':1.e-6,
                         'tol': 0.001,
-                        'intercept':True }
+                        'intercept':False }
         self.hparam_grid = {'alpha': np.logspace(-10,-5,3) }
         super(GaussianProcessExperiment_skl, self).__init__(**kwargs)
 

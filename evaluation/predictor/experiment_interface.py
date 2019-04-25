@@ -390,7 +390,7 @@ class Experiment(object):
         # Randomly split training and py data
         for fold, (X_train, y_train, X_test, y_test) in enumerate(self.get_fold()):
             print "FOLD ", fold
-            
+
             # this 5 lines are also in get_model without crosval
             print "Training ...",
             r_test.extend(y_test)
@@ -399,7 +399,7 @@ class Experiment(object):
             model = self.train(X_train, y_train, **kwargs)
             time_to_fit = time.time() - stime
             print "\tTime to fit: ", time_to_fit, ' s'
-            
+
             print "Testing ...",
             stime = time.time()
             y_train_pred = self.test(X_train, model)

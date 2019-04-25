@@ -175,9 +175,9 @@ def get_calcs(subinp, line):
 def get_jobs(subinp, line, index=1):
     def get_extra_line(line):
         key, value = line.strip().split(None, 1)
-        assert key in ['identify', 'nosub', 'program', 'nprocs',
+        assert key in ['identify', 'nosub', 'program', 'nprocs', 'mem',
                 'geom', 'script', 'positions', 'fafoom', 'rdfreq']
-        if key in ['nosub', 'nprocs', 'fafoom']:
+        if key in ['nosub', 'nprocs', 'fafoom', 'mem']:
             value = int(value)
         elif key in ['positions']:
             value = map(int, value.split())
@@ -277,6 +277,31 @@ def get_pso_params(subinp, line):
                 defaults[key]=1.4
 
     return subinp, defaults
+
+def get_gprf_params(subinp, line):
+    defaults = {'algorithm': 'GP',
+                'acq_func': 'gp_hedge',
+                'acq_optimizer': 'sampling',
+                'n_initial_points': 10,
+                'seed':1287294368,
+                'batchsize': 20,
+                }
+    try:
+        n_extra_lines = int(line.split()[2])
+    except IndexError:
+        print "WARNING: all default values for the genetic algorithms will be used:"
+    else:  # execute only when no exception is thrown
+        for _ in range(n_extra_lines):
+            line = subinp.readline()
+            key = line.split()[0]
+            if not key in defaults:
+                print "keyword in GP/RF section not recognized:", key
+                raise SystemExit('program stopped')
+            value_type = type(defaults[key])
+            defaults[key] = value_type(line.split()[1])
+        print " defaults for GP/RF are changed. new values:", defaults
+    return subinp, defaults
+
 
 def readfile(subinp):
     '''this method reads all the inputkeywords'''
@@ -525,6 +550,8 @@ def readfile(subinp):
                 subinp, paras['genalg'] = get_genalg_params(subinp, line)
             elif paras['procedure'] in ['pso', 'particleswarm']:
                 subinp, paras['pso'] = get_pso_params(subinp, line)
+            elif paras['procedure'] in ['gp', 'rf']:
+                subinp, paras['gprf'] = get_gprf_params(subinp, line)
             elif paras['procedure'] in ['testpred', 'makepred']:
                 try:
                     paras['datacolumn'] = int(line.split()[2])

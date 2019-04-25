@@ -119,6 +119,7 @@ def get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun):
         try:
             mol.props = table[mol.index]
         except KeyError:
+            print "mol not in secret_table",
             continue
         mol.predicted = False
         mols_tocal.remove(mol)

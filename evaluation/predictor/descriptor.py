@@ -510,7 +510,7 @@ class Propane(Dataset):
         self.seq=seq
         self.ngps=ngps
         return
-    
+
     def extractX(self, confs):
         nC = len(confs)
         LoS = [] # list of sites
@@ -548,6 +548,7 @@ class Thiadiazinyl(Dataset):
         return
 
     def extractX(self,confs):
+        print "confs[0]:", confs[0]
         nC= len(confs)
         nsites = len(self.ngps)
         if args.verbose>2:

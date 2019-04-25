@@ -27,8 +27,9 @@ class LinRegOneExperiment(Experiment):
 
         self.hparam = { 'alpha':1e4,
                         'tol': 0.001,
-                        'intercept':True }
-        self.hparam_grid = {'alpha': np.logspace(-5,5,10) }
+                        'intercept':False }
+        self.hparam_grid = {'alpha': np.logspace(-5, 5, 11) }
+        #self.hparam_grid = {'alpha': [1e-7, 1e-6] }
 
         for key in self.hparam:
             if key in kwargs:
@@ -40,6 +41,7 @@ class LinRegOneExperiment(Experiment):
     def get_estimator(self, **kwargs):
         alpha = self.hparam['alpha']
         intercept = self.hparam['intercept']
+        print "intercept:", intercept
         tol = self.hparam['tol']
         subtype = self.subtype
 
@@ -101,7 +103,6 @@ class LinRegOneExperiment(Experiment):
         indices = [ mol.index for mol in molecules ]
 
         # different
-        #X_pred = get_X_1D(indices=indices, descriptor=self.descriptor, identify=self.run.identify)
         X_pred = get_X(indices, array=self.array, descriptor=self.descriptor, identify=self.run.identify, **self.run.TZmat )
 
         # same
@@ -136,6 +137,8 @@ class LinRegOneExperiment(Experiment):
             self.plot2 = model.plot2
         except AttributeError:
             pass
+
+        self.model = model
 
         return model
 

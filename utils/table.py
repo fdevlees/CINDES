@@ -51,9 +51,10 @@ def set_table(myrun, array=[]):
         print "pickle_db:", pickle_db
         json_db = dict()
         #tableprops=['mw','solv', 'e0_solv', 'e1_solv', 'lumo', 'solv']
-        #tableprops=['omega']
+        tableprops=['omega']
         tableprops=['gap', 'homo', 'lumo', 'E0' ]
-        tableprops=['gap', 'lumo', 'homo' ]
+        tableprops=[ 'lumo', 'homo' ]
+        tableprops=['lumo']
         #tableprops=['stab']
         for item in pickle_db:
             key=item[0]

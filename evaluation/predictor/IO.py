@@ -2,7 +2,7 @@
 
 from CINDES.utils.converter import Converter
 from CINDES.utils.utils import processify
-from CINDES.INDES import construction as zcon
+from CINDES.evaluation import construction as zcon
 
 import numpy as np
 import logging
@@ -14,7 +14,14 @@ from descriptor import get_X_1D, get_X_int
 def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='x_', array=None, **kwargs):
     ''' calculte X and y '''
     def get_y(table, tableindex):
-        y =  np.fromiter((item[tableindex] for item in table ),np.float)
+        try:
+            y =  np.fromiter((item[tableindex] for item in table ),np.float)
+        except ValueError:
+            try:
+                y =  np.fromiter((value for key, value in table.iteritems()),np.float)
+            except Exception as e:
+                raise e
+
         return y
 
     #### MAKE Y
@@ -24,7 +31,10 @@ def get_XY(table, TZmat={}, tableindex=1, descriptor='BoB', identify='x_', array
 
     #### MAKE X
     ## X.1: get indices from table
-    indices = (item[0] for item in table)
+    try:
+        indices = table.keys()
+    except AttributeError:
+        indices = (item[0] for item in table)
     X = get_X( indices, descriptor=descriptor, identify=identify, array=array, **TZmat)
 
     #### LOG

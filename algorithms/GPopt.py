@@ -58,6 +58,7 @@ def GP(run):
 class GaussianProcess(Algorithm):
     def __init__(self, run):
         self.run = run
+        self.param = self.run.gprf
         self.array = self.run.array
         # make an array with CNOO instead of ['C','N','O','O'] etc
         self.array_joined = [ tuple("".join(item) for item in site ) for site in self.array ]
@@ -115,30 +116,21 @@ class GaussianProcess(Algorithm):
         return Y
 
     def evolve(self):
-        batchsize=10
         best = None
         self.set_space()
-
-        if True:
-            algorithm = "GP"
-        else:
-            algorithm = "RF" #random forest
 
         # algorithms: GP(default), RF, ET, GBRT
         # acq_func: gp_hedge(default), LCB, EI, PI
         # acq_optimizer: sampling(for categorical) lbfgs
-        if True:
-            acq_func = 'gp_hedge'
-        else:
-            acq_func = 'EI'
+        print "self.param:", self.param
 
         optimizer = Optimizer(
             dimensions=self.space,
-            base_estimator=algorithm,
-            n_initial_points=batchsize,
-            acq_func=acq_func,
-            #random_state=1,
-            acq_optimizer='sampling'
+            base_estimator=self.param['algorithm'],
+            n_initial_points=self.param['n_initial_points'],
+            acq_func=self.param['acq_func'],
+            random_state=1287294368,
+            acq_optimizer=self.param['acq_optimizer']
             )
 
 
@@ -148,7 +140,7 @@ class GaussianProcess(Algorithm):
         for gen in range(self.run.maxiter):
             print_title("BATCH-NO: " + str(gen), outline='l', signator="-")
 
-            X = optimizer.ask(n_points=batchsize)
+            X = optimizer.ask(n_points=self.param['batchsize'])
             Y = self.get_Y(X, gen=gen)
             X, Y = self.only_finite(X, Y)
             optimizer.tell(X, Y)
@@ -161,7 +153,6 @@ class GaussianProcess(Algorithm):
             with open('my-optimizer.pkl', 'wb') as f:
                 pickle.dump(optimizer, f)
 
-            # 
             self.history.append({
                     'count':gen,
                     'p':best[1],
@@ -173,9 +164,7 @@ class GaussianProcess(Algorithm):
             logging.info("--- %s seconds ---" % (time.time() - self.run.starttime))
 
         print "\n\tOptimum:", min(zip(optimizer.yi, optimizer.Xi))
-        
         result = {'p':best[1], 'index':best[0], 'history':self.history, 'ncalcs':self.ncalcs, 'count':self.run.maxiter}
- 
         return result
 
     @staticmethod
