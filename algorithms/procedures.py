@@ -89,11 +89,11 @@ def genconf(myrun):
     return
 
 
-def generate_procedure(param, array):
+def generate_procedure(myrun):
     ''' 3. calculate all possible structures '''
 
-    myrun = FrameRun(**param)
     table = set_table(myrun)
+    array = myrun.array
     print myrun
 
     # get all structures
