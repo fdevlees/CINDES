@@ -33,20 +33,19 @@ if True:
     parser.add_argument("-i", "--inputfile", type=str, default='INPUT', help="name of the input file. default name: INPUT")
     parser.add_argument("-v", "--verbose", action="count", default=0, help="increase output verbosity")
     args = parser.parse_args()
-    #zmatrixfile is a global variable
-    logging.info("name of input-file:" + args.inputfile)
+
     # INPUT READING
+    logging.info("name of input-file:" + args.inputfile)
     run = read_input(args.inputfile)
-    # END INPUT READING
 
     #START PROGRAM PROCEDURE
     if run.procedure in ['standard', 'bfs']:
         from algorithms.BFS import BFS
         BFS(run)
 
-    elif run.procedure in ['steepest', 'sd']:  # can be steepest1 or steepest2
-        from algorithms.procedures import SteepestDescent
-        SteepestDescent(run)
+    elif run.procedure in ['sd', 'rsd']:  # can be sd or reduced steepest descent, rsd
+        from algorithms.BFS import SD
+        SD(run)
 
     elif run.procedure in ['ga', 'genetic algorithm', 'genalg']:
         from algorithms import GA

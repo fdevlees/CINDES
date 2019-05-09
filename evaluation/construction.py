@@ -149,15 +149,19 @@ def get_configurations(startconf, array, k, run=None):
     return configurations
 
 def get_molecules(startconf, array, k, run):
-    from CINDES.molecule import Molecule, Population
+    from CINDES.molecule import Molecule
     confs = get_configurations(startconf, array, k, run)
     individuals = [Molecule(conf=conf) for conf in confs]  # list of molecules
     return individuals
 
-def get_molecules_SD(startconf, array, run):
+def get_molecules_SD(startconf, array, run, restingsites=None):
     ''' same as get_molecules but now every single mutation '''
+    from CINDES.molecule import Molecule
+    if restingsites is None:
+        restingsites = range(len(startconf))
+
     confs = []
-    for i in run.restingsites:
+    for i in restingsites:
         confs.extend(get_configurations(startconf, array, i, run=run))
 
     # remove duplicates by sorting and subsequently only adding when the previous one is not similar
@@ -165,8 +169,7 @@ def get_molecules_SD(startconf, array, run):
     confs = [sortedconfs[i] for i in xrange(len(sortedconfs)) if i == 0 or sortedconfs[i] != sortedconfs[i - 1]]
 
     individuals = [Molecule(conf=conf) for conf in confs]  # list of molecules
-    mols_todo, mols_nodo = check_in_table(individuals, table, run.props)
-    return mols_todo, mols_nodo
+    return individuals
 
 
 def check_in_table(individuals, table, props=set(), check_ignored=False):

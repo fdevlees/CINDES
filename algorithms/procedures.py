@@ -259,23 +259,8 @@ def testpred(param, array):
     return
 
 # 6: steepest descent
-
 def SteepestDescent(param, array):
     raise NotImplementedError('this method is too old and out of date compared to the BFS procedure')
-    bcok = 0  # TO REMOVE LATER
-    param['bcok'] = 0
-
-    # SET MYRUN CLASS and assign all necessary attributes
-    myrun = FrameRun(**param)
-    print(myrun)  # this should print all the class elements via the __str__ function
-    # the table with all the results of all calculated configs
-    table = set_table(myrun)
-    # set optimum
-    optimum = None
-    # set calculation properties
-    startconf = get_startconf(param, array)
-    # END MYRUN CLASS assignments. from now myrun should contain all the
-    # necessary information to work with during the whole program run.
 
     # defines which sites will be changed. only relevant for steepest2 algorithm
     myrun.restingsites = range(myrun.nsites)
@@ -283,18 +268,17 @@ def SteepestDescent(param, array):
     # ------------------------------------- #
     # --- HERE THE MAIN LOOP STARTS --- --- #
     # ------------------------------------- #
+    startconf = None
     count = 1  # so we start counting at 1!
-    ncalcs = 0
     while True:
         print_title("COUNT: " + str(count), outline='l', signator="-")
 
-        if count > 1:  # define new startconfiguration if not first cycle
-            # define new starting geometry
-            print "optsite[0]", optsite[0]
-            del startconf
+        # define new starting geometry
+        if startconf:
             startconf = optsite.conf
-            #startconf = zcon.indtocon(optsite[0])
-            print "newconf: ", startconf
+        else:
+            startconf = get_startconf(param, array)
+        print "start configuration: ", startconf
 
         # STEP 1: INDEXMAKER
         # get indices_all and the indices that still need to be calculated

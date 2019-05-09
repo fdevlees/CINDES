@@ -435,7 +435,10 @@ def readfile(subinp):
                 paras['bcoptimum'] = line.split()[3]
             except IndexError:
                 paras['bcoptimum'] = 'minimum'
-            assert paras['bcoptimum'] in ['min', 'max', 'minimum', 'maximum']
+            if paras['bcoptimum'] in ['min', 'minimum']:
+                paras['bcoptimum'] = 'min'
+            else:
+                paras['bcoptimum'] = 'max'
         elif 'startcalcs' in line:
             paras['calcs'] = get_calcs(subinp, line)
         # elif 'basisset' in line: paras['basisset'] = line.split()[1]

@@ -130,14 +130,17 @@ def get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun):
 def runjobs(mols_tocal, myrun, i):
     calc = myrun.calcs[i]
 
-    def call(function, calc, *args, **kwargs):
+    def call(function, calc, mols, **kwargs):
         if isinstance(calc, list) or isinstance(calc, tuple):
             for j, cal in enumerate(calc):
                 invoke_script(cal, locals(), (i + 1) * 100 + (j + 1))
-                function(calc=cal, *args, **kwargs)
+                mols = filter(lambda x: not x.ignoremol, mols)
+                function(calc=cal, mols=mols, **kwargs)
         else:
             invoke_script(calc, locals(), i + 1)
-            function(calc=calc, *args, **kwargs)
+            mols = filter(lambda x: not x.ignoremol, mols)
+            function(calc=calc, mols=mols, **kwargs)
+
     # 0. filter off ignored molecules
     mols_calc = filter(lambda x: not x.ignoremol, mols_tocal)
 
