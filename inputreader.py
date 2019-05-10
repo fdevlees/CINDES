@@ -157,9 +157,11 @@ def get_calcs(subinp, line):
     while True:
         assert line.strip()=='{:d}.{:d}'.format(i,j)
         line = subinp.readline()
-        calcs.append(get_jobs(subinp, line, index=0))
+        calc, line = get_jobs(subinp, line, index=0)
+        calcs.append(calc)
         # try to see if yet another job is given
-        line = subinp.readline().strip()
+        if line is None:
+            line = subinp.readline().strip()
         if line=='endcalcs' or line.split('.')[0]==str(i+1):
             if len(calcs)==1:
                 supercalcs.append(calcs[0])
@@ -169,6 +171,7 @@ def get_calcs(subinp, line):
         if line=='endcalcs':
             break
         i, j = map(int, line.split('.'))
+    print "supercalcs:", supercalcs
     return supercalcs
 
 
@@ -184,25 +187,60 @@ def get_jobs(subinp, line, index=1):
         calc[key] = value
         return
     calc = dict()
-    splitted = line.split()
-    njobs = int(splitted[index])
-    if len(splitted) == index+2:
-        n_extra_lines = int(splitted[index+1])
-        for _ in range(n_extra_lines):
-            line = subinp.readline()
+
+    # regex for format job specification:
+    p = re.compile(' *[0-9] +-*[0-9] +#.*')
+    # test if line only contains two integers:
+    if not all( i in '0123456789' for i in line.split() ):
+        print "line is not formattes as <njobs> <nextrakeywords>"
+        while True:
+            splitted = line.split()
+            nextline = subinp.readline()
+            if p.search(nextline):
+                print "found job:", nextline
+                break
+            # next line is no job so line is a keyword:
             get_extra_line(line)
-    jobs = []
-    for _ in range(njobs):
-        job = dict()
-        # read propline
-        line = subinp.readline().split()
-        job['info'] = set(line)
-        # read mult/charge/hotline
-        line = subinp.readline().split()
-        job['charge'], job['mult'], job['hotline'] = (line[0], line[1], ' '.join(line[2:]))
-        jobs.append(job)
-    calc['jobs'] = jobs
-    return calc
+            line = nextline
+        jobs = []
+        nextline = nextline.split()
+        print "nextline:", nextline
+        while True:
+            job = dict()
+            # read propline
+            job['info'] = set(splitted)
+            # read mult/charge/hotline
+            job['charge'], job['mult'], job['hotline'] = (nextline[0], nextline[1], ' '.join(nextline[2:]))
+            jobs.append(job)
+            line = subinp.readline().strip()
+            if line=='endcalcs' or len(line.split('.'))==2:
+                print "found no more job"
+                break
+            nextline = subinp.readline().split()
+            print "nextline:", nextline
+            splitted = line.split()
+        calc['jobs'] = jobs
+        return calc, line
+    else:
+        splitted = line.split()
+        njobs = int(splitted[index])
+        if len(splitted) == index+2:
+            n_extra_lines = int(splitted[index+1])
+            for _ in range(n_extra_lines):
+                line = subinp.readline()
+                get_extra_line(line)
+        jobs = []
+        for _ in range(njobs):
+            job = dict()
+            # read propline
+            line = subinp.readline().split()
+            job['info'] = set(line)
+            # read mult/charge/hotline
+            line = subinp.readline().split()
+            job['charge'], job['mult'], job['hotline'] = (line[0], line[1], ' '.join(line[2:]))
+            jobs.append(job)
+        calc['jobs'] = jobs
+    return calc, None
 
 
 def get_genalg_params(subinp, line):
@@ -453,7 +491,7 @@ def readfile(subinp):
         elif 'extra_props' in line:
             paras['extra_props'] = line.split()[1:]
         elif 'extrajobs' in line:
-            paras['extrajobs'] = get_jobs(subinp, line)
+            paras['extrajobs'], _ = get_jobs(subinp, line)
         elif 'extrawaittime' in line:
             paras['extrawaittime'] = float(line.split()[1])
         elif 'ignore' in line:
