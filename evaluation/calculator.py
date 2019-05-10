@@ -91,15 +91,16 @@ def restriction1(mols_todo, mols_nodo, run):
     return mols_todo, mols_nodo
 
 
-def invoke_script(calc, namespace, ID=0, start=True):
+def invoke_script(calc, ID, start=True, **kwargs):
     if not isinstance(calc, dict):
         return
     if not 'script' in calc:
-        print "no script invocation"
         return
-    print "in invoke script:):"
     module_obj = __import__(calc['script'])
-    module_obj.main(namespace, ID)
+    if start:
+        module_obj.start(calc=calc, ID=ID, **kwargs)
+    else:
+        module_obj.end(calc=calc, ID=ID, **kwargs)
     return
 
 
@@ -130,16 +131,16 @@ def get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun):
 def runjobs(mols_tocal, myrun, i):
     calc = myrun.calcs[i]
 
-    def call(function, calc, mols, **kwargs):
+    def call(function, calc, mols, run):
         if isinstance(calc, list) or isinstance(calc, tuple):
             for j, cal in enumerate(calc):
-                invoke_script(cal, locals(), (i + 1) * 100 + (j + 1))
+                invoke_script(calc=cal, mols=mols, run=run, ID=(i + 1) * 100 + (j + 1))
                 mols = filter(lambda x: not x.ignoremol, mols)
-                function(calc=cal, mols=mols, **kwargs)
+                function(calc=cal, mols=mols, run=run)
         else:
-            invoke_script(calc, locals(), i + 1)
+            invoke_script(calc=calc, mols=mols, run=run, ID=(i+1)*100 + 1)
             mols = filter(lambda x: not x.ignoremol, mols)
-            function(calc=calc, mols=mols, **kwargs)
+            function(calc=calc, mols=mols, run=run)
 
     # 0. filter off ignored molecules
     mols_calc = filter(lambda x: not x.ignoremol, mols_tocal)
@@ -160,15 +161,16 @@ def runjobs(mols_tocal, myrun, i):
 
     return
 
-def do_calcs(mols_tocal, myrun):
-    for i, calc in enumerate(myrun.calcs):
-        if myrun.threading:
+def do_calcs(mols_tocal, run):
+    for i, calc in enumerate(run.calcs):
+        invoke_script(calc=calc, mols=mols_tocal, run=run, ID=(i+1)*100)
+        if run.threading:
             from threading_utils import runjobs_threading
-            runjobs_threading(mols_tocal, myrun, i)
+            runjobs_threading(mols_tocal, run, i)
         else:
-            runjobs(mols_tocal, myrun, i)
+            runjobs(mols_tocal, run, i)
         # if there need to be set some new geometries for new calculation.
-        invoke_script(calc, locals(), (i+1)*100)
+        invoke_script(calc=calc, mols=mols_tocal, run=run, ID=(i+1)*100, start=False)
         # delete jobs such that new jobs can be set up.
         for mol in mols_tocal:
             mol.deletejobs()
@@ -176,7 +178,7 @@ def do_calcs(mols_tocal, myrun):
     # after every calculation is performed:
     for mol in mols_tocal:
         if not mol.ignoremol:
-            datareader.set_combined_variables(mol, myrun.props)
+            datareader.set_combined_variables(mol, run.props)
     return mols_tocal
 
 # PROCEDURE

@@ -32,7 +32,6 @@ from CINDES.evaluation import calculator
 from CINDES.utils.writings import print_title
 from CINDES.utils.utils import skipper
 from CINDES.utils.table import set_table, get_property_table
-from BFS import testmax, runtest
 
 once = 0
 

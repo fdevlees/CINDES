@@ -115,6 +115,7 @@ def writegeom(mol, fid, geom=None):
         Azmat = 'zmat{}'.format(str(geom))
         Axyz = 'xyz{}'.format(str(geom))
 
+
     # write geom. zmat has priority over xyz!
     if hasattr(mol, Azmat):
         zmat = getattr(mol, Azmat)

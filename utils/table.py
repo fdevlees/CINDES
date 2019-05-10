@@ -19,6 +19,7 @@ def get_property_table(table, myrun):
                 p = value['lumo'] - value['homo']
             else:
                 print "molecule is missing in database:", key
+                p = None
         return p
 
     for key,value in table.iteritems():
