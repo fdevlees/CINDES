@@ -171,7 +171,6 @@ def get_calcs(subinp, line):
         if line=='endcalcs':
             break
         i, j = map(int, line.split('.'))
-    print "supercalcs:", supercalcs
     return supercalcs
 
 
@@ -189,35 +188,29 @@ def get_jobs(subinp, line, index=1):
     calc = dict()
 
     # regex for format job specification:
-    p = re.compile(' *[0-9] +-*[0-9] +#.*')
+    p = re.compile(' *-*[0-9] +[0-9] +#.*')
     # test if line only contains two integers:
     if not all( i in '0123456789' for i in line.split() ):
-        print "line is not formattes as <njobs> <nextrakeywords>"
+        print "living on the edge=) line is not formattes as <njobs> <nextrakeywords>!"
         while True:
             splitted = line.split()
             nextline = subinp.readline()
             if p.search(nextline):
-                print "found job:", nextline
                 break
             # next line is no job so line is a keyword:
             get_extra_line(line)
             line = nextline
         jobs = []
         nextline = nextline.split()
-        print "nextline:", nextline
         while True:
             job = dict()
-            # read propline
             job['info'] = set(splitted)
-            # read mult/charge/hotline
             job['charge'], job['mult'], job['hotline'] = (nextline[0], nextline[1], ' '.join(nextline[2:]))
             jobs.append(job)
             line = subinp.readline().strip()
             if line=='endcalcs' or len(line.split('.'))==2:
-                print "found no more job"
                 break
             nextline = subinp.readline().split()
-            print "nextline:", nextline
             splitted = line.split()
         calc['jobs'] = jobs
         return calc, line
