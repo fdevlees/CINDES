@@ -324,6 +324,7 @@ def readfile(subinp):
         'function': lambda x: x,
         'ignore': 0,
         'jobs': [],
+        'hasimagfreq':False,
         'logging':logging.INFO,
         'ml': 0,
         'maxiter': 10,
@@ -477,6 +478,8 @@ def readfile(subinp):
                 paras['stabjobs'] = jobs
         elif splitted[0] == 'jobs':
             paras['jobs'] = get_jobs(subinp, line)
+        elif 'hasimagfreq' in line:
+            paras['hasimagfreq'] = True
         elif splitted[0] == 'logging':
             level = splitted[1].lower()
             if level == 'debug':

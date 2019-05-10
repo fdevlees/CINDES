@@ -241,6 +241,23 @@ def zzztester(mols):
         print "no zzzs (anymore) in queue",
         return False
 
+def wait_hasimagfreq(job):
+    once = False
+    while True:
+        datadict = read_file(job)
+        if datadict['hasimagfreq']:
+            print "still imaginary frequency for job:", job,
+            if not once:
+                try:
+                    vibfreqs = datadict['vibfreqs']
+                    print "vibfreqs:", vibfreqs
+                except KeyError:
+                    pass
+                once = True
+            time.sleep(300)
+        else:
+            break
+    return
 
 @log_io()
 def datareader(mols, run):
@@ -251,6 +268,11 @@ def datareader(mols, run):
     for molecule in mols_toread:
         print "><" * 15, molecule,
         for job in molecule.jobs:
+
+            # 2.0 optionally: wait until no imag freqs
+            if run.hasimagfreq:
+                wait_hasimagfreq(job)
+
             # 2.1 read the job
             readings = read_file(job)
 
