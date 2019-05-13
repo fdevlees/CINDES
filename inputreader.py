@@ -415,7 +415,10 @@ def readfile(subinp):
             continue
         if line[0] == '#':
             continue
-        key = splitted[0]
+        try:
+            key = splitted[0]
+        except IndexError:
+            continue
         # 1. some capital sensitive keywords:
         if 'tablename' in line:
             paras['tablename'] = splitted[1]
