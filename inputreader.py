@@ -357,7 +357,7 @@ def readfile(subinp):
         'jobs': [],
         'hasimagfreq':False,
         'logging':logging.INFO,
-        'ml': 0,
+        'ml': False,
         'maxiter': 10,
         'montecarlo': 0,  # Temperature at start
         'nch3': Ellipsis,
@@ -538,7 +538,7 @@ def readfile(subinp):
         elif key=='mult':
             paras['mult'] = int(line.split()[1])
         elif 'ml' == line[:2]:
-            paras['ml'] = int(line.split()[1])
+            paras['ml'] = True
         elif 'norandom' in line:
             paras['norandom'] = 1
         elif 'no1sub' in line:
@@ -618,7 +618,7 @@ def readfile(subinp):
                     print "read {:d} indices to generate".format(paras['ngenerate'])
         elif 'regression' in line:
             paras['regression'] = 1
-        elif 'readtable' in line:
+        elif any(keyword in line) for keyword in ['readtable', 'read_table']:
             paras['readtable'] = True
         elif 'restart' in line:
             print "RESTART KEYWORD IS DEPRECATED: USE READTABLE INSTEAD"
@@ -685,7 +685,7 @@ def readfile(subinp):
         # LOCAL FUTURE JOB KEYWORDS:
         elif 'geom2' in line:
             paras['geom2'] = line.split()[1]
-        elif 'identify' in line:
+        elif 'identif' in line:
             paras['identify'] = line.split()[1]
             if not paras['identify'].endswith('_'):
                 print "underscore appended to identify"

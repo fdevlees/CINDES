@@ -299,7 +299,7 @@ def read_file(Job):
 
     # 2. split logfile in different jobs
     if program == 'gaussian':
-        from CINDES.evaluation.cclib.parser.gaussianparser import Gaussian as Logfile
+        from CINDES.evaluation.cclib.parser.gaussianparser import Gaussian as Log
         key = 'termination'
         # if keyword freq in line than there is an extra internal job!
         jobslines_v1 = open(filename).read().split(key)[:-1]
@@ -311,10 +311,10 @@ def read_file(Job):
             else:
                 jobslines.append(joblines_v1)
     elif program == 'orca':
-        from CINDES.evaluation.cclib.parser.orcaparser import ORCA as Logfile
+        from CINDES.evaluation.cclib.parser.orcaparser import ORCA as Log
         raise SystemExit('ORCA interface not implemented')
     elif program == 'nwchem':
-        from CINDES.evaluation.cclib.parser.nwchemparser import NWChem as Logfile
+        from CINDES.evaluation.cclib.parser.nwchemparser import NWChem as Log
         key = 'NWChem Input Module'
         splitted = open(filename).read().split(key)
         jobslines = splitted[1:-1]
@@ -332,7 +332,7 @@ def read_file(Job):
     for jobfile, job in zip(jobfiles, jobs):
 
         try:
-            job_data = Logfile(jobfile).parse()
+            job_data = Log(jobfile).parse()
         except Exception as e:
             print "parsing error with:", jobfile
             raise e
@@ -342,7 +342,7 @@ def read_file(Job):
                 continue
             elif inf[0] == 'e':  # so it concerns an energy!:
                 datadict[inf] = job_data.scfenergies[-1] / 27.21138505  # this value is used in cclib
-            elif inf[0] == 'g' and not inf == 'gap':
+            elif inf[0] == 'g' and not inf.startswith('gap'):
                 # note that scfenergies are given in eV by cclib but free energy in hartree
                 datadict[inf] = job_data.freeenergy
                 print "free energy found:", job_data.freeenergy
@@ -354,6 +354,12 @@ def read_file(Job):
                 datadict[inf] = job_data.moenergies[-1][job_data.homos[0]]
             elif inf.startswith('lumo'):
                 datadict[inf] = job_data.moenergies[-1][job_data.homos[0] + 1]
+            elif inf.startswith('hono_occn'):
+                nlumo = ( sum(job_data.atomnos) - job_data.charge ) / 2
+                datadict[inf] = job_data.nooccnos[nlumo - 1]
+            elif inf.startswith('luno_occn'):
+                nlumo = ( sum(job_data.atomnos) - job_data.charge ) / 2
+                datadict[inf] = job_data.nooccnos[nlumo]
             elif inf == 'dipole':
                 datadict[inf] = job_data.dipole
             elif inf == 'polar':
