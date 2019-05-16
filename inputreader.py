@@ -150,13 +150,17 @@ def get_prop_function(subinp, line):
     return subinp, func, props
 
 def get_calcs(subinp, line):
+
     supercalcs = []
     calcs = []
     i, j=1, 1
     line = subinp.readline()
+
     while True:
-        assert line.strip()=='{:d}.{:d}'.format(i,j)
-        line = subinp.readline()
+        if line.strip()=='{:d}.{:d}'.format(i,j):
+            line = subinp.readline()
+        else:
+            print "only one job!"
         calc, line = get_jobs(subinp, line, index=0)
         calcs.append(calc)
         # try to see if yet another job is given
@@ -618,7 +622,7 @@ def readfile(subinp):
                     print "read {:d} indices to generate".format(paras['ngenerate'])
         elif 'regression' in line:
             paras['regression'] = 1
-        elif any(keyword in line) for keyword in ['readtable', 'read_table']:
+        elif any(keyword in line for keyword in ['readtable', 'read_table']):
             paras['readtable'] = True
         elif 'restart' in line:
             print "RESTART KEYWORD IS DEPRECATED: USE READTABLE INSTEAD"
