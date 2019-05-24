@@ -181,7 +181,7 @@ def get_calcs(subinp, line):
 def get_jobs(subinp, line, index=1):
     def get_extra_line(line):
         key, value = line.strip().split(None, 1)
-        assert key in ['identify', 'nosub', 'program', 'nprocs', 'mem',
+        assert key in ['identify', 'identifier', 'nosub', 'program', 'nprocs', 'mem',
                 'geom', 'script', 'positions', 'fafoom', 'rdfreq']
         if key in ['nosub', 'nprocs', 'fafoom', 'mem']:
             value = int(value)
