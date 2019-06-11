@@ -1432,9 +1432,9 @@ class Gaussian(logfileparser.Logfile):
                 alpha_data = NLO_TW.get_alpha_data(inputfile)
                 #print("alpha_data:", alpha_data)
                 self.set_attribute('dipolealpha', alpha_data)
-            except IndexError:
-                pass
+            except (IndexError, ValueError) as e:
                 #print("NO NLO ALPHA", end=' ')
+                pass
 
         if ' First dipole hyperpolarizability, Beta (dipole orientation)' in line:
             from CINDES.utils import NLO_TW
@@ -1442,7 +1442,7 @@ class Gaussian(logfileparser.Logfile):
                 beta_data = NLO_TW.get_beta_data(inputfile)
                 #print("beta_data:", beta_data)
                 self.set_attribute('dipolebeta', beta_data)
-            except IndexError:
+            except (IndexError, ValueError) as e:
                 print("NO NLO BETA", end=' ')
 
         if 'Magnetic susceptibility (cgs-ppm):' in line:

@@ -578,15 +578,25 @@ class Thiadiazinyl(Dataset):
 
 
 class Pentacene(Dataset):
-    def __init__(self,nsites=4,*args,**kwargs):
+    def __init__(self,
+            nsites=None,
+            *args,**kwargs):
         self.seq = ['CH','N','CCHHH','CNHH','COH','CPh','CTh','CCl','CF','CSH','CNOO','CCCH','CCN','CNC','CCHO','CSOOOH','CCFFF']
-        self.ngps = nsites * (len(self.seq),)
+        if not nsites is None:
+            self.ngps = nsites * (len(self.seq),)
+        else:
+            self.ngps = None
         return
 
     def extractX(self,confs):
+        if self.ngps is None:
+            nsites = len(confs[0])
+            print "nsites:", nsites
+            self.ngps = nsites * (len(self.seq),)
+        print "ngps:", self.ngps
         nC= len(confs)
         nsites = len(self.ngps)
-        if args.verbose>2:
+        if args.verbose>=2:
             for i in range(10):
                 print confs[i]
             print "self.seq:", self.seq
@@ -600,10 +610,47 @@ class Pentacene(Dataset):
             for i in range(len(confs[k])): #for all the groups in the configuration
                 group = confs[k][i]
                 j = self.seq.index(group) #find the index of the group of that sequence
-                LoS[i][k,j] = 1
+                try:
+                    LoS[i][k,j] = 1
+                except Exception as e:
+                    print "LoS[i].shape", LoS[i]
+                    print "ijk", i, j, k
+                    raise e
         X = np.concatenate(LoS,axis=1)
         return X
 
+    def extract2DX(self,confs):
+        seq = self.seq
+        nC= len(confs)
+        X = np.zeros( [ nC , len(seq)**2 ] )
+        bonds = ( (0,1),(1,2),(2,3),(3,4),(4,5),(5,6))
+
+        for k in range(len(confs)): # for all the configurations:
+            B = []
+            if False:
+                for combi in bonds:
+                    B.append( np.zeros( [len(seq),len(seq)] ) )
+            else:
+                from itertools import combinations
+                for combi in combinations(range(7),2):
+                    B.append( np.zeros( [len(seq),len(seq)] ) )
+            #loop over all combinations 
+            for combi,bmatrix in zip(bonds,B):
+                i1,i2 = combi
+                group1 = confs[k][i1]
+                cleangroup1 = split('(\d+)',group1)[0]
+                group2 = confs[k][i2]
+                cleangroup2 = split('(\d+)',group2)[0]
+                gr1 = self.seq.index(cleangroup1)
+                gr2 = self.seq.index(cleangroup2)
+                bmatrix[ gr1, gr2 ] = 1
+                bmatrix[ gr2, gr1 ] = 1
+            if True: # so make one total matrix were all combis are combined
+                Btotal = np.sum( B , axis = 0)
+                Bflatten = Btotal.flatten()
+                X[k] = Bflatten
+        print "X2 constructed; shape X2:", np.shape(X)
+        return X
 #####################################
 #####       MAIN PROGRAM       ######
 #####################################
@@ -656,7 +703,7 @@ def main(args):
 #for default args:
 class defaults(object):
    def __init__(self):
-       self.verbose=1
+       self.verbose=2
        self.plot=0
        self.twosite=True
        self.xyplot=0

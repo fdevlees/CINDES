@@ -150,13 +150,17 @@ def get_prop_function(subinp, line):
     return subinp, func, props
 
 def get_calcs(subinp, line):
+
     supercalcs = []
     calcs = []
     i, j=1, 1
     line = subinp.readline()
+
     while True:
-        assert line.strip()=='{:d}.{:d}'.format(i,j)
-        line = subinp.readline()
+        if line.strip()=='{:d}.{:d}'.format(i,j):
+            line = subinp.readline()
+        else:
+            print "only one job!"
         calc, line = get_jobs(subinp, line, index=0)
         calcs.append(calc)
         # try to see if yet another job is given
@@ -177,7 +181,7 @@ def get_calcs(subinp, line):
 def get_jobs(subinp, line, index=1):
     def get_extra_line(line):
         key, value = line.strip().split(None, 1)
-        assert key in ['identify', 'nosub', 'program', 'nprocs', 'mem',
+        assert key in ['identify', 'identifier', 'nosub', 'program', 'nprocs', 'mem',
                 'geom', 'script', 'positions', 'fafoom', 'rdfreq']
         if key in ['nosub', 'nprocs', 'fafoom', 'mem']:
             value = int(value)
@@ -357,7 +361,7 @@ def readfile(subinp):
         'jobs': [],
         'hasimagfreq':False,
         'logging':logging.INFO,
-        'ml': 0,
+        'ml': False,
         'maxiter': 10,
         'montecarlo': 0,  # Temperature at start
         'nch3': Ellipsis,
@@ -538,7 +542,7 @@ def readfile(subinp):
         elif key=='mult':
             paras['mult'] = int(line.split()[1])
         elif 'ml' == line[:2]:
-            paras['ml'] = int(line.split()[1])
+            paras['ml'] = True
         elif 'norandom' in line:
             paras['norandom'] = 1
         elif 'no1sub' in line:
@@ -618,7 +622,7 @@ def readfile(subinp):
                     print "read {:d} indices to generate".format(paras['ngenerate'])
         elif 'regression' in line:
             paras['regression'] = 1
-        elif 'readtable' in line:
+        elif any(keyword in line for keyword in ['readtable', 'read_table']):
             paras['readtable'] = True
         elif 'restart' in line:
             print "RESTART KEYWORD IS DEPRECATED: USE READTABLE INSTEAD"
@@ -685,7 +689,7 @@ def readfile(subinp):
         # LOCAL FUTURE JOB KEYWORDS:
         elif 'geom2' in line:
             paras['geom2'] = line.split()[1]
-        elif 'identify' in line:
+        elif 'identif' in line:
             paras['identify'] = line.split()[1]
             if not paras['identify'].endswith('_'):
                 print "underscore appended to identify"

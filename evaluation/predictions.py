@@ -386,7 +386,7 @@ def predictor(
         # 3.2. json_log
         json_predictions(run.predictions)
         # 3.3. do plottings
-        # plot_predictions(run.predictions)
+        #plot_predictions(run.predictions)
 
         # 4. decide which molecules to calculate and which not
         if run.procedure == 'ga':
