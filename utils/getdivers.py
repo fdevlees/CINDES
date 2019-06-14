@@ -79,7 +79,7 @@ def getdivers(array, table, myrun):
 
     #1.
     from CINDES.utils.molecule import Molecule
-    from CINDES.utils.diversity1 import Diversifier
+    from CINDES.utils.diversity import Diversifier
     from CINDES.utils.table import Tablebin
     diversifier = Diversifier(index=index)
     mols = []

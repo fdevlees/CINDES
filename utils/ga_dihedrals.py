@@ -1,8 +1,8 @@
 import numpy as np
 from copy import deepcopy
 
-from CINDES.pyevolve import G1DList , GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters, Crossovers
-import CINDES.pyevolve as pyevolve
+from CINDES.algorithms.pyevolve import G1DList , GSimpleGA, GAllele, Mutators, Initializators, Selectors, Consts, DBAdapters, Crossovers
+import CINDES.algorithms.pyevolve as pyevolve
 
 DE=False
 
@@ -62,7 +62,7 @@ def slice_it(li, splits, ngps=None):
 #def get_xyz(molecule, core,active,passive):
 def get_xyz(molecule, core, active, passive):
     #print "core,active,passive:", core, active, passive
-    from CINDES.INDES.construction import constructor2
+    from CINDES.evaluation.construction import constructor2
     import pickle
     #with open('TZMat','r') as f: TZMAT=pickle.load(f)
     ncore = len(core)
@@ -243,13 +243,13 @@ def run_pyevolve(molecule, **kwargs):
 
     # 2. Set Genome instance using as allelles the sites with the different functionalisations.
     genome = G1DList.G1DList(len(molecule.dihedrals))
-    genome.setParams(rangemin=1, rangemax=360, gauss_mu=20, gauss_sigma=5)
+    genome.setParams(rangemin=1, rangemax=360, gauss_mu=0.0, gauss_sigma=30.0)
 
     # 3. Set evaluator function (objective function) or set precalculation is True! this circumvents serial evaluation
     genome.evaluator.set(function.eval_function)
     # 4. Set mutator function
     genome.mutator.set(Mutators.G1DListMutatorRealGaussian)
-    genome.mutator.set(Mutators.G1DListMutatorIntegerRange)
+    #genome.mutator.set(Mutators.G1DListMutatorIntegerRange)
 
     # 5. Set initalizator function
     genome.initializator.set(Initializators.G1DListInitializatorReal)
@@ -260,7 +260,10 @@ def run_pyevolve(molecule, **kwargs):
     # 7. set Genetic Algorithm Instance using a defined random.seed()
     ga = GSimpleGA.GSimpleGA(genome)
     # 8. set Selector
-    ga.selector.set(Selectors.GRouletteWheel)
+    #ga.selector.set(Selectors.GRouletteWheel)
+    ga.selector.set(Selectors.GTournamentSelector)
+    pop = ga.getPopulation()
+    pop.setParams(tournamentPool=3)
     # 9. set NGEN (number of generations)
     ga.setGenerations(500)
     # 10. set min / max (optimize to a maximum or to a minimum)
@@ -268,12 +271,12 @@ def run_pyevolve(molecule, **kwargs):
     # 11. set MUP (mutation probability)
     ga.setMutationRate(0.2) #i added this from another example
     # 12. set CXP (crossover probability)
-    ga.setCrossoverRate(0.3)
+    ga.setCrossoverRate(0.5)
     # 13. set termination at convergence?:
     #ga.terminationCriteria.set(GSimpleGA.ConvergenceCriteria)
     ga.terminationCriteria.set(GoodEnoughDistance)
     # 14. set population size
-    ga.setPopulationSize(30)
+    ga.setPopulationSize(50)
     # 15. set elitism
     ga.setElitism(True)
     ga.nElitismReplacement = 1

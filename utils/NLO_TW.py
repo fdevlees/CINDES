@@ -263,6 +263,11 @@ def get_alpha_data(f):
     return a
 
 def get_beta_data(f):
+    def not_zero(value):
+        if value<0.001:
+            value=0.001
+        return value
+
     b = dict()
     # Skip 11 lines in the file
     skippen(11,f)
@@ -283,10 +288,10 @@ def get_beta_data(f):
         b2=mperm(b2)
     b["Static longitudinal first hyperpolarizability"]=beta_par(b1)
     b["Static transversal first hyperpolarizability"]=beta_per(b1)
-    b["Static HRS first hyperpolarizability"]=np.sqrt(bzzz(b1)+bzxx(b1))
+    b["Static HRS first hyperpolarizability"]=not_zero(np.sqrt(bzzz(b1)+bzxx(b1)))
     b["Static depolarization ratio"]=bzzz(b1)/bzxx(b1)
     b["Dynamic longitudinal first hyperpolarizability"]=beta_par(b2)
     b["Dynamic transversal first hyperpolarizability"]=beta_per(b2)
-    b["Dynamic HRS first hyperpolarizability"]=np.sqrt(bzzz(b2)+bzxx(b2))
+    b["Dynamic HRS first hyperpolarizability"]=not_zero(np.sqrt(bzzz(b2)+bzxx(b2)))
     b["Dynamic depolarization ratio"]=bzzz(b2)/bzxx(b2)
     return b

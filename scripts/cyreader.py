@@ -14,6 +14,7 @@ written by Jos L. Teunissen
 import argparse
 parser = argparse.ArgumentParser(description="reads cycles data stored in cyclesinfo")
 parser.add_argument("-p","--pplot",action="store_true",help="make a site vs property plot of the data")
+parser.add_argument("-L","--Lplot",action="store_true",help="make a linear regression of data")
 parser.add_argument("-s","--splot",action="store_true",help="make a plot of sitevalues of cycle0 vs cycle-1")
 parser.add_argument("-c","--cplot",action="store_true",help="make a plot of cyclevalues of cycle0 vs cycle-1")
 parser.add_argument("-H","--homo",action="store_true",help="get the HOMO levels from the databc directory")
@@ -27,6 +28,7 @@ parser.add_argument('file', nargs='?', default='cyclesinfo',help='filename defau
 args=parser.parse_args()
 import matplotlib.pyplot as plt
 import matplotlib
+#import seaborn as sb
 import numpy as np
 import pprint
 pp = pprint.PrettyPrinter(indent=4, width=150)
@@ -67,7 +69,8 @@ funcs_r = {'CCFFF': '$C-CF_3$',
          'O': '$O$',
          'S': '$S$',
          'CNHCHHH' : '$CNHCH_3$',
-         'COCHHH'  : '$COCH_3$' }
+         'COCHHH'  : '$COCH_3$',
+         'CCCH': '$CC_2H$'}
 class Funcs(object):
     def __init__(self):
         self.funcs = funcs_r
@@ -161,6 +164,47 @@ def complexprint(data, func=lambda arg: arg, strfunc= lambda *s: s):
         print "&"*20
     return
 
+def Lplot(indices, values):
+    from CINDES.evaluation.predictor.descriptor import get_X_1D
+    from string import digits
+    from sklearn import linear_model, metrics
+    print indices[:10]
+    print values[:10]
+    # get y
+    Y = [ item[args.datacolumn] for item in values ]
+    print Y[:10]
+    # get x
+    # remove dihedral numbers from indices
+    indices = [ index.translate(None, digits) for index in indices ]
+    # descriptor can be 1DL or 2DL
+    X = get_X_1D(indices, 'penta', descriptor='2DL')
+
+    alphas = [ 1*10**i for i in [ -16, -14, -12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4 ] ]
+    #clf = linear_model.Ridge(alpha=alpha,fit_intercept=intercept,tol=0.001,solver='auto')
+    clf = linear_model.RidgeCV(alphas=np.logspace(-10, 2, 5),
+            fit_intercept=False, store_cv_values=False, cv=6)
+    clf.fit(X, Y)
+    Y_pred = clf.predict(X)
+    print "score 1D:", clf.score(X, Y)
+    print "best 1D alpha:", clf.alpha_
+    print "1D coefs:", clf.coef_
+    print "R2:", metrics.r2_score(Y, Y_pred)
+    plt.scatter(Y, Y_pred)
+    ax = plt.gca()
+    plt.axis('equal')
+    ax.set_aspect('equal', 'box')
+    # set same ranges:
+    yr = plt.ylim()
+    xr = plt.xlim()
+    zmin = min((xr[0],yr[0]))
+    zmax = max((xr[1],yr[1]))
+    print yr, xr, zmin, zmax
+    plt.ylim(zmin, zmax)
+    plt.xlim(zmin, zmax)
+    plt.show()
+
+    return
+
 def main():
     with open(args.file,'r') as fid:
         data = [ item.split() for item in fid.read().splitlines() ]
@@ -193,29 +237,20 @@ def main():
                 value = rest + indices
                 item = [ item[0].replace("'","") ] + value
         else:
-            #if len(item)==5:
-            #    sys.stdout.write('#')
-            #    item = [ item[0].replace("'",""), float(item[1]), int(item[2]), int(item[3]), int(item[4]) ]
-            #    homo = get_homo(conf)
-            #    value = (float(item[1])*27.2113838,-homo,int(item[2]),int(item[3]),int(item[4]))
-            if False:
-                pass
-            else:
-                sys.stdout.write('#')
-                indices = map(int,item[-3:])
-                rest = map(float,item[1:-3])
-                homo = get_homo(conf)
-                homos.append([conf,homo])
-                IP = rest[0] * 27.2113838
-                value = [ IP] + [-homo] + rest[1:] + indices
-                item = [ item[0].replace("'","") ] + value
-                if -homo> 5.0 and IP<6.6:
-                    print "outlier:", conf, " ", item
-                    get_homo(conf,True)
-                    continue
+            sys.stdout.write('#')
+            indices = map(int,item[-3:])
+            rest = map(float,item[1:-3])
+            homo = get_homo(conf)
+            homos.append([conf,homo])
+            IP = rest[0] * 27.2113838
+            value = [ IP] + [-homo] + rest[1:] + indices
+            item = [ item[0].replace("'","") ] + value
+            if -homo> 5.0 and IP<6.6:
+                print "outlier:", conf, " ", item
+                get_homo(conf,True)
+                continue
         item[0]=item[0].split('_')
         if item[1]:
-        #if item[1]<1000:
             datar.append(item)
             confs.append(conf)
             values.append(value)
@@ -341,9 +376,11 @@ def main():
         pp.pprint(table.items()[0:4])
 
 
+    if args.Lplot:
+        Lplot(confs, values)
+
     # plot of property vs dopant/substituent
     if args.pplot:
-        import seaborn as sb
         #for runs in totalruns:
         tags_r=['ro','bs','g^','c*','mp','y|','k+','rd','bv','gh']
         tags_r=['-ro','-bs','-g^','-c*','-mp','-y|','-k+','-rd','-bv','-gh']
@@ -678,9 +715,6 @@ def suplabel(axis,label,label_prop=None,
                transform=fig.transFigure,
                ha=ha,va=va,
                **label_prop)
-
-
-
 
 
 

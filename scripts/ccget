@@ -18,7 +18,7 @@ import logging
 import os
 import sys
 
-from CINDES.cclib.parser import ccData, ccopen
+from CINDES.evaluation.cclib.parser import ccData, ccopen
 
 
 msg_usage = """\

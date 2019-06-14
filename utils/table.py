@@ -8,25 +8,30 @@ from utils import pythonify
 def get_property_table(table, myrun):
     '''set a dict with {'index1':prop1, etc. } to use for montecarlo and prediction making '''
     db=dict()
+
+    def get(value, prop):
+        try:
+            p = value[prop]
+        except KeyError:
+            if prop == 'solv':
+                p = value['e1_solv'] - value['e0_solv']
+            elif key == 'gap':
+                p = value['lumo'] - value['homo']
+            else:
+                print "molecule is missing in database:", key
+                p = None
+        return p
+
     for key,value in table.iteritems():
         if myrun.property=='func':
             if myrun.nosub==1:
                 db[key] = value[ myrun.func_args[0] ]
             else:
-                kwargs = { prop:value[prop] for prop in myrun.func_args }
+                kwargs = { prop:get(value, prop) for prop in myrun.func_args }
                 Pvalue = myrun.function(**kwargs)
                 db[key]=Pvalue
         else:
-            try:
-                if myrun.property == 'solv':
-                    Pvalue = value['e1_solv'] - value['e0_solv']
-                elif myrun.property == 'gap':
-                    Pvalue = value['lumo'] - value['homo']
-                else:
-                    Pvalue = value[ myrun.property ]
-                db[key]=Pvalue
-            except KeyError:
-                print "molecule is missing!", key
+            db[key] = get(value, myrun.property)
     return db
 
 # 4 table (database)
@@ -47,9 +52,10 @@ def set_table(myrun, array=[]):
         print "pickle_db:", pickle_db
         json_db = dict()
         #tableprops=['mw','solv', 'e0_solv', 'e1_solv', 'lumo', 'solv']
-        #tableprops=['omega']
+        tableprops=['omega']
         tableprops=['gap', 'homo', 'lumo', 'E0' ]
-        tableprops=['gap', 'lumo', 'homo' ]
+        tableprops=[ 'lumo', 'homo' ]
+        tableprops=['lumo']
         #tableprops=['stab']
         for item in pickle_db:
             key=item[0]
@@ -252,7 +258,7 @@ class Tablebin(object):
         return ngps
 
     def diversity_filter(self, n=10, divindex=1):
-        from CINDES.utils.diversity1 import Diversifier
+        from CINDES.utils.diversity import Diversifier
         self.diversifier = Diversifier(index=divindex)
         self.diversifier.set_filter(False)
         divalues, occupancy = self.diversifier.table_run(self, index=divindex)
