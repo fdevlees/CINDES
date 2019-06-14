@@ -25,7 +25,7 @@ import pprint
 import time
 #from writings import log_io, sprint
 from CINDES.utils.writings import log_io, print_title, sprint, logpopulation
-from CINDES.utils.utils import custom_redirection, skipper
+from CINDES.utils.utils import custom_redirection, skipper, SessionID
 from CINDES.utils.table import get_property_table
 from predictions import predictor
 import logging
@@ -134,11 +134,13 @@ def runjobs(mols_tocal, myrun, i):
     def call(function, calc, mols, run):
         if isinstance(calc, list) or isinstance(calc, tuple):
             for j, cal in enumerate(calc):
-                invoke_script(calc=cal, mols=mols, run=run, ID=(i + 1) * 100 + (j + 1))
+                ID = SessionID((i + 1) * 100 + (j + 1))
+                invoke_script(calc=cal, mols=mols, run=run, ID=ID)
                 mols = filter(lambda x: not x.ignoremol, mols)
                 function(calc=cal, mols=mols, run=run)
         else:
-            invoke_script(calc=calc, mols=mols, run=run, ID=(i+1)*100 + 1)
+            ID = SessionID((i+1)*100+1)
+            invoke_script(calc=calc, mols=mols, run=run, ID=ID)
             mols = filter(lambda x: not x.ignoremol, mols)
             function(calc=calc, mols=mols, run=run)
 
