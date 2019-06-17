@@ -98,9 +98,15 @@ def invoke_script(calc, ID, start=True, **kwargs):
         return
     module_obj = __import__(calc['script'])
     if start:
-        module_obj.start(calc=calc, ID=ID, **kwargs)
+        try:
+            module_obj.start(calc=calc, ID=ID, **kwargs)
+        except AttributeError:
+            print "no start function in {}".format(calc['script'])
     else:
-        module_obj.end(calc=calc, ID=ID, **kwargs)
+        try:
+            module_obj.end(calc=calc, ID=ID, **kwargs)
+        except AttributeError:
+            print "no end function in {}".format(calc['script'])
     return
 
 
