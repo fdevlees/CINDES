@@ -252,7 +252,13 @@ def get_alpha_data(f):
     skippen(5,f)
     # Construct a 3x3 symmetrical matrix from the next 6 lines in the file
     a1 = constructSymmetricalMatrix(f)
-    skippen(17,f) # si Gaussian est embetant et imprime tt deux fois
+
+    next(f)
+    if 'Dipole polarizability, Alpha' in next(f):
+        skippen(15,f)
+    else:
+        skippen(2,f)
+
     # Polarizability Dynamic
     # Construct a 3x3 symmetrical matrix from the next 6 lines in the file
     a2 = constructSymmetricalMatrix(f)
@@ -279,7 +285,13 @@ def get_beta_data(f):
         position, value = getPosVal(f)
         b1 = populateMatrix(b1, position, value)
         b1 =vperm(b1)
-    skippen(57,f)
+    
+    next(f)
+    if 'First dipole hyperpolarizabilit' in f.next():
+        skippen(55,f)
+    else:
+        skippen(32,f)   
+
     b2 = np.zeros([3,3,3])
     for j in range(18):
     # position in an xyz string representation and the float 'value' to store at the position of the matrix
