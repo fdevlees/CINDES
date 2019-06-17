@@ -240,21 +240,21 @@ def testrun(param, array):
 # 5b: testpred
 
 
-def testpred(param, array):
+def testpred(run):
     ''' run the predictions on the tablebin file '''
     print_title("Testing Prediction procedure activated!", outline='l', signator=':')
+
+    array = run.array
 
     class Mol(object):
         def __init__(self):
             self.predictions = {}
 
         def __repr__(self): return "<empty molecule object>"
-    myrun = FrameRun(**param)
-    print myrun
-    table = set_table(myrun)
-    property_table = get_property_table(table, myrun)
+    table = set_table(run)
+    property_table = get_property_table(table, run)
     mols_todo, mols_nodo = ([Mol(), ], [Mol(), ])
-    mols_nocal, mols_tocal, made_pred = predictor(myrun, property_table, mols_todo, mols_nodo, 99, array=array, nsite=0)
+    mols_nocal, mols_tocal, made_pred = predictor(run, property_table, mols_todo, mols_nodo, 99, array=array, nsite=0)
     return
 
 # 6: steepest descent

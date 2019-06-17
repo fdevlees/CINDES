@@ -20,7 +20,9 @@ class GaussianJob(BaseJob):
     def termination(self, logpath, raise_errors=True):
         with open(logpath, 'r') as fid:
             text = ''.join(fid.readlines()[-3:])
-            if re.search('Normal termination', text) and not re.search('Initial command', text):
+            if (re.search('Normal termination', text) 
+              and not (re.search('Initial command', text)
+              and not re.search('Link1', text))):
                 ret = 1
             elif re.search('IGNORE', text):
                 ret = 2
