@@ -522,6 +522,7 @@ def substituter2(group, geom0, count):
             # geom[0][0] = group[1] # change C to O or also C
             # geom[1][0] = group[2] # change H to N or also H
             geom[2][0] = group[3]  # change H to N or also H
+            count += 3  # three atoms added to activemat
         elif group == ['C', 'N', 'O', 'O']:
             zma = [['N', 1, '1.51'],
                    ['O', 2, '1.227', 1, '117.01', 0, '30.1'],
@@ -529,6 +530,7 @@ def substituter2(group, geom0, count):
             if dihedral:
                 zma[1][6] = dihedral
             geom = geomfiller(zma, geom, count)
+            count += 3  # three atoms added to activemat
         elif group == ['C', 'C', 'O', 'O']:
             print "WARNING: charged group: -1"
             zma = [['C', 1, '1.51'],
@@ -537,6 +539,7 @@ def substituter2(group, geom0, count):
             if dihedral:
                 zma[1][6] = dihedral
             geom = geomfiller(zma, geom, count)
+            count += 3  # three atoms added to activemat
         elif group == ['C', 'C', 'H', 'H']:
             zma = [['C', 1, '1.51'],
                    ['H', 2, '0.9', 1, '117.01', 0, '30.1'],
@@ -544,6 +547,7 @@ def substituter2(group, geom0, count):
             if dihedral:
                 zma[1][6] = dihedral
             geom = geomfiller(zma, geom, count)
+            count += 3  # three atoms added to activemat
         elif group in [['C', 'O', 'O', 'H'], ['C', 'S', 'O', 'H']]:
             zma = [['O', 1, '1.4'],
                    ['O', 2, '1.45', 1, '104.0', 0, '-61.0'],
@@ -553,6 +557,7 @@ def substituter2(group, geom0, count):
             if dihedral:
                 zma[1][6] = dihedral
             geom = geomfiller(zma, geom, count)
+            count += 3  # three atoms added to activemat
         elif group == ['C', 'N', 'H', 'H']:
             geom[0][2] = '1.465'
             geom[1][2] = '1.02'
@@ -560,6 +565,7 @@ def substituter2(group, geom0, count):
             if dihedral:
                 geom[1][6] = dihedral
                 geom[2][6] = dihedral - 120.0
+            count += 3  # three atoms added to activemat
         elif group in [['C', 'C', 'H', 'O'], ['C', 'C', 'O', 'H']]:
             geom[1][1] = str(count + 1)  # this is the =O
             geom[2][1] = str(count + 1)  # this is the -H
@@ -571,6 +577,7 @@ def substituter2(group, geom0, count):
             geom[2][2] = 1.11  # bond length C-O
             geom[2][4] = 115.1  # angle coreC-C=O
             geom[2][6] = 180.1  # dihedral with one of core
+            count += 3  # three atoms added to activemat
         elif group == ['C', 'Ph', 'F', 'A']:
             #print "PhF2  group"
             zma = [['C', 1, '1.51'],
@@ -605,7 +612,6 @@ def substituter2(group, geom0, count):
                 zma[1][6] = dihedral
             geom = geomfiller(zma, geom, count)
             count += len(zma)
-        count += 3  # three atoms added to activemat
     elif len(group) == 3:
         # when length is 3 it is a COH, NOH? or CCN group
         # we need to remove two hydrogens

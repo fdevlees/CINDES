@@ -1433,7 +1433,8 @@ class Gaussian(logfileparser.Logfile):
                 #print("alpha_data:", alpha_data)
                 self.set_attribute('dipolealpha', alpha_data)
             except (IndexError, ValueError) as e:
-                #print("NO NLO ALPHA", end=' ')
+                #raise e
+                print("NO NLO ALPHA", end=' ')
                 pass
 
         if ' First dipole hyperpolarizability, Beta (dipole orientation)' in line:
@@ -1443,6 +1444,7 @@ class Gaussian(logfileparser.Logfile):
                 #print("beta_data:", beta_data)
                 self.set_attribute('dipolebeta', beta_data)
             except (IndexError, ValueError) as e:
+                #raise e
                 print("NO NLO BETA", end=' ')
 
         if 'Magnetic susceptibility (cgs-ppm):' in line:

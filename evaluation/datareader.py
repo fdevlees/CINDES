@@ -36,6 +36,8 @@ def setEAHs(molecule):
     if EAHs:
         molecule.props['EAHs'] = EAHs
         print "EAHs:", EAHs
+    else:
+        print 'molecule has no EAHs!:', molecule
     return
 
 
