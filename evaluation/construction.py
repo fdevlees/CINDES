@@ -177,11 +177,14 @@ def check_in_table(individuals, table, props=set(), check_ignored=False):
     if not it is optionally checked if molecules are already flagged as discarded or
     if the molecule is already ignored earlier, i.e., the molecule name is present in the IGNORED file
     '''
+
     mols_todo = individuals[:]
     mols_nodo = []
     neglect_dihedrals = True
     i = 0
     digits = '0123456789'
+
+
     if table:
         for individual in individuals:
             if individual.index in table:

@@ -467,14 +467,16 @@ class Dataset(object): #abstract data class
                 heatmap_2d(C,hits,labels,args)
 
         print "small test:"
-        sprint(5,clf.predict(X), self.Y)
+        #sprint(5,clf.predict(X), self.Y)
         if args.xyplot and args.verbose>0:
             if args.fraction:
                 print "training red / test bleu"
                 plt.plot(preds_train,self.Y_train,'ro',alpha=0.5)
                 plt.plot(preds_test,self.Y_test,'bo',alpha=0.25)
             else:
-                plt.plot(clf.predict(X),self.Y,'ro')
+                plt.scatter(clf.predict(X),self.Y,s=5, alpha=0.8)
+                plt.ylabel('DFT gap')
+                plt.xlabel('predicted gap')
             plt.show()
 
 
@@ -742,6 +744,21 @@ class Dataset(object): #abstract data class
         for i in range(5): print self.Y[i], y_pred1[i], y_pred2[i], y_2D_errors[i]
 
         clf = CLF(clf1, clf2)
+
+        if True: # added for plot
+            X1 = clf.splitX(self.X)[0]
+            fig, (ax1, ax2) = plt.subplots(1, 2, sharex=True, sharey=True)
+            ax1.scatter(clf1.predict(X1),self.Y,s=8, alpha=0.8)
+            ax1.set_title('sites')
+            ax1.set_ylabel('DFT gap')
+            ax1.set_xlabel('predicted gap')
+            ax2.scatter(clf.predict(self.X12),self.Y,s=8, alpha=0.8)
+            ax2.set_title('sites & pairs')
+            #ax2.set_aspect('equal')
+            plt.ylabel('DFT gap')
+            plt.xlabel('predicted gap')
+            plt.show()
+
         return clf
 
     def predict(self,indices,clf):
