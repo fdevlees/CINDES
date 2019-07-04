@@ -380,7 +380,7 @@ if __name__=="__main__":
         with open(sys.argv[1]) as f:
             indices = f.readlines()
             for index in indices:
-                print indtosmi(index)
+                print indtosmi(index).strip().strip(' ')
     except IOError:
         print indtosmi(sys.argv[1])
         print "".join([replacements.get(c, c) for c in sys.argv[1]])

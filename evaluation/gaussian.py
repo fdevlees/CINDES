@@ -197,8 +197,7 @@ def filewriter(mol, calc, pos=None):
     writegeom(mol, fid, geom)
 
     # write extra inputs:
-    if 'rdfreq' in job1['hotline']:
-        fid.write(' {}\n'.format(calc['rdfreq']))
+    write_extra_lines(fid, job1, name)
 
     fid.write('\n')
     # THE OTHER JOBS
@@ -214,10 +213,19 @@ def filewriter(mol, calc, pos=None):
         fid.write(str(index) + " {}th calc\n\n".format(i + 2))
         if not 'allcheck' in job['hotline']:
             fid.write("{} {}\n\n".format(job['charge'], job['mult']))
-        if 'rdfreq' in job['hotline']:
-            fid.write(' {}\n\n'.format(calc['rdfreq']))
+        write_extra_lines(fid, job, name)
+        fid.write("\n")
     fid.close()
     return Job
+
+def write_extra_lines(fid, job, name):
+    if 'rdfreq' in job['hotline']:
+        fid.write(' {}\n'.format(calc['rdfreq']))
+    if any(item in job['hotline'] for item in ['out=wfx', 'output=wfx']):
+        fid.write('{}.fwx\n'.format(name))
+    if any(item in job['hotline'] for item in ['out=wfn', 'output=wfn']):
+        fid.write('{}.fwn\n'.format(name))
+    return
 
 
 def get_paths(mols):
