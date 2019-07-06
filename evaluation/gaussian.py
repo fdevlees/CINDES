@@ -222,7 +222,7 @@ def write_extra_lines(fid, job, name):
     if 'rdfreq' in job['hotline']:
         fid.write(' {}\n'.format(calc['rdfreq']))
     if any(item in job['hotline'] for item in ['out=wfx', 'output=wfx']):
-        fid.write('{}.fwx\n'.format(name))
+        fid.write('{}.wfx\n'.format(name))
     if any(item in job['hotline'] for item in ['out=wfn', 'output=wfn']):
         fid.write('{}.fwn\n'.format(name))
     return

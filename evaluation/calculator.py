@@ -149,12 +149,13 @@ def runjobs(mols_tocal, myrun, i):
             invoke_script(calc=calc, mols=mols, run=run, ID=ID)
             mols = filter(lambda x: not x.ignoremol, mols)
             function(calc=calc, mols=mols, run=run)
+        return mols
 
     # 0. filter off ignored molecules
     mols_calc = filter(lambda x: not x.ignoremol, mols_tocal)
 
     # 1. Make the jobs and add them to the molecules:
-    call(jobmaker, mols=mols_calc, run=myrun, calc=calc)
+    mols_calc = call(jobmaker, mols=mols_calc, run=myrun, calc=calc)
     # 2. now the jobs have to be submitted (this function contains a try_ready test)
     jobids = subm.submission(mols_calc, myrun)
 
