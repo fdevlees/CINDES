@@ -99,19 +99,7 @@ class BaseJob(object):
             self.IsReady = True
         return
 
-    def ready(self, ignore=0, extratime=10, **kwargs):
-        ''' if job had no normal termination, this function checks how to proceed:
-            1. by a normal termination of the logfile
-            2. by a normal termination of the errorlogfile (*zzz.log)
-            3. by IGNORE statement
-        '''
-        # try a normal termination of errorpath
-        try:
-            ret = self.termination(self.logpath)
-        except IOError:
-            ret = 0
-
-
+    def check_errorpath(self):
         if self.errorpath:
             try:
                 ret_zzz = self.termination(self.errorpath)
@@ -121,6 +109,18 @@ class BaseJob(object):
             ret_zzz = 0
 
 
+    def ready(self, ignore=0, extratime=10, **kwargs):
+        ''' if job had no normal termination, this function checks how to proceed:
+            1. by a normal termination of the logfile
+            2. by a normal termination of the errorlogfile (*zzz.log)
+            3. by IGNORE statement
+        '''
+        # check normal termination of normal path
+        ret = self.termination(self.logpath)
+
+        # check normal termination of errorpath
+        ret_zzz = self.check_errorpath()
+
         if ret == 1:
             self.IsReady = True
         elif ret == 2:
@@ -128,10 +128,15 @@ class BaseJob(object):
             self.ignorejob = True
             self.IsReady = True
         elif self.errorpath and ret_zzz == 1:
-            import shutil
-            shutil.copyfile(self.errorpath, self.logpath)
-            time.sleep(1)
-            print "*zzz.log file with normal termination copied back to original logfile."
+            time.sleep(10)  # just wait for the files to write back before opening them
+            # recheck last part of file is normal termination:
+            if not self.check_errorpath()==1:
+                print "\n\tError job had normal termination but was not yet ready!!!\n"
+            else:
+                import shutil
+                shutil.copyfile(self.errorpath, self.logpath)
+                time.sleep(1)
+                print "*zzz.log file with normal termination copied back to original logfile."
             pass  # in the following iteration of while true the termination(path) should return 1
         elif (not self.errorpath is None) and ignore and extratime > ignore:
             self.ignorejob = True

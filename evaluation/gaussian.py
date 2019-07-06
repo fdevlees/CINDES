@@ -9,6 +9,16 @@ class GaussianJob(BaseJob):
     script = 'ID_gauss'
     cmd = 'g09'
 
+    def __init__(self, filepath, calc=dict(), worker=False):
+        super(GaussianJob, self).__init__(filepath, calc=calc, worker=worker)
+
+        self.nNormalTermination = 0
+        for job in calc['jobs']:
+            if 'freq' in job['hotline']:
+                self.nNormalTermination += 1
+            self.nNormalTermination += 1
+        return
+
     def write(self):
         ''' overwrites the standard BaseJob write method '''
         pass
@@ -18,18 +28,21 @@ class GaussianJob(BaseJob):
 
     # ----- might as well be a static method
     def termination(self, logpath, raise_errors=True):
-        with open(logpath, 'r') as fid:
-            text = ''.join(fid.readlines()[-3:])
-            if (re.search('Normal termination', text) 
-              and not (re.search('Initial command', text)
-              and not re.search('Link1', text))):
-                ret = 1
-            elif re.search('IGNORE', text):
-                ret = 2
-            elif re.search('open-new-file', text):
-                ret = 3
-            else:
-                ret = 0
+        try:
+            with open(logpath, 'r') as fid:
+                text = ''.join(fid.readlines()[-3:])
+                if (re.search('Normal termination', text)
+                  and not (re.search('Initial command', text)
+                  and not re.search('Link1', text))):
+                    ret = 1
+                elif re.search('IGNORE', text):
+                    ret = 2
+                elif re.search('open-new-file', text):
+                    ret = 3
+                else:
+                    ret = 0
+        except IOError:
+            ret = 0
         return ret
     # -----
 
@@ -101,8 +114,6 @@ class GaussianJob(BaseJob):
             f.writelines(newfile)
         print "jobfile rewritten"
         return
-            
-        
 
 
 def writegeom(mol, fid, geom=None):
