@@ -107,6 +107,7 @@ class BaseJob(object):
                 ret_zzz = 0
         else:
             ret_zzz = 0
+        return ret_zzz
 
 
     def ready(self, ignore=0, extratime=10, **kwargs):
@@ -149,3 +150,4 @@ class BaseJob(object):
             except IOError as e:
                 print "not able to write IGNORE to file"
         return
+

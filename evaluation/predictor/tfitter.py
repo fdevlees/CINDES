@@ -30,6 +30,8 @@ from CINDES.utils.writings import log_io, sprint
 
 from itertools import islice
 
+
+
 def take(n, iterable):
     "Return first n items of the iterable as a list"
     return list(islice(iterable, n))
@@ -159,7 +161,15 @@ class Dataset(object): #abstract data class
             table = Tablebin( filename=self.name, column=args.column )
             self.confs = table.confs
             self.Y = table.Y
+            print "self.Y[:10]:", self.Y[:10]
             self.confs, self.Y = zip(*[[conf, y] for conf,y in zip(self.confs, self.Y) if not any( group in conf for group in ['CCHHH','CCOOH','CF','CCl'])])
+            filter161162 = False
+            if filter161162:
+                self.confs, self.Y = zip(*[[conf, y] for i, (conf,y) in enumerate(zip(self.confs, self.Y)) if not i in [161, 162]])
+            filter2subs = True
+            if filter2subs:
+                self.confs, self.Y = zip(*[[conf, y] for i, (conf,y) in enumerate(zip(self.confs, self.Y)) if conf.count('CH')<8])
+                print self.confs
             #self.seq = list(table.get_seq())
             self.seq = ['CH', 'CPh', 'CSH', 'CCHO', 'N', 'P', 'B', 'CSOOOH', 'COH', 'CNHH', 'CNOO', 'O', 'S']
             self.nsec = len(self.seq)
@@ -184,6 +194,7 @@ class Dataset(object): #abstract data class
         if args.verbose<0:
             print "X:",self.X.shape
             print "Y:",self.Y.shape
+        print "2: self.Y[:10]:", self.Y[:10]
         return
 
     def extractX(self,confs):
@@ -420,6 +431,7 @@ class Dataset(object): #abstract data class
                 #vmax2=
                 vmin1= min(np.array(df.values.tolist())[mask1])
                 vmin2= min(np.array(df.values.tolist())[mask2])
+                vmin2, vmax2 = -0.5, 0.5
                 vcenter = .5*(vmin1+vmax1)
                 print "vmin1, vmax1, vmin2, vmax2:", vmin1, vmax1, vmin2, vmax2
                 if noch1:
@@ -686,12 +698,14 @@ class Dataset(object): #abstract data class
         return clf
 
     def linreg_combined(self, model='Ridge', **kwargs):
+        print "3. self.Y[:10]:", self.Y[:10]
         alpha=1.e-14
         CV=True
         intercept1=True
         if noch1:
             intercept1=False
-            self.Y = np.array(self.Y)-9.446704
+            ada_gap = 9.446704
+            self.Y = np.array(self.Y)-ada_gap
             #self.Y = np.array(self.Y)+7.426258753
             #self.Y = np.array(self.Y)-2.020445247
 
@@ -714,8 +728,10 @@ class Dataset(object): #abstract data class
 
         print "1D coefs:", clf1.coef_
         # get the differences of real values and predicted values
+        print "4. self.Y[:10]:", self.Y[:10]
         y_pred1 = clf1.predict(self.X)
         y_1D_errors = self.Y - y_pred1
+        print "5. self.Y[:10]:", self.Y[:10]
         print "MAE:", np.sum(abs(y_1D_errors))/float(len(y_1D_errors))
         print "self.Y, y_pred1, error:"
         for i in range(5): print self.Y[i], y_pred1[i], y_1D_errors[i]
@@ -748,15 +764,19 @@ class Dataset(object): #abstract data class
         if True: # added for plot
             X1 = clf.splitX(self.X)[0]
             fig, (ax1, ax2) = plt.subplots(1, 2, sharex=True, sharey=True)
-            ax1.scatter(clf1.predict(X1),self.Y,s=8, alpha=0.8)
-            ax1.set_title('sites')
-            ax1.set_ylabel('DFT gap')
-            ax1.set_xlabel('predicted gap')
-            ax2.scatter(clf.predict(self.X12),self.Y,s=8, alpha=0.8)
-            ax2.set_title('sites & pairs')
+            preds = clf1.predict(X1) + ada_gap
+            outliers = [ [i, pred, y, '_'.join(self.confs[i])] for i, (pred, y) in enumerate(zip(preds, self.Y)) if pred>-7.8 and y<-8.5 ]
+            print "outliers:", outliers
+            ax1.scatter(preds,self.Y+ ada_gap,s=8, alpha=0.8)
+            ax1.set_title('ISA model')
+            ax1.set_ylabel('DFT gap (eV)')
+            ax1.set_xlabel('predicted gap (eV)')
+
+            ax2.scatter(clf.predict(self.X12)+ada_gap,self.Y+ada_gap,s=8, alpha=0.8)
+            ax2.set_title('ISA + IBA model')
             #ax2.set_aspect('equal')
-            plt.ylabel('DFT gap')
-            plt.xlabel('predicted gap')
+            plt.ylabel('DFT gap (eV)')
+            plt.xlabel('predicted gap (eV)')
             plt.show()
 
         return clf
@@ -1257,7 +1277,7 @@ def main(args):
             if args.analyze:
                 errors = myrun.linreg_analyze2(clf_RidgeC, model='Ridge', combined=True)
                 allerrors.append(errors)
-            if True:#test another dataset
+            if False:#test another dataset
                 newset=Adamantane('tablebin_400')
                 newset.extract12()
                 print clf_RidgeC.score(newset.X12, newset.Y)

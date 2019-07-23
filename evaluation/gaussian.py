@@ -26,6 +26,21 @@ class GaussianJob(BaseJob):
     def getlog(self):
         return self.name + '.log'
 
+    def parse(self, path=None):
+        if path is None:
+            path = self.logpath
+        from CINDES.evaluation.cclib.parser.gaussianparser import Gaussian
+        try:
+            mymol = Gaussian(self.logpath).parse()
+        except Exception as e:
+            print "cclib read error with:", path
+            errorfile = 'error_{}.log'.format(self.name)
+            print "see {} for more details".format(errorfile)
+            with open(errorfile, 'w') as f:
+                f.write(e)
+            return False
+        return mymol
+
     # ----- might as well be a static method
     def termination(self, logpath, raise_errors=True):
         try:
@@ -48,8 +63,10 @@ class GaussianJob(BaseJob):
 
     def errortermination(self, debug=False):
         import time
-        from CINDES.evaluation.cclib.parser.gaussianparser import Gaussian
-        mymol = Gaussian(self.logpath).parse()
+        mymol = self.parse(self.logpath)
+        if not mymol:
+            print "did not manage to read logfile without Normal Termination"
+            return False
         from CINDES.utils import utils
         t = utils.PeriodicTable()
         if hasattr(mymol, 'atomcoords'):

@@ -1,4 +1,12 @@
-""" a conveniece Molecule Class """
+""" the Molecule Class
+
+The Abstract Base Class is BaseMolecule
+
+The two child classes are:
+    1. Molecule: For combinatorial optimizations
+    2. SmiMolecule: For molecules initiated by SMILES
+
+"""
 import numpy as np
 from CINDES.utils.converter import Converter
 from collections import MutableSequence
