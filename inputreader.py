@@ -139,7 +139,7 @@ def get_prop_function(subinp, line):
             elif split==']':inkey=False
             if inkey:
                 continue
-            if isword.match(split) and (not split in ['if', 'else', 'abs(']):
+            if isword.match(split) and (not split in ['if', 'else', 'abs(', 'and', 'or', 'not', 'elif', 'bool', 'float', 'int']):
                 props.add(split)
     arguments = ",".join(props)
     funcstr = "lambda {}:{}".format(arguments, line)
@@ -181,7 +181,7 @@ def get_calcs(subinp, line):
 def get_jobs(subinp, line, index=1):
     def get_extra_line(line):
         key, value = line.strip().split(None, 1)
-        assert key in ['identify', 'nosub', 'program', 'nprocs', 'mem',
+        assert key in ['identify', 'identifier', 'nosub', 'program', 'nprocs', 'mem',
                 'geom', 'script', 'positions', 'fafoom', 'rdfreq']
         if key in ['nosub', 'nprocs', 'fafoom', 'mem']:
             value = int(value)

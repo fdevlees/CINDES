@@ -1,4 +1,12 @@
-""" a conveniece Molecule Class """
+""" the Molecule Class
+
+The Abstract Base Class is BaseMolecule
+
+The two child classes are:
+    1. Molecule: For combinatorial optimizations
+    2. SmiMolecule: For molecules initiated by SMILES
+
+"""
 import numpy as np
 from CINDES.utils.converter import Converter
 from collections import MutableSequence
@@ -380,7 +388,7 @@ if __name__=="__main__":
         with open(sys.argv[1]) as f:
             indices = f.readlines()
             for index in indices:
-                print indtosmi(index)
+                print indtosmi(index).strip().strip(' ')
     except IOError:
         print indtosmi(sys.argv[1])
         print "".join([replacements.get(c, c) for c in sys.argv[1]])

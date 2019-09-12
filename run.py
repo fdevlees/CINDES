@@ -111,6 +111,11 @@ class BaseRun(object):
             for key in tohavekeys:
                 if not key in calc:
                     calc[key] = paras[key]
+                elif key=='identify':
+                    identify = self.identify.rstrip('_') + calc[key]
+                    if not identify[-1]=='_':
+                        identify += '_'
+                    calc[key]=identify
             return calc
 
         def check(cal, i):
@@ -153,7 +158,7 @@ class BaseRun(object):
                 calc = paras[key]
                 calcs[-1] = [calcs[-1], tocalc(calc)]
 
-        # verify that there are not similar identifiers
+        # verify that there are no similar identifiers
         identifiers = []
         i = 1
         for calc in calcs:

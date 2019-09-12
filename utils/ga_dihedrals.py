@@ -224,7 +224,7 @@ def GoodEnoughDistance(ga_engine):
     elif ga_engine.currentGeneration > 50:
         distance_goal = 1.2
     else:
-        distance_goal = 1.8
+        distance_goal = 1.5
     return ga_engine.bestIndividual().score > distance_goal
 
 #def run_pyevolve(molecule, TZMat):

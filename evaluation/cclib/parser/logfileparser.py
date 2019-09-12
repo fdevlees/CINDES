@@ -277,7 +277,7 @@ class Logfile(object):
         # There is the possibility of passing assitional argument via self.data_args, but
         # we use this sparingly in cases where we want to limit the API with options, etc.
         data = self.datatype(attributes=self.__dict__)
-                
+
         # Now make sure that the cclib attributes in the data object are all the correct type,
         # including arrays and lists of arrays.
         data.arrayify()

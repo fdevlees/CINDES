@@ -25,6 +25,13 @@ def submit(job, script='ID_gauss'):
             raise RuntimeError('no jobid')
     except subprocess.CalledProcessError as e:
         print "submitting error:", repr(e)
+    except OSError as e:
+        print "submission error; submission script might not be executable?"
+        scriptpath = "{}/{}".format(job.path, script)
+        st = os.stat(scriptpath)
+        print "permissions of {} is:".format(scriptpath), st
+        import stat
+        os.chmod(scriptpath, st.st_mode | stat.S_IEXEC)
     except Exception as e:
         print "unforeseen submission error:", repr(e)
         raise

@@ -424,7 +424,15 @@ class Gaussian(logfileparser.Logfile):
                 pass
             line = next(inputfile)
             # The MAX density matrix.
-            scftargets.append(self.float(line.strip().split('=')[1][:-1]))
+            try:
+                scftargets.append(self.float(line.strip().split('=')[1][:-1]))
+            except ValueError as e:
+                value = line.strip().split('=')[1][:-1]
+                print('value error for:', value)
+                new_value = value.split()[0]
+                print("new_value:", new_value)
+                scftargets.append(self.float(new_value))
+
             line = next(inputfile)
             # For G03, there's also the energy (not for G98).
             if line[1:10] == "Requested":
@@ -432,7 +440,6 @@ class Gaussian(logfileparser.Logfile):
                     scftargets.append(self.float(line.strip().split('=')[1][:-1]))
                 except (ValueError, IndexError) as e:
                     scftargets.append(numpy.nan)
-
             self.scftargets.append(scftargets)
 
         # Extract SCF convergence information (QM calcs).
@@ -1432,9 +1439,10 @@ class Gaussian(logfileparser.Logfile):
                 alpha_data = NLO_TW.get_alpha_data(inputfile)
                 #print("alpha_data:", alpha_data)
                 self.set_attribute('dipolealpha', alpha_data)
-            except IndexError:
+            except (IndexError, ValueError) as e:
+                #raise e
+                print("NO NLO ALPHA", end=' ')
                 pass
-                #print("NO NLO ALPHA", end=' ')
 
         if ' First dipole hyperpolarizability, Beta (dipole orientation)' in line:
             from CINDES.utils import NLO_TW
@@ -1442,7 +1450,8 @@ class Gaussian(logfileparser.Logfile):
                 beta_data = NLO_TW.get_beta_data(inputfile)
                 #print("beta_data:", beta_data)
                 self.set_attribute('dipolebeta', beta_data)
-            except IndexError:
+            except (IndexError, ValueError) as e:
+                #raise e
                 print("NO NLO BETA", end=' ')
 
         if 'Magnetic susceptibility (cgs-ppm):' in line:

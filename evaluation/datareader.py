@@ -36,6 +36,8 @@ def setEAHs(molecule):
     if EAHs:
         molecule.props['EAHs'] = EAHs
         print "EAHs:", EAHs
+    else:
+        print 'molecule has no EAHs!:', molecule
     return
 
 
@@ -334,7 +336,7 @@ def read_file(Job):
         try:
             job_data = Log(jobfile).parse()
         except Exception as e:
-            print "parsing error with:", jobfile
+            print "parsing error with:", jobfile, job
             raise e
 
         for inf in job['info']:
