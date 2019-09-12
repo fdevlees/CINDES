@@ -588,6 +588,17 @@ class Pentacene(Dataset):
             self.ngps = None
         return
 
+    def extractC(self, confs):
+        ngps = len(self.seq)
+        X = np.zeros([len(confs), ngps])
+        for i, conf in enumerate(confs):
+            for group in conf:
+                j = self.seq.index(group)
+                X[i,j] += 1
+        print "make categorical X with shape:", X.shape
+        return X
+
+
     def extractX(self,confs):
         if self.ngps is None:
             nsites = len(confs[0])
@@ -622,8 +633,17 @@ class Pentacene(Dataset):
     def extract2DX(self,confs):
         seq = self.seq
         nC= len(confs)
+        nsites = len(confs[0])
         X = np.zeros( [ nC , len(seq)**2 ] )
-        bonds = ( (0,1),(1,2),(2,3),(3,4),(4,5),(5,6))
+        if True:
+            from itertools import combinations
+            print "nsites:", nsites
+            bonds = list(combinations(range(nsites),2))
+        else:
+            if nsites==7:
+                bonds = ( (0,1),(1,2),(2,3),(3,4),(4,5),(5,6))
+            elif nsites==4:
+                bonds = ( (0,1),(1,2),(2,3) )
 
         for k in range(len(confs)): # for all the configurations:
             B = []
@@ -631,8 +651,7 @@ class Pentacene(Dataset):
                 for combi in bonds:
                     B.append( np.zeros( [len(seq),len(seq)] ) )
             else:
-                from itertools import combinations
-                for combi in combinations(range(7),2):
+                for combi in bonds:
                     B.append( np.zeros( [len(seq),len(seq)] ) )
             #loop over all combinations 
             for combi,bmatrix in zip(bonds,B):
@@ -643,14 +662,26 @@ class Pentacene(Dataset):
                 cleangroup2 = split('(\d+)',group2)[0]
                 gr1 = self.seq.index(cleangroup1)
                 gr2 = self.seq.index(cleangroup2)
-                bmatrix[ gr1, gr2 ] = 1
-                bmatrix[ gr2, gr1 ] = 1
+                bmatrix[ gr1, gr2 ] = 100.
+                bmatrix[ gr2, gr1 ] = 100.
             if True: # so make one total matrix were all combis are combined
                 Btotal = np.sum( B , axis = 0)
                 Bflatten = Btotal.flatten()
                 X[k] = Bflatten
         print "X2 constructed; shape X2:", np.shape(X)
         return X
+
+    def extractNDX(self):
+        from itertools import combinations
+        seq = self.seq
+        nC = len(confs)
+        nsites = len(confs[0])
+        X = np.zeros( [nC, len(combinations(range(nsites), 3))] )
+        for k in range(nC):
+            B = []
+        return X
+        
+
 #####################################
 #####       MAIN PROGRAM       ######
 #####################################
@@ -739,6 +770,8 @@ def get_X_1D(indices, identify, descriptor='1DL',column=2, **kwargs):
         return myrun.extractX(confs=confs)
     elif descriptor=='2DL':
         return myrun.extract2DX(confs=confs)
+    elif descriptor=='C':
+        return myrun.extractC(confs=confs)
     else:
         raise SystemExit('no valid descriptor given')
 

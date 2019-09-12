@@ -61,8 +61,7 @@ class BaseRun(object):
         if self.property=='func' and inspect.isclass(self.function):
             print "initializing function..."
             self.function = self.function(self)
-            assert callable(self.function)
-        return
+
 
     def __str__(self):
         sb = ['BaseRun object with the following attributes:']
