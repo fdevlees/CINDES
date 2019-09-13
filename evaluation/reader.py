@@ -27,6 +27,13 @@ class ZMatrix(object):
         (coremat, activemat, passivemat) = sitesplitter(zmat, param['ncore'], param['sites'], param['nch3'])
         return
 
+def get_cartesian(xyzfile='XYZ', **param):
+    with open(xyzfile, 'r') as f:
+        xyz_raw = [ line.split() for line in f ]
+    xyz = [ [line[0], map(float, line[1:])] for line in xyz_raw ]
+    print 'xyz:', xyz
+    return xyz
+
 
 def geometry(zmatfile, **param):
     '''reads the zmat from a file and splits it'''

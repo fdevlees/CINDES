@@ -320,6 +320,9 @@ def read_file(Job):
         key = 'NWChem Input Module'
         splitted = open(filename).read().split(key)
         jobslines = splitted[1:-1]
+    elif program == 'vasp':
+        from CINDES.evaluation.cclib.parser.vaspparser import VASP as Log
+        jobslines = open(filename).read()
     else:
         raise SystemExit('not implemented')
     print "njobs:", len(jobslines),

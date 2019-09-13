@@ -53,7 +53,7 @@ class BaseRun(object):
         self.pid = os.getpid()
         self.ppid = os.getppid()
 
-        if not self.nosub==1:
+        if not self.nosub==2:
             self.setup_filesystem()
             self.set_calcs()
 
@@ -172,7 +172,7 @@ class BaseRun(object):
 
     def setup_filesystem(self):
         param = self.__dict__
-        if self.nosub == 1:
+        if self.nosub == 2:
             path = ''
         else:
             #param['workdir'] = os.getcwd()
@@ -192,6 +192,10 @@ class BaseRun(object):
                 self.script = 'ID_NWChem'
                 self.extension = ''
                 shutil.copy(os.getcwd() + '/ID_NWChem', path)
+            elif param['program'] == 'vasp':
+                self.script = 'ID_VASP'
+                self.extension = ''
+                shutil.copy(os.getcwd() + '/ID_VASP', path)
             else:
                 raise SystemExit('ERROR: No valid program specified')
         self.path = path
@@ -199,6 +203,16 @@ class BaseRun(object):
 
     def currenttime(self):
         return "Current time %s" % str(time.time() - self.starttime)
+
+class XYZRun(BaseRun):
+
+    def __init__(self, **entries):
+        super(XYZRun, self).__init__(**entries)
+        if self.nsites and not self.nosub==2:
+            self.cartesian = r.get_cartesian(**entries)
+        else:
+            logging.info("NO ZMAT NOR XYZ")
+        return
 
 
 class FrameRun(BaseRun):
@@ -209,7 +223,7 @@ class FrameRun(BaseRun):
     def __init__(self, **entries):
         super(FrameRun, self).__init__(**entries)
         # specific for FrameRun:
-        if self.nsites and not self.nosub==1:
+        if self.nsites and not self.nosub==2:
             if isinstance(self.zmatrixfile, list):
                 self.TZmatrices={}
                 for zmatrixfile in self.zmatrixfile:

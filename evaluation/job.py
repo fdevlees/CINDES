@@ -55,7 +55,7 @@ class BaseJob(object):
         '''submit the job input file'''
         jobid = None
         try:
-            if self.calc['nosub'] == 2:
+            if self.calc['nosub'] == 1:
                 time.sleep(1)
                 subm.nosubmit(self, self.cmd)
                 jobid = '0'
