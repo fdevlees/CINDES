@@ -62,7 +62,7 @@ def evaluate_mols(run, mols, table, count, nsite=0):
 
     # 4. SUBMITTING PART
     nnewcalcs = len(mols_tocal)
-    if not run.nosub == 1:
+    if not run.nosub == 2:
         mols_all = procedure(run, mols_tocal, mols_nocal)
     else:
         mols_all = skipper(mols_tocal, mols_nocal, run)
@@ -86,7 +86,9 @@ def procedure(myrun, mols_tocal, mols_nocal):
     if not mols_tocal == []:
         # 0. Set the molecular geometries
         if myrun.__class__.__name__=='FrameRun':
-            geommaker(mols_tocal, myrun)
+            geom_maker(mols_tocal, myrun)
+        elif myrun.__class__.__name__=='XYZRun':
+            make_cartesian(mols_tocal, myrun)
         # 1. And perform the calculations
         do_calcs(mols_tocal, myrun)
 
@@ -198,11 +200,21 @@ def do_calcs(mols_tocal, run):
     return mols_tocal
 
 
-# 0. geom making
+@log_io()
+def make_cartesian(mols, myrun):
+    for molecule in mols:
+        cartesian = deepcopy(myrun.cartesian)
+        # loop over every site:
+        print "original cartesian:", cartesian, "sites:", myrun.sites, "conf:", molecule.conf
+        for site, group in zip(myrun.sites, molecule.conf):
+            cartesian[site-1][0]=group[0]
 
+        print "new cartesian:", cartesian
+        setattr(molecule, 'cartesian', cartesian)
+    return
 
 @log_io()
-def geommaker(mols_tocal, myrun):
+def geom_maker(mols_tocal, myrun):
 
     if myrun.symlinks:
         print "symmetry will be applied |",
@@ -290,11 +302,21 @@ def jobmaker(mols, run, calc):  # ----- dict with info for filewriter has to pas
         import gaussian as program
     elif calc['program'] == 'nwchem':
         import nwchem as program
+    elif calc['program'] == 'vasp':
+        import vasp as program
     else:
         raise SystemExit('program not recognized')
 
     # 2. Write inputfile(s)
     for molecule in mols:
+        if calc['program']=='vasp':
+            name = calc['identify'] + str(molecule.index)
+            path = calc['path'] + '/' + name
+            if not os.path.exists(path):  # path is $WORKDIR/data
+                os.makedirs(path)
+                # and make sure ID_gauss is in the folder!
+                shutil.copy(calc['path'] + '/' + run.script, path)
+
         if 'positions' in calc:  # so multiple jobs
             assert 'geom' in calc and (calc['geom'] in ['H', 'AH'])
             # 1. make a folder with the indexname in /data/indices[i]

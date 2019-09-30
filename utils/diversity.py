@@ -195,6 +195,7 @@ class Diversifier(object):
                     for conf in X:
                         # if in the new selection of confs, the ith site of the gth conf has the jth substituent: add 1 to occupancy counter
                         #if site2[i][g] == substituent[j]:
+                        #print "conf[i]", conf[i], seq[j], i, j
                         if conf[i] == seq[j]:
                             # that is the occupancy of the ith site the jth substituent:
                             occupancy_single[i][j]+=1

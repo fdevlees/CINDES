@@ -55,6 +55,8 @@ def read_input(inputfilename='INPUT'):
     # so this can be initiated here:
     if param['procedure'] is None:
         myrun = run.BaseRun(**param)
+    elif param['program']=='vasp':
+        myrun = run.XYZRun(**param)
     else:
         myrun = run.FrameRun(**param)
 
@@ -722,6 +724,8 @@ def readfile(subinp):
                 raise SystemExit('Molpro not yet implemented')
             elif line.split()[1] in ['nwchem']:
                 paras['program'] = 'nwchem'
+            elif line.split()[1] in ['vasp']:
+                paras['program'] = 'vasp'
             else:
                 raise SystemExit('program not recognized')
 
