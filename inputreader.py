@@ -180,7 +180,12 @@ def get_calcs(subinp, line):
 
 def get_jobs(subinp, line, index=1):
     def get_extra_line(line):
-        key, value = line.strip().split(None, 1)
+        splitted = line.strip().split(None, 1)
+        if len splitted==1:
+            key = splitted[0]
+            value = True
+        else:
+            key, value = splitted
         assert key in ['identify', 'identifier', 'nosub', 'program', 'nprocs', 'mem',
                 'geom', 'script', 'positions', 'fafoom', 'rdfreq']
         if key in ['nosub', 'nprocs', 'fafoom', 'mem']:
@@ -195,7 +200,6 @@ def get_jobs(subinp, line, index=1):
     p = re.compile(' *-*[0-9] +[0-9] +#.*')
     # test if line only contains two integers:
     if not all( i in '0123456789' for i in line.split() ):
-        print "living on the edge=) line is not formattes as <njobs> <nextrakeywords>!"
         while True:
             splitted = line.split()
             nextline = subinp.readline()
@@ -346,6 +350,7 @@ def readfile(subinp):
 
         #          GLOBAL RUN PARAMETERS
         'adjust_dihedrals': False,
+        'assign_geom':None,
         'batchsize': None,
         'bc': False,
         'calcs':[],
@@ -464,6 +469,14 @@ def readfile(subinp):
         line = line.split('#')[0].lower()
         if 'adjust_dihedrals' in line:
             paras['adjust_dihedrals'] = True
+        if 'assign_geom' in line:
+            try:
+                if line.split()[1] in ['0', 'False']:
+                    paras['assign_geom'] = False
+                else:
+                    raise ValueError('unrecognized value for assign_geom')
+            except IndexError:
+                paras['assign_geom'] = True
         elif 'batchsize' in line:
             paras['batchsize'] = int(line.split()[1])
         elif 'bc' in line:

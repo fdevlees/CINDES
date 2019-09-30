@@ -9,6 +9,7 @@ import logging
 class BaseJob(object):
     '''BaseJob of any kind of submittable job'''
     script = ''
+    assign_geom = False
 
     def __init__(self, filepath, calc=dict(), worker=False):
         '''There are different combinations of path and file to be set:

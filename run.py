@@ -30,6 +30,7 @@ from evaluation import reader as r  # this reads the zmatrix in gaussian format
 # import utils
 from CINDES.utils.writings import dump
 from CINDES.utils.utils import *
+from CINDES.evaluation.job import BaseJob
 
 print "time for imports:", time.clock() - start
 
@@ -56,6 +57,10 @@ class BaseRun(object):
         if not self.nosub==1:
             self.setup_filesystem()
             self.set_calcs()
+
+        # for Gaussian this is default. otherwise it has to be switched on
+        if self.assign_geom==True or self.program=='gaussian':
+            BaseJob.assign_geom=True
 
         # sometimes complicated property functions have to be initialized:
         if self.property=='func' and inspect.isclass(self.function):

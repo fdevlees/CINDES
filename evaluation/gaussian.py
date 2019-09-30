@@ -8,9 +8,12 @@ class GaussianJob(BaseJob):
     extension = '.log'
     script = 'ID_gauss'
     cmd = 'g09'
+    assign_geom = True
 
     def __init__(self, filepath, calc=dict(), worker=False):
         super(GaussianJob, self).__init__(filepath, calc=calc, worker=worker)
+
+        # for gaussian geometries are automatically asigned to attributes unless this variable is set to False
 
         self.nNormalTermination = 0
         for job in calc['jobs']:

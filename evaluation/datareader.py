@@ -283,7 +283,12 @@ def datareader(mols, run):
                 for old_key in readings.keys():  # the .keys is very important here. iterkeys or for just readings do not work!
                     readings["{}_P{}".format(old_key, str(job.pos))] = readings.pop(old_key)
 
+            # 2.3 assign Job data to Molecule
             molecule.props.update(readings)
+
+            # 2.4 optionally set geometry data as Molecule attribute
+            if job.assign_geom:
+                set_geom_attribute(molecule, readings)
         molecule.predicted = False
 
         # only relevant for stab calculations
@@ -292,6 +297,21 @@ def datareader(mols, run):
 
     return
 
+def set_geom_attribute(molecule, readings):
+    from CINDES.utils import utils
+    t = utils.PeriodicTable()
+    formatstr = lambda x:"{:12.6f}".format(x)
+    for key in readings:
+        if key.startswith('xyz'):
+            coords = readings[key]
+            coords = [ map(formatstr, xyz) for xyz in coords ]
+            atomnos = readings['atomnos' + key.lstrip('xyz')]
+            # add the elements
+            for atomn, xyz in zip(atomnos, coords):
+                xyz.insert(0, t.element[atomn])
+            coordsstr = "\n".join([ " ".join(xyz) for xyz in coords ]) + "\n"
+            setattr(molecule, key, coordsstr)
+    return
 
 def read_file(Job):
     # 1. look to which calc the logfile belongs when there were simultaneous calculations:
