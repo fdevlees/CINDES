@@ -19,6 +19,12 @@ def take(n, iterable):
     "Return first n items of the iterable as a list"
     return list(islice(iterable, n))
 
+def try_del(l, i):
+    try:
+        del l[i]
+    except IndexError:
+        pass
+    return l
 
 def indtocon(index):
     conf = []
@@ -673,9 +679,12 @@ def substituter2(group, geom0, count):
             # all the three hydrogens need to be removed
 
             #print "len 2!"
-            del geom[3]
-            del geom[2]
-            del geom[1]
+            #del geom[3]
+            #del geom[2]
+            #del geom[1]
+            try_del(geom, 3)
+            try_del(geom, 2)
+            try_del(geom, 1)
             # and thange the C to H or Cl or F
             geom[0][0] = group[1]
             if group == ['C', 'O']:  # changes angle. analyses the different cases
@@ -689,11 +698,16 @@ def substituter2(group, geom0, count):
             count += 1
             # the first atom is directly attached to the core so the zmat indices don't change
     elif len(group) == 1:
+        print geom
         # when the length of the group is one, that means it is doped with N,O,S,B,P
-        del geom[3]
-        del geom[2]
-        del geom[1]
-        del geom[0]
+        #del geom[3]
+        #del geom[2]
+        #del geom[1]
+        #del geom[0]
+        try_del(geom, 3)
+        try_del(geom, 2)
+        try_del(geom, 1)
+        try_del(geom, 0)
         return None, count
     # so whole geom is deleted actualy
     # there will not appear any of this ones in the activemat so count is not changed

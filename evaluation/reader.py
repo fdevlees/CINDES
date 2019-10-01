@@ -24,7 +24,7 @@ class ZMatrix(object):
         # FORMATTING AND SPLITTING OF ZMATRIX
         self.zmat = zmatprinter(self.zmat, self.zmatdic)
         logging.debug("zmat:\n" + pprint.pformat(zmat))
-        (coremat, activemat, passivemat) = sitesplitter(zmat, param['ncore'], param['sites'], param['nch3'])
+        (coremat, activemat, passivemat) = sitesplitter(zmat, param['ncore'], param['sites'])
         return
 
 def get_cartesian(xyzfile='XYZ', **param):
@@ -43,15 +43,13 @@ def geometry(zmatfile, **param):
     logging.debug(pprint.pformat(zmatdic))
     fileid.close()
     # FORMATTING AND SPLITTING OF ZMATRIX
-    zmat = zmatprinter(zmat, zmatdic)
+    zmat = fill_zmat(zmat, zmatdic)
     logging.debug("zmat:\n" + pprint.pformat(zmat))
-    (coremat, activemat, passivemat) = sitesplitter(zmat, param['ncore'], param['sites'], param['nch3'])
+    coremat, activemat, passivemat, corresp = sitesplitter(zmat, param['ncore'], param['sites'])
     # now i save here the matrices for later use, and then the others are allowed to change for each molecule
-    logging.debug('activemat:' + pprint.pformat(activemat))
-    logging.debug('passivemat:' + pprint.pformat(passivemat))
     logging.info("----- END FORMATTING & SPLITTING -----")
     Total_Zmat = {'core': coremat, 'active': activemat, 'passive': passivemat}
-    return Total_Zmat
+    return Total_Zmat, corresp
 
 
 def zmatread(filename):
@@ -81,69 +79,85 @@ def zmatvalues(fileid):
     """
     dictio = {}
     for line in fileid:
-        lijntje = line.split()
-        dictio[lijntje[0]] = lijntje[1]
+        splitted = line.split()
+        dictio[splitted[0]] = splitted[1]
     return dictio
 
 
-def zmatprinter(czmat, dictio):
+def fill_zmat(czmat, dictio):
     """
-    The aim of this function is to make a more compact zmatrix
-    printing the values directly by replacing the variable names
-
-    I think i just have to print zmat, but checking for each element
-    if it is a value from the dictionary. If so print value instead of key
-
-    maybe, i need to check only the values
-    [1][2]
-    [2][2] & [2][4]
-    [3][2] & [3][4] & [3][6]
-    same for the others
+    filling in the values by replacing the variable names B#, A# and D#
     """
-    # w = write (will erase existing file) a = append (to the end of file)
-    # you can only write strings to a file
-    # use join to mute the objects in a list of strings together. separated
-    # from each other by a whitespace.
     # print "czmat[1][2]:", czmat[1][2]
     # search the dictionary
-    for i in range(1, len(czmat) - 1):  # first row already printed, contains no value
-        for key in dictio.keys():
-            for j in [2, 4, 6]:  # 2 bondlengt #4 angle #6 dihedral
-                # now the first two don't have 4 and 6 giving IndexError so
-                try:
-                    # look if key matches with object
-                    if key == czmat[i][j]:
-                        # actually i prefer not to change it, only to print it
-                        czmat[i][j] = dictio[key]
-                except IndexError:  # that is the name of the Error
-                    pass  # go on to the next one
+    for i in range(1, len(czmat) - 1):
+        for j in [2, 4, 6]:  # 2 bondlengt #4 angle #6 dihedral
+            # now the first two don't have 4 and 6 giving IndexError so
+            try:
+                # look if key matches with object
+                czmat[i][j] = dictio[czmat[i][j]]
+            except IndexError:
+                pass
     return czmat
 
 
-def sitesplitter(zmatrix, natomscore, index, nsites):  # here nsites is number of possible sites so nch3
+def sitesplitter(zmatrix, natomscore, index):
     """this module splits zmatrix in core part and part for sites
-    next the sites are split up in an active and passive part
+       next the sites are split up in an active and passive part
     """
-    coremat = zmatrix[0:natomscore]
+    i=natomscore
+    coremat = zmatrix[0:i]
     # pprint.pprint(coremat)
-    sitemat = []
-    # here i split the rest, that are al ch3 groups
-    for i in range(nsites):
-        sitemat.append(zmatrix[natomscore + 4 * i:natomscore + 4 * (i + 1)])
-    logging.debug('sitemat' + pprint.pformat(sitemat))
+    # here i split the rest, that are all ch3 groups
+
+    # OLD IMPLEMENTATION
+    # sitemat = []
+    #for i in range(nsites):
+    #    sitemat.append(zmatrix[natomscore + 4 * i:natomscore + 4 * (i + 1)])
+    #logging.debug('sitemat' + pprint.pformat(sitemat))
     # now split in passive and active part
-    activeindex = [((x - natomscore + 3) / 4) - 1 for x in index]
-    logging.debug('activeindex: ' + str(activeindex))
-    logging.debug('len(sitemat)' + str(len(sitemat)))
-    active = []
-    passive = []
+    #activeindex = [((x - natomscore + 3) / 4) - 1 for x in index]
+    #logging.debug('len(sitemat)' + str(len(sitemat)))
+    #active = []
+    #passive = []
     # here mistake!!! and inefficient better to loop over activesites
-    for i in activeindex:
-        active.append(sitemat[i])
-    for i in range(len(sitemat)):
-        if not i in activeindex:
-            passive.append(sitemat[i])
-    return (coremat, active, passive)
+    #for i in activeindex:
+    #    active.append(sitemat[i])
+    #for i in range(len(sitemat)):
+    #    if not i in activeindex:
+    #        passive.append(sitemat[i])
+    #return (coremat, active, passive)
+
+    # NEW IMPLEMENTATION
+    corresp= dict()
+    active = dict()
+    passive = []
+    line = zmatrix[i]
+    while True:
+        if line==[]:
+            break
+        group = [line]
+        corresp[i+1]=int(line[1])
+        if i+1 in index:
+            active[i+1]=group
+            #active.append(group)
+        else:
+            passive.append(group)
+        while True:
+            i+=1
+            line = zmatrix[i]
+            if line==[]:
+                break
+            if line[0]=='H':
+                group.append(line)
+            else:
+                break
+    active = [ active[i] for i in index ]
+
+    print "corresp:", corresp
+    #pprint.pprint(active)
+    #pprint.pprint(passive)
+    return coremat, active, passive, corresp
 
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ import inspect # to see if function is a class
 import logging  # instead of the large amount of print statements not using it at the moment
 from copy import deepcopy  # for keeping matrices while changing others
 import numpy as np
+import yaml
 
 # import my own modules
 from evaluation import construction as zcon  # all functions needed for constructing new geometries
@@ -60,6 +61,7 @@ class BaseRun(object):
 
         # for Gaussian this is default. otherwise it has to be switched on
         if self.assign_geom==True or self.program=='gaussian':
+            self.assign_geom=True
             BaseJob.assign_geom=True
 
         # sometimes complicated property functions have to be initialized:
@@ -67,6 +69,12 @@ class BaseRun(object):
             print "initializing function..."
             self.function = self.function(self)
 
+    def dump(self):
+        ''' dumps the input to yaml. YAML because it can handle python sets better than json '''
+        data = { k:v for k,v in self.__dict__.iteritems() if not callable(v) }
+        print data
+        with open("input.yaml", "w") as f:
+            yaml.dump(data, f)
 
     def __str__(self):
         sb = ['BaseRun object with the following attributes:']
@@ -232,13 +240,12 @@ class FrameRun(BaseRun):
             if isinstance(self.zmatrixfile, list):
                 self.TZmatrices={}
                 for zmatrixfile in self.zmatrixfile:
-                    tzmat = r.geometry(zmatfile=zmatrixfile, **entries)
+                    tzmat, self.corresp = r.geometry(zmatfile=zmatrixfile, **entries)
                     self.TZmatrices[zmatrixfile]=tzmat
                 self.TZmat = self.TZmatrices[self.zmatrixfile[0]]
             else:
-                self.TZmat = r.geometry(zmatfile=self.zmatrixfile, **entries)
-            self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
-            self.corresp = self.set_corresp(self.TZmat['active'], self.TZmat['passive'])
+                self.TZmat, self.corresp = r.geometry(zmatfile=self.zmatrixfile, **entries)
+            self.set_adj(self.TZmat['core'], self.TZmat['active'])
         else:
             logging.info("NO ZMAT")
         return
@@ -259,23 +266,6 @@ class FrameRun(BaseRun):
                 adj[j][i] = adj[i][j]
         sites = [int(methyl[0][1]) - 1 for methyl in active]
         sites_adj = adj[sites][:, sites]
-        if debug:
-            print "adjacency matrix of core:", adj
-            print "self.sites:", self.sites
-            print "active: ", active
-            print "sites: ", sites
-            print "sites_adj:", sites_adj
-        return sites_adj
-
-    def set_corresp(self, active, passive):
-        '''makes a dictionary that gives the correspondance of sites with position in core matrix'''
-        corresp = dict()
-        correspI= dict()
-        for site in active:
-            corresp[int(site[0][1])] = int(site[1][1])
-            correspI[int(site[1][1])] = int(site[0][1])
-        for site in passive:
-            corresp[int(site[0][1])] = int(site[1][1])
-            correspI[int(site[1][1])] = int(site[0][1])
-        return correspI
+        self.adj = list(adj)
+        return
 

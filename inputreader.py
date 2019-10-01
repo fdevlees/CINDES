@@ -60,6 +60,8 @@ def read_input(inputfilename='INPUT'):
     else:
         myrun = run.FrameRun(**param)
 
+    myrun.dump()
+
     return myrun
 
 
@@ -183,7 +185,7 @@ def get_calcs(subinp, line):
 def get_jobs(subinp, line, index=1):
     def get_extra_line(line):
         splitted = line.strip().split(None, 1)
-        if len splitted==1:
+        if len(splitted)==1:
             key = splitted[0]
             value = True
         else:
@@ -371,7 +373,6 @@ def readfile(subinp):
         'ml': False,
         'maxiter': 10,
         'montecarlo': 0,  # Temperature at start
-        'nch3': Ellipsis,
         'ncore': Ellipsis,
         'nlinks': False,
         'no1sub': 0,
@@ -564,8 +565,6 @@ def readfile(subinp):
             paras['no1sub'] = 1
         elif any(item in line for item in ('ncore', 'natomscore')):
             paras['ncore'] = int(line.split()[1])
-        elif 'nch3' in line:
-            paras['nch3'] = int(line.split()[1])
         elif 'nprocs' in line:
             paras['nprocs'] = int(line.split()[1])
         elif 'optimum' in line:
