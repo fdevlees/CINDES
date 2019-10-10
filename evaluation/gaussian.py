@@ -250,12 +250,15 @@ def filewriter(mol, calc, pos=None):
     return Job
 
 def write_extra_lines(fid, job, name):
+    p_solvent = re.compile('scrf.*read')
     if 'rdfreq' in job['hotline']:
         fid.write(' {}\n'.format(calc['rdfreq']))
     if any(item in job['hotline'] for item in ['out=wfx', 'output=wfx']):
         fid.write('{}.wfx\n'.format(name))
     if any(item in job['hotline'] for item in ['out=wfn', 'output=wfn']):
         fid.write('{}.fwn\n'.format(name))
+    if p_solvent.match(job['hotline']):
+        fid.write('{}\n'.format(calc['solvent_info']))
     return
 
 
