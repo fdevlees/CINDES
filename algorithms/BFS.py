@@ -22,8 +22,14 @@ def BFS(run):
 def SD(run):
     """ 1. This is the SD procedure """
     logging.info(run)  # this should print all the class elements via the __str__ function
-    mybfs = SteepestDescent(run)
-    result = mybfs.evolve()
+    mySD = SteepestDescent(run)
+    result = mySD.evolve()
+    return result
+
+def runEmpty(run):
+    logging.info(run)
+    myEmpty = Empty(run)
+    result = myEmpty.evolve()
     return result
 
 class Algorithm(object):
@@ -55,7 +61,10 @@ class Algorithm(object):
 
         # STEP 4: UPDATE OPTIMUM STRUCTURE
         # decide what the optimum site is and if the bc if fullfilled
-        optsite = self.testmax(mols_all)
+        if not self.run.procedure=='empty':
+            optsite = self.testmax(mols_all)
+        else:
+            optsite = mols[0]
 
         # STEP 5: UPDATE DATABASE and LOG results of microiteration
         # logs new elements in data to table and tablebin and whole data to cyclesinfo
@@ -122,6 +131,12 @@ class Algorithm(object):
         optsite.opt = True
         return optsite
 
+class Empty(Algorithm):
+    def evolve(self):
+        from CINDES.molecule import Molecule
+        mols = [Molecule([])]
+        optsite = self.evaluateMols(mols)
+       
 
 class BestFirstSearch(Algorithm):
     def __init__(self, run):

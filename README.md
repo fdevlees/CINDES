@@ -10,3 +10,11 @@ There is a manual. Please send a mail to johannes.teunissen@vub.ac.be to ask for
 
 to run the test suite:
 in CINDES4/ run >nosetests
+
+
+TODO:
+- in input reader replace:
+   if '<key>' in line:
+  with something like:
+   if <keyword> == <key>:
+- 

@@ -71,7 +71,7 @@ class BaseRun(object):
 
     def dump(self):
         ''' dumps the input to yaml. YAML because it can handle python sets better than json '''
-        data = { k:v for k,v in self.__dict__.iteritems() if not callable(v) }
+        data = { k:v for k,v in self.__dict__.iteritems() if not callable(v) and not k=='adj'}
         print data
         with open("input.yaml", "w") as f:
             yaml.dump(data, f)
@@ -236,7 +236,7 @@ class FrameRun(BaseRun):
     def __init__(self, **entries):
         super(FrameRun, self).__init__(**entries)
         # specific for FrameRun:
-        if self.nsites and not self.nosub==2:
+        if (self.nsites and not self.nosub==2) or self.procedure=='empty':
             if isinstance(self.zmatrixfile, list):
                 self.TZmatrices={}
                 for zmatrixfile in self.zmatrixfile:
@@ -266,6 +266,6 @@ class FrameRun(BaseRun):
                 adj[j][i] = adj[i][j]
         sites = [int(methyl[0][1]) - 1 for methyl in active]
         sites_adj = adj[sites][:, sites]
-        self.adj = list(adj)
+        self.adj = map(list,adj)
         return
 

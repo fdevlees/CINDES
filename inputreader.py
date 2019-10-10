@@ -565,6 +565,8 @@ def readfile(subinp):
             paras['no1sub'] = 1
         elif any(item in line for item in ('ncore', 'natomscore')):
             paras['ncore'] = int(line.split()[1])
+        elif 'nch3' in line:
+            logging.warning('    nch3 keyword is deprecated!')
         elif 'nprocs' in line:
             paras['nprocs'] = int(line.split()[1])
         elif 'optimum' in line:
@@ -634,6 +636,8 @@ def readfile(subinp):
                         indices.append(line.strip())
                     paras['generatemols'] = indices
                     print "read {:d} indices to generate".format(paras['ngenerate'])
+            elif paras['procedure'] in ['empty']:
+                paras['sites']=[]
         elif 'regression' in line:
             paras['regression'] = 1
         elif any(keyword in line for keyword in ['readtable', 'read_table']):
@@ -672,7 +676,7 @@ def readfile(subinp):
             print "SYMMETRY ACTIVATED!"
         elif 'simple' in line:
             paras['simple'] = 1
-        elif 'sites' in line:
+        elif key == 'sites':
             paras['sites'] = [int(item) for item in line.split()[1:]]
         elif 'try_ready' in line:
             paras['try_ready'] = 1
@@ -680,11 +684,6 @@ def readfile(subinp):
             paras['test_ready'] = int(line.split()[1])
         elif 'threading' in line:
             paras['threading'] = True
-        # elif 'twojob' in line:
-        #    try:
-        #        paras['twojob'] = int(line.split()[1])
-        #    except IndexError:
-        #        paras['twojob'] = 1
         elif 'procedure' in line:
             paras['procedure'] = line.split()[1]
             if paras['procedure'] in ['genrandom', 'getrandom']:

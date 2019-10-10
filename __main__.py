@@ -47,6 +47,10 @@ if True:
         from algorithms.BFS import SD
         SD(run)
 
+    elif run.procedure in ['empty']:  # can be sd or reduced steepest descent, rsd
+        from algorithms.BFS import runEmpty
+        runEmpty(run)
+
     elif run.procedure in ['ga', 'genetic algorithm', 'genalg']:
         from algorithms import GA
         GA.main(run)

@@ -8,6 +8,7 @@ The two child classes are:
 
 """
 import numpy as np
+import re
 from CINDES.utils.converter import Converter
 from collections import MutableSequence
 
@@ -48,7 +49,7 @@ def indtocon(index):
     conf = []
     for item in index.split('_'):
         splitted = re.findall(r"[a-zA-Z]+|\d+", item)
-        site = findall('[A-Z0-9][^A-Z1-9]*', splitted[0] )
+        site = re.findall('[A-Z0-9][^A-Z1-9]*', splitted[0] )
         if len(splitted)==2:
             dihedral=splitted[1]
             site.append(dihedral)
