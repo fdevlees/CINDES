@@ -364,7 +364,7 @@ def readfile(subinp):
         'difmodel': 0,
         'extrajobs': [],
         'extra_props': [],
-        'extrawaittime': 2,
+        'extrawaittime': 5,
         'function': lambda x: x,
         'ignore': 0,
         'jobs': [],

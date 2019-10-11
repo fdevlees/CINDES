@@ -321,7 +321,9 @@ def skipper(mols_tocal, mols_nocal, myrun, iprint=True):
 class SessionID(object):
     def __init__(self, ID):
         if isinstance(ID, int):
-            name = str(ID).replace('0','.')
+            n_calc = int(str(ID)[1:])
+            n_session = int(str(ID)[0])
+            name = "{:d}.{:d}".format(n_session, n_calc)
         else:
             name = ID
         self.names= [name]
