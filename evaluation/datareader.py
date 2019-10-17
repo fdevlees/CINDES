@@ -123,8 +123,8 @@ def normaltermination(mols, run):
     # 2. test normal termination and errorjob are ready or molecule is ignored
     extratime = 0
     normaltime= 0
-    timestep1 = 10
-    timestep2 = 300
+    timestep1 = run.timestep
+    timestep2 = max(300, run.timestep)
     print "normal waiting time=NT | extra waiting time=XT"
     while True:
         # CHECK READY:

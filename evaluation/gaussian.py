@@ -228,7 +228,7 @@ def filewriter(mol, calc, pos=None):
     writegeom(mol, fid, geom)
 
     # write extra inputs:
-    write_extra_lines(fid, job1, name)
+    write_extra_lines(fid, job1, name, calc)
 
     fid.write('\n')
     # THE OTHER JOBS
@@ -244,21 +244,23 @@ def filewriter(mol, calc, pos=None):
         fid.write(str(index) + " {}th calc\n\n".format(i + 2))
         if not 'allcheck' in job['hotline']:
             fid.write("{} {}\n\n".format(job['charge'], job['mult']))
-        write_extra_lines(fid, job, name)
+        #fid.write("\n")
+        write_extra_lines(fid, job, name, calc)
         fid.write("\n")
     fid.close()
     return Job
 
-def write_extra_lines(fid, job, name):
+def write_extra_lines(fid, job, name, calc=None):
     p_solvent = re.compile('scrf.*read')
+    if p_solvent.search(job['hotline']):
+        print "wrote solvent info!"
+        fid.write('{}\n\n'.format(calc['solvent_info']))
     if 'rdfreq' in job['hotline']:
-        fid.write(' {}\n'.format(calc['rdfreq']))
+        fid.write(' {}\n\n'.format(calc['rdfreq']))
     if any(item in job['hotline'] for item in ['out=wfx', 'output=wfx']):
-        fid.write('{}.wfx\n'.format(name))
+        fid.write('{}.wfx\n\n'.format(name))
     if any(item in job['hotline'] for item in ['out=wfn', 'output=wfn']):
-        fid.write('{}.fwn\n'.format(name))
-    if p_solvent.match(job['hotline']):
-        fid.write('{}\n'.format(calc['solvent_info']))
+        fid.write('{}.fwn\n\n'.format(name))
     return
 
 
