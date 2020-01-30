@@ -18,7 +18,6 @@ def read_input(inputfilename='INPUT'):
     subinp = openfile(inputfilename)  # this is the fileID
     param = readfile(subinp)  # inputline is a tuple with all kind of input variables
 
-
     # here we set some extra parameters:
     # 1. if there is symmetry the real number of sites is smaller than the number of changeable sites
     if param['nlinks']:
@@ -55,7 +54,7 @@ def read_input(inputfilename='INPUT'):
     # so this can be initiated here:
     if param['procedure'] is None:
         myrun = run.BaseRun(**param)
-    elif param['program']=='vasp':
+    elif param['program'] == 'vasp':
         myrun = run.XYZRun(**param)
     else:
         myrun = run.FrameRun(**param)
@@ -100,7 +99,7 @@ def get_preds(subinp, line):
     for _ in range(npredictions):
         while True:
             line = subinp.readline()
-            if not '#' in line:
+            if '#' not in line:
                 break
         # the first word is a unique prediction identifier (just a name which has to be unique)
         pname = line.split()[0]

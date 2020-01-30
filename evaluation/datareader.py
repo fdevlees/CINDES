@@ -1,15 +1,13 @@
 #!/bin/env python
 
-from pprint import pprint
-#from writings import log_io
-from CINDES.utils.writings import log_io, print_title, sprint
-from submitter import qsta
 import re
 import numpy
 import time
 import logging
-#logging.basicConfig(level=logging.DEBUG)
+from pprint import pprint
 
+from CINDES.utils.writings import log_io, print_title, sprint
+from submitter import qsta
 import construction
 
 def round8(x): return round(float(x), 8)
@@ -243,6 +241,7 @@ def zzztester(mols):
         print "no zzzs (anymore) in queue",
         return False
 
+
 def wait_hasimagfreq(job):
     once = False
     while True:
@@ -260,6 +259,7 @@ def wait_hasimagfreq(job):
         else:
             break
     return
+
 
 @log_io()
 def datareader(mols, run):
@@ -448,6 +448,7 @@ def read_file(Job):
 
 
 def set_combined_variables(mol, to_read_props):
+
     # so now datadict should have all energy keys + homo/lumo + dipole
     # but not yet omega/solv/gap so:
     results = mol.props
