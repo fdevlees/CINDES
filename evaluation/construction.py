@@ -235,6 +235,8 @@ def constructor2(conf, core, active, passive, links=None, defaultgroups=None):
         >matrixmerger2
         >hydrogenizer
     '''
+    conf = conf[:]
+
     def extend_conf(conf, links):
         #print "Symmetry applied!",
         # allocate room for new sites:
@@ -247,6 +249,7 @@ def constructor2(conf, core, active, passive, links=None, defaultgroups=None):
     # 1. if links change conf to extended conf
     if links:
         conf = extend_conf(conf, links)
+        print 'extended conf:', conf
 
     #print "CONFIGURATION:",conf
     #if core is nitrogen passive = total remove
@@ -265,6 +268,7 @@ def constructor2(conf, core, active, passive, links=None, defaultgroups=None):
         if True:
             if debug:
                 print "in constructor 2. before doper:", conf[i], "len passive:", len(passive)
+            print i
             core, passive = doper2(conf[i], active[i], core, passive)
             if debug:
                 print "in constructor 2. AFTER  doper:", conf[i], "len passive:", len(passive)
