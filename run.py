@@ -72,7 +72,7 @@ class BaseRun(object):
     def dump(self):
         ''' dumps the input to yaml. YAML because it can handle python sets better than json '''
         data = { k:v for k,v in self.__dict__.iteritems() if not (callable(v) or v is Ellipsis) and not k=='adj'}
-        print data
+        #print data
         with open("input.yaml", "w") as f:
             yaml.dump(data, f)
 

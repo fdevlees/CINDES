@@ -246,7 +246,7 @@ def constructor2(conf, core, active, passive, links=None, defaultgroups=None):
     # 1. if links change conf to extended conf
     if links:
         conf = extend_conf(conf, links)
-        print 'extended conf:', conf
+        #print 'extended conf:', conf
 
     #print "CONFIGURATION:",conf
     #if core is nitrogen passive = total remove
@@ -265,7 +265,7 @@ def constructor2(conf, core, active, passive, links=None, defaultgroups=None):
         if True:
             if debug:
                 print "in constructor 2. before doper:", conf[i], "len passive:", len(passive)
-            print i
+            #print i
             core, passive = doper2(conf[i], active[i], core, passive)
             if debug:
                 print "in constructor 2. AFTER  doper:", conf[i], "len passive:", len(passive)
@@ -674,7 +674,7 @@ def substituter2(group, geom0, count):
             count += 1
             # the first atom is directly attached to the core so the zmat indices don't change
     elif len(group) == 1:
-        print geom
+        #print geom
         # when the length of the group is one, that means it is doped with N,O,S,B,P
         #del geom[3]
         #del geom[2]
