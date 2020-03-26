@@ -210,7 +210,7 @@ def jobtester(mols_tocal, myrun, jobids=None):
     """
     if jobids is None:
         jobids = []  # this to avoid the mutable default gotcha
-    if myrun.nosub == 2 or len(mols_tocal) == 0:
+    if myrun.nosub or len(mols_tocal) == 0:
         print "Job tester skipped because jobs are evaluated on login node or no jobs to be calculated"
         return
     print "len(mols_tocal):", len(mols_tocal)

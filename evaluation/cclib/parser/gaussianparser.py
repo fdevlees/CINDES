@@ -424,7 +424,15 @@ class Gaussian(logfileparser.Logfile):
                 pass
             line = next(inputfile)
             # The MAX density matrix.
-            scftargets.append(self.float(line.strip().split('=')[1][:-1]))
+            try:
+                scftargets.append(self.float(line.strip().split('=')[1][:-1]))
+            except ValueError as e:
+                value = line.strip().split('=')[1][:-1]
+                print('value error for:', value)
+                new_value = value.split()[0]
+                print("new_value:", new_value)
+                scftargets.append(self.float(new_value))
+
             line = next(inputfile)
             # For G03, there's also the energy (not for G98).
             if line[1:10] == "Requested":
@@ -432,7 +440,6 @@ class Gaussian(logfileparser.Logfile):
                     scftargets.append(self.float(line.strip().split('=')[1][:-1]))
                 except (ValueError, IndexError) as e:
                     scftargets.append(numpy.nan)
-
             self.scftargets.append(scftargets)
 
         # Extract SCF convergence information (QM calcs).

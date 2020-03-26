@@ -19,6 +19,12 @@ def take(n, iterable):
     "Return first n items of the iterable as a list"
     return list(islice(iterable, n))
 
+def try_del(l, i):
+    try:
+        del l[i]
+    except IndexError:
+        pass
+    return l
 
 def indtocon(index):
     conf = []
@@ -61,11 +67,12 @@ def demethyl(passive, defaultgroups):
         defaultgroups = {}
 
     for i, passivesite in enumerate(passive):
-        #coreindex = int(passivesite[0][1])
+        # get the index of the site. normally this is the bond index of the first H
+        # if there is no 'H', this will give an IndexError
         try:
             siteindex = int(passivesite[1][1])
         except IndexError:
-            print passivesite
+            siteindex = 0
 
         if siteindex in defaultgroups:
             defaultconf = indtocon(defaultgroups[siteindex])[0]
@@ -80,7 +87,6 @@ def demethyl(passive, defaultgroups):
                 newpassive.append(passivesite)
             print "final passivesite:", passivesite
         else:
-            # remove the hydrogens from the methyl groups
             passivesite = [passivesite[0]]
             # change carbons to hydrogens
             passivesite[0][0] = 'H'
@@ -105,10 +111,10 @@ def hydrogenizer(totalmat):
     return totalmat
 
 # @profile
-
-
 def matrixmerger2(core, active, passive):
-    ''' this has to be translated to numpy '''
+    ''' this function merges core / active / passive parts of ZMAT to 1 zmat
+    This function is optimized for speed!
+    '''
     import numpy as np
     V = np.vstack  # is a tweaked form of concatenate
     C = np.concatenate
@@ -128,18 +134,6 @@ def matrixmerger2(core, active, passive):
 
     core.extend(actpas)
 
-    #totalmat = []
-    # for i in range(len(core)):
-    #    totalmat.append(core[i])
-    # for j in range(len(active)):
-    #    # THIS PART IS TIME CONSUMING (all 3 next lines)
-    #    for l in range(len(active[j])):
-    #        totalmat.append(active[j][l])
-    # for k in range(len(passive)):
-    #    totalmat.append(passive[k][0])
-    # with open('TOTALMAT','w') as tmfid:
-    #    tmfid.write(pprint.pformat(totalmat))
-    # return totalmat
     return core
 
 
@@ -177,11 +171,14 @@ def check_in_table(individuals, table, props=set(), check_ignored=False):
     if not it is optionally checked if molecules are already flagged as discarded or
     if the molecule is already ignored earlier, i.e., the molecule name is present in the IGNORED file
     '''
+
     mols_todo = individuals[:]
     mols_nodo = []
     neglect_dihedrals = True
     i = 0
     digits = '0123456789'
+
+
     if table:
         for individual in individuals:
             if individual.index in table:
@@ -285,27 +282,12 @@ def constructor2(conf, core, active, passive, links=None, defaultgroups=None):
 
 
 def doper2(group, geom, core, passive):
-    debug = False
-    if debug:
-        print "group:", group
-        print "geom:", geom
-        print "core"
-        for item in core:
-            print item
-        print "passive:", passive
-    # the actual doping command. taking care of index difference Gaussian/Python
     coreindex = int(geom[0][1])
     if not group[0] == 'C':
         # this assumes standard a C is present.
         # this also prevents other groups from overwriting dopants on this site
         # only one site is allowed to have the dopants in that case btw!
         core[coreindex - 1][0] = group[0]
-    if debug:
-        print "coreindex:", coreindex, "group:", group
-        print "core after doping:",
-        for item in core:
-            print item
-    #print "coreindex is: ", coreindex
     if group in [['O'], ['S'], ['C', 'O'], 'O', 'S', 'CO']:
         # we remove the hydrogen at the passive site on that location
         for i in range(len(passive)):
@@ -320,7 +302,6 @@ def doper2(group, geom, core, passive):
 
 def geomfiller(zma, geom, count):
     ''' this function fills the zma of a functionalisation into the -methyl geometry of that site '''
-    #print "geom1:", geom
     nagroup = len(zma)
     nageom = len(geom)
     delta = nagroup - nageom
@@ -336,9 +317,9 @@ def geomfiller(zma, geom, count):
     # from the first atom in geom i take its bond index and angle index. dihedral index not needed
     bi = geom[0][1]  # this are strings
     ai = geom[0][3]  # string
-    # afspraak1: if in zma an index is 0 it will become the angle index
-    # afspraak2: if in zma an index is 1 it will become the bond index
-    # afspraak3: if in zma an index is empty?
+    # if in zma an index is 0 it will become the angle index
+    # if in zma an index is 1 it will become the bond index
+    # if in zma an index is empty?
     # for all the other entries
 
     # THIS PART IS TIME CONSUMING:
@@ -674,9 +655,12 @@ def substituter2(group, geom0, count):
             # all the three hydrogens need to be removed
 
             #print "len 2!"
-            del geom[3]
-            del geom[2]
-            del geom[1]
+            #del geom[3]
+            #del geom[2]
+            #del geom[1]
+            try_del(geom, 3)
+            try_del(geom, 2)
+            try_del(geom, 1)
             # and thange the C to H or Cl or F
             geom[0][0] = group[1]
             if group == ['C', 'O']:  # changes angle. analyses the different cases
@@ -690,11 +674,16 @@ def substituter2(group, geom0, count):
             count += 1
             # the first atom is directly attached to the core so the zmat indices don't change
     elif len(group) == 1:
+        print geom
         # when the length of the group is one, that means it is doped with N,O,S,B,P
-        del geom[3]
-        del geom[2]
-        del geom[1]
-        del geom[0]
+        #del geom[3]
+        #del geom[2]
+        #del geom[1]
+        #del geom[0]
+        try_del(geom, 3)
+        try_del(geom, 2)
+        try_del(geom, 1)
+        try_del(geom, 0)
         return None, count
     # so whole geom is deleted actualy
     # there will not appear any of this ones in the activemat so count is not changed

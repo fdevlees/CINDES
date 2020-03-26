@@ -50,8 +50,8 @@ test_geom = {'active': [[['C', '1', '1.51578489', '2', '102.25009401', '3', '-23
 
 
 import unittest
-from CINDES4.INDES import reader
-path = '/u/jteuniss/CINDES4/tests'
+from CINDES.evaluation import reader
+path = '/u/jteuniss/CINDES/tests'
 
 class Test_reader(unittest.TestCase):
     def setUp(self):

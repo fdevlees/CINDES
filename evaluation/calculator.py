@@ -25,7 +25,7 @@ import pprint
 import time
 #from writings import log_io, sprint
 from CINDES.utils.writings import log_io, print_title, sprint, logpopulation
-from CINDES.utils.utils import custom_redirection, skipper
+from CINDES.utils.utils import custom_redirection, skipper, SessionID
 from CINDES.utils.table import get_property_table
 from predictions import predictor
 import logging
@@ -62,34 +62,43 @@ def evaluate_mols(run, mols, table, count, nsite=0):
 
     # 4. SUBMITTING PART
     nnewcalcs = len(mols_tocal)
-    if not run.nosub == 1:
+    if not run.nosub == 2:
         mols_all = procedure(run, mols_tocal, mols_nocal)
     else:
         mols_all = skipper(mols_tocal, mols_nocal, run)
     return mols_all, nnewcalcs, made_pred
 
-def restriction1(mols_todo, mols_nodo, run):
-    ''' test if not B-B A or N-N bond present in molecules '''
-    def has_forbidden_combination(conf, adj):
-        for i in range(len(conf)):
-            for j in range(i, len(conf)):
-                if conf[i] == conf[j] and adj[i][j] == 1.0 and conf[i] in [['N'], ['B']]:
-                    print "forbidden combination: ", i, conf[i], j, conf[j], adj[i]
-                    return True
-        return False
+def procedure(myrun, mols_tocal, mols_nocal):
+    ''' This function takes care of ALL actual ab-initio calculations.
+    '''
+    global once
+    #print "nconfs:", len(population)
+    print "| n_indices_tocal:", len(mols_tocal)
+    print "|    n_data_nocal:", len(mols_nocal)
+    if myrun.no1sub == 1 and once == 0:
+        once = 1
+        print " "
+    elif myrun.secret_file:
+        print "SECRET DATA activated:", myrun.secret_file
+        tablefilename = myrun.secret_file
+        mols_tocal, mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun)
 
-    print "nmol:", len(mols_todo)
+    if not mols_tocal == []:
+        # 0. Set the molecular geometries
+        if myrun.__class__.__name__=='FrameRun':
+            geom_maker(mols_tocal, myrun)
+        elif myrun.__class__.__name__=='XYZRun':
+            make_cartesian(mols_tocal, myrun)
+        # 1. And perform the calculations
+        do_calcs(mols_tocal, myrun)
 
-    for molecule in mols_todo:
-        print "mol.conf:", molecule.conf
-        if has_forbidden_combination(molecule.conf, run.adj):
-            molecule.discard()
-            #mols_todo.remove(molecule)
+    # 5. merge data_calc and data_nocal to data_all
+    mols_all = mols_tocal + mols_nocal
 
-    print "nmol:", len(mols_todo)
+    # 6. set target property i.e. mol.Pvalue and mol.boundaries
+    set_target_properties(mols_all, myrun)
 
-    return mols_todo, mols_nodo
-
+    return mols_all
 
 def invoke_script(calc, ID, start=True, **kwargs):
     if not isinstance(calc, dict):
@@ -140,19 +149,22 @@ def runjobs(mols_tocal, myrun, i):
     def call(function, calc, mols, run):
         if isinstance(calc, list) or isinstance(calc, tuple):
             for j, cal in enumerate(calc):
-                invoke_script(calc=cal, mols=mols, run=run, ID=(i + 1) * 100 + (j + 1))
+                ID = SessionID((i + 1) * 100 + (j + 1))
+                invoke_script(calc=cal, mols=mols, run=run, ID=ID)
                 mols = filter(lambda x: not x.ignoremol, mols)
                 function(calc=cal, mols=mols, run=run)
         else:
-            invoke_script(calc=calc, mols=mols, run=run, ID=(i+1)*100 + 1)
+            ID = SessionID((i+1)*100+1)
+            invoke_script(calc=calc, mols=mols, run=run, ID=ID)
             mols = filter(lambda x: not x.ignoremol, mols)
             function(calc=calc, mols=mols, run=run)
+        return mols
 
     # 0. filter off ignored molecules
     mols_calc = filter(lambda x: not x.ignoremol, mols_tocal)
 
     # 1. Make the jobs and add them to the molecules:
-    call(jobmaker, mols=mols_calc, run=myrun, calc=calc)
+    mols_calc = call(jobmaker, mols=mols_calc, run=myrun, calc=calc)
     # 2. now the jobs have to be submitted (this function contains a try_ready test)
     jobids = subm.submission(mols_calc, myrun)
 
@@ -187,42 +199,22 @@ def do_calcs(mols_tocal, run):
             datareader.set_combined_variables(mol, run.props)
     return mols_tocal
 
-# PROCEDURE
-
-
-def procedure(myrun, mols_tocal, mols_nocal):
-    global once
-    #print "nconfs:", len(population)
-    print "| n_indices_tocal:", len(mols_tocal)
-    print "|    n_data_nocal:", len(mols_nocal)
-    if myrun.no1sub == 1 and once == 0:
-        once = 1
-        print " "
-    elif myrun.secret_file:
-        print "SECRET DATA activated:", myrun.secret_file
-        tablefilename = myrun.secret_file
-        mols_tocal, mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun)
-
-    if not mols_tocal == []:
-        # 0. Set the molecular geometries
-        if myrun.__class__.__name__=='FrameRun':
-            geommaker(mols_tocal, myrun)
-        # 1. And perform the calculations
-        do_calcs(mols_tocal, myrun)
-
-    # 5. merge data_calc and data_nocal to data_all
-    mols_all = mols_tocal + mols_nocal
-
-    # 6. set target property i.e. mol.Pvalue and mol.boundaries
-    set_target_properties(mols_all, myrun)
-
-    return mols_all
-
-# 0. geom making
-
 
 @log_io()
-def geommaker(mols_tocal, myrun):
+def make_cartesian(mols, myrun):
+    for molecule in mols:
+        cartesian = deepcopy(myrun.cartesian)
+        # loop over every site:
+        print "original cartesian:", cartesian, "sites:", myrun.sites, "conf:", molecule.conf
+        for site, group in zip(myrun.sites, molecule.conf):
+            cartesian[site-1][0]=group[0]
+
+        print "new cartesian:", cartesian
+        setattr(molecule, 'cartesian', cartesian)
+    return
+
+@log_io()
+def geom_maker(mols_tocal, myrun):
 
     if myrun.symlinks:
         print "symmetry will be applied |",
@@ -310,11 +302,21 @@ def jobmaker(mols, run, calc):  # ----- dict with info for filewriter has to pas
         import gaussian as program
     elif calc['program'] == 'nwchem':
         import nwchem as program
+    elif calc['program'] == 'vasp':
+        import vasp as program
     else:
         raise SystemExit('program not recognized')
 
     # 2. Write inputfile(s)
     for molecule in mols:
+        if calc['program']=='vasp':
+            name = calc['identify'] + str(molecule.index)
+            path = calc['path'] + '/' + name
+            if not os.path.exists(path):  # path is $WORKDIR/data
+                os.makedirs(path)
+                # and make sure ID_gauss is in the folder!
+                shutil.copy(calc['path'] + '/' + run.script, path)
+
         if 'positions' in calc:  # so multiple jobs
             assert 'geom' in calc and (calc['geom'] in ['H', 'AH'])
             # 1. make a folder with the indexname in /data/indices[i]
@@ -502,3 +504,28 @@ def set_target_properties(molecules, myrun):
                 print e
                 pass
     return
+
+
+def restriction1(mols_todo, mols_nodo, run):
+    ''' test if not B-B A or N-N bond present in molecules '''
+    def has_forbidden_combination(conf, adj):
+        for i in range(len(conf)):
+            for j in range(i, len(conf)):
+                if conf[i] == conf[j] and adj[i][j] == 1.0 and conf[i] in [['N'], ['B']]:
+                    print "forbidden combination: ", i, conf[i], j, conf[j], adj[i]
+                    return True
+        return False
+
+    print "nmol:", len(mols_todo)
+
+    for molecule in mols_todo:
+        print "mol.conf:", molecule.conf
+        if has_forbidden_combination(molecule.conf, run.adj):
+            molecule.discard()
+            #mols_todo.remove(molecule)
+
+    print "nmol:", len(mols_todo)
+
+    return mols_todo, mols_nodo
+
+

@@ -20,16 +20,19 @@ class NWChemJob(BaseJob):
     # -----
 
     def termination(self, logpath):
-        with open(logpath, 'r') as fid:
-            text = fid.readlines()[-4:]
-            if re.search('Zhang', ''.join(text)):
-                fid.close()
-                return 1
-            elif re.search('IGNORE', ''.join(text)):
-                fid.close()
-                return 2
-            else:
-                return 3
+        try:
+            with open(logpath, 'r') as fid:
+                text = fid.readlines()[-4:]
+                if re.search('Zhang', ''.join(text)):
+                    fid.close()
+                    return 1
+                elif re.search('IGNORE', ''.join(text)):
+                    fid.close()
+                    return 2
+                else:
+                    return 3
+        except IOError:
+            return 0
     # -----
 
     def errortermination(self, debug=False):

@@ -28,7 +28,11 @@ def get_property_table(table, myrun):
                 db[key] = value[ myrun.func_args[0] ]
             else:
                 kwargs = { prop:get(value, prop) for prop in myrun.func_args }
-                Pvalue = myrun.function(**kwargs)
+                try:
+                    Pvalue = myrun.function(**kwargs)
+                except TypeError:
+                    print "type error with:", key, value, kwargs
+                    Pvalue = None
                 db[key]=Pvalue
         else:
             db[key] = get(value, myrun.property)
@@ -111,16 +115,19 @@ def set_table(myrun, array=[]):
         i=0
         for key in table:
             conf = key.split('_')
-            new_conf=[]
-            for group in conf:
-                # 1. remove any dihedrals from group
-                try:
-                    group=group.translate(None, '0123456789')
-                except TypeError:
-                    group=group.translate({ord(ch): None for ch in '0123456789'})
-                new_conf.append(group)
-            new_key='_'.join(new_conf)
-            new_table[new_key]=table[key]
+            if len(conf)>1:
+                new_conf=[]
+                for group in conf:
+                    # 1. remove any dihedrals from group
+                    try:
+                        group=group.translate(None, '0123456789')
+                    except TypeError:
+                        group=group.translate({ord(ch): None for ch in '0123456789'})
+                    new_conf.append(group)
+                new_key='_'.join(new_conf)
+                new_table[new_key]=table[key]
+            else:
+                new_table[key]=table[key]
         return new_table
     # -------
     # try if tablename is given

@@ -1,9 +1,5 @@
-''' the whole CINDES package '''
+''' the whole CINDES package
 
-__version__ = '0.4'
-__author__ = 'J.L. Teunissen'
-
-'''
  Here the rootlogger is configured to display only the message
  At the moment there are still many multiple-line logging event that are not displayed
  correctly when other formatters are used such as:
@@ -16,18 +12,23 @@ __author__ = 'J.L. Teunissen'
 >logger = logging.getLogger(__name__)
  but for the moment this does not seem necessary.
 '''
-import sys, os
+
+import sys
+import os
 import logging
+
+from CINDES import *
+
+__version__ = '0.4'
+__author__ = 'J.L. Teunissen'
+
+# exclude scripts/tests/old_modules from "from CINDES import *
+__all__ = ['algorithms', 'evaluation', 'utils']
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)  # This toggles all the logging
 ch = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter('%(message)s')
 ch.setFormatter(formatter)
-ch.setLevel(logging.INFO) # This also toggles all the logging
+ch.setLevel(logging.INFO)  # This also toggles all the logging
 logger.addHandler(ch)
-
-# exclude scripts/tests/old_modules from "from CINDES import *
-__all__ = ['algorithms', 'evaluation', 'utils']
-from CINDES import *
-
-

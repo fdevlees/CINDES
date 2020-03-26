@@ -206,8 +206,10 @@ class ccData(object):
                     a = getattr(self, k)
                     setattr(self, k, numpy.array(getattr(self, k), precision))
                 except ValueError as e:
-                    print "ValueError in arrayify:", k, self.k
-                    raise e
+                    print k
+                    continue
+                    #print "ValueError in arrayify:", k, self.k
+                    #raise e
             elif v == list and k in self._listsofarrays:
                 setattr(self, k, [numpy.array(x, precision) for x in getattr(self, k)])
             elif v == dict and k in self._dictsofarrays:

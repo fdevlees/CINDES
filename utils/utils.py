@@ -318,6 +318,28 @@ def skipper(mols_tocal, mols_nocal, myrun, iprint=True):
     mols_all = mols_tocal + mols_nocal
     return mols_all
 
+class SessionID(object):
+    def __init__(self, ID):
+        if isinstance(ID, int):
+            n_calc = int(str(ID)[1:])
+            n_session = int(str(ID)[0])
+            name = "{:d}.{:d}".format(n_session, n_calc)
+        else:
+            name = ID
+        self.names= [name]
+        self.names.append(float(name))
+        splitted = name.split('.')
+        zerod = '{}0{}'.format(*splitted)
+        numbered = int(zerod)
+        self.names.extend([splitted, map(int, splitted), zerod, numbered])
+        return
+
+    def __eq__(self, other):
+        return other in self.names
+
+    def __repr__(self):
+        return "<SessionID object: {}>".format(self.names[0])
+
 
 if __name__ == "__main__":
     import doctest, utils

@@ -1,5 +1,14 @@
-""" a conveniece Molecule Class """
+""" the Molecule Class
+
+The Abstract Base Class is BaseMolecule
+
+The two child classes are:
+    1. Molecule: For combinatorial optimizations
+    2. SmiMolecule: For molecules initiated by SMILES
+
+"""
 import numpy as np
+import re
 from CINDES.utils.converter import Converter
 from collections import MutableSequence
 
@@ -40,7 +49,7 @@ def indtocon(index):
     conf = []
     for item in index.split('_'):
         splitted = re.findall(r"[a-zA-Z]+|\d+", item)
-        site = findall('[A-Z0-9][^A-Z1-9]*', splitted[0] )
+        site = re.findall('[A-Z0-9][^A-Z1-9]*', splitted[0] )
         if len(splitted)==2:
             dihedral=splitted[1]
             site.append(dihedral)
@@ -380,7 +389,7 @@ if __name__=="__main__":
         with open(sys.argv[1]) as f:
             indices = f.readlines()
             for index in indices:
-                print indtosmi(index)
+                print indtosmi(index).strip().strip(' ')
     except IOError:
         print indtosmi(sys.argv[1])
         print "".join([replacements.get(c, c) for c in sys.argv[1]])

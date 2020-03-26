@@ -22,6 +22,7 @@ import inspect # to see if function is a class
 import logging  # instead of the large amount of print statements not using it at the moment
 from copy import deepcopy  # for keeping matrices while changing others
 import numpy as np
+import yaml
 
 # import my own modules
 from evaluation import construction as zcon  # all functions needed for constructing new geometries
@@ -30,6 +31,7 @@ from evaluation import reader as r  # this reads the zmatrix in gaussian format
 # import utils
 from CINDES.utils.writings import dump
 from CINDES.utils.utils import *
+from CINDES.evaluation.job import BaseJob
 
 print "time for imports:", time.clock() - start
 
@@ -53,16 +55,26 @@ class BaseRun(object):
         self.pid = os.getpid()
         self.ppid = os.getppid()
 
-        if not self.nosub==1:
+        if not self.nosub==2:
             self.setup_filesystem()
             self.set_calcs()
+
+        # for Gaussian this is default. otherwise it has to be switched on
+        if self.assign_geom==True or self.program=='gaussian':
+            self.assign_geom=True
+            BaseJob.assign_geom=True
 
         # sometimes complicated property functions have to be initialized:
         if self.property=='func' and inspect.isclass(self.function):
             print "initializing function..."
             self.function = self.function(self)
-            assert callable(self.function)
-        return
+
+    def dump(self):
+        ''' dumps the input to yaml. YAML because it can handle python sets better than json '''
+        data = { k:v for k,v in self.__dict__.iteritems() if not (callable(v) or v is Ellipsis) and not k=='adj'}
+        print data
+        with open("input.yaml", "w") as f:
+            yaml.dump(data, f)
 
     def __str__(self):
         sb = ['BaseRun object with the following attributes:']
@@ -173,7 +185,7 @@ class BaseRun(object):
 
     def setup_filesystem(self):
         param = self.__dict__
-        if self.nosub == 1:
+        if self.nosub == 2:
             path = ''
         else:
             #param['workdir'] = os.getcwd()
@@ -193,6 +205,10 @@ class BaseRun(object):
                 self.script = 'ID_NWChem'
                 self.extension = ''
                 shutil.copy(os.getcwd() + '/ID_NWChem', path)
+            elif param['program'] == 'vasp':
+                self.script = 'ID_VASP'
+                self.extension = ''
+                shutil.copy(os.getcwd() + '/ID_VASP', path)
             else:
                 raise SystemExit('ERROR: No valid program specified')
         self.path = path
@@ -200,6 +216,16 @@ class BaseRun(object):
 
     def currenttime(self):
         return "Current time %s" % str(time.time() - self.starttime)
+
+class XYZRun(BaseRun):
+
+    def __init__(self, **entries):
+        super(XYZRun, self).__init__(**entries)
+        if self.nsites and not self.nosub==2:
+            self.cartesian = r.get_cartesian(**entries)
+        else:
+            logging.info("NO ZMAT NOR XYZ")
+        return
 
 
 class FrameRun(BaseRun):
@@ -210,17 +236,16 @@ class FrameRun(BaseRun):
     def __init__(self, **entries):
         super(FrameRun, self).__init__(**entries)
         # specific for FrameRun:
-        if self.nsites and not self.nosub==1:
+        if (self.nsites and not self.nosub==2) or self.procedure=='empty':
             if isinstance(self.zmatrixfile, list):
                 self.TZmatrices={}
                 for zmatrixfile in self.zmatrixfile:
-                    tzmat = r.geometry(zmatfile=zmatrixfile, **entries)
+                    tzmat, self.corresp = r.geometry(zmatfile=zmatrixfile, **entries)
                     self.TZmatrices[zmatrixfile]=tzmat
                 self.TZmat = self.TZmatrices[self.zmatrixfile[0]]
             else:
-                self.TZmat = r.geometry(zmatfile=self.zmatrixfile, **entries)
-            self.adj = self.set_adj(self.TZmat['core'], self.TZmat['active'])
-            self.corresp = self.set_corresp(self.TZmat['active'], self.TZmat['passive'])
+                self.TZmat, self.corresp = r.geometry(zmatfile=self.zmatrixfile, **entries)
+            self.set_adj(self.TZmat['core'], self.TZmat['active'])
         else:
             logging.info("NO ZMAT")
         return
@@ -241,23 +266,6 @@ class FrameRun(BaseRun):
                 adj[j][i] = adj[i][j]
         sites = [int(methyl[0][1]) - 1 for methyl in active]
         sites_adj = adj[sites][:, sites]
-        if debug:
-            print "adjacency matrix of core:", adj
-            print "self.sites:", self.sites
-            print "active: ", active
-            print "sites: ", sites
-            print "sites_adj:", sites_adj
-        return sites_adj
-
-    def set_corresp(self, active, passive):
-        '''makes a dictionary that gives the correspondance of sites with position in core matrix'''
-        corresp = dict()
-        correspI= dict()
-        for site in active:
-            corresp[int(site[0][1])] = int(site[1][1])
-            correspI[int(site[1][1])] = int(site[0][1])
-        for site in passive:
-            corresp[int(site[0][1])] = int(site[1][1])
-            correspI[int(site[1][1])] = int(site[0][1])
-        return correspI
+        self.adj = map(list,adj)
+        return
 

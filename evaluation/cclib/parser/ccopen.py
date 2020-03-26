@@ -32,6 +32,7 @@ from .nwchemparser import NWChem
 from .orcaparser import ORCA
 from .psiparser import Psi
 from .qchemparser import QChem
+#from .vaspparser import VASP
 
 try:
     from ..bridge import cclib2openbabel

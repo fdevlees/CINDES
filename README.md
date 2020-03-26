@@ -1,12 +1,9 @@
 
-This is the CINDES package containing:
-    1. Best First Search Algorithm 
-    2. predictor functions
-    3. some other utilities
-    4. scripts
-    5. Genetic Algorithm including the pyevolve package internally
-    
-There is a manual. Please send a mail to johannes.teunissen@vub.ac.be to ask for the manual
+This is the CINDES package containing two modules:
+  1. evaluation: HPC automation of job submission/processing
+  2. algorithms: Several algorithms to perform combinatorial optimizations. The most important ones are the Best-First-Search algorithm and several Genetic Algorithm implementations (as well as NSGA-II), and Bayesian optimization
+
+A manual is available, please email to jlteunissen@gmail.com
 
 to run the test suite:
-in CINDES4/ run >nosetests
+$> nosetests

@@ -1,15 +1,13 @@
 #!/bin/env python
 
-from pprint import pprint
-#from writings import log_io
-from CINDES.utils.writings import log_io, print_title, sprint
-from submitter import qsta
 import re
 import numpy
 import time
 import logging
-#logging.basicConfig(level=logging.DEBUG)
+from pprint import pprint
 
+from CINDES.utils.writings import log_io, print_title, sprint
+from submitter import qsta
 import construction
 
 def round8(x): return round(float(x), 8)
@@ -123,8 +121,8 @@ def normaltermination(mols, run):
     # 2. test normal termination and errorjob are ready or molecule is ignored
     extratime = 0
     normaltime= 0
-    timestep1 = 10
-    timestep2 = 300
+    timestep1 = run.timestep
+    timestep2 = max(300, run.timestep)
     print "normal waiting time=NT | extra waiting time=XT"
     while True:
         # CHECK READY:
@@ -243,6 +241,7 @@ def zzztester(mols):
         print "no zzzs (anymore) in queue",
         return False
 
+
 def wait_hasimagfreq(job):
     once = False
     while True:
@@ -260,6 +259,7 @@ def wait_hasimagfreq(job):
         else:
             break
     return
+
 
 @log_io()
 def datareader(mols, run):
@@ -283,7 +283,12 @@ def datareader(mols, run):
                 for old_key in readings.keys():  # the .keys is very important here. iterkeys or for just readings do not work!
                     readings["{}_P{}".format(old_key, str(job.pos))] = readings.pop(old_key)
 
+            # 2.3 assign Job data to Molecule
             molecule.props.update(readings)
+
+            # 2.4 optionally set geometry data as Molecule attribute
+            if job.assign_geom:
+                set_geom_attribute(molecule, readings)
         molecule.predicted = False
 
         # only relevant for stab calculations
@@ -292,6 +297,21 @@ def datareader(mols, run):
 
     return
 
+def set_geom_attribute(molecule, readings):
+    from CINDES.utils import utils
+    t = utils.PeriodicTable()
+    formatstr = lambda x:"{:12.6f}".format(x)
+    for key in readings:
+        if key.startswith('xyz'):
+            coords = readings[key]
+            coords = [ map(formatstr, xyz) for xyz in coords ]
+            atomnos = readings['atomnos' + key.lstrip('xyz')]
+            # add the elements
+            for atomn, xyz in zip(atomnos, coords):
+                xyz.insert(0, t.element[atomn])
+            coordsstr = "\n".join([ " ".join(xyz) for xyz in coords ]) + "\n"
+            setattr(molecule, key, coordsstr)
+    return
 
 def read_file(Job):
     # 1. look to which calc the logfile belongs when there were simultaneous calculations:
@@ -320,6 +340,9 @@ def read_file(Job):
         key = 'NWChem Input Module'
         splitted = open(filename).read().split(key)
         jobslines = splitted[1:-1]
+    elif program == 'vasp':
+        from CINDES.evaluation.cclib.parser.vaspparser import VASP as Log
+        jobslines = open(filename).read()
     else:
         raise SystemExit('not implemented')
     print "njobs:", len(jobslines),
@@ -336,7 +359,7 @@ def read_file(Job):
         try:
             job_data = Log(jobfile).parse()
         except Exception as e:
-            print "parsing error with:", jobfile
+            print "parsing error with:", jobfile, job
             raise e
 
         for inf in job['info']:
@@ -425,6 +448,7 @@ def read_file(Job):
 
 
 def set_combined_variables(mol, to_read_props):
+
     # so now datadict should have all energy keys + homo/lumo + dipole
     # but not yet omega/solv/gap so:
     results = mol.props

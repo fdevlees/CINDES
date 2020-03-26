@@ -18,7 +18,6 @@ def read_input(inputfilename='INPUT'):
     subinp = openfile(inputfilename)  # this is the fileID
     param = readfile(subinp)  # inputline is a tuple with all kind of input variables
 
-
     # here we set some extra parameters:
     # 1. if there is symmetry the real number of sites is smaller than the number of changeable sites
     if param['nlinks']:
@@ -55,8 +54,12 @@ def read_input(inputfilename='INPUT'):
     # so this can be initiated here:
     if param['procedure'] is None:
         myrun = run.BaseRun(**param)
+    elif param['program'] == 'vasp':
+        myrun = run.XYZRun(**param)
     else:
         myrun = run.FrameRun(**param)
+
+    myrun.dump()
 
     return myrun
 
@@ -96,7 +99,7 @@ def get_preds(subinp, line):
     for _ in range(npredictions):
         while True:
             line = subinp.readline()
-            if not '#' in line:
+            if '#' not in line:
                 break
         # the first word is a unique prediction identifier (just a name which has to be unique)
         pname = line.split()[0]
@@ -139,7 +142,7 @@ def get_prop_function(subinp, line):
             elif split==']':inkey=False
             if inkey:
                 continue
-            if isword.match(split) and (not split in ['if', 'else', 'abs(']):
+            if isword.match(split) and (not split in ['if', 'else', 'abs(', 'and', 'or', 'not', 'elif', 'bool', 'float', 'int']):
                 props.add(split)
     arguments = ",".join(props)
     funcstr = "lambda {}:{}".format(arguments, line)
@@ -180,9 +183,14 @@ def get_calcs(subinp, line):
 
 def get_jobs(subinp, line, index=1):
     def get_extra_line(line):
-        key, value = line.strip().split(None, 1)
+        splitted = line.strip().split(None, 1)
+        if len(splitted)==1:
+            key = splitted[0]
+            value = True
+        else:
+            key, value = splitted
         assert key in ['identify', 'identifier', 'nosub', 'program', 'nprocs', 'mem',
-                'geom', 'script', 'positions', 'fafoom', 'rdfreq']
+                'geom', 'script', 'positions', 'fafoom', 'rdfreq', 'solvent_info']
         if key in ['nosub', 'nprocs', 'fafoom', 'mem']:
             value = int(value)
         elif key in ['positions']:
@@ -195,7 +203,6 @@ def get_jobs(subinp, line, index=1):
     p = re.compile(' *-*[0-9] +[0-9] +#.*')
     # test if line only contains two integers:
     if not all( i in '0123456789' for i in line.split() ):
-        print "living on the edge=) line is not formattes as <njobs> <nextrakeywords>!"
         while True:
             splitted = line.split()
             nextline = subinp.readline()
@@ -346,6 +353,7 @@ def readfile(subinp):
 
         #          GLOBAL RUN PARAMETERS
         'adjust_dihedrals': False,
+        'assign_geom':None,
         'batchsize': None,
         'bc': False,
         'calcs':[],
@@ -355,7 +363,7 @@ def readfile(subinp):
         'difmodel': 0,
         'extrajobs': [],
         'extra_props': [],
-        'extrawaittime': 2,
+        'extrawaittime': 5,
         'function': lambda x: x,
         'ignore': 0,
         'jobs': [],
@@ -364,7 +372,6 @@ def readfile(subinp):
         'ml': False,
         'maxiter': 10,
         'montecarlo': 0,  # Temperature at start
-        'nch3': Ellipsis,
         'ncore': Ellipsis,
         'nlinks': False,
         'no1sub': 0,
@@ -464,6 +471,14 @@ def readfile(subinp):
         line = line.split('#')[0].lower()
         if 'adjust_dihedrals' in line:
             paras['adjust_dihedrals'] = True
+        if 'assign_geom' in line:
+            try:
+                if line.split()[1] in ['0', 'False']:
+                    paras['assign_geom'] = False
+                else:
+                    raise ValueError('unrecognized value for assign_geom')
+            except IndexError:
+                paras['assign_geom'] = True
         elif 'batchsize' in line:
             paras['batchsize'] = int(line.split()[1])
         elif 'bc' in line:
@@ -550,7 +565,7 @@ def readfile(subinp):
         elif any(item in line for item in ('ncore', 'natomscore')):
             paras['ncore'] = int(line.split()[1])
         elif 'nch3' in line:
-            paras['nch3'] = int(line.split()[1])
+            logging.warning('    nch3 keyword is deprecated!')
         elif 'nprocs' in line:
             paras['nprocs'] = int(line.split()[1])
         elif 'optimum' in line:
@@ -620,6 +635,8 @@ def readfile(subinp):
                         indices.append(line.strip())
                     paras['generatemols'] = indices
                     print "read {:d} indices to generate".format(paras['ngenerate'])
+            elif paras['procedure'] in ['empty']:
+                paras['sites']=[]
         elif 'regression' in line:
             paras['regression'] = 1
         elif any(keyword in line for keyword in ['readtable', 'read_table']):
@@ -658,7 +675,7 @@ def readfile(subinp):
             print "SYMMETRY ACTIVATED!"
         elif 'simple' in line:
             paras['simple'] = 1
-        elif 'sites' in line:
+        elif key == 'sites':
             paras['sites'] = [int(item) for item in line.split()[1:]]
         elif 'try_ready' in line:
             paras['try_ready'] = 1
@@ -666,11 +683,6 @@ def readfile(subinp):
             paras['test_ready'] = int(line.split()[1])
         elif 'threading' in line:
             paras['threading'] = True
-        # elif 'twojob' in line:
-        #    try:
-        #        paras['twojob'] = int(line.split()[1])
-        #    except IndexError:
-        #        paras['twojob'] = 1
         elif 'procedure' in line:
             paras['procedure'] = line.split()[1]
             if paras['procedure'] in ['genrandom', 'getrandom']:
@@ -709,6 +721,8 @@ def readfile(subinp):
                 raise SystemExit('Molpro not yet implemented')
             elif line.split()[1] in ['nwchem']:
                 paras['program'] = 'nwchem'
+            elif line.split()[1] in ['vasp']:
+                paras['program'] = 'vasp'
             else:
                 raise SystemExit('program not recognized')
 

@@ -5,10 +5,9 @@ from setuptools import setup
 
 setup(name='CINDES',
       version='1.0',
-      description='Python Inverse Design Utility',
+      description='Combinatiorial INverse DESigner',
       author='Jos Teunissen',
       author_email='jteuniss@vub.ac.be',
-      packages=['INDES', 'utils', 'predictor', ''],
       scripts=['scripts/cyreader.py', 'scripts/ID_gauss'],  # makes that automatically the right !# path is used.
       #data_files=[ ("", ['requirements.txt'])],
       #py_modules=['foo'],
@@ -19,7 +18,8 @@ setup(name='CINDES',
           "scipy",
           "sklearn",
           #"pybel",
-          "seaborn"]
+          #"seaborn"
+          ]
      )
 
 

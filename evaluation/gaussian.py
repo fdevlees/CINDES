@@ -8,6 +8,19 @@ class GaussianJob(BaseJob):
     extension = '.log'
     script = 'ID_gauss'
     cmd = 'g09'
+    assign_geom = True
+
+    def __init__(self, filepath, calc=dict(), worker=False):
+        super(GaussianJob, self).__init__(filepath, calc=calc, worker=worker)
+
+        # for gaussian geometries are automatically asigned to attributes unless this variable is set to False
+
+        self.nNormalTermination = 0
+        for job in calc['jobs']:
+            if 'freq' in job['hotline']:
+                self.nNormalTermination += 1
+            self.nNormalTermination += 1
+        return
 
     def write(self):
         ''' overwrites the standard BaseJob write method '''
@@ -16,27 +29,47 @@ class GaussianJob(BaseJob):
     def getlog(self):
         return self.name + '.log'
 
+    def parse(self, path=None):
+        if path is None:
+            path = self.logpath
+        from CINDES.evaluation.cclib.parser.gaussianparser import Gaussian
+        try:
+            mymol = Gaussian(self.logpath).parse()
+        except Exception as e:
+            print "cclib read error with:", path
+            errorfile = 'error_{}.log'.format(self.name)
+            print "see {} for more details".format(errorfile)
+            with open(errorfile, 'w') as f:
+                f.write(e)
+            return False
+        return mymol
+
     # ----- might as well be a static method
     def termination(self, logpath, raise_errors=True):
-        with open(logpath, 'r') as fid:
-            text = ''.join(fid.readlines()[-3:])
-            if (re.search('Normal termination', text) 
-              and not (re.search('Initial command', text)
-              and not re.search('Link1', text))):
-                ret = 1
-            elif re.search('IGNORE', text):
-                ret = 2
-            elif re.search('open-new-file', text):
-                ret = 3
-            else:
-                ret = 0
+        try:
+            with open(logpath, 'r') as fid:
+                text = ''.join(fid.readlines()[-3:])
+                if (re.search('Normal termination', text)
+                  and not (re.search('Initial command', text)
+                  and not re.search('Link1', text))):
+                    ret = 1
+                elif re.search('IGNORE', text):
+                    ret = 2
+                elif re.search('open-new-file', text):
+                    ret = 3
+                else:
+                    ret = 0
+        except IOError:
+            ret = 0
         return ret
     # -----
 
     def errortermination(self, debug=False):
         import time
-        from CINDES.evaluation.cclib.parser.gaussianparser import Gaussian
-        mymol = Gaussian(self.logpath).parse()
+        mymol = self.parse(self.logpath)
+        if not mymol:
+            print "did not manage to read logfile without Normal Termination"
+            return False
         from CINDES.utils import utils
         t = utils.PeriodicTable()
         if hasattr(mymol, 'atomcoords'):
@@ -101,8 +134,6 @@ class GaussianJob(BaseJob):
             f.writelines(newfile)
         print "jobfile rewritten"
         return
-            
-        
 
 
 def writegeom(mol, fid, geom=None):
@@ -197,8 +228,7 @@ def filewriter(mol, calc, pos=None):
     writegeom(mol, fid, geom)
 
     # write extra inputs:
-    if 'rdfreq' in job1['hotline']:
-        fid.write(' {}\n'.format(calc['rdfreq']))
+    write_extra_lines(fid, job1, name, calc)
 
     fid.write('\n')
     # THE OTHER JOBS
@@ -214,10 +244,24 @@ def filewriter(mol, calc, pos=None):
         fid.write(str(index) + " {}th calc\n\n".format(i + 2))
         if not 'allcheck' in job['hotline']:
             fid.write("{} {}\n\n".format(job['charge'], job['mult']))
-        if 'rdfreq' in job['hotline']:
-            fid.write(' {}\n\n'.format(calc['rdfreq']))
+        #fid.write("\n")
+        write_extra_lines(fid, job, name, calc)
+        fid.write("\n")
     fid.close()
     return Job
+
+def write_extra_lines(fid, job, name, calc=None):
+    p_solvent = re.compile('scrf.*read')
+    if p_solvent.search(job['hotline']):
+        print "wrote solvent info!"
+        fid.write('{}\n\n'.format(calc['solvent_info']))
+    if 'rdfreq' in job['hotline']:
+        fid.write(' {}\n\n'.format(calc['rdfreq']))
+    if any(item in job['hotline'] for item in ['out=wfx', 'output=wfx']):
+        fid.write('{}.wfx\n\n'.format(name))
+    if any(item in job['hotline'] for item in ['out=wfn', 'output=wfn']):
+        fid.write('{}.fwn\n\n'.format(name))
+    return
 
 
 def get_paths(mols):
