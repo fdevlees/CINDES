@@ -12,17 +12,16 @@ debug = 1
 # import python libraries
 import time  # for getting time/date and time delays
 start = time.clock()
-from inspect import stack
-from math import ceil
 import shutil  # module to copy files
-from platform import node
-from pprint import pformat
 import os  # for getting window width and testing existence of files
 import inspect # to see if function is a class
 import logging  # instead of the large amount of print statements not using it at the moment
-from copy import deepcopy  # for keeping matrices while changing others
 import numpy as np
-
+from copy import deepcopy  # for keeping matrices while changing others
+from inspect import stack
+from math import ceil
+from platform import node
+from pprint import pformat
 
 # import my own modules
 from evaluation import construction as zcon  # all functions needed for constructing new geometries
@@ -32,8 +31,6 @@ from evaluation import reader as r  # this reads the zmatrix in gaussian format
 from CINDES.utils.writings import dump
 from CINDES.utils.utils import *
 from CINDES.evaluation.job import BaseJob
-
-print "time for imports:", time.clock() - start
 
 class BaseRun(object):
     ''' This is the main object for all the parameters used during any process
@@ -64,13 +61,17 @@ class BaseRun(object):
             self.assign_geom=True
             BaseJob.assign_geom=True
 
-        # sometimes complicated property functions have to be initialized:
+        # if property is a class it has to be initialized:
         if self.property=='func' and inspect.isclass(self.function):
             print "initializing function..."
             self.function = self.function(self)
 
+        return
+
     def dump(self):
-        ''' dumps the input to yaml. YAML because it can handle python sets better than json '''
+        ''' dumps the input to yaml.
+
+        YAML because it can handle python sets better than json '''
         data = { k:v for k,v in self.__dict__.iteritems() if not (callable(v) or v is Ellipsis) and not k=='adj'}
         #print data
         try:
@@ -82,6 +83,7 @@ class BaseRun(object):
         return
 
     def __str__(self):
+        """ formulating output to print function """
         sb = ['BaseRun object with the following attributes:']
         empty_attributes = []
         for key, value in sorted(self.__dict__.items()):
@@ -121,7 +123,6 @@ class BaseRun(object):
     def __repr__(self):
         return self.__str__()
 
-    # the the calculationskeyword:
     def set_calcs(self):
         def tocalc(calc):
             # path only set after setup_filesystem!
@@ -176,7 +177,7 @@ class BaseRun(object):
                 calc = paras[key]
                 calcs[-1] = [calcs[-1], tocalc(calc)]
 
-        # verify that there are no similar identifiers
+        # enforce that there are no similar identifiers
         identifiers = []
         i = 1
         for calc in calcs:
@@ -223,6 +224,7 @@ class BaseRun(object):
         return "Current time %s" % str(time.time() - self.starttime)
 
 class XYZRun(BaseRun):
+    """ This is another Run class specific for using xyz inputs """
 
     def __init__(self, **entries):
         super(XYZRun, self).__init__(**entries)
@@ -240,7 +242,7 @@ class FrameRun(BaseRun):
 
     def __init__(self, **entries):
         super(FrameRun, self).__init__(**entries)
-        # specific for FrameRun:
+        # specific for FrameRun: read ZMAT file and set relevant attributes
         if (self.nsites and not self.nosub==2) or self.procedure=='empty':
             if isinstance(self.zmatrixfile, list):
                 self.TZmatrices={}
@@ -250,12 +252,15 @@ class FrameRun(BaseRun):
                 self.TZmat = self.TZmatrices[self.zmatrixfile[0]]
             else:
                 self.TZmat, self.corresp = r.geometry(zmatfile=self.zmatrixfile, **entries)
-            self.set_adj(self.TZmat['core'], self.TZmat['active'])
+            #self.set_adj(self.TZmat['core'], self.TZmat['active'])
         else:
             logging.info("NO ZMAT")
         return
 
     def set_adj(self, core, active):
+        """ Making a list of atoms that are neighbors
+
+        This function is currently not used """
         debug = 0
         from CINDES.utils.converter import Converter
         import numpy as np

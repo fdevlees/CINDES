@@ -17,28 +17,28 @@ J.L. Teunissen, 20th June 2016
 debug = False
 safe = False
 
-import submitter as subm
-from copy import deepcopy
 import glob
-from pprint import pprint
 import pprint
 import time
-#from writings import log_io, sprint
+import os
+import shutil
+from pprint import pprint
+from copy import deepcopy
+
 from CINDES.utils.writings import log_io, print_title, sprint, logpopulation
 from CINDES.utils.utils import custom_redirection, skipper, SessionID
 from CINDES.utils.table import get_property_table
 from predictions import predictor
 import logging
 import construction as zcon
+import submitter as subm
 import datareader
 
-# for stab:
-import re
-import os
-import shutil
 once = 0
 
 def evaluate_mols(run, mols, table, count, nsite=0):
+    """ This function evaluates the molecule props either from database / prediction
+    or calculation """
 
     # 1. check in table
     mols_todo, mols_nodo = zcon.check_in_table(mols, table, run.props)
@@ -100,6 +100,28 @@ def procedure(myrun, mols_tocal, mols_nocal):
 
     return mols_all
 
+
+def do_calcs(mols_tocal, run):
+    for i, calc in enumerate(run.calcs):
+        invoke_script(calc=calc, mols=mols_tocal, run=run, ID=(i+1)*100)
+        if run.threading:
+            from threading_utils import runjobs_threading
+            runjobs_threading(mols_tocal, run, i)
+        else:
+            runjobs(mols_tocal, run, i)
+        # if there need to be set some new geometries for new calculation.
+        invoke_script(calc=calc, mols=mols_tocal, run=run, ID=(i+1)*100, start=False)
+        # delete jobs such that new jobs can be set up.
+        for mol in mols_tocal:
+            mol.deletejobs()
+
+    # after every calculation is performed:
+    for mol in mols_tocal:
+        if not mol.ignoremol:
+            datareader.set_combined_variables(mol, run.props)
+    return mols_tocal
+
+
 def invoke_script(calc, ID, start=True, **kwargs):
     if not isinstance(calc, dict):
         return
@@ -118,29 +140,6 @@ def invoke_script(calc, ID, start=True, **kwargs):
             print "no end function in {}".format(calc['script'])
     return
 
-
-def get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun):
-    '''checks for confs already calculated:
-        uses myrun.~
-        -props (set)
-    '''
-    import json
-    with open(tablefilename, 'r') as f:
-        db = json.load(f)
-    if debug:
-        print "secret_table:"
-        sprint(10, secret_table)
-    table = {key: value for key, value in db.iteritems() if myrun.props <= value.viewkeys()}
-    for mol in mols_tocal[:]:
-        try:
-            mol.props = table[mol.index]
-        except KeyError:
-            print "mol not in secret_table",
-            continue
-        mol.predicted = False
-        mols_tocal.remove(mol)
-        mols_nocal.append(mol)
-    return mols_tocal, mols_nocal
 
 
 def runjobs(mols_tocal, myrun, i):
@@ -178,26 +177,6 @@ def runjobs(mols_tocal, myrun, i):
     datareader.datareader(mols_calc, myrun)
 
     return
-
-def do_calcs(mols_tocal, run):
-    for i, calc in enumerate(run.calcs):
-        invoke_script(calc=calc, mols=mols_tocal, run=run, ID=(i+1)*100)
-        if run.threading:
-            from threading_utils import runjobs_threading
-            runjobs_threading(mols_tocal, run, i)
-        else:
-            runjobs(mols_tocal, run, i)
-        # if there need to be set some new geometries for new calculation.
-        invoke_script(calc=calc, mols=mols_tocal, run=run, ID=(i+1)*100, start=False)
-        # delete jobs such that new jobs can be set up.
-        for mol in mols_tocal:
-            mol.deletejobs()
-
-    # after every calculation is performed:
-    for mol in mols_tocal:
-        if not mol.ignoremol:
-            datareader.set_combined_variables(mol, run.props)
-    return mols_tocal
 
 
 @log_io()
@@ -332,8 +311,8 @@ def jobmaker(mols, run, calc):  # ----- dict with info for filewriter has to pas
                 setattr(molecule, attr, zmat2)
                 job = program.filewriter(molecule, calc, pos)
 
-                # job.N will be deprecated and replaced by job.Aatom which is the atomic number of 
-                # the attached atom. 
+                # job.N will be deprecated and replaced by job.Aatom which is the atomic number of
+                # the attached atom.
                 job.N = N
                 if job.N:
                     job.Aatom=7
@@ -361,7 +340,7 @@ def jobmaker(mols, run, calc):  # ----- dict with info for filewriter has to pas
                 os.makedirs(calc['path'] + '/' + molecule.index)
                 # and make sure ID_gauss is in the folder!
                 shutil.copy(calc['path'] + '/' + run.script, calc['path'] + '/' + molecule.index)
-            # 2. 
+            # 2.
             for i, geom in enumerate(getattr(molecule, calc['geom'])):
                 geomattr = 'xyz{}_{:d}'.format(calc['geom'], i)
                 print "geomattr:", geomattr
@@ -528,4 +507,27 @@ def restriction1(mols_todo, mols_nodo, run):
 
     return mols_todo, mols_nodo
 
+
+def get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun):
+    '''checks for confs already calculated:
+        uses myrun.~
+        -props (set)
+    '''
+    import json
+    with open(tablefilename, 'r') as f:
+        db = json.load(f)
+    if debug:
+        print "secret_table:"
+        sprint(10, secret_table)
+    table = {key: value for key, value in db.iteritems() if myrun.props <= value.viewkeys()}
+    for mol in mols_tocal[:]:
+        try:
+            mol.props = table[mol.index]
+        except KeyError:
+            print "mol not in secret_table",
+            continue
+        mol.predicted = False
+        mols_tocal.remove(mol)
+        mols_nocal.append(mol)
+    return mols_tocal, mols_nocal
 
