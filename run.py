@@ -22,7 +22,7 @@ import inspect # to see if function is a class
 import logging  # instead of the large amount of print statements not using it at the moment
 from copy import deepcopy  # for keeping matrices while changing others
 import numpy as np
-import yaml
+
 
 # import my own modules
 from evaluation import construction as zcon  # all functions needed for constructing new geometries
@@ -73,8 +73,13 @@ class BaseRun(object):
         ''' dumps the input to yaml. YAML because it can handle python sets better than json '''
         data = { k:v for k,v in self.__dict__.iteritems() if not (callable(v) or v is Ellipsis) and not k=='adj'}
         #print data
-        with open("input.yaml", "w") as f:
-            yaml.dump(data, f)
+        try:
+            import yaml
+            with open("input.yaml", "w") as f:
+                yaml.dump(data, f)
+        except ImportError
+            print "pyyaml not installed"
+        return
 
     def __str__(self):
         sb = ['BaseRun object with the following attributes:']

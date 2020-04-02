@@ -16,9 +16,7 @@ setup(name='CINDES',
       install_requires=[
           "numpy",
           "scipy",
-          "sklearn",
-          #"pybel",
-          #"seaborn"
+          "sklearn"
           ]
      )
 
