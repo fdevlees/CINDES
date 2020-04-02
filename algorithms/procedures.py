@@ -40,7 +40,7 @@ print "time for imports:", time.clock() - start
 
 def genconf(myrun):
     """ 2. Procedure to generate the inputfiles for a single index """
-    from CINDES.utils.molecule import Molecule
+    from CINDES.molecule import Molecule
     param = myrun.__dict__
     conf = zcon.indtocon(param['startind'])
     mol = Molecule(conf=conf)
@@ -172,7 +172,7 @@ def generate_procedure(myrun):
 
 
 def get_all_molecules(array):
-    from CINDES.utils.molecule import Molecule
+    from CINDES.molecule import Molecule
     print "in get_all_molecules"
     #A = [ map(''.join,item) for item in array ]
     A = array
