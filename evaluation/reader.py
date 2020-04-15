@@ -30,8 +30,8 @@ class ZMatrix(object):
 def get_cartesian(xyzfile='XYZ', **param):
     with open(xyzfile, 'r') as f:
         xyz_raw = [ line.split() for line in f ]
-    xyz = [ [line[0], map(float, line[1:])] for line in xyz_raw ]
-    print 'xyz:', xyz
+    xyz = [ [line[0], list(map(float, line[1:]))] for line in xyz_raw ]
+    print('xyz:', xyz)
     return xyz
 
 
@@ -154,7 +154,7 @@ def sitesplitter(zmatrix, natomscore, index):
                 break
     active = [ active[i] for i in index ]
 
-    print "corresp:", corresp
+    print("corresp:", corresp)
     #pprint.pprint(active)
     #pprint.pprint(passive)
     return coremat, active, passive, corresp
@@ -185,9 +185,9 @@ if __name__ == "__main__":
     # the corresponding index in the sitemat
     # now we make two matrices, one with the active sites
     # and one with the sites that stay fixed
-    print "activematrix: "
+    print("activematrix: ")
     pprint.pprint(activematrix)
-    print "passivematrix: "
+    print("passivematrix: ")
     pprint.pprint(passivematrix)
     # now we will change the passivematrix such that it are only single
     # hydrogen atoms and no methyl groups

@@ -1,7 +1,7 @@
 """ subfunctions for inputfile construction """
 import pprint
 from pprint import pformat
-from itertools import izip, islice
+from itertools import islice
 from re import findall
 import re
 import logging
@@ -40,7 +40,7 @@ def indtocon(index):
 def contoind(conf):
     # return '_'.join([''.join(item) for item in conf])
     # without dihedrals:
-    return '_'.join([''.join(filter(lambda x:str(x).isalpha(), item)) for item in conf])
+    return '_'.join([''.join([x for x in item if str(x).isalpha()]) for item in conf])
 
 
 def contoint(conf, array):
@@ -85,7 +85,7 @@ def demethyl(passive, defaultgroups):
                 for j, atom in enumerate(defaultconf[1:]):
                     passivesite[j][0]=atom
                 newpassive.append(passivesite)
-            print "final passivesite:", passivesite
+            print("final passivesite:", passivesite)
         else:
             passivesite = [passivesite[0]]
             # change carbons to hydrogens
@@ -128,8 +128,8 @@ def matrixmerger2(core, active, passive):
         elif active == []:
             actpas = V(passive)
         else:
-            print "passive:", passive
-            print "active:", active
+            print("passive:", passive)
+            print("active:", active)
             raise
 
     core.extend(actpas)
@@ -152,7 +152,7 @@ def get_molecules_SD(startconf, array, run, restingsites=None):
     ''' same as get_molecules but now every single mutation '''
     from CINDES.molecule import Molecule
     if restingsites is None:
-        restingsites = range(len(startconf))
+        restingsites = list(range(len(startconf)))
 
     confs = []
     for i in restingsites:
@@ -160,7 +160,7 @@ def get_molecules_SD(startconf, array, run, restingsites=None):
 
     # remove duplicates by sorting and subsequently only adding when the previous one is not similar
     sortedconfs = sorted(confs)
-    confs = [sortedconfs[i] for i in xrange(len(sortedconfs)) if i == 0 or sortedconfs[i] != sortedconfs[i - 1]]
+    confs = [sortedconfs[i] for i in range(len(sortedconfs)) if i == 0 or sortedconfs[i] != sortedconfs[i - 1]]
 
     individuals = [Molecule(conf=conf) for conf in confs]  # list of molecules
     return individuals
@@ -195,7 +195,7 @@ def check_in_table(individuals, table, props=set(), check_ignored=False):
         if i:
             logging.info("{} molecules are already in database".format(i))
     if debug:
-        print "mols_todo:", mols_todo, "mols_nodo:", mols_nodo
+        print("mols_todo:", mols_todo, "mols_nodo:", mols_nodo)
 
     if check_ignored:
         try:
@@ -208,7 +208,7 @@ def check_in_table(individuals, table, props=set(), check_ignored=False):
                 # - already flagged as discarded
             for mol in mols_todo[:]:
                 if mol.index in ignored:
-                    print mol, 'in IGNORE'
+                    print(mol, 'in IGNORE')
                     mol.ignore = True
                     mol.IsDiscarded = True
                     mols_nodo.append(mol)
@@ -264,11 +264,11 @@ def constructor2(conf, core, active, passive, links=None, defaultgroups=None):
         # if (not conf[i][0]=='C' or conf[i] == ['C','O']):
         if True:
             if debug:
-                print "in constructor 2. before doper:", conf[i], "len passive:", len(passive)
+                print("in constructor 2. before doper:", conf[i], "len passive:", len(passive))
             #print i
             core, passive = doper2(conf[i], active[i], core, passive)
             if debug:
-                print "in constructor 2. AFTER  doper:", conf[i], "len passive:", len(passive)
+                print("in constructor 2. AFTER  doper:", conf[i], "len passive:", len(passive))
         # now for EACH! one goes to the substituter
         active[i], count = substituter2(conf[i], active[i], count)
         if not active[i]:
@@ -381,7 +381,7 @@ def substituter2(group, geom0, count):
                    ['H', 3, '1.095', 2, '109.5', 1, '300.0'],
                    ['O', 2, '1.500', 3, '109.5', 4, '-60.1']]
         else:
-            print "group:", group
+            print("group:", group)
             raise SystemExit('group not recognized')
         if dihedral:
             zma[1][6] = dihedral
@@ -446,7 +446,7 @@ def substituter2(group, geom0, count):
             geom[2][1] = str(count + 1)  # if also attached to that one
             geom[3][1] = str(count + 1)
             if group in [['C', 'N', 'H', 'H', 'H']]:
-                print "WARNING: charged group: +1"
+                print("WARNING: charged group: +1")
         elif group in [['C', 'C', 'O', 'O', 'H']]:
             #print "carbonic acid"
             geom[1][1] = str(count + 1)  # this is the =O
@@ -473,7 +473,7 @@ def substituter2(group, geom0, count):
             geom[3][4] = 109.5
             geom[3][6] = 2.1  # just to make it changebla i don't make it zero
         else:
-            print group
+            print(group)
             raise Exception('Group does not exist')
 
         count += 4
@@ -514,7 +514,7 @@ def substituter2(group, geom0, count):
             geom = geomfiller(zma, geom, count)
             count += 3  # three atoms added to activemat
         elif group == ['C', 'C', 'O', 'O']:
-            print "WARNING: charged group: -1"
+            print("WARNING: charged group: -1")
             zma = [['C', 1, '1.51'],
                    ['O', 2, '1.227', 1, '117.01', 0, '30.1'],
                    ['O', 2, '1.227', 1, '117.01', 3, '178.5']]
@@ -697,8 +697,8 @@ if __name__ == "__main__":
     with open(filename) as fid:
         for line in fid:
             if multcharge.match(line):
-                print "match!"
-                print multcharge.match(line).group()
+                print("match!")
+                print(multcharge.match(line).group())
                 zmat = []
                 line = next(fid)
                 while not line == '\n':
@@ -713,4 +713,4 @@ if __name__ == "__main__":
         del ind
         del hline
         del item
-    print "DONE"
+    print("DONE")

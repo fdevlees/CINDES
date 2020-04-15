@@ -7,7 +7,7 @@ import random
 import os
 multiplicity = {1: 'singlet', 2: 'doublet', 3: 'triplet', 4: 'quartet'}
 
-from job import BaseJob
+from .job import BaseJob
 
 
 class NWChemJob(BaseJob):
@@ -42,51 +42,51 @@ class NWChemJob(BaseJob):
         t = utils.PeriodicTable()
 
         if hasattr(mymol, 'atomcoords'):
-            coords = map(list, mymol.atomcoords[-1])
+            coords = list(map(list, mymol.atomcoords[-1]))
             #print coords
             for sym, xyz in zip(mymol.atomnos, coords):
                 xyz.insert(0, t.element[sym])
-            print "atomcoords and added elements:"
+            print("atomcoords and added elements:")
             for item in mymol.atomcoords[-1]:
-                print ' '.join(map(str, item))
+                print(' '.join(map(str, item)))
             if debug == True:
-                import submitter
+                from . import submitter
                 if hasattr(mymol, 'optdone'):
                     if mymol.optdone == False:
-                        print "Optimizations not converged!"
+                        print("Optimizations not converged!")
                     elif mymol.optdone == True:
-                        print "Optimization is converged!"
+                        print("Optimization is converged!")
                 fid = open(self.filepath, 'r')  # change .log in .com extension and read input file
                 multcharge = re.compile(' zmatrix')  # a regex for the mult charge line
                 newfile = []
                 once = 0  # only find that line once
                 for line in fid:  # copy file exept for the zmat found in the inputfile
                     if multcharge.match(line) and once == 0:  # when found
-                        print "match!"
+                        print("match!")
                         once += 1
                         while True:
                             line = next(fid)  # take al new lines
                             if line == ' end\n':  # end of zmat
                                 # now instead of this zmat that is now completely skipped place in newfile
                                 # the last coordinates of the crashed run
-                                coords = filter(lambda x: not x[0] is None, coords)
+                                coords = [x for x in coords if not x[0] is None]
                                 xyz_f = [" " + item[0] +
                                          ' '.join(map("{:12.6f}".format, item[1:])) + '\n' for item in coords]
-                                print xyz_f
+                                print(xyz_f)
                                 newfile.extend(xyz_f)
                                 break
                     else:
                         newfile.append(line)  # copy that line because it is not the zmat found in the inputfile
-                print "=" * 20
+                print("=" * 20)
                 newfilepath = "{}/{}zzz".format(self.path, self.name)
                 open(newfilepath, 'w').writelines(newfile)
-                print "newfile written in: ", newfilepath
+                print("newfile written in: ", newfilepath)
                 errorjob = NWChemJob(newfilepath, self.calc)
                 errorjob.submit()
                 self.errorpath = "{}.log".format(newfilepath)
                 return newfilepath
         else:
-            print "has no coords in file"
+            print("has no coords in file")
             return False
 
 
@@ -115,7 +115,7 @@ def write_geom(mol, fid, geom=None):
         fid.write("end\n")
         #fid.write('\n')
     else:
-        print "attribute not found:", Axyz
+        print("attribute not found:", Axyz)
         raise AttributeError
     return
 
@@ -172,10 +172,10 @@ def write_subjob(fid, job):
             fid.write("mulliken\nprint 'mulliken ao'\n")
         fid.write('end\n')
     if 'cosmo' in hotline:
-        dielec = filter(lambda x: 'cosmo' in x, hotline.split())[0].split('=')[1]
+        dielec = [x for x in hotline.split() if 'cosmo' in x][0].split('=')[1]
         fid.write("cosmo\n {}\nend\n".format(dielec))
     if 'smd' in hotline:
-        solvent = filter(lambda x: 'cosmo' in x, hotline.split())[0].split('=')[1]
+        solvent = [x for x in hotline.split() if 'cosmo' in x][0].split('=')[1]
         fid.write("cosmo\n do_cosmo_smd true\n solvent {}\nend\n".format(solvent))
     if 'opt' in hotline:
         fid.write('driver\n maxiter 100\nend\n')
@@ -209,7 +209,7 @@ def filewriter(mol, calc, pos=None):
         filename = name
         filepath = '{0}/{1}/{2}'.format(paras['path'], str(index), filename)
         geom = '{}_{:d}'.format(calc['geom'], pos)
-        print "geom in filewriter:", geom
+        print("geom in filewriter:", geom)
         Job = NWChemJob(filepath, calc)
         Job.pos = pos
     else:

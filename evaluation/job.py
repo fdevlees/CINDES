@@ -2,7 +2,7 @@
 '''a BaseClass for any kind of Job'''
 
 import time
-import submitter as subm
+from . import submitter as subm
 import logging
 
 
@@ -63,8 +63,8 @@ class BaseJob(object):
             else:
                 jobid = subm.submit(self, self.script).strip()
         except Exception as e:
-            print repr(e)
-            print "retry submit after 5s..."
+            print(repr(e))
+            print("retry submit after 5s...")
             time.sleep(5)
             jobid = subm.submit(self, self.script).strip()
         logging.info('{} submitted'.format(self))
@@ -82,7 +82,7 @@ class BaseJob(object):
             try:
                 ret = self.termination(self.logpath)
             except IOError as e:
-                print "read error with:", self.logpath
+                print("read error with:", self.logpath)
                 time.sleep(10)
                 ret = 3
                 continue
@@ -90,11 +90,11 @@ class BaseJob(object):
                 break
 
         if ret == 3:
-            print "open-new-file submit-problem. trying to resubmit"
+            print("open-new-file submit-problem. trying to resubmit")
             self.submit()
         elif not ret == 1:
-            print "================="
-            print "Error termination:", self.logpath
+            print("=================")
+            print("Error termination:", self.logpath)
             self.errortermination(debug)
         else:
             self.IsReady = True
@@ -126,29 +126,29 @@ class BaseJob(object):
         if ret == 1:
             self.IsReady = True
         elif ret == 2:
-            print "\n{0}\n\t  IGNORED: {1} IGNORED!\n{0}\n".format("    --oOo--" * 10, self.logpath)
+            print("\n{0}\n\t  IGNORED: {1} IGNORED!\n{0}\n".format("    --oOo--" * 10, self.logpath))
             self.ignorejob = True
             self.IsReady = True
         elif self.errorpath and ret_zzz == 1:
             time.sleep(10)  # just wait for the files to write back before opening them
             # recheck last part of file is normal termination:
             if not self.check_errorpath()==1:
-                print "\n\tError job had normal termination but was not yet ready!!!\n"
+                print("\n\tError job had normal termination but was not yet ready!!!\n")
             else:
                 import shutil
                 shutil.copyfile(self.errorpath, self.logpath)
                 time.sleep(1)
-                print "*zzz.log file with normal termination copied back to original logfile."
+                print("*zzz.log file with normal termination copied back to original logfile.")
             pass  # in the following iteration of while true the termination(path) should return 1
         elif (not self.errorpath is None) and ignore and extratime > ignore:
             self.ignorejob = True
             self.IsReady = True
-            print "\n\n{0}\n    AUTOMATICALLY IGNORED after {2} seconds of waiting: {1}\n{0}\n".format(
-                "    --oOo--" * 10, self.logpath, str(ignore))
+            print("\n\n{0}\n    AUTOMATICALLY IGNORED after {2} seconds of waiting: {1}\n{0}\n".format(
+                "    --oOo--" * 10, self.logpath, str(ignore)))
             try:
                 with open(self.logpath, 'a') as f:
                     f.write(' IGNORED')
             except IOError as e:
-                print "not able to write IGNORE to file"
+                print("not able to write IGNORE to file")
         return
 

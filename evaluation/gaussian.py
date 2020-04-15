@@ -1,7 +1,7 @@
 #!/bin/env python
 ''' this module contains all functions related to the Gaussian09 program '''
 import re
-from job import BaseJob
+from .job import BaseJob
 
 
 class GaussianJob(BaseJob):
@@ -36,9 +36,9 @@ class GaussianJob(BaseJob):
         try:
             mymol = Gaussian(self.logpath).parse()
         except Exception as e:
-            print "cclib read error with:", path
+            print("cclib read error with:", path)
             errorfile = 'error_{}.log'.format(self.name)
-            print "see {} for more details".format(errorfile)
+            print("see {} for more details".format(errorfile))
             with open(errorfile, 'w') as f:
                 f.write(e)
             return False
@@ -68,24 +68,24 @@ class GaussianJob(BaseJob):
         import time
         mymol = self.parse(self.logpath)
         if not mymol:
-            print "did not manage to read logfile without Normal Termination"
+            print("did not manage to read logfile without Normal Termination")
             return False
         from CINDES.utils import utils
         t = utils.PeriodicTable()
         if hasattr(mymol, 'atomcoords'):
-            coords = map(list, mymol.atomcoords[-1])
+            coords = list(map(list, mymol.atomcoords[-1]))
             #print coords
             for sym, xyz in zip(mymol.atomnos, coords):
                 xyz.insert(0, t.element[sym])
-            print "atomcoords and added elements:"
+            print("atomcoords and added elements:")
             # for item in mymol.atomcoords[-1]:
             #    print ' '.join(map(str,item))
             if debug == True:
                 if hasattr(mymol, 'optdone'):
                     if mymol.optdone == False:
-                        print "Optimizations not converged!"
+                        print("Optimizations not converged!")
                     elif mymol.optdone == True:
-                        print "Optimization is converged!"
+                        print("Optimization is converged!")
                 fid = open(self.filepath, 'r')  # change .log in .com extension and read input file
                 multcharge = re.compile('^\-?[01]\s[12]')  # a regex for the mult charge line
                 newfile = []
@@ -112,7 +112,7 @@ class GaussianJob(BaseJob):
                 newfilepath = "{}/{}zzz.com".format(self.path, self.name)
                 self.errorfile = newfilepath
                 open(newfilepath, 'w').writelines(newfile)
-                print "newfile written in: ", newfilepath
+                print("newfile written in: ", newfilepath)
                 errorjob = GaussianJob(newfilepath, self.calc)
 
                 errorjob.submit()
@@ -132,12 +132,12 @@ class GaussianJob(BaseJob):
                 newfile.append(line)
         with open(self.filepath, 'w') as f:
             f.writelines(newfile)
-        print "jobfile rewritten"
+        print("jobfile rewritten")
         return
 
 
 def writegeom(mol, fid, geom=None):
-    print "geom", geom,
+    print("geom", geom, end=' ')
     # set attributes
     if geom is None:
         Azmat = 'zmat'
@@ -163,7 +163,7 @@ def writegeom(mol, fid, geom=None):
         fid.write(xyz)
         fid.write("\n")
     else:
-        print "attribute not found:", Axyz
+        print("attribute not found:", Axyz)
         raise AttributeError
     return
 
@@ -191,7 +191,7 @@ def filewriter(mol, calc, pos=None):
         filename = "{}.com".format(name)
         filepath = '{0}/{1}/{2}'.format(paras['path'], str(index), filename)
         geom = '{}_{:d}'.format(calc['geom'], pos)
-        print "geom in filewriter:", geom
+        print("geom in filewriter:", geom)
         Job = GaussianJob(filepath, calc)
         Job.pos = pos
     else:
@@ -253,7 +253,7 @@ def filewriter(mol, calc, pos=None):
 def write_extra_lines(fid, job, name, calc=None):
     p_solvent = re.compile('scrf.*read')
     if p_solvent.search(job['hotline']):
-        print "wrote solvent info!"
+        print("wrote solvent info!")
         fid.write('{}\n\n'.format(calc['solvent_info']))
     if 'rdfreq' in job['hotline']:
         fid.write(' {}\n\n'.format(calc['rdfreq']))

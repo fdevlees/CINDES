@@ -7,7 +7,7 @@ import random
 import os
 multiplicity = {1: 'singlet', 2: 'doublet', 3: 'triplet', 4: 'quartet'}
 
-from job import BaseJob
+from .job import BaseJob
 
 
 class VASPJob(BaseJob):

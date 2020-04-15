@@ -3,8 +3,8 @@ import pprint
 import logging
 
 # my own modules
-from predictor import learning_skl as learning
-from predictor import learning_int as ml_int
+from .predictor import learning_skl as learning
+from .predictor import learning_int as ml_int
 from CINDES.utils.writings import log_io, print_title, dump
 from CINDES.utils.utils import processify
 
@@ -22,7 +22,7 @@ def do_ml(indices, database, **TZmat):
 def get_experiment(prediction, table, run, retrain=True, array=[]):
     # each prediction element is a dictionary with a 'type' key.
     ptype = prediction['type']
-    table = list(table.iteritems())
+    table = list(table.items())
     #print "table:", table
     # prediction is a dictonary with options specific for that experiment type
     kwargs = prediction
@@ -89,7 +89,7 @@ def get_experiment(prediction, table, run, retrain=True, array=[]):
     elif ptype == 'knn':
         from CINDES.evaluation.predictor.knn import NearestNeighborExperiment, NearestNeighborWithPCAExperiment
         if prediction['pca']:
-            print "PCA!"
+            print("PCA!")
             regressor = NearestNeighborWithPCAExperiment(table=table,
                                                          retrain=retrain,
                                                          array=array,
@@ -188,15 +188,15 @@ def do_prediction(
     try:
         prediction['plot1'] = regressor.plot1
     except AttributeError:
-        print "prediction", prediction['name'], "has no plot1 attribute"
+        print("prediction", prediction['name'], "has no plot1 attribute")
     try:
         prediction['plot2'] = regressor.plot2
     except AttributeError:
-        print "prediction", prediction['name'], "has no plot2 attribute"
+        print("prediction", prediction['name'], "has no plot2 attribute")
     try:
         prediction['plot3'] = regressor.plot3
     except AttributeError:
-        print "prediction", prediction['name'], "has no plot3 attribute"
+        print("prediction", prediction['name'], "has no plot3 attribute")
     return prediction
 
 
@@ -243,7 +243,7 @@ def plot_predictions(predictions, prop=""):
     plotted = True
     n = len(predictions)
     nx, ny = set_nxy(len(predictions))
-    print nx, ny
+    print(nx, ny)
     f, axs = plt.subplots(ny, nx)
     try:
         axs2d = [item for sublist in axs for item in sublist]
@@ -252,12 +252,12 @@ def plot_predictions(predictions, prop=""):
             axs2d = [item for item in axs]
         except TypeError:
             axs2d = [axs]
-    print "axs2d:", axs2d
+    print("axs2d:", axs2d)
     for i, prediction in enumerate(predictions):
         if prediction['retrained'] or True:
             j = 0
             a = axs2d[i]
-            print prediction['name']
+            print(prediction['name'])
 
             # p#lot test data
             try:
@@ -265,7 +265,7 @@ def plot_predictions(predictions, prop=""):
                 x1 = A(prediction['plot1'])[:, 0]
                 y1 = A(prediction['plot1'])[:, 1]
             except KeyError:
-                print "no plot1 Key"
+                print("no plot1 Key")
                 j += 1
             else:
                 a.scatter(
@@ -283,7 +283,7 @@ def plot_predictions(predictions, prop=""):
                 x2 = A(prediction['plot2'])[:, 0]
                 y2 = A(prediction['plot2'])[:, 1]
             except KeyError:
-                print "no plot2 Key"
+                print("no plot2 Key")
                 j += 1
             else:
                 a.scatter(
@@ -382,7 +382,7 @@ def predictor(
 
         # 3.1 log
         for molecule in mols_todo:
-            print molecule.predictions
+            print(molecule.predictions)
         # 3.2. json_log
         json_predictions(run.predictions)
         # 3.3. do plottings
@@ -401,28 +401,28 @@ def predictor(
             def get_ntake(R, n):
                 fraction = 4. - 4. * R
                 ntake = max(1, int(fraction * n))
-                print "I will calculate only {:d} of the {:d} structures ;)".format(
-                    ntake, n)
+                print("I will calculate only {:d} of the {:d} structures ;)".format(
+                    ntake, n))
                 return ntake
             ntake = get_ntake(best_pred['R'], len(mols_todo))
-            print "prediction is good enough"
+            print("prediction is good enough")
             mols_nocal, mols_tocal = (mols_nodo, [])
             mols_sorted = sorted(
                 mols_todo, key=lambda x: x.predictions.get(
                     best_pred['name']), reverse=(
                     not run.optimum == 'minimum'))
             if GA:
-                print 'there could be a problem in the GA when there are predicted values below the actual calculated ones!'
+                print('there could be a problem in the GA when there are predicted values below the actual calculated ones!')
                 # take here the ones better than optimum?
             for i, mol in enumerate(mols_sorted):
-                print mol, mol.predictions.get(best_pred['name'], "empty")
+                print(mol, mol.predictions.get(best_pred['name'], "empty"))
                 if i < ntake:
                     mols_tocal.append(mol)
                 else:
                     mol.Pvalue = mol.predictions.get(best_pred['name'], None)
                     mol.predicted = True
                     mols_nocal.append(mol)
-            print "mols_tocal:\n", mols_tocal, "\nmols_nocal:\n", mols_nocal
+            print("mols_tocal:\n", mols_tocal, "\nmols_nocal:\n", mols_nocal)
 
         else:
             mols_nocal = mols_nodo
@@ -434,12 +434,12 @@ def predictor(
         mols_tocal = mols_todo
 
     if debug:
-        print "data_nocal", mols_nocal
+        print("data_nocal", mols_nocal)
         try:
             #print "data_tocal",data_tocal
-            print "indices_tocal", mols_tocal
+            print("indices_tocal", mols_tocal)
         except NameError:
-            print "NameError!"
+            print("NameError!")
     # return mols_nocal, mols_tocal, predict
     run.function = store_function
     return mols_nocal, mols_tocal, made_pred

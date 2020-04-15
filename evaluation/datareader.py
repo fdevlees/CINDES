@@ -7,8 +7,8 @@ import logging
 from pprint import pprint
 
 from CINDES.utils.writings import log_io, print_title, sprint
-from submitter import qsta
-import construction
+from .submitter import qsta
+from . import construction
 
 def round8(x): return round(float(x), 8)
 
@@ -29,13 +29,13 @@ def setEAHs(molecule):
                 EAHs[job.pos]['tchAH'] = tcAH
                 EAHs[job.pos]['enthalpy'] = eAH + tcAH
             else:
-                print "no tch",
+                print("no tch", end=' ')
                 EAHs[job.pos]['enthalpy'] = eAH
     if EAHs:
         molecule.props['EAHs'] = EAHs
-        print "EAHs:", EAHs
+        print("EAHs:", EAHs)
     else:
-        print 'molecule has no EAHs!:', molecule
+        print('molecule has no EAHs!:', molecule)
     return
 
 
@@ -68,16 +68,16 @@ def calculate_stab(results, molecule):
         Domega = results['omega'] - 2.
     except KeyError:
         Domega = 0.0
-        print "No electrophilicity term found so stab is calculated without omega term"
+        print("No electrophilicity term found so stab is calculated without omega term")
 
     EAHs = results['EAHs']
 
     once = False
-    for i, EAH in EAHs.iteritems():
+    for i, EAH in EAHs.items():
         # 1. first set BDE for each AH molecule
         if 'tchA' in results:
             if not once:
-                print "applying thermal corrections", results['tchA'], 'and', EAH['tchAH']
+                print("applying thermal corrections", results['tchA'], 'and', EAH['tchAH'])
                 # note that if tch_AH is present it is already present in the enthalpy term
                 once = True
             EAH['BDE_ah'] = (results['eA'] + results['tchA'] + H_h - EAH['enthalpy']) * kJmol
@@ -87,11 +87,11 @@ def calculate_stab(results, molecule):
         # 2. than set stab for each AH molecule
         if EAH['Aatom']==7:
             chi_term = bde_b * (chi_h - 3) * (chi_n - 3)
-            print "+Domega term for N",
+            print("+Domega term for N", end=' ')
             EAH['stab'] = EAH['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
         elif EAH['Aatom']==8:
             chi_term = bde_b * (chi_h - 3) * (chi_o - 3)
-            print "+Domega term for O",
+            print("+Domega term for O", end=' ')
             EAH['stab'] = EAH['BDE_ah'] - stab_h - bde_a * Domega * Dw_h - chi_term
         else:
             EAH['stab'] = EAH['BDE_ah'] - stab_h - bde_a * Domega * Dw_h
@@ -116,17 +116,17 @@ def normaltermination(mols, run):
                 notready += "{}.{}: {}\n".format(i, j, job.name)
                 mol.IsReady = False
     if notready:
-        print "jobs not ready:\n", notready
+        print("jobs not ready:\n", notready)
 
     # 2. test normal termination and errorjob are ready or molecule is ignored
     extratime = 0
     normaltime= 0
     timestep1 = run.timestep
     timestep2 = max(300, run.timestep)
-    print "normal waiting time=NT | extra waiting time=XT"
+    print("normal waiting time=NT | extra waiting time=XT")
     while True:
         # CHECK READY:
-        print "not ready:",
+        print("not ready:", end=' ')
         counter = 0
         for i, mol in enumerate(mols):
             # i. check if mol is ignored or ready
@@ -140,7 +140,7 @@ def normaltermination(mols, run):
                     continue
                 else:
                     counter += 1
-                    print "{}.{}".format(i, j),
+                    print("{}.{}".format(i, j), end=' ')
 
                 # test ready. when extratime is too high job is ignored
                 job.ready(extratime=extratime, ignore=run.ignore)
@@ -152,11 +152,11 @@ def normaltermination(mols, run):
 
             if all(job.IsReady for job in mol.jobs):
                 mol.IsReady = True
-        print
+        print()
         if all(mol.IsReady for mol in mols):
             break
         elif counter == 0:
-            print "there are no zzz files anymore?!"
+            print("there are no zzz files anymore?!")
             break
 
         # test if there are still uncompleted zzz_files in queue. If not count extra time
@@ -170,13 +170,13 @@ def normaltermination(mols, run):
         if extratime >= timestep2:
             timestep1 = timestep2
         if extratime:
-            print "XT: {:.4f} ||".format(extratime / 3600.),
+            print("XT: {:.4f} ||".format(extratime / 3600.), end=' ')
         else:
-            print "NT: {:.4f} ||".format(normaltime / 3600.),
+            print("NT: {:.4f} ||".format(normaltime / 3600.), end=' ')
 
 
     # 3. return mols that are not ignored:
-    mols_toread = filter(lambda mol: not mol.ignoremol, mols)
+    mols_toread = [mol for mol in mols if not mol.ignoremol]
     return mols_toread
 
 
@@ -195,7 +195,7 @@ def zzztester(mols):
         files.extend(jobnames)
     if files:
         #print "zzz-files:", files
-        print "n zzz files:", len(files),
+        print("n zzz files:", len(files), end=' ')
     else:  # here return so we don't need the qsta
         return False
 
@@ -203,7 +203,7 @@ def zzztester(mols):
     while True:
         qsta_raw = qsta()
         if qsta_raw == False:
-            print "qsta not working! trying again after 1 minute"
+            print("qsta not working! trying again after 1 minute")
             time.sleep(60)
         else:
             break
@@ -238,7 +238,7 @@ def zzztester(mols):
     if count > 0:
         return True
     else:
-        print "no zzzs (anymore) in queue",
+        print("no zzzs (anymore) in queue", end=' ')
         return False
 
 
@@ -247,11 +247,11 @@ def wait_hasimagfreq(job):
     while True:
         datadict = read_file(job)
         if datadict['hasimagfreq']:
-            print "still imaginary frequency for job:", job,
+            print("still imaginary frequency for job:", job, end=' ')
             if not once:
                 try:
                     vibfreqs = datadict['vibfreqs']
-                    print "vibfreqs:", vibfreqs
+                    print("vibfreqs:", vibfreqs)
                 except KeyError:
                     pass
                 once = True
@@ -268,7 +268,7 @@ def datareader(mols, run):
 
     # 2. obtain data for each molecule
     for molecule in mols_toread:
-        print "><" * 15, molecule,
+        print("><" * 15, molecule, end=' ')
         for job in molecule.jobs:
 
             # 2.0 optionally: wait until no imag freqs
@@ -280,7 +280,7 @@ def datareader(mols, run):
 
             # 2.2 if there are multiple variants of the job, give each variant a different index _P#
             if hasattr(job, 'pos'):
-                for old_key in readings.keys():  # the .keys is very important here. iterkeys or for just readings do not work!
+                for old_key in list(readings.keys()):  # the .keys is very important here. iterkeys or for just readings do not work!
                     readings["{}_P{}".format(old_key, str(job.pos))] = readings.pop(old_key)
 
             # 2.3 assign Job data to Molecule
@@ -304,7 +304,7 @@ def set_geom_attribute(molecule, readings):
     for key in readings:
         if key.startswith('xyz'):
             coords = readings[key]
-            coords = [ map(formatstr, xyz) for xyz in coords ]
+            coords = [ list(map(formatstr, xyz)) for xyz in coords ]
             atomnos = readings['atomnos' + key.lstrip('xyz')]
             # add the elements
             for atomn, xyz in zip(atomnos, coords):
@@ -328,7 +328,7 @@ def read_file(Job):
         jobslines = []
         for joblines_v1 in jobslines_v1:
             if 'roceeding to internal job step number' in joblines_v1.split('\n', 2)[1]:
-                print "freq job appended to main job"
+                print("freq job appended to main job")
                 jobslines[-1] += joblines_v1
             else:
                 jobslines.append(joblines_v1)
@@ -345,21 +345,21 @@ def read_file(Job):
         jobslines = open(filename).read()
     else:
         raise SystemExit('not implemented')
-    print "njobs:", len(jobslines),
+    print("njobs:", len(jobslines), end=' ')
     if len(jobslines) == 0:
-        print "no jobs in logfile!"
+        print("no jobs in logfile!")
         raise SystemExit('should not occur here')
 
     # 3. handle every subjob as a different logfile and read the needed job['info'] from it
-    from cStringIO import StringIO
-    jobfiles = map(StringIO, jobslines)
+    from io import StringIO
+    jobfiles = list(map(StringIO, jobslines))
     datadict = dict()
     for jobfile, job in zip(jobfiles, jobs):
 
         try:
             job_data = Log(jobfile).parse()
         except Exception as e:
-            print "parsing error with:", jobfile, job
+            print("parsing error with:", jobfile, job)
             raise e
 
         for inf in job['info']:
@@ -370,7 +370,7 @@ def read_file(Job):
             elif inf[0] == 'g' and not inf.startswith('gap'):
                 # note that scfenergies are given in eV by cclib but free energy in hartree
                 datadict[inf] = job_data.freeenergy
-                print "free energy found:", job_data.freeenergy
+                print("free energy found:", job_data.freeenergy)
             elif inf.startswith('tch'):
                 datadict[inf] = job_data.thermalcorrectionH
             elif inf.startswith('tc'):
@@ -392,20 +392,20 @@ def read_file(Job):
             elif inf == 'mw':
                 datadict['mw'] = float(sum(job_data.atomnos))
             elif inf == 'rdv':
-                spiden = map(lambda x: x[0] - x[1], zip(job_data.npaa, job_data.npab))
+                spiden = [x[0] - x[1] for x in zip(job_data.npaa, job_data.npab)]
                 datadict['rdv'] = sum([item**2 for item in spiden if abs(item) > 0.05])
             elif inf.startswith('spindensities'):
                 # NB charge-beta - charge-alpha because spindensity is a positive value but electron charge is negative!
-                spiden = map(lambda x: round(x[1] - x[0], 8), zip(job_data.npaa, job_data.npab))
+                spiden = [round(x[1] - x[0], 8) for x in zip(job_data.npaa, job_data.npab)]
                 datadict[inf] = spiden
             elif any(prop in inf for prop in ['pcharges', 'partialcharges']):
                 #print "partial charges", job_data.atomcharges
 
                 try:
-                    pcharges = zip(map(int, job_data.atomnos), map(round8, job_data.atomcharges['natural']))
+                    pcharges = list(zip(list(map(int, job_data.atomnos)), list(map(round8, job_data.atomcharges['natural']))))
                 except KeyError:
-                    print "partial charges not found for natural orbitals so Mulliken charges are used"
-                    pcharges = zip(map(int, job_data.atomnos), map(round8, job_data.atomcharges['mulliken']))
+                    print("partial charges not found for natural orbitals so Mulliken charges are used")
+                    pcharges = list(zip(list(map(int, job_data.atomnos)), list(map(round8, job_data.atomcharges['mulliken']))))
                 datadict[inf] = pcharges
             elif inf.startswith('xyz'):
                 datadict[inf] = job_data.atomcoords[-1]
@@ -437,12 +437,12 @@ def read_file(Job):
                 # NB: the else statement of a for loop is executed when the for loop finishes without break statement!
                 for attribute in dir(job_data):
                     if inf.startswith(attribute):
-                        print "cclib attribute recognized:", attribute
+                        print("cclib attribute recognized:", attribute)
                         datadict[inf] = getattr(job_data, attribute)
                         break
                 else:
-                    print "value not recognized:", inf
-    print
+                    print("value not recognized:", inf)
+    print()
 
     return datadict
 
@@ -473,11 +473,11 @@ def set_combined_variables(mol, to_read_props):
         results = calculate_stab(results, mol)
     if any(i in to_read_props for i in ['ipfukui', 'radfukui']):
         #print "results:", results
-        results['ipfukui'] = map(round8, [(q_ip[1] - q_0[1]) for q_ip, q_0 in zip(results['pchargesIP'], results['pcharges0'])])
+        results['ipfukui'] = list(map(round8, [(q_ip[1] - q_0[1]) for q_ip, q_0 in zip(results['pchargesIP'], results['pcharges0'])]))
     if any(i in to_read_props for i in ['eafukui', 'radfukui']):
-        results['eafukui'] = map(round8, [(q_0[1] - q_ea[1]) for q_0, q_ea in zip(results['pcharges0'], results['pchargesEA'])])
+        results['eafukui'] = list(map(round8, [(q_0[1] - q_ea[1]) for q_0, q_ea in zip(results['pcharges0'], results['pchargesEA'])]))
     if 'radfukui' in to_read_props:
-        results['radfukui'] = map(round8, [0.5 * (ipf + eaf) for ipf, eaf in zip(results['ipfukui'], results['eafukui'])])
+        results['radfukui'] = list(map(round8, [0.5 * (ipf + eaf) for ipf, eaf in zip(results['ipfukui'], results['eafukui'])]))
 
     if False: # this part can probably be removed
         if 'delta_hardness' in to_read_props:

@@ -24,16 +24,16 @@ def submit(job, script='ID_gauss'):
         if not jobid:
             raise RuntimeError('no jobid')
     except subprocess.CalledProcessError as e:
-        print "submitting error:", repr(e)
+        print("submitting error:", repr(e))
     except OSError as e:
-        print "submission error; submission script might not be executable?"
+        print("submission error; submission script might not be executable?")
         scriptpath = "{}/{}".format(job.path, script)
         st = os.stat(scriptpath)
-        print "permissions of {} is:".format(scriptpath), st
+        print("permissions of {} is:".format(scriptpath), st)
         import stat
         os.chmod(scriptpath, st.st_mode | stat.S_IEXEC)
     except Exception as e:
-        print "unforeseen submission error:", repr(e)
+        print("unforeseen submission error:", repr(e))
         raise
     time.sleep(1)
     return jobid
@@ -45,7 +45,7 @@ def submitworker(nprocs):
     elif nprocs>1:
         jobids = subprocess.check_output(['wsub', '-batch', 'CINDES_worker.pbs', '-data', 'loglist.csv', '-threaded', str(nprocs), '-master'])
     else:
-        print "nprocs:", nprocs
+        print("nprocs:", nprocs)
         raise NotImplementedError('other than 1,2,4 procs is currently not allowed via worker submission')
     return jobids
 
@@ -67,13 +67,13 @@ def nosubmit(job, extension='.com', cmd=None):  # not tested
     inputname = job.filepath
     outname = job.logpath
     fakename = job.filepath + '.o12345'  # NOTE: on hydra this is without the [:-4] (.com)
-    print "fakename:", fakename
+    print("fakename:", fakename)
     with open(inputname, 'r') as inp, open(outname, 'w') as out, open(fakename, 'w') as err:
         try:
             p = subprocess.Popen(cmd, stdin=inp, stdout=out, stderr=err, cwd=path)
             p.wait()
         except OSError as e:
-            print "module probably not loaded."
+            print("module probably not loaded.")
             raise
     return 123456
 
@@ -93,16 +93,16 @@ def qsta():
     try:
         p1 = subprocess.check_output(['qsta'])
     except subprocess.CalledProcessError as e:
-        print "subprocess.CalledProcessError"
-        print repr(e)
+        print("subprocess.CalledProcessError")
+        print(repr(e))
         p1 = False
     except LookupError as e:
         # This error occurred on VSC in subprocess module calling pickle using 'string_escape'
-        print "LookupError"
-        print repr(e)
+        print("LookupError")
+        print(repr(e))
         p1 = False
     except OSError as e:
-        print "OS Error:", e
+        print("OS Error:", e)
         p1 = False
     return p1
 
@@ -112,7 +112,7 @@ def qsta():
 def submission(mols_tocal, myrun):
     global once
     if once == 1 and myrun.no1sub == 1:
-        print "submit skipped"
+        print("submit skipped")
         once = 2
         jobids = None
     else:
@@ -142,13 +142,13 @@ def submit_normal(mols_tocal, myrun):
                 if worker:
                     name = job.logpath
                     if glob.glob(name):
-                        print "already calculated:", name
+                        print("already calculated:", name)
                         continue
                 else:
                     name1 = job.filepath[:-4] + '.o[0-9][0-9][0-9][0-9]*'
                     name2 = job.filepath + '.o[0-9][0-9][0-9][0-9]*'
                     if glob.glob(name1) or glob.glob(name2):
-                        print "already calculated:", name2
+                        print("already calculated:", name2)
                         continue
 
             # 2. submit part
@@ -184,7 +184,7 @@ def submit_normal(mols_tocal, myrun):
         jobfiles = [ identifier ]
         return jobfiles
     elif worker and len(jobids)>0:
-        print "there are too few jobs to use the worker efficiently so jobs will be submitted to full nodes"
+        print("there are too few jobs to use the worker efficiently so jobs will be submitted to full nodes")
         jobfiles = []
         for job in jobids:
             #rewrite job to have %nprocshared=28
@@ -211,9 +211,9 @@ def jobtester(mols_tocal, myrun, jobids=None):
     if jobids is None:
         jobids = []  # this to avoid the mutable default gotcha
     if myrun.nosub or len(mols_tocal) == 0:
-        print "Job tester skipped because jobs are evaluated on login node or no jobs to be calculated"
+        print("Job tester skipped because jobs are evaluated on login node or no jobs to be calculated")
         return
-    print "len(mols_tocal):", len(mols_tocal)
+    print("len(mols_tocal):", len(mols_tocal))
     test_ready = myrun.test_ready
     path = myrun.path
     fileparameters = myrun.__dict__
@@ -245,16 +245,16 @@ def test_ready1(indices, myrun):
                 paths.append(path2)
     while True:  # then we remove each item of the paths that exists. If every path exists, all jobs are ready
         if tijdje > fileparameters['timelimit']:
-            print "time is up"
+            print("time is up")
             break
         pathscopy = paths[:]
         for pathje in pathscopy:
             if glob.glob(pathje):
                 paths.remove(pathje)
-                print "ready: ", pathje[:-25]
+                print("ready: ", pathje[:-25])
         if paths == []:
             break
-        print "time/h:", tijdje / 3600, "len paths:", len(paths),
+        print("time/h:", tijdje / 3600, "len paths:", len(paths), end=' ')
         time.sleep(fileparameters['timestep'])
         tijdje += fileparameters['timestep']
     logging.info("All jobs are READY")
@@ -286,20 +286,20 @@ def test_ready2(mols_tocal, myrun, jobids=None):
         for mol in mols_tocal:
             jobnames = [job.filename for job in mol.jobs]
             files.extend(jobnames)
-    print "files:", files
+    print("files:", files)
 
     # 2. and wait until all are completed or not anymore in queue
     tijdje = 0
     while True:
         count = 0
         if tijdje > fileparameters['timelimit']:
-            print "time is up"
+            print("time is up")
             break
         filescopy = files[:]
         njobs = len(filescopy)
         qsta_raw = qsta()
         if qsta_raw == False:
-            print "qsta not working!"
+            print("qsta not working!")
             time.sleep(fileparameters['timestep'])
             continue
         qsta_out = [item.split() for item in qsta_raw.split('\n')]
@@ -313,26 +313,26 @@ def test_ready2(mols_tocal, myrun, jobids=None):
                 states.append(item[2])
                 jobs.append(item[4])
         if debug:
-            print "states:", states
-            print "jobs:", jobs
-            print "files:", files
+            print("states:", states)
+            print("jobs:", jobs)
+            print("files:", files)
         for filetje in filescopy:
             for state, job in zip(states, jobs):
                 if filetje == job:
                     if state in ['Q', 'R']:  # so if job still in queue and not has state=='C'
                         count += 1  # so count all the jobs still in queue
                     elif state in ['H', 'E']:
-                        print "ERROR jobs on hold or Error"
+                        print("ERROR jobs on hold or Error")
                         count += 1
                     else:
                         assert state == 'C'
                         if job not in completedjobs:
-                            print 'JOB completed:', job
+                            print('JOB completed:', job)
                             completedjobs.append(job)
                     if debug:
-                        print "found a job: ", state, job, filetje
+                        print("found a job: ", state, job, filetje)
         t = "{:.2f}".format(tijdje / 3600.)
-        print "njobs -running: {:d} -ready: {:d} | waittime={} hrs".format(count, njobs - count, t)
+        print("njobs -running: {:d} -ready: {:d} | waittime={} hrs".format(count, njobs - count, t))
         if count == 0:  # so no jobs anymore in queue
             break
         time.sleep(fileparameters['timestep'])
@@ -361,16 +361,16 @@ def test_ready3(indices, myrun):
                 paths.append(path2)
     while True:  # then we remove each item of the paths that exists. If every path exists, all jobs are ready
         if tijdje > fileparameters['timelimit']:
-            print "time is up"
+            print("time is up")
             break
         pathscopy = paths[:]
         for pathje in pathscopy:
             if glob.glob(pathje):
                 paths.remove(pathje)
-                print "ready: ", pathje[:-25]
+                print("ready: ", pathje[:-25])
         if paths == []:
             break
-        print "time/h:", tijdje / 3600, "len paths:", len(paths),
+        print("time/h:", tijdje / 3600, "len paths:", len(paths), end=' ')
         time.sleep(fileparameters['timestep'])
         tijdje += fileparameters['timestep']
     logging.info("All jobs are READY")
@@ -381,5 +381,5 @@ if __name__ == "__main__":
     import sys
     file = sys.argv[1]
     jobid = str(submit(index))
-    print "jobid: ", jobid
-    print "output of 'qstat | grep 020':\n", jobstatus(jobid)
+    print("jobid: ", jobid)
+    print("output of 'qstat | grep 020':\n", jobstatus(jobid))

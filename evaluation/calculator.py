@@ -28,11 +28,11 @@ from copy import deepcopy
 from CINDES.utils.writings import log_io, print_title, sprint, logpopulation
 from CINDES.utils.utils import custom_redirection, skipper, SessionID
 from CINDES.utils.table import get_property_table
-from predictions import predictor
+from .predictions import predictor
 import logging
-import construction as zcon
-import submitter as subm
-import datareader
+from . import construction as zcon
+from . import submitter as subm
+from . import datareader
 
 once = 0
 
@@ -73,13 +73,13 @@ def procedure(myrun, mols_tocal, mols_nocal):
     '''
     global once
     #print "nconfs:", len(population)
-    print "| n_indices_tocal:", len(mols_tocal)
-    print "|    n_data_nocal:", len(mols_nocal)
+    print("| n_indices_tocal:", len(mols_tocal))
+    print("|    n_data_nocal:", len(mols_nocal))
     if myrun.no1sub == 1 and once == 0:
         once = 1
-        print " "
+        print(" ")
     elif myrun.secret_file:
-        print "SECRET DATA activated:", myrun.secret_file
+        print("SECRET DATA activated:", myrun.secret_file)
         tablefilename = myrun.secret_file
         mols_tocal, mols_nocal = get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun)
 
@@ -105,7 +105,7 @@ def do_calcs(mols_tocal, run):
     for i, calc in enumerate(run.calcs):
         invoke_script(calc=calc, mols=mols_tocal, run=run, ID=(i+1)*100)
         if run.threading:
-            from threading_utils import runjobs_threading
+            from .threading_utils import runjobs_threading
             runjobs_threading(mols_tocal, run, i)
         else:
             runjobs(mols_tocal, run, i)
@@ -132,12 +132,12 @@ def invoke_script(calc, ID, start=True, **kwargs):
         try:
             module_obj.start(calc=calc, ID=ID, **kwargs)
         except AttributeError:
-            print "no start function in {}".format(calc['script'])
+            print("no start function in {}".format(calc['script']))
     else:
         try:
             module_obj.end(calc=calc, ID=ID, **kwargs)
         except AttributeError:
-            print "no end function in {}".format(calc['script'])
+            print("no end function in {}".format(calc['script']))
     return
 
 
@@ -150,17 +150,17 @@ def runjobs(mols_tocal, myrun, i):
             for j, cal in enumerate(calc):
                 ID = SessionID((i + 1) * 100 + (j + 1))
                 invoke_script(calc=cal, mols=mols, run=run, ID=ID)
-                mols = filter(lambda x: not x.ignoremol, mols)
+                mols = [x for x in mols if not x.ignoremol]
                 function(calc=cal, mols=mols, run=run)
         else:
             ID = SessionID((i+1)*100+1)
             invoke_script(calc=calc, mols=mols, run=run, ID=ID)
-            mols = filter(lambda x: not x.ignoremol, mols)
+            mols = [x for x in mols if not x.ignoremol]
             function(calc=calc, mols=mols, run=run)
         return mols
 
     # 0. filter off ignored molecules
-    mols_calc = filter(lambda x: not x.ignoremol, mols_tocal)
+    mols_calc = [x for x in mols_tocal if not x.ignoremol]
 
     # 1. Make the jobs and add them to the molecules:
     mols_calc = call(jobmaker, mols=mols_calc, run=myrun, calc=calc)
@@ -171,7 +171,7 @@ def runjobs(mols_tocal, myrun, i):
     if jobids:
         subm.jobtester(mols_calc, myrun, jobids)
     else:
-        print "no jobids so assume no jobs submitted"
+        print("no jobids so assume no jobs submitted")
 
     # 4. test normal termination and read jobs (only myrun variable used is actually debug)
     datareader.datareader(mols_calc, myrun)
@@ -184,11 +184,11 @@ def make_cartesian(mols, myrun):
     for molecule in mols:
         cartesian = deepcopy(myrun.cartesian)
         # loop over every site:
-        print "original cartesian:", cartesian, "sites:", myrun.sites, "conf:", molecule.conf
+        print("original cartesian:", cartesian, "sites:", myrun.sites, "conf:", molecule.conf)
         for site, group in zip(myrun.sites, molecule.conf):
             cartesian[site-1][0]=group[0]
 
-        print "new cartesian:", cartesian
+        print("new cartesian:", cartesian)
         setattr(molecule, 'cartesian', cartesian)
     return
 
@@ -196,20 +196,20 @@ def make_cartesian(mols, myrun):
 def geom_maker(mols_tocal, myrun):
 
     if myrun.symlinks:
-        print "symmetry will be applied |",
+        print("symmetry will be applied |", end=' ')
     if myrun.optga:
-        print "Output of Dihedral GA Optimizer is redirected to optga.out. optimizing... |",
-    print
+        print("Output of Dihedral GA Optimizer is redirected to optga.out. optimizing... |", end=' ')
+    print()
     e = None
     for molecule in mols_tocal:
 
         # set zmatrices:
         # for multiple zmats:
         if isinstance(myrun.zmatrixfile, list):
-            print "myrun.zmatrixfile:", myrun.zmatrixfile
+            print("myrun.zmatrixfile:", myrun.zmatrixfile)
             for zmatfile in myrun.zmatrixfile:
                 tzmat = myrun.TZmatrices[zmatfile]
-                c, a, p = map(deepcopy, (tzmat['core'], tzmat['active'], tzmat['passive']))
+                c, a, p = list(map(deepcopy, (tzmat['core'], tzmat['active'], tzmat['passive'])))
                 zmat = zcon.constructor2(molecule.conf, c, a, p, links=myrun.symlinks, defaultgroups=myrun.defaultgroups)
                 setattr(molecule, zmatfile, zmat)
         # for a single zmat
@@ -229,7 +229,7 @@ def geom_maker(mols_tocal, myrun):
         # Try to print SMILES
         try:
             smiles = molecule.get_format()
-            print "smiles:", smiles,
+            print("smiles:", smiles, end=' ')
         except (IndexError, NameError, KeyError) as e:
             pass  # only the last error is printed after the whole molecule loop
 
@@ -263,7 +263,7 @@ def geom_maker(mols_tocal, myrun):
             # no special action. the first assigned geometry is used as a start
             pass
     if e:
-        print "OpenBabel Smiles error:", e
+        print("OpenBabel Smiles error:", e)
     return
 
 # 1. file making
@@ -274,15 +274,15 @@ def jobmaker(mols, run, calc):  # ----- dict with info for filewriter has to pas
     '''jkl'''
 
     if debug:
-        print "DEBUG: calc", calc
+        print("DEBUG: calc", calc)
 
     # 1. Decide program
     if calc['program'] == 'gaussian':
-        import gaussian as program
+        from . import gaussian as program
     elif calc['program'] == 'nwchem':
-        import nwchem as program
+        from . import nwchem as program
     elif calc['program'] == 'vasp':
-        import vasp as program
+        from . import vasp as program
     else:
         raise SystemExit('program not recognized')
 
@@ -318,7 +318,7 @@ def jobmaker(mols, run, calc):  # ----- dict with info for filewriter has to pas
                     job.Aatom=7
         elif 'fafoom' in calc:  # so first find a lower xyz
             from CINDES.utils import fafoom_utils
-            print "trying fafoom..."
+            print("trying fafoom...")
             if calc['fafoom'] == 1:
                 # only find the lowest conformer
                 molecule.xyz = fafoom_utils.GetLowestXYZ(molecule)
@@ -343,7 +343,7 @@ def jobmaker(mols, run, calc):  # ----- dict with info for filewriter has to pas
             # 2.
             for i, geom in enumerate(getattr(molecule, calc['geom'])):
                 geomattr = 'xyz{}_{:d}'.format(calc['geom'], i)
-                print "geomattr:", geomattr
+                print("geomattr:", geomattr)
                 setattr(molecule, geomattr, geom)
                 job = program.filewriter(molecule, calc, i)
                 job.Aatom = molecule.Aatoms[i]
@@ -435,7 +435,7 @@ def set_target_properties(molecules, myrun):
         return
     for mol in molecules:
         if mol.ignoremol:
-            print mol, 'ignored'
+            print(mol, 'ignored')
 
             # if multi-objective. for now only in deap
             if myrun.procedure == 'deap':
@@ -453,34 +453,34 @@ def set_target_properties(molecules, myrun):
                     mol.Pvalue = float("inf")
             continue
         if mol.Pvalue:
-            print "molecular target property already set. Predicted?", mol
+            print("molecular target property already set. Predicted?", mol)
             if myrun.bc:
-                print "boundary condition cannot be set"
-            print "molecule has probably no .props attribute"
+                print("boundary condition cannot be set")
+            print("molecule has probably no .props attribute")
             continue
         if myrun.property == 'func':
             try:
                 kwargs = {prop: mol.props[prop] for prop in myrun.func_args}
-                print "kwargs:", kwargs
+                print("kwargs:", kwargs)
             except KeyError:
-                print "error mol:", mol
-                print "props:", mol.props
+                print("error mol:", mol)
+                print("props:", mol.props)
             mol.Pvalue = myrun.function(**kwargs)
         else:
             try:
                 mol.Pvalue = mol.props[myrun.property]
             except KeyError:
-                print "error mol:", mol, mol.index
-                print "mol.ignoremol", mol.ignoremol
-                print "props:", mol.props
-                print "molecule doesnt have the required property! so is ignored!"
+                print("error mol:", mol, mol.index)
+                print("mol.ignoremol", mol.ignoremol)
+                print("props:", mol.props)
+                print("molecule doesnt have the required property! so is ignored!")
                 mol.discard()
 
         if myrun.bc:
             try:
                 mol.boundaries = [mol.props[bcp] for bcp in [myrun.bcprop]]
             except KeyError as e:
-                print e
+                print(e)
                 pass
     return
 
@@ -491,19 +491,19 @@ def restriction1(mols_todo, mols_nodo, run):
         for i in range(len(conf)):
             for j in range(i, len(conf)):
                 if conf[i] == conf[j] and adj[i][j] == 1.0 and conf[i] in [['N'], ['B']]:
-                    print "forbidden combination: ", i, conf[i], j, conf[j], adj[i]
+                    print("forbidden combination: ", i, conf[i], j, conf[j], adj[i])
                     return True
         return False
 
-    print "nmol:", len(mols_todo)
+    print("nmol:", len(mols_todo))
 
     for molecule in mols_todo:
-        print "mol.conf:", molecule.conf
+        print("mol.conf:", molecule.conf)
         if has_forbidden_combination(molecule.conf, run.adj):
             molecule.discard()
             #mols_todo.remove(molecule)
 
-    print "nmol:", len(mols_todo)
+    print("nmol:", len(mols_todo))
 
     return mols_todo, mols_nodo
 
@@ -517,14 +517,14 @@ def get_secret_data(tablefilename, mols_tocal, mols_nocal, myrun):
     with open(tablefilename, 'r') as f:
         db = json.load(f)
     if debug:
-        print "secret_table:"
+        print("secret_table:")
         sprint(10, secret_table)
-    table = {key: value for key, value in db.iteritems() if myrun.props <= value.viewkeys()}
+    table = {key: value for key, value in db.items() if myrun.props <= value.keys()}
     for mol in mols_tocal[:]:
         try:
             mol.props = table[mol.index]
         except KeyError:
-            print "mol not in secret_table",
+            print("mol not in secret_table", end=' ')
             continue
         mol.predicted = False
         mols_tocal.remove(mol)
