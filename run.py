@@ -78,7 +78,7 @@ class BaseRun(object):
             import yaml
             with open("input.yaml", "w") as f:
                 yaml.dump(data, f)
-        except ImportError
+        except ImportError:
             print "pyyaml not installed"
         return
 
