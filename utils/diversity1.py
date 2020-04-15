@@ -49,7 +49,7 @@ class Diversifier(object):
         if discardCH:
             if 'CH' in seq:
                 seq.remove('CH')
-                print "    NOTA BENE: CH groups are discarded in the diversity analysis"
+                print("    NOTA BENE: CH groups are discarded in the diversity analysis")
         #n groups
         M=len(seq)
         #n sites
@@ -75,9 +75,9 @@ class Diversifier(object):
                             # that is the occupancy of the ith site the jth substituent:
                             occupancy_single[i][j]+=1
                     except IndexError:
-                        print "conf:", conf
-                        print "seq:", seq
-                        print "i,j", i,j
+                        print("conf:", conf)
+                        print("seq:", seq)
+                        print("i,j", i,j)
                         raise
 
         # get summed occupancy 1D
@@ -115,7 +115,7 @@ class Diversifier(object):
                    (1,4),(1,5),(1,6),
                    (2,6),(2,8),(2,7),
                    (3,9),(3,4),(3,8) )
-        tert_positions, sec_positions = zip(*combis)
+        tert_positions, sec_positions = list(zip(*combis))
         n_tert, n_sec = (len(tert_positions), len(sec_positions))
 
         if True:
@@ -160,7 +160,7 @@ class Diversifier(object):
         for k in range(M):
             for l in range(k,M):
                 occupancy_percentage_double[k][l]=occupancy_double[k][l]*100./teller
-        print "n bonds in confs:", teller
+        print("n bonds in confs:", teller)
 
         return occupancy_double, occupancy_percentage_double
 
@@ -250,10 +250,10 @@ class Diversifier(object):
             if verbose:
                 # print div1
                 for j in range(M):
-                    print seq[j], occupancy_single[0][j], occupancy_single[1][j], occupancy_single[2][j], occupancy_single[3][j]
+                    print(seq[j], occupancy_single[0][j], occupancy_single[1][j], occupancy_single[2][j], occupancy_single[3][j])
                 # print div1 percentages
                 for j in range(M):
-                    print seq[j], occupancy_percentage_single[0][j], occupancy_percentage_single[1][j], occupancy_percentage_single[2][j], occupancy_percentage_single[3][j]
+                    print(seq[j], occupancy_percentage_single[0][j], occupancy_percentage_single[1][j], occupancy_percentage_single[2][j], occupancy_percentage_single[3][j])
 
             # return
             if index==1:
@@ -292,7 +292,7 @@ class Diversifier(object):
             for k in range(M):
                 for l in range(k,M):
                     occupancy_percentage_double[k][l]=occupancy_double[k][l]*100./teller
-            print teller
+            print(teller)
 
             # list of div3 values
             diversity_value_double = [0 for g in range(nconfs)]
@@ -308,7 +308,7 @@ class Diversifier(object):
             # print div3 
             for k in range(M):
                 for l in range(k,M):
-                    print seq[k], seq[l], occupancy_double[k][l]
+                    print(seq[k], seq[l], occupancy_double[k][l])
 
             return diversity_value_double, occupancy_double
 
@@ -318,9 +318,9 @@ class Diversifier(object):
 
         # div indices 1,2,3 for each conf
         if verbose:
-            print "DIVERSITY:"
+            print("DIVERSITY:")
             for g,conf in enumerate(X):
                 #print site2[0][g], site2[1][g], site2[2][g], site2[3][g], homo2[g], lumo2[g], dipool2[g], solv2[g], functie2[g], diversity_value_single[g], diversity_value_singlebis[g], diversity_value_double[g]
-                print '_'.join(conf), Y[g], divalues[g]
+                print('_'.join(conf), Y[g], divalues[g])
 
         return divalues, occupancy

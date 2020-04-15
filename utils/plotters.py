@@ -114,7 +114,7 @@ def heatmap_2d(data,hits,labels,args,cmap='viridis'):
     '''
     import matplotlib.ticker as ticker
     data[data == 0.00000] = np.nan
-    print "matrix:", data
+    print("matrix:", data)
     #pprint(map(list,list(data)))
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -130,13 +130,13 @@ def heatmap_2d(data,hits,labels,args,cmap='viridis'):
         fig.colorbar(cax)
     else:
         #convert the data to a nice pandas.DataFrame. Seaborn likes dataframes.
-        print "BLA"
+        print("BLA")
         import pandas as pd
         from matplotlib.colors import ListedColormap
         if ttert:
             labels_columns_nottert = labels[:data.shape[1]]
             labels_columns = np.concatenate( (labels_columns_nottert, labels_columns_nottert ) )
-            print "labels_columns:", labels_columns
+            print("labels_columns:", labels_columns)
             data_pd = pd.DataFrame(data=data,index=labels[:data.shape[0]],columns=labels_columns)
         else: data_pd = pd.DataFrame(data=data,index=labels[:data.shape[0]],columns=labels[:data.shape[1]])
         #cax2=sns.heatmap(hits,annot=True,alpha=0.0,fmt="d",cbar=False,annot_kws={"color":'k'})
@@ -152,7 +152,7 @@ def heatmap_2d(data,hits,labels,args,cmap='viridis'):
         plt.yticks(rotation=45)
         plt.xlabel('secondary positions')
         plt.ylabel('tertiary positions')
-    print "seq:", labels
+    print("seq:", labels)
     if False and not args.fraction:
         for (i, j), z in np.ndenumerate(hits):
             if not z==0:
@@ -164,18 +164,18 @@ def heatmap_1d(raw_data, ylabels=None, xlabels=None):
     '''1d regression plot'''
     debug=True
 
-    print raw_data
+    print(raw_data)
 
     # make sure data is a numpy array
     data = np.asarray(raw_data)
     if ylabels is None:
         nsites = data.shape[1]
         ylabels = [ "site {}".format(i+1) for i in range(nsites) ]
-    print "xlabels", xlabels
-    print "ylabels", ylabels
+    print("xlabels", xlabels)
+    print("ylabels", ylabels)
     data_pd = pd.DataFrame(data=data.T, index=ylabels, columns=xlabels).astype(float)
-    print "data_pd:"
-    print data_pd
+    print("data_pd:")
+    print(data_pd)
 
     # set zeros to NAN.
     data[data==0.0]=np.nan
@@ -225,7 +225,7 @@ def plots_lin(slist):
         if ttert:columns=['tert. apical','tert. medial','secondary']
         else:   columns=['tertiary'    ,'secondary']
         data_pd = pd.DataFrame(data=data,index=flabels[:data.shape[0]],columns=columns).transpose()
-        print "data_pd:", data_pd
+        print("data_pd:", data_pd)
         im = sns.heatmap(data_pd,annot=True,square=True,cbar=i==0,
                  ax=ax,
                  cmap=cmap,
@@ -252,7 +252,7 @@ def plots_lin(slist):
         npdata[npdata == 0.00000] = np.nan
         if ttert:#for diamantane.
             npdata = npdata[:,[0,2,4]]
-        print "npdata:", npdata
+        print("npdata:", npdata)
         im = plot1(npdata,i,vmin=vmin,vmax=vmax)
     fig.tight_layout( rect=[ 0, 0, .8,1])
     plt.show()
@@ -273,14 +273,14 @@ def multibar_plot(X,seq,std=0,fig=0,ax=0):
     labels = tuple( 'site '+str(i+1) for i in range(len(X[0])) )
     N = len(X)
     #ax.set_prop_cycle('color',cycle(['b','r','g','c','k','y','m']))
-    print "I'M HERE!"
+    print("I'M HERE!")
     #ax.set_prop_cycle(cycler('color',['b','r','g','c','k','y','m']))
     rects = len(seq) * [None]
     for i in range(len(seq)):
         try:
             nsit = len(X[i])
             inds = i + offset + (width/nsit) * np.arange(nsit)
-            print "inds:", inds
+            print("inds:", inds)
             rects[i] = ax.bar(inds, X[i], width/nsit,color=colors,label=labels)
             #df = DataFrame(inds,X[i],width/nsit,columns=labels)
             #df.plot(type='bar')
@@ -293,9 +293,9 @@ def multibar_plot(X,seq,std=0,fig=0,ax=0):
         try:
             legend.legendHandles[i].set_color(colors[i])
         except IndexError:
-            print "i:", i
-            print "X[0]:", X[0]
-            print "colors:", colors
+            print("i:", i)
+            print("X[0]:", X[0])
+            print("colors:", colors)
             pass
     ax.yaxis.grid(True)
     #handles, labels = ax.get_legend_handles_labels()
@@ -333,12 +333,12 @@ def prop_substituent_last_cycle( totalsites, maxnsites=10, datacolumn=0):
     #do for each site:
     for j in range(len(totalsites[i])):
         run=totalsites[i][j]
-        x = np.array(range(len(run)))
+        x = np.array(list(range(len(run))))
         if len(run) == maxnsites:
             my_xticks = [ funcs[ re.split('[0-9]',item[0])[0] ] for item in run ]
             plt.xticks(x,my_xticks)
             plt.xticks(rotation=45)
-            print "my_xticks", my_xticks
+            print("my_xticks", my_xticks)
         y = [ item[1][datacolumn] for item in run ]
         itje = j
         plt.plot(x,y,tags[itje],label=' site:' + str(j+1), color=colors[itje])

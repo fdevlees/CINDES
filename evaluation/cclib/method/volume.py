@@ -12,7 +12,7 @@
 
 """Calculation methods related to volume based on cclib data."""
 
-from __future__ import print_function
+
 import copy
 
 import numpy
@@ -42,15 +42,15 @@ class Volume(object):
        topcorner -- the top right hand corner
        spacing -- the distance between the points in the cube
 
-    Attributes:   
+    Attributes:
        data -- a numpy array of values for each point in the volume
                (set to zero at initialisation)
        numpts -- the numbers of points in the (x,y,z) directions
 
     """
-    
+
     def __init__(self, origin, topcorner, spacing):
-    
+
         self.origin = origin
         self.spacing = spacing
         self.topcorner = topcorner
@@ -70,7 +70,7 @@ class Volume(object):
         format = format.upper()
 
         if format.upper() not in ["VTK", "CUBE"]:
-            raise "Format must be either VTK or Cube"
+            raise ValueError("Format must be either VTK or Cube")
         elif format=="VTK":
             self.writeasvtk(filename)
         else:
@@ -140,7 +140,7 @@ def scinotation(num):
        sign="-"
    else:
        sign="+"
-   return ("%sE%s%s" % (broken[0],sign,broken[1][-2:])).rjust(12)                
+   return ("%sE%s%s" % (broken[0],sign,broken[1][-2:])).rjust(12)
 
 def getbfs(coords, gbasis):
     """Convenience function for both wavefunction and density based on PyQuante Ints.py."""
@@ -169,7 +169,7 @@ def getbfs(coords, gbasis):
 
 def wavefunction(coords, mocoeffs, gbasis, volume):
     """Calculate the magnitude of the wavefunction at every point in a volume.
-    
+
     Attributes:
         coords -- the coordinates of the atoms
         mocoeffs -- mocoeffs for one eigenvalue
@@ -177,7 +177,7 @@ def wavefunction(coords, mocoeffs, gbasis, volume):
         volume -- a template Volume object (will not be altered)
     """
     bfs = getbfs(coords, gbasis)
-    
+
     wavefn = copy.copy(volume)
     wavefn.data = numpy.zeros( wavefn.data.shape, "d")
 
@@ -194,12 +194,12 @@ def wavefunction(coords, mocoeffs, gbasis, volume):
                     data[i, j, k] = bfs[bs].amp(xval,yval,zval)
         numpy.multiply(data, mocoeffs[bs], data)
         numpy.add(wavefn.data, data, wavefn.data)
-    
+
     return wavefn
 
 def electrondensity(coords, mocoeffslist, gbasis, volume):
     """Calculate the magnitude of the electron density at every point in a volume.
-    
+
     Attributes:
         coords -- the coordinates of the atoms
         mocoeffs -- mocoeffs for all of the occupied eigenvalues
@@ -210,7 +210,7 @@ def electrondensity(coords, mocoeffslist, gbasis, volume):
           for restricted calculations, and length 2 for unrestricted.
     """
     bfs = getbfs(coords, gbasis)
-    
+
     density = copy.copy(volume)
     density.data = numpy.zeros( density.data.shape, "d")
 
@@ -233,10 +233,10 @@ def electrondensity(coords, mocoeffslist, gbasis, volume):
                 numpy.multiply(data, mocoeff[bs], data)
                 numpy.add(wavefn, data, wavefn)
             density.data += wavefn**2
-        
+
     if len(mocoeffslist) == 1:
         density.data = density.data*2. # doubly-occupied
-    
+
     return density
 
 
@@ -253,7 +253,7 @@ if __name__=="__main__":
     a = ccopen("../../../data/Gaussian/basicGaussian03/dvb_sp_basis.log")
     a.logger.setLevel(logging.ERROR)
     c = a.parse()
-    
+
     b = ccopen("../../../data/Gaussian/basicGaussian03/dvb_sp.out")
     b.logger.setLevel(logging.ERROR)
     d = b.parse()
@@ -263,10 +263,10 @@ if __name__=="__main__":
                           c.gbasis, vol)
     assert abs(wavefn.integrate())<1E-6 # not necessarily true for all wavefns
     assert abs(wavefn.integrate_square() - 1.00)<1E-3 #   true for all wavefns
-    print(wavefn.integrate(), wavefn.integrate_square())
+    print((wavefn.integrate(), wavefn.integrate_square()))
 
     vol = Volume( (-3.0,-6,-2.0), (3.0, 6, 2.0), spacing=(0.25,0.25,0.25) )
     frontierorbs = [d.mocoeffs[0][(d.homos[0]-3):(d.homos[0]+1)]]
     density = electrondensity(d.atomcoords[0], frontierorbs, c.gbasis, vol)
     assert abs(density.integrate()-8.00)<1E-2
-    print("Combined Density of 4 Frontier orbitals=",density.integrate())
+    print(("Combined Density of 4 Frontier orbitals=",density.integrate()))

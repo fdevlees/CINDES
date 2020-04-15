@@ -8,11 +8,11 @@ DE=False
 
 # main function:
 def reduce_conflicts(molecule, core=[], active=[], passive=[]):
-    print "\n{0} {1} {0}".format("$"*20, molecule.index)
+    print("\n{0} {1} {0}".format("$"*20, molecule.index))
     conf = molecule.conf
     if DE:
-        print "initial conf:", conf
-        print "initial index", molecule.index
+        print("initial conf:", conf)
+        print("initial index", molecule.index)
 
     new_conf = []
     for group in conf:
@@ -24,9 +24,9 @@ def reduce_conflicts(molecule, core=[], active=[], passive=[]):
         else:
             pass
             # no relevant dihedral for:", group
-    print "new_conf:", new_conf
+    print("new_conf:", new_conf)
     molecule.dihedrals = [item[-1] for item in new_conf]
-    print "dihedrals:", molecule.dihedrals
+    print("dihedrals:", molecule.dihedrals)
 
     import pickle
     TZMat={'core':core, 'passive':passive, 'active':active}
@@ -34,10 +34,10 @@ def reduce_conflicts(molecule, core=[], active=[], passive=[]):
     try:
         run_pyevolve(molecule, **TZMat)
     except ValueError:
-        print "\t Error in run_pyevolve to reduce conflicts"
+        print("\t Error in run_pyevolve to reduce conflicts")
     if DE:
-        print "final conf:", molecule.conf
-        print "final index", molecule.index
+        print("final conf:", molecule.conf)
+        print("final index", molecule.index)
     return
 
 def is_float(s):
@@ -52,7 +52,7 @@ def slice_it(li, splits, ngps=None):
     start = 0
     lis = []
     nkinds = len(splits)
-    for i in xrange(nkinds):
+    for i in range(nkinds):
         if splits[i]==0: continue
         stop = start+splits[i]
         lis.append(li[start:stop])
@@ -82,7 +82,7 @@ def get_xyz(molecule, core, active, passive):
     try:
         molecule.set_zmat( constructor2(molecule.conf,c,a,p) )
     except IndexError:
-        print "indexerror:", molecule.conf
+        print("indexerror:", molecule.conf)
         raise
     molecule.zmatoxyz()
     #print molecule.xyz
@@ -121,7 +121,7 @@ class Fitness_Function():
         return
 
     def eval_function(self, dihedrals):
-        dihedrals=map(int,dihedrals)
+        dihedrals=list(map(int,dihedrals))
         #return sum(self.dihedrals_to_dist2(dihedrals))
         return self.dihedrals_to_minvalue(dihedrals)
 
@@ -199,15 +199,15 @@ class Fitness_Function():
         return self.molecule.conf
 
     def get_final_molecule(self, dihedrals):
-        dihedrals=map(int,dihedrals)
+        dihedrals=list(map(int,dihedrals))
         self.dihedrals_to_conf(dihedrals)
-        print "molecule.conf:", self.molecule.conf
+        print("molecule.conf:", self.molecule.conf)
         dihedralindex = '_'.join([''.join(map(str,item)) for item in self.molecule.conf])
-        print "dihedralindex", self.molecule.index
+        print("dihedralindex", self.molecule.index)
         # index has to be without dihedrals? index has to stay the same for the whole event
         from string import digits
         #self.molecule.index= self.molecule.index.translate(None, digits)
-        print "self.molecule.index:", self.molecule.index
+        print("self.molecule.index:", self.molecule.index)
         get_xyz(self.molecule, **self.kwargs)
         #get_xyz(self.molecule)
         return
@@ -290,10 +290,10 @@ def run_pyevolve(molecule, **kwargs):
     # Do the evolution, with stats dump
     ga.evolve(freq_stats=5)
     best = ga.bestIndividual()
-    print "best individual:", best.score
+    print("best individual:", best.score)
     #from pprint import pprint
     #pprint(vars(best))
-    print "genomeList:", best.genomeList
+    print("genomeList:", best.genomeList)
     function.get_final_molecule(best.genomeList)
     return
 

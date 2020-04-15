@@ -6,8 +6,8 @@
 This module have the *scaling schemes* like Linear scaling, etc.
 
 """
-import Consts
-import Util
+from . import Consts
+from . import Util
 import math
 import logging
 
@@ -37,7 +37,7 @@ def LinearScaling(pop):
       a = pop_rawAve / delta
       b = -pop_rawMin * pop_rawAve / delta
 
-   for i in xrange(len(pop)):
+   for i in range(len(pop)):
       f = pop[i].score
       if f < 0.0:
          Util.raiseException("Negative score, linear scaling not supported !", ValueError)
@@ -53,7 +53,7 @@ def SigmaTruncScaling(pop):
    c = Consts.CDefScaleSigmaTruncMultiplier
    pop_rawAve = pop.stats["rawAve"]
    pop_rawDev = pop.stats["rawDev"]
-   for i in xrange(len(pop)):
+   for i in range(len(pop)):
       f = pop[i].score - pop_rawAve
       f+= c * pop_rawDev
       if f < 0: f = 0.0
@@ -67,7 +67,7 @@ def PowerLawScaling(pop):
    """
    logging.debug("Running power law scaling.")
    k = Consts.CDefScalePowerLawFactor
-   for i in xrange(len(pop)):
+   for i in range(len(pop)):
       f = pop[i].score
       if f < 0.0:
          Util.raiseException("Negative score, power law scaling not supported !", ValueError)
@@ -97,14 +97,14 @@ def BoltzmannScaling(pop):
    boltz_e = []
    avg = 0.0
 
-   for i in xrange(len(pop)):
+   for i in range(len(pop)):
       val = math.exp(pop[i].score / boltz_temperature)
       boltz_e.append(val)
       avg += val
       
    avg /= len(pop)
 
-   for i in xrange(len(pop)):
+   for i in range(len(pop)):
       pop[i].fitness = boltz_e[i] / avg
    
 def ExponentialScaling(pop):
@@ -113,7 +113,7 @@ def ExponentialScaling(pop):
    .. versionadded: 0.6
       The `ExponentialScaling` function.
    """
-   for i in xrange(len(pop)):
+   for i in range(len(pop)):
       score = pop[i].score
       pop[i].fitness = math.exp(score)
 
@@ -123,7 +123,7 @@ def SaturatedScaling(pop):
    .. versionadded: 0.6
       The `SaturatedScaling` function.
    """
-   for i in xrange(len(pop)):
+   for i in range(len(pop)):
       score = pop[i].score
       pop[i].fitness = 1.0 - math.exp(score)
 

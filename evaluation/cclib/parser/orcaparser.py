@@ -13,7 +13,7 @@
 """Parser for ORCA output files"""
 
 
-from __future__ import print_function
+
 
 import numpy
 
@@ -28,7 +28,7 @@ class ORCA(logfileparser.Logfile):
 
         # Call the __init__ method of the superclass
         super(ORCA, self).__init__(logname="ORCA", *args, **kwargs)
-        
+
     def __str__(self):
         """Return a string representation of the object."""
         return "ORCA log file %s" % (self.filename)
@@ -36,7 +36,7 @@ class ORCA(logfileparser.Logfile):
     def __repr__(self):
         """Return a representation of the object."""
         return 'ORCA("%s")' % (self.filename)
-    
+
     def normalisesym(self, label):
         """Use standard symmetry labels instead of Gaussian labels.
 
@@ -82,7 +82,7 @@ class ORCA(logfileparser.Logfile):
         # --------------
         # SCF ITERATIONS
         # --------------
-        # 
+        #
         # However, there are two common formats which need to be handled, implemented as separate functions.
         if "SCF ITERATIONS" in line:
 
@@ -154,7 +154,7 @@ class ORCA(logfileparser.Logfile):
             energy = self.scfvalues[-1][-1][0]
             self.scfenergies.append(energy)
 
-            self._append_scfvalues_scftargets(inputfile, line)  
+            self._append_scfvalues_scftargets(inputfile, line)
 
         # The convergence targets for geometry optimizations are printed at the
         # beginning of the output, although the order and their description is
@@ -266,7 +266,7 @@ class ORCA(logfileparser.Logfile):
 
             if not hasattr(self, "geovalues"):
                 self.geovalues = []
-            
+
             headers = next(inputfile)
             dashes = next(inputfile)
 
@@ -296,14 +296,14 @@ class ORCA(logfileparser.Logfile):
                 else:
                     newvalues.append(values[names.index(n)])
                     assert targets[names.index(n)] == self.geotargets[i]
-            
+
             self.geovalues.append(newvalues)
 
         #if not an optimization, determine structure used
         if line[0:21] == "CARTESIAN COORDINATES" and not hasattr(self, "atomcoords"):
 
             self.skip_line(inputfile, 'dashes')
-            
+
             atomnos = []
             atomcoords = []
             line = next(inputfile)
@@ -331,7 +331,7 @@ class ORCA(logfileparser.Logfile):
             self.gopt_cycle = int(line.split()[4])
 
             self.skip_lines(inputfile, ['s', 'd', 'text', 'd'])
-           
+
             if not hasattr(self,"atomcoords"):
                 self.atomcoords = []
 
@@ -342,7 +342,7 @@ class ORCA(logfileparser.Logfile):
                 broken = line.split()
                 atomnos.append(self.table.number[broken[0]])
                 atomcoords.append(list(map(float, broken[1:4])))
-            
+
             self.atomcoords.append(atomcoords)
 
             self.set_attribute('atomnos', atomnos)
@@ -461,7 +461,7 @@ class ORCA(logfileparser.Logfile):
                             atomname = line[3:5].split()[0]
                             num = int(line[0:3])
                             orbital = broken[1].upper()
-                            
+
                             self.aonames.append("%s%i_%s"%(atomname, num+1, orbital))
                             self.atombasis[num].append(j)
 
@@ -522,14 +522,14 @@ class ORCA(logfileparser.Logfile):
             self.skip_lines(inputfile, ['d', 'header', 'header', 'd'])
 
             self.etoscs = []
-            for x in self.etsyms:                
+            for x in self.etsyms:
                 osc = next(inputfile).split()[3]
-                if osc == "spin": # "spin forbidden"    
+                if osc == "spin": # "spin forbidden"
                     osc = 0
                 else:
                     osc = float(osc)
                 self.etoscs.append(osc)
-                
+
         if line[0:23] == "VIBRATIONAL FREQUENCIES":
 
             self.skip_lines(inputfile, ['d', 'b'])
@@ -556,7 +556,7 @@ class ORCA(logfileparser.Logfile):
             M(i,i)=1/sqrt(m[i]) where m[i] is the mass of the displaced atom
             Thus, these vectors are normalized but *not* orthogonal
 
-                              0          1          2          3          4          5    
+                              0          1          2          3          4          5
                   0       0.000000   0.000000   0.000000   0.000000   0.000000   0.000000
                   1       0.000000   0.000000   0.000000   0.000000   0.000000   0.000000
                   2       0.000000   0.000000   0.000000   0.000000   0.000000   0.000000
@@ -647,7 +647,7 @@ class ORCA(logfileparser.Logfile):
             self.atomcharges["mulliken"] = charges
             if has_spins:
                 self.atomspins["mulliken"] = spins
-            
+
         # Things are the same for Lowdin populations, except that the sums
         #   are not printed (there is a blank line at the end).
         if line[:22] == "LOEWDIN ATOMIC CHARGES":
@@ -855,7 +855,8 @@ class ORCA(logfileparser.Logfile):
 
 if __name__ == "__main__":
     import sys
-    import doctest, orcaparser
+    import doctest
+    from . import orcaparser
 
     if len(sys.argv) == 1:
         doctest.testmod(orcaparser, verbose=False)

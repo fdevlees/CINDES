@@ -120,7 +120,7 @@ class MyThread(threading.Thread):
     def __repr__(self):
         return "<MyTread: {}>".format(self.name)
 
-   def __str__(self):
+    def __str__(self):
        return self.__repr__()
 
     def run(self):

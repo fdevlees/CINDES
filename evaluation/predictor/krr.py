@@ -6,7 +6,7 @@ from sklearn.utils import resample
 import pandas as pd
 import numpy as np
 
-from experiment_interface import Experiment
+from .experiment_interface import Experiment
 
 # krr with rbf kernel. C controls simplisity or decision surface. High C will
 # try to fit all data and select more support vector. Low C will give a more
@@ -40,7 +40,7 @@ class KernelRidgeExperiment(Experiment):
         for key in self.hparam:
             if key in kwargs:
                 self.hparam[key] = kwargs[key]
-                print "new default hyperparameter:", key, kwargs[key]
+                print("new default hyperparameter:", key, kwargs[key])
 
         return
 
@@ -52,10 +52,10 @@ class KernelRidgeExperiment(Experiment):
         if y is None: y=self.y
 
         krr_rbf = self.get_estimator()
-        print "Fitting... with hparam:", self.hparam
+        print("Fitting... with hparam:", self.hparam)
         krr_rbf.fit(X, y)
 
-        if verbose: print "\tLearned model: ", krr_rbf
+        if verbose: print("\tLearned model: ", krr_rbf)
 
         return krr_rbf
 
@@ -106,13 +106,13 @@ class KernelRidgeExperiment(Experiment):
             stats_df_train['C'][i] = gamma
             stats_df_test['C'][i] = gamma
 
-        print "end of hyper opt:"
-        print "stats_df_train:\n", stats_df_train
-        print "stats_df_test:\n", stats_df_test
+        print("end of hyper opt:")
+        print("stats_df_train:\n", stats_df_train)
+        print("stats_df_test:\n", stats_df_test)
 
         # get hyperparameter with highest R**2
         C = stats_df_test.loc[stats_df_test['r'].idxmax()]['C']
-        print "self.C:", C
+        print("self.C:", C)
         self.hparam['C'] = C
 
         #raise SystemExit('stop')
@@ -136,12 +136,12 @@ class KernelRidgeWithPCAExperiment(KernelRidgeExperiment):
         if fit:
             F = PCA(self.n_principal_components)
             F.fit(X)
-            print "\tLeast explained variance:", F.explained_variance_[-1]
+            print("\tLeast explained variance:", F.explained_variance_[-1])
             self.F = F
         elif not hasattr(self, 'F'):
             self.F = None
         X_F = self.F.transform(X)
-        print "\tDimensionality reduction: ", X_F.shape
+        print("\tDimensionality reduction: ", X_F.shape)
         return X_F
 
 #    def train(self, X=None, y=None, **kwargs):
@@ -185,7 +185,7 @@ class KernelRidgeWithPCAExperiment(KernelRidgeExperiment):
 
 if __name__=="__main__":
     import pickle
-    print "SVR:"
+    print("SVR:")
     class Run:
         pass
     retrain = True
@@ -196,7 +196,7 @@ if __name__=="__main__":
     regressor = KernelRidgeExperiment(table=table, retrain=True, n_folds=n_folds, run=run, identify='ada_',
                                         descriptor= '1DL' )
 
-    print "regressor:", regressor
+    print("regressor:", regressor)
 
 
 

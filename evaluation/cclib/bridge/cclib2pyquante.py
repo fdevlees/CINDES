@@ -10,7 +10,7 @@
 
 """Bridge for using cclib data in PyQuante (http://pyquante.sourceforge.net)."""
 
-from __future__ import print_function
+
 
 import sys
 

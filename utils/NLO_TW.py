@@ -11,7 +11,7 @@ def getfloat(x):
 
 def skippen(c,f):
     # Skip c lines in file f
-    for i in xrange(c):
+    for i in range(c):
         next(f)
 
 def splitsen(f):
@@ -287,7 +287,7 @@ def get_beta_data(f):
         b1 =vperm(b1)
     
     next(f)
-    if 'First dipole hyperpolarizabilit' in f.next():
+    if 'First dipole hyperpolarizabilit' in next(f):
         skippen(55,f)
     else:
         skippen(32,f)   

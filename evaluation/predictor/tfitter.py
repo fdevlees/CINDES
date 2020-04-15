@@ -3,8 +3,8 @@ ttert = False # keep a distinction between tert apical and termedial. this will 
 debug=True
 noch=True
 noch1=True
-if noch:print "CH is neglected in 2D"
-if noch1:print "CH is neglected in 1D"
+if noch:print("CH is neglected in 2D")
+if noch1:print("CH is neglected in 1D")
 
 ########################
 #####   IMPORTS    #####
@@ -67,7 +67,7 @@ def slice_it(li, splits, ngps=None):
         splits=(11,13)
         #splits=(15,13)
     nkinds = len(splits)
-    for i in xrange(nkinds):
+    for i in range(nkinds):
         stop = start+splits[i]
         lis.append(li[start:stop])
         start = stop
@@ -81,10 +81,10 @@ def sprint_old(n,*args,**kwargs):
     for i in range(n):
         for item in args:
             try:
-                print item[i],
+                print(item[i], end=' ')
             except IndexError:
                 break
-        print
+        print()
     return
 
 def print_coef(coef,seq, nsites=None):
@@ -93,20 +93,20 @@ def print_coef(coef,seq, nsites=None):
         means = []
         stds = []
         for i in range(len(seq)): #max fiveteen functional groups
-            print '{:7}'.format(seq[i]),
+            print('{:7}'.format(seq[i]), end=' ')
             all = []
             for j in range(nsites): #max 10 sites
                 try:
-                    print '{:10.5f}'.format(coef[j][i]),
+                    print('{:10.5f}'.format(coef[j][i]), end=' ')
                     all.append(coef[j][i])
                 except IndexError:
-                    print " "*10,
-            print '{:10.3f}'.format(np.mean(all)),
-            print '{:10.5f}'.format(np.std(all)),
+                    print(" "*10, end=' ')
+            print('{:10.3f}'.format(np.mean(all)), end=' ')
+            print('{:10.5f}'.format(np.std(all)), end=' ')
             means.append(np.mean(all))
             stds.append(np.std(all))
-            print
-        print "all:",all
+            print()
+        print("all:",all)
     return means,stds
 
 def get_color(index,colors=['r', 'g', 'b', 'y']):
@@ -161,23 +161,23 @@ class Dataset(object): #abstract data class
             table = Tablebin( filename=self.name, column=args.column )
             self.confs = table.confs
             self.Y = table.Y
-            print "self.Y[:10]:", self.Y[:10]
-            self.confs, self.Y = zip(*[[conf, y] for conf,y in zip(self.confs, self.Y) if not any( group in conf for group in ['CCHHH','CCOOH','CF','CCl'])])
+            print("self.Y[:10]:", self.Y[:10])
+            self.confs, self.Y = list(zip(*[[conf, y] for conf,y in zip(self.confs, self.Y) if not any( group in conf for group in ['CCHHH','CCOOH','CF','CCl'])]))
             filter161162 = False
             if filter161162:
-                self.confs, self.Y = zip(*[[conf, y] for i, (conf,y) in enumerate(zip(self.confs, self.Y)) if not i in [161, 162]])
+                self.confs, self.Y = list(zip(*[[conf, y] for i, (conf,y) in enumerate(zip(self.confs, self.Y)) if not i in [161, 162]]))
             filter2subs = True
             if filter2subs:
-                self.confs, self.Y = zip(*[[conf, y] for i, (conf,y) in enumerate(zip(self.confs, self.Y)) if conf.count('CH')<8])
-                print self.confs
+                self.confs, self.Y = list(zip(*[[conf, y] for i, (conf,y) in enumerate(zip(self.confs, self.Y)) if conf.count('CH')<8]))
+                print(self.confs)
             #self.seq = list(table.get_seq())
             self.seq = ['CH', 'CPh', 'CSH', 'CCHO', 'N', 'P', 'B', 'CSOOOH', 'COH', 'CNHH', 'CNOO', 'O', 'S']
             self.nsec = len(self.seq)
             self.nter = len( [ item for item in self.seq if not item in ['S','O','CO'] ] )
             #self.ngps= table.get_ngps()
             self.ngps = (11,11,11,11,13,13,13,13,13,13)
-            print self.ngps
-            print self.seq
+            print(self.ngps)
+            print(self.seq)
         #else:
         #    print "read table from call"
         #    inds = [ item[0] for item in table ]
@@ -192,9 +192,9 @@ class Dataset(object): #abstract data class
         self.X = self.extractX(self.confs)
 
         if args.verbose<0:
-            print "X:",self.X.shape
-            print "Y:",self.Y.shape
-        print "2: self.Y[:10]:", self.Y[:10]
+            print("X:",self.X.shape)
+            print("Y:",self.Y.shape)
+        print("2: self.Y[:10]:", self.Y[:10])
         return
 
     def extractX(self,confs):
@@ -203,14 +203,14 @@ class Dataset(object): #abstract data class
         nsites = len(self.ngps)
         if args.verbose>2:
             for i in range(10):
-                print confs[i]
-            print "self.seq:", self.seq
-            print "len confs:", len(confs)
-            print "len confs[0]:", len(confs[0])
+                print(confs[i])
+            print("self.seq:", self.seq)
+            print("len confs:", len(confs))
+            print("len confs[0]:", len(confs[0]))
         LoS = []
         for i in range(nsites):
             LoS.append( np.zeros( [nC, self.ngps[i] ] ) )
-        if args.verbose>1: print "dim site0", LoS[0].shape
+        if args.verbose>1: print("dim site0", LoS[0].shape)
         for k in range(len(confs)): # for all the configurations:
             for i in range(len(confs[k])): #for all the groups in the configuration
                 group = confs[k][i]
@@ -224,9 +224,9 @@ class Dataset(object): #abstract data class
                 try:
                     LoS[i][k,j] = 1
                 except IndexError:
-                    print i,j,k
-                    print confs[k]
-                    print self.seq
+                    print(i,j,k)
+                    print(confs[k])
+                    print(self.seq)
                     raise
         if args.equalsites:
             LoSequal = [] # new list of sites with equal sites as one site
@@ -248,17 +248,17 @@ class Dataset(object): #abstract data class
         datadict = dict() #dictionary to avoid duplicates
         for conf, ytje in zip(self.confs, self.Y): #loop over configurations + values
             conf_np = np.array(conf) #convert to np.array for boolean indexing
-            if debug: print conf_np
+            if debug: print(conf_np)
             for isomer in self.syms: #for each symmetrical isomer
                 newconf = conf_np[isomer] #create a new conf. 
                 newind = contoind(newconf) #make the conf an index to be used in the dict
                 datadict[newind]=ytje #update the dict. if already present nothing will happen. 
-        self.inds, self.Y = zip( *datadict.items() ) #convert the dictionary back to lists. 
+        self.inds, self.Y = list(zip( *list(datadict.items()) )) #convert the dictionary back to lists. 
         self.confs = [ index.split('_') for index in self.inds ] #convert the indices back to configurations. 
         if debug:
-            print "len confs:", len(self.confs)
-            print "len Y:", len(self.Y)
-            print "len dict", len(datadict)
+            print("len confs:", len(self.confs))
+            print("len Y:", len(self.Y))
+            print("len dict", len(datadict))
         # output: self.confs(updated) | self.Y(updated) | self.inds | 
         return
 
@@ -269,33 +269,33 @@ class Dataset(object): #abstract data class
         # DIAMONDOIDS:
         if ttert: hits = np.sum(self.X2, axis=0).reshape([self.nter,self.nscec*2]).astype(int)
         else: hits = np.sum(self.X2, axis=0).reshape([self.nter,self.nsec]).astype(int)
-        print hits
+        print(hits)
         return hits
 
     def extract12(self):
         if not hasattr(self,'X'):
             self.extract()
-        print "X1.shape:", self.X.shape
+        print("X1.shape:", self.X.shape)
         if not hasattr(self,'X2'):
             hits = self.extract2()
         self.hits = hits
-        print "X2.shape:", self.X2.shape
+        print("X2.shape:", self.X2.shape)
         X12 = np.concatenate((self.X,self.X2),axis=1)
-        print "X12.shape:", X12.shape
+        print("X12.shape:", X12.shape)
         self.X12 = X12
         return X12
 
     def analyze(self):
         '''analyzes the structure of the data file'''
-        print "data analyzation"
-        print "verbosity:", args.verbose
-        print "data consists of {} elements".format(len(self.Y))
+        print("data analyzation")
+        print("verbosity:", args.verbose)
+        print("data consists of {} elements".format(len(self.Y)))
         if hasattr(self,'X'):
-            print "first element of self.X\n", self.X[0]
+            print("first element of self.X\n", self.X[0])
         if hasattr(self,'X2'):
-            print "first element of self.X2\n", self.X2[0]
+            print("first element of self.X2\n", self.X2[0])
         if hasattr(self,'Y'):
-            print "first value of self.Y\n", self.Y[0]
+            print("first value of self.Y\n", self.Y[0])
         return
 
     def write_X(self):
@@ -323,9 +323,9 @@ class Dataset(object): #abstract data class
         elif param['reference']=='arg':
             reference = refconf
             assert not refconf==[]
-        print "reference:", reference
+        print("reference:", reference)
         creference = indtocon(reference[0])
-        print "creference:", creference
+        print("creference:", creference)
         #print "self.data:"
         sprint(5, self.data)
         pprint(self.data[:5])
@@ -337,7 +337,7 @@ class Dataset(object): #abstract data class
         for index in indices:
             deltaetje = 0
             rconf = indtocon(index)
-            print "rconf:" , rconf, "real value:", Dtable[index]
+            print("rconf:" , rconf, "real value:", Dtable[index])
             for i in range(len(creference)): # now we want to have a value erandom for this configuration and test it with a certain probability
                 if not rconf[i] == creference[i]:
                     confje = creference[0:i] + [rconf[i]] + creference[i+1:]
@@ -346,13 +346,13 @@ class Dataset(object): #abstract data class
                     try:
                         deltaetje += Dtable[indje] - reference[1]
                     except KeyError:
-                        print "KeyError"
+                        print("KeyError")
                         break
                     #print "deltaetje:", deltaetje
-                    print "indje:", indje, "deltaetje:", deltaetje
+                    print("indje:", indje, "deltaetje:", deltaetje)
             erandom = float (reference[1] + deltaetje)
             #erandom = float ( deltaetje)
-            print "erandom:", erandom, "reference[1]:", reference[1]
+            print("erandom:", erandom, "reference[1]:", reference[1])
             predictions.append(erandom)
         sprint(100,predictions, self.data[-100:])
         return predictions
@@ -360,17 +360,17 @@ class Dataset(object): #abstract data class
     def linreg_analyze2(self, clf, hits=[],model='OLS', combined=False, **kwargs):
         if combined: X=self.X12
         else: X=self.X2
-        if args.verbose>2: print clf.coef_ #also very large coefficients
+        if args.verbose>2: print(clf.coef_) #also very large coefficients
         Rscore = clf.score(X,self.Y)
-        print "total score {}:".format(model), Rscore
+        print("total score {}:".format(model), Rscore)
         y_pred = clf.predict(X)
         y_errors = self.Y - y_pred
-        print "total MAE:", np.sum(abs(y_errors))/float(len(y_errors))
+        print("total MAE:", np.sum(abs(y_errors))/float(len(y_errors)))
 
         if combined:
             C = clf.coef_
-            print "alpha:", clf.alpha_
-            print list(C)
+            print("alpha:", clf.alpha_)
+            print(list(C))
             # split the coefficients:
             n1 = self.X.shape[1]
             c1,c2 = (C[:n1],C[n1:])
@@ -400,10 +400,10 @@ class Dataset(object): #abstract data class
             if noch:
                 df=df[order].reindex(['tertiary','secondary','']+order[1:-2])
             df.to_csv('coefs')
-            print df.index
-            print df.columns
-            df.index=map(funcf,df.index)
-            df.columns=map(funcf, df.columns)
+            print(df.index)
+            print(df.columns)
+            df.index=list(map(funcf,df.index))
+            df.columns=list(map(funcf, df.columns))
 
             import seaborn as sns
             sns.set(style="white")
@@ -427,13 +427,13 @@ class Dataset(object): #abstract data class
                 #print mask2
                 vmax1= max(np.array(df.values.tolist())[mask1])
                 vmax2= max(np.array(df.values.tolist())[mask2])
-                print df.values.tolist()
+                print(df.values.tolist())
                 #vmax2=
                 vmin1= min(np.array(df.values.tolist())[mask1])
                 vmin2= min(np.array(df.values.tolist())[mask2])
                 vmin2, vmax2 = -0.5, 0.5
                 vcenter = .5*(vmin1+vmax1)
-                print "vmin1, vmax1, vmin2, vmax2:", vmin1, vmax1, vmin2, vmax2
+                print("vmin1, vmax1, vmin2, vmax2:", vmin1, vmax1, vmin2, vmax2)
                 if noch1:
                     df=df.iloc[:,1:]
                     mask1=mask1[:,1:]
@@ -448,7 +448,7 @@ class Dataset(object): #abstract data class
                         cbar_kws={'label':'2nd order corrections'},
                         annot_kws={'fontsize':9}, cmap=cmap2)
                 # change fontcolor of a textlabel:
-                print ax1.texts[19].get_text()
+                print(ax1.texts[19].get_text())
                 #print ax2.texts[-20].get_text()
                 #print ax2.texts[-20].get_color()
                 #ax2.texts[19].set_color('k')
@@ -478,11 +478,11 @@ class Dataset(object): #abstract data class
                 from CINDES.utils.plotters import heatmap_2d
                 heatmap_2d(C,hits,labels,args)
 
-        print "small test:"
+        print("small test:")
         #sprint(5,clf.predict(X), self.Y)
         if args.xyplot and args.verbose>0:
             if args.fraction:
-                print "training red / test bleu"
+                print("training red / test bleu")
                 plt.plot(preds_train,self.Y_train,'ro',alpha=0.5)
                 plt.plot(preds_test,self.Y_test,'bo',alpha=0.25)
             else:
@@ -497,23 +497,23 @@ class Dataset(object): #abstract data class
     def linreg_analyze(self,clf,model='OLS',**kwargs):
 
         # SCORES
-        print "total score {}:".format(model), clf.score(self.X,self.Y)
+        print("total score {}:".format(model), clf.score(self.X,self.Y))
         if args.verbose>0:
             if args.fraction:
-                print "training score {}:".format(model), clf.score(self.X_train,self.Y_train)
-                print "testing  score {}:".format(model), clf.score(self.X_test,self.Y_test)
+                print("training score {}:".format(model), clf.score(self.X_train,self.Y_train))
+                print("testing  score {}:".format(model), clf.score(self.X_test,self.Y_test))
             try:
-                print "alpha:", clf.alpha
+                print("alpha:", clf.alpha)
             except AttributeError:
                 pass
             try:
-                print "alpha_:", clf.alpha_
-                print "Cross Validation Values_:", clf.cv_values_
+                print("alpha_:", clf.alpha_)
+                print("Cross Validation Values_:", clf.cv_values_)
             except AttributeError:
                 pass
 
         if args.verbose>2:
-            print "\n    Coefficients:", clf.coef_ #also very large coefficients
+            print("\n    Coefficients:", clf.coef_) #also very large coefficients
 
         if args.verbose>0:
             #prints the first 10 datapoints and the prediction.
@@ -524,16 +524,16 @@ class Dataset(object): #abstract data class
                 mae_train = metrics.mean_absolute_error(preds_train, self.Y_train)
                 rmse_test = metrics.mean_squared_error(preds_test, self.Y_test)
                 mae_test = metrics.mean_absolute_error(preds_test, self.Y_test)
-                print "small comparison prediction vs real target value (training):"
+                print("small comparison prediction vs real target value (training):")
                 sprint(5,preds_train, self.Y_train)
-                print "small comparison prediction vs real target value (testing):"
+                print("small comparison prediction vs real target value (testing):")
                 sprint(5,preds_test, self.Y_test)
-                print "RMSE training:", rmse_train
-                print "MAE training:",  mae_train
-                print "RMSE test:", rmse_test
-                print "MAE test:",  mae_test
+                print("RMSE training:", rmse_train)
+                print("MAE training:",  mae_train)
+                print("RMSE test:", rmse_test)
+                print("MAE test:",  mae_test)
             else:
-                print "small test:"
+                print("small test:")
                 sprint(5,clf.predict(self.X), self.Y)
 
         #print "outlier test"
@@ -543,7 +543,7 @@ class Dataset(object): #abstract data class
         #plot the dataset vs the predictions. has to be straight line for good fit
         if args.xyplot and args.verbose>0:
             if args.fraction:
-                print "training red / test bleu"
+                print("training red / test bleu")
                 plt.plot(preds_train,self.Y_train,'ro',alpha=0.5)
                 plt.plot(preds_test,self.Y_test,'bo',alpha=0.25)
             else:
@@ -552,15 +552,15 @@ class Dataset(object): #abstract data class
 
         #cut the coefficient vector per functional group
         if args.verbose>1 or args.plot>0:
-            print "\n    Intercept:", clf.intercept_
+            print("\n    Intercept:", clf.intercept_)
             C = clf.coef_
-            print "len C", len(C), "ngps:", self.ngps
-            print "len coef:", len(clf.coef_)
+            print("len C", len(C), "ngps:", self.ngps)
+            print("len coef:", len(clf.coef_))
             if args.equalsites:
                 coef = slice_it(C,(11,13))
             else:
                 coef = slice_it(C,self.ngps)
-            print "coef:", coef
+            print("coef:", coef)
             # print them. gives back the mean and stds per functional groups
             if args.equalsites:
                 means,stds = print_coef(coef,self.seq,2)
@@ -569,7 +569,7 @@ class Dataset(object): #abstract data class
 
             # for a transposed format per site
             coeft= []
-            coeft = map(lambda *row: list(row), *coef)
+            coeft = list(map(lambda *row: list(row), *coef))
             coeft = [[ item if item else 0.0 for item in sublist ] for sublist in coeft ]
             self.coeft = coeft
 
@@ -582,7 +582,7 @@ class Dataset(object): #abstract data class
         if args.plot>0:
             from CINDES.utils.plotters import multibar_plot, heatmap_1d
             if True:
-                print "coeft:", coeft
+                print("coeft:", coeft)
                 if args.equalsites:
                     heatmap_1d(coeft, xlabels=self.seq, ylabels=['secondary', 'tertiary'])
                 else:
@@ -627,13 +627,13 @@ class Dataset(object): #abstract data class
         if args.fraction:
           if twosite:
             self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(self.X2,self.Y, train_size = args.fraction)
-            print "size training set:", np.shape(self.Y_train)
-            print "size test set:", np.shape(self.Y_test)
+            print("size training set:", np.shape(self.Y_train))
+            print("size test set:", np.shape(self.Y_test))
             clf.fit(self.X_train, self.Y_train)
           else:
             self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(self.X,self.Y, train_size = args.fraction)
-            print "size training set:", np.shape(self.Y_train)
-            print "size test set:", np.shape(self.Y_test)
+            print("size training set:", np.shape(self.Y_train))
+            print("size test set:", np.shape(self.Y_test))
             clf.fit(self.X_train, self.Y_train)
         else:
             if False:
@@ -645,16 +645,16 @@ class Dataset(object): #abstract data class
                 # fit 1D model
                 clf1 = linear_model.RidgeCV(alphas=alpha, fit_intercept=intercept, store_cv_values=True)
                 clf1.fit(self.X, self.Y)
-                print "score 1D:", clf1.score(self.X, self.Y)
-                print "best 1D alpha:", clf1.alpha_
-                print "1D coefs:", clf1.coef_
+                print("score 1D:", clf1.score(self.X, self.Y))
+                print("best 1D alpha:", clf1.alpha_)
+                print("1D coefs:", clf1.coef_)
 
                 # get the differences of real values and predicted values
                 y_pred1 = clf1.predict(self.X)
                 y_1D_errors = self.Y - y_pred1
-                print "MAE:", np.sum(abs(y_1D_errors))/float(len(y_1D_errors))
-                print "self.Y, y_pred1, error:"
-                for i in range(5): print self.Y[i], y_pred1[i], y_1D_errors[i]
+                print("MAE:", np.sum(abs(y_1D_errors))/float(len(y_1D_errors)))
+                print("self.Y, y_pred1, error:")
+                for i in range(5): print(self.Y[i], y_pred1[i], y_1D_errors[i])
 
                 # predict the differences. 
                 #alpha = [ 1*10**i for i in [ -12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4 ] ]
@@ -666,17 +666,17 @@ class Dataset(object): #abstract data class
                 else:
                     clf2 = linear_model.RidgeCV(alphas=alpha, fit_intercept=True, store_cv_values=False, cv=None)
                 clf2.fit(self.X2, y_1D_errors)
-                print "score 2D:", clf2.score(self.X2, y_1D_errors)
-                print "best 2D alpha:", clf2.alpha_
+                print("score 2D:", clf2.score(self.X2, y_1D_errors))
+                print("best 2D alpha:", clf2.alpha_)
                 #print "self.cv_values_:", clf2.cv_values_
 
                 # get the real values of 1D+2D
                 y_pred_errors = clf2.predict(self.X2)
                 y_pred2 = y_pred1 + y_pred_errors
                 y_2D_errors = self.Y - y_pred2 # == y_1D_errors - y_pred_errors
-                print "MAE:", np.sum(abs(y_2D_errors))/float(len(y_2D_errors))
-                print "self.Y, y_pred1, y_pred2"
-                for i in range(5): print self.Y[i], y_pred1[i], y_pred2[i], y_2D_errors[i]
+                print("MAE:", np.sum(abs(y_2D_errors))/float(len(y_2D_errors)))
+                print("self.Y, y_pred1, y_pred2")
+                for i in range(5): print(self.Y[i], y_pred1[i], y_pred2[i], y_2D_errors[i])
 
                 clf = CLF(clf1, clf2)
                 if True:
@@ -698,7 +698,7 @@ class Dataset(object): #abstract data class
         return clf
 
     def linreg_combined(self, model='Ridge', **kwargs):
-        print "3. self.Y[:10]:", self.Y[:10]
+        print("3. self.Y[:10]:", self.Y[:10])
         alpha=1.e-14
         CV=True
         intercept1=True
@@ -718,23 +718,23 @@ class Dataset(object): #abstract data class
         else:
             raise TypeError
         clf1.fit(self.X, self.Y)
-        print "score 1D:", clf1.score(self.X, self.Y)
+        print("score 1D:", clf1.score(self.X, self.Y))
 
-        try:print "best 1D alpha:", clf1.alpha_
+        try:print("best 1D alpha:", clf1.alpha_)
         except AttributeError:clf1.alpha_=alpha
 
-        try:print "1D intercept:", clf1.intercept_
+        try:print("1D intercept:", clf1.intercept_)
         except AttributeError:clf1.intercept_=False
 
-        print "1D coefs:", clf1.coef_
+        print("1D coefs:", clf1.coef_)
         # get the differences of real values and predicted values
-        print "4. self.Y[:10]:", self.Y[:10]
+        print("4. self.Y[:10]:", self.Y[:10])
         y_pred1 = clf1.predict(self.X)
         y_1D_errors = self.Y - y_pred1
-        print "5. self.Y[:10]:", self.Y[:10]
-        print "MAE:", np.sum(abs(y_1D_errors))/float(len(y_1D_errors))
-        print "self.Y, y_pred1, error:"
-        for i in range(5): print self.Y[i], y_pred1[i], y_1D_errors[i]
+        print("5. self.Y[:10]:", self.Y[:10])
+        print("MAE:", np.sum(abs(y_1D_errors))/float(len(y_1D_errors)))
+        print("self.Y, y_pred1, error:")
+        for i in range(5): print(self.Y[i], y_pred1[i], y_1D_errors[i])
 
         if model in ['Ridge']:
             if not CV:
@@ -746,18 +746,18 @@ class Dataset(object): #abstract data class
         else:
             raise TypeError
         clf2.fit(self.X2, y_1D_errors)
-        print "score 2D:", clf2.score(self.X2, y_1D_errors)
+        print("score 2D:", clf2.score(self.X2, y_1D_errors))
 
-        try:print "best 2D alpha:", clf2.alpha_
+        try:print("best 2D alpha:", clf2.alpha_)
         except AttributeError: clf2.alpha_=alpha
 
         # get the real values of 1D+2D
         y_pred_errors = clf2.predict(self.X2)
         y_pred2 = y_pred1 + y_pred_errors
         y_2D_errors = self.Y - y_pred2 # == y_1D_errors - y_pred_errors
-        print "MAE 2D:", np.sum(abs(y_2D_errors))/float(len(y_2D_errors))
-        print "self.Y, y_pred1, y_pred2"
-        for i in range(5): print self.Y[i], y_pred1[i], y_pred2[i], y_2D_errors[i]
+        print("MAE 2D:", np.sum(abs(y_2D_errors))/float(len(y_2D_errors)))
+        print("self.Y, y_pred1, y_pred2")
+        for i in range(5): print(self.Y[i], y_pred1[i], y_pred2[i], y_2D_errors[i])
 
         clf = CLF(clf1, clf2)
 
@@ -766,7 +766,7 @@ class Dataset(object): #abstract data class
             fig, (ax1, ax2) = plt.subplots(1, 2, sharex=True, sharey=True)
             preds = clf1.predict(X1) + ada_gap
             outliers = [ [i, pred, y, '_'.join(self.confs[i])] for i, (pred, y) in enumerate(zip(preds, self.Y)) if pred>-7.8 and y<-8.5 ]
-            print "outliers:", outliers
+            print("outliers:", outliers)
             ax1.scatter(preds,self.Y+ ada_gap,s=8, alpha=0.8)
             ax1.set_title('ISA model')
             ax1.set_ylabel('DFT gap (eV)')
@@ -785,17 +785,17 @@ class Dataset(object): #abstract data class
         pre_confs = [ indtocon(item) for item in indices ]
         pre_Xs = self.extractX(pre_confs)
         #pre_2Xs= self.extract2D(pre_confs)
-        print "prediction. 2 Xs:"
+        print("prediction. 2 Xs:")
         preds = clf.predict(pre_Xs)
         sprint(2,pre_Xs,preds)
         return preds
 
     def predict2(self,indices,clf):
         pre_confs = [ indtocon(item) for item in indices ]
-        if debug: print "indices:", indices
+        if debug: print("indices:", indices)
         #pre_Xs = self.extractX(pre_confs)
         pre_2Xs= self.extract2DX(pre_confs)
-        print "two dimensional prediction. 2 Xs:"
+        print("two dimensional prediction. 2 Xs:")
         preds = clf.predict(pre_2Xs)
         sprint(2,pre_2Xs,preds)
         return preds
@@ -836,14 +836,14 @@ class Adamantane(Dataset):
         nsites = len(self.ngps)
         if args.verbose>2:
             for i in range(10):
-                print confs[i]
-            print "self.seq:", self.seq
-            print "len confs:", len(confs)
-            print "len confs[0]:", len(confs[0])
+                print(confs[i])
+            print("self.seq:", self.seq)
+            print("len confs:", len(confs))
+            print("len confs[0]:", len(confs[0]))
         LoS = []
         for i in range(nsites):
             LoS.append( np.zeros( [nC, self.ngps[i] ] ) )
-        if args.verbose>1: print "dim site0", LoS[0].shape
+        if args.verbose>1: print("dim site0", LoS[0].shape)
         for k in range(len(confs)): # for all the configurations:
             for i in range(len(confs[k])): #for all the groups in the configuration
                 group = confs[k][i]
@@ -859,9 +859,9 @@ class Adamantane(Dataset):
                 try:
                     LoS[i][k,j] = 1
                 except IndexError:
-                    print i,j,k
-                    print confs[k]
-                    print self.seq
+                    print(i,j,k)
+                    print(confs[k])
+                    print(self.seq)
                     raise
         if args.equalsites:
             tertiair = LoS[0] + LoS[1] + LoS[2] + LoS[3]
@@ -898,10 +898,10 @@ class Adamantane(Dataset):
         #print "X2 constructed; shape X2:", np.shape(X)
 
         if False: # analyse X2
-            print "sum of all elements:"
+            print("sum of all elements:")
             s = np.sum(X, axis=0)
-            print s
-            print min(s)
+            print(s)
+            print(min(s))
             hits = s.reshape([self.nter, self.nsec])
             hitsdf = pd.DataFrame(hits[1:, 1:], columns=self.seq[1:], index=self.seq[1:-2])
             import seaborn as sb
@@ -971,8 +971,8 @@ class Diamantane(Dataset):
                 Btotal = np.concatenate( (Btertapical,Btertmedial),axis=1)
                 Bflatten = Btotal.flatten()
                 X[k] = Bflatten
-        print "X2 constructed; shape X2:", np.shape(X)
-        print "Btotal constructed; shape X2:", np.shape(Btotal)
+        print("X2 constructed; shape X2:", np.shape(X))
+        print("Btotal constructed; shape X2:", np.shape(Btotal))
         return X
 
     def extractX_old(self,confs):
@@ -989,17 +989,17 @@ class Diamantane(Dataset):
         #seq = newseq
         if args.verbose>2:
             for i in range(10):
-                print confs[i]
-            print "seq:", seq
-            print "len confs:", len(confs)
-            print "len confs[0]:", len(confs[0])
+                print(confs[i])
+            print("seq:", seq)
+            print("len confs:", len(confs))
+            print("len confs[0]:", len(confs[0]))
         site0 = np.zeros([nC,12])
         site1 = np.zeros([nC,12])
         site2 = np.zeros([nC,12])
         site3 = np.zeros([nC,12])
         site4 = np.zeros([nC,15])
         site5 = np.zeros([nC,15])
-        if args.verbose>1: print "dim site0", site0.shape
+        if args.verbose>1: print("dim site0", site0.shape)
         for k in range(len(confs)): # for all the configurations:
             for i in range(len(confs[k])): #for all the groups in the configuration
                 j = seq.index(confs[k][i]) #find the index of the group of that sequence
@@ -1016,9 +1016,9 @@ class Diamantane(Dataset):
                 if i == 5:
                     site5[k,j]=1
                 if i == 6:
-                    print 'too long'
+                    print('too long')
                 if j > 14:
-                    print 'too far index'
+                    print('too far index')
         X = np.concatenate((site0,site1,site2,site3,site4,site5),axis=1)
         if False: # try to make sites equal
             a1 = site0 + site1
@@ -1039,14 +1039,14 @@ class Phenalene(Dataset):
         nsites = len(self.ngps)
         if args.verbose>2:
             for i in range(10):
-                print confs[i]
-            print "self.seq:", self.seq
-            print "len confs:", len(confs)
-            print "len confs[0]:", len(confs[0])
+                print(confs[i])
+            print("self.seq:", self.seq)
+            print("len confs:", len(confs))
+            print("len confs[0]:", len(confs[0]))
         LoS = []
         for i in range(nsites):
             LoS.append( np.zeros( [nC, self.ngps[i] ] ) )
-        if args.verbose>1: print "dim site0", LoS[0].shape
+        if args.verbose>1: print("dim site0", LoS[0].shape)
         for k in range(len(confs)): # for all the configurations:
             for i in range(len(confs[k])): #for all the groups in the configuration
                 group = confs[k][i]
@@ -1081,7 +1081,7 @@ class Phenalene(Dataset):
                 Btotal = np.sum( B , axis = 0)
                 Bflatten = Btotal.flatten()
                 X[k] = Bflatten
-        print "X2 constructed; shape X2:", np.shape(X)
+        print("X2 constructed; shape X2:", np.shape(X))
         return X
 
 class Thiadiazinyl(Dataset):
@@ -1099,14 +1099,14 @@ class Thiadiazinyl(Dataset):
         nsites = len(self.ngps)
         if args.verbose>2:
             for i in range(10):
-                print confs[i]
-            print "self.seq:", self.seq
-            print "len confs:", len(confs)
-            print "len confs[0]:", len(confs[0])
+                print(confs[i])
+            print("self.seq:", self.seq)
+            print("len confs:", len(confs))
+            print("len confs[0]:", len(confs[0]))
         LoS = []
         for i in range(nsites):
             LoS.append( np.zeros( [nC, self.ngps[i] ] ) )
-        if args.verbose>1: print "dim site0", LoS[0].shape
+        if args.verbose>1: print("dim site0", LoS[0].shape)
         for k in range(len(confs)): # for all the configurations:
             #if k<30: print confs[k]
             for i in range(len(confs[k])): #for all the groups in the configuration
@@ -1171,8 +1171,8 @@ def supermain(args):
             args.column=column
             run=main(args)
             resultlist.append(run.coeft)
-        print "resultlist:"
-        print resultlist
+        print("resultlist:")
+        print(resultlist)
         plots_lin(resultlist)
     else:
         main(args)
@@ -1210,27 +1210,27 @@ def main(args):
         if args.ols:
             clf_LS = myrun.linreg(model=linmodels[0], intercept=args.intercept)
             if args.intercept:
-                print "intercept:", clf_LS.intercept_
+                print("intercept:", clf_LS.intercept_)
             if args.analyze:
                 myrun.linreg_analyze(clf_LS)
         if args.ridge:
-            print "args.ridge:", args.ridge
+            print("args.ridge:", args.ridge)
             clf_Ridge = myrun.linreg(model='Ridge', alpha=args.ridge, intercept=args.intercept)
             if args.intercept:
-                print "intercept:", clf_Ridge.intercept_
+                print("intercept:", clf_Ridge.intercept_)
             if args.analyze:
                 errors = myrun.linreg_analyze(clf_Ridge,model='Ridge')
                 allerrors.append(errors)
         if args.ridgecv:
-            print "args.ridgeCV"
+            print("args.ridgeCV")
             alpha = [ 10**i for i in np.arange(-10,10,0.5) ]
             clf_RidgeCV = myrun.linreg(model='RidgeCV',alpha=alpha)
             if args.intercept:
-                print "intercept:", clf_RidgeCV.intercept_
+                print("intercept:", clf_RidgeCV.intercept_)
             if args.analyze:
                 myrun.linreg_analyze(clf_RidgeCV,model='RidgeCV')
         if args.lasso:
-            print "args.lasso"
+            print("args.lasso")
             alpha = args.lasso
             clf_Lasso = myrun.linreg(model='Lasso',alpha=alpha)
             if args.analyze:
@@ -1241,26 +1241,26 @@ def main(args):
 
         # 4.2.1: get 2D data
         hits = myrun.extract2()
-        print hits
+        print(hits)
 
         # 4.2.2: do regressions
         if True:
             alpha=1e-4
-            print "args.ridge:", alpha
+            print("args.ridge:", alpha)
             clf_Ridge2D = myrun.linreg(model='Ridge', alpha=alpha,twosite=True)
             if args.analyze:
                 errors = myrun.linreg_analyze2(clf_Ridge2D,hits=hits,model='Ridge')
                 allerrors.append(errors)
         if False:
             alpha=1e-2
-            print "args.Lasso:", alpha
+            print("args.Lasso:", alpha)
             clf_Lasso2D = myrun.linreg(model='Lasso', alpha=alpha,twosite=True)
             if args.analyze:
                 errors = myrun.linreg_analyze2(clf_Lasso2D,hits=hits,model='Lasso')
                 allerrors.append(errors)
         if False:
             alpha=1e-2
-            print "args.ElasticNet:", alpha
+            print("args.ElasticNet:", alpha)
             clf_EN2D = myrun.linreg(model='ElasticNet', alpha=alpha,twosite=True)
             if args.analyze:
                 errors = myrun.linreg_analyze2(clf_EN2D,hits=hits,model='ElasticNet')
@@ -1271,7 +1271,7 @@ def main(args):
         # 4.2.2: do regressions
         if True:
             alpha=args.ridge
-            print "args.ridge:", alpha
+            print("args.ridge:", alpha)
             #clf_Ridge2D = myrun.linreg(model='Ridge', alpha=alpha, combined=True)
             clf_RidgeC = myrun.linreg_combined(model='Ridge')
             if args.analyze:
@@ -1280,12 +1280,12 @@ def main(args):
             if False:#test another dataset
                 newset=Adamantane('tablebin_400')
                 newset.extract12()
-                print clf_RidgeC.score(newset.X12, newset.Y)
+                print(clf_RidgeC.score(newset.X12, newset.Y))
         else:
             alpha = [ 10**i for i in np.arange(-10,0,0.5) ]
             clf_RidgeCV = myrun.linreg(model='RidgeCV',alpha=alpha, combined=True)
             if args.intercept:
-                print "intercept:", clf_RidgeCV.intercept_
+                print("intercept:", clf_RidgeCV.intercept_)
             if args.analyze:
                 myrun.linreg_analyze2(clf_RidgeCV,model='RidgeCV', combined=True)
 
@@ -1294,12 +1294,12 @@ def main(args):
     if args.ridge or args.ols or args.ridgecv or args.twosite:
         try:
             for item in allerrors:
-                print " ".join(map(str,item))
-            print "means RMSE_train/MAE_train/RMSE_test/MAE_test:", np.mean(allerrors,axis=0)
+                print(" ".join(map(str,item)))
+            print("means RMSE_train/MAE_train/RMSE_test/MAE_test:", np.mean(allerrors,axis=0))
         except (ValueError,TypeError):
-            print "error error"
+            print("error error")
             for item in allerrors:
-                print item
+                print(item)
             pass
 
     return myrun
@@ -1329,7 +1329,7 @@ class defaults(object):
 args = defaults()
 
 def regression(table, indices,identify,column=2, **kwargs):
-    print "In call in fitter.py"
+    print("In call in fitter.py")
     global args
     args.column=column
     if any(item in identify for item in ['ada', 'adhoma']):
@@ -1350,21 +1350,21 @@ def regression(table, indices,identify,column=2, **kwargs):
         alphas = [ 1*10**i for i in [ -12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4 ] ]
         clf_RidgeCV = myrun.linreg(model='RidgeCV', alpha=alphas)
         alpha = clf_RidgeCV.alpha_
-        print "alpha used:", alpha
+        print("alpha used:", alpha)
     else:
         alpha=1e-4
-    print "args.ridge alpha parameter:", alpha
+    print("args.ridge alpha parameter:", alpha)
 
     clf = myrun.linreg(model='Ridge',alpha=alpha)
     myrun.linreg_analyze(clf,model='Ridge',**kwargs)
 
     predictions = myrun.predict(indices,clf)
-    print "one_dimensional predictions:", predictions
+    print("one_dimensional predictions:", predictions)
     return predictions
 
 @log_io()
 def twodim_regression(table, indices,identify,column=2, **kwargs):
-    print "In call in fitter.py"
+    print("In call in fitter.py")
     global args
     args.column=column
     if any(item in identify for item in ['ada', 'adhoma']):
@@ -1375,20 +1375,20 @@ def twodim_regression(table, indices,identify,column=2, **kwargs):
         raise SystemExit('No identify_ identified')
     myrun.extract(table=table)
     hits = myrun.extract2()   #different. 
-    print hits
+    print(hits)
     # DETERMINE ALPHA:
     if True:
         alphas = [ 1*10**i for i in [ -12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4 ] ]
         clf_RidgeCV = myrun.linreg(model='RidgeCV', twosite=True, alpha=alphas)
         alpha = clf_RidgeCV.alpha_
-        print "alpha used:", alpha
+        print("alpha used:", alpha)
     else:
         alpha=1e-4
-    print "args.ridge alpha parameter:", alpha
+    print("args.ridge alpha parameter:", alpha)
     clf_Ridge2D = myrun.linreg(model='Ridge', alpha=alpha,twosite=True)
     errors = myrun.linreg_analyze2(clf_Ridge2D, model='Ridge')
     predictions = myrun.predict2(indices,clf_Ridge2D)
-    print "two_dimensional predictions:", predictions
+    print("two_dimensional predictions:", predictions)
     return predictions
 
 #####################################

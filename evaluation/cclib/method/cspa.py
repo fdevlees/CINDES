@@ -21,12 +21,12 @@ from .population import Population
 
 class CSPA(Population):
     """The C-squared population analysis."""
-    
+
     def __init__(self, *args):
 
         # Call the __init__ method of the superclass.
         super(CSPA, self).__init__(logname="CSPA", *args)
-        
+
     def __str__(self):
         """Return a string representation of the object."""
         return "CSPA of" % (self.data)
@@ -34,14 +34,14 @@ class CSPA(Population):
     def __repr__(self):
         """Return a representation of the object."""
         return 'CSPA("%s")' % (self.data)
-    
+
     def calculate(self, indices=None, fupdate=0.05):
         """Perform the C squared population analysis.
-        
+
         Inputs:
            indices - list of lists containing atomic orbital indices of fragments
         """
-    
+
         # Do we have the needed info in the parser?
         if not hasattr(self.data, "mocoeffs"):
             self.logger.error("Missing mocoeffs")
@@ -99,14 +99,14 @@ class CSPA(Population):
         self.logger.info("Creating fragcharges: array[1]")
         size = len(self.fragresults[0][0])
         self.fragcharges = numpy.zeros([size], "d")
-        
+
         for spin in range(len(self.fragresults)):
 
             for i in range(self.data.homos[spin] + 1):
 
                 temp = numpy.reshape(self.fragresults[spin][i], (size,))
                 self.fragcharges = numpy.add(self.fragcharges, temp)
-        
+
         if not unrestricted:
             self.fragcharges = numpy.multiply(self.fragcharges, 2)
 
@@ -114,5 +114,6 @@ class CSPA(Population):
 
 
 if __name__ == "__main__":
-    import doctest, cspa
+    import doctest
+    from . import cspa
     doctest.testmod(cspa, verbose=False)

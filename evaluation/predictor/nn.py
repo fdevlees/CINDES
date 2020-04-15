@@ -1,11 +1,11 @@
 
 import sys
 import numpy as np
-import cPickle as pickle
+import pickle as pickle
 import os.path
 import keras as nn
 from sklearn.model_selection import train_test_split
-from experiment_interface import Experiment
+from .experiment_interface import Experiment
 from keras.wrappers.scikit_learn import KerasRegressor
 
 input_dim = None
@@ -31,14 +31,14 @@ class NeuralNetworkExperiment(Experiment):
         if X is None: X = self.X
         if y is None: y = self.y
 
-        print "X[0].shape:", X[0].shape
-        print "X.shape:", X.shape
+        print("X[0].shape:", X[0].shape)
+        print("X.shape:", X.shape)
         input_dim = X[0].shape[0]
         if verbose:
-            print "an example input vector:", X[3]
+            print("an example input vector:", X[3])
 
-        print "self.kwargs:", kwargs
-        print "self.hparam:", self.hparam
+        print("self.kwargs:", kwargs)
+        print("self.hparam:", self.hparam)
         model = set_model(input_dim = input_dim, **self.hparam)
 
         #model.compile(loss='mse', optimizer='adam')
@@ -53,7 +53,7 @@ class NeuralNetworkExperiment(Experiment):
         train_error = model.evaluate(X, y)
         #test_error = model.evaluate(X_test, y_test)
         print('\n')
-        print('training error: '+str(train_error))
+        print(('training error: '+str(train_error)))
         #print('test error: '+str(test_error))
 
         return model
@@ -69,7 +69,7 @@ class NeuralNetworkExperiment(Experiment):
         try:
             self.R = model.R
         except AttributeError:
-            print "model has no R value!"
+            print("model has no R value!")
             self.R = None
 
         # other way:
@@ -103,20 +103,20 @@ class NeuralNetworkExperiment(Experiment):
             #X = self.X[:n_train]
             #y = self.y[:n_train]
             X, y = resample(self.X, self.y, n_samples=n_train)
-            print "restricted hparamopt to only {} samples".format(n_train)
+            print("restricted hparamopt to only {} samples".format(n_train))
         else:
             X = self.X
             y = self.y
         stime = time.time()
         grid_nn.fit(X,y)
         time_to_fit = time.time() - stime
-        print "\tTime to fit: ", time_to_fit, ' s'
+        print("\tTime to fit: ", time_to_fit, ' s')
 
         # 3. print results
-        print "nn_grid:", nn_grid
-        print "n nn_grid.best_estimator_.support_", len(nn_grid.best_estimator_.support_)
-        print "best_params_:", nn_grid.best_params_
-        print "best_score_:", nn_grid.best_score_
+        print("nn_grid:", nn_grid)
+        print("n nn_grid.best_estimator_.support_", len(nn_grid.best_estimator_.support_))
+        print("best_params_:", nn_grid.best_params_)
+        print("best_score_:", nn_grid.best_score_)
         self.R = nn_grid.best_score_
         #print "cv_results_", nn_grid.cv_results_ # too verbose
 
@@ -147,24 +147,24 @@ class NeuralNetworkExperiment(Experiment):
 
 
         nn_grid = GridSearchCV(estimator=estimator, param_grid=param_grid, cv=kfold)
-        print "before fit"
+        print("before fit")
         grid_result = grid.fit(X,y)
 
         # summarize results:
-        print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
+        print(("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_)))
         means = grid_result.cv_results_['mean_test_score']
         stds = grid_result.cv_results_['std_test_score']
         params = grid_result.cv_results_['params']
         for mean, stdev, param in zip(means, stds, params):
-            print("%f (%f) with: %r" % (mean, stdev, param))
+            print(("%f (%f) with: %r" % (mean, stdev, param)))
 
-        print "grid_result:", grid_result
+        print("grid_result:", grid_result)
         return grid_result
 
     def get_estimator(self):
         from functools import partial, update_wrapper
-        print self.X.shape
-        print self.X[0].shape
+        print(self.X.shape)
+        print(self.X[0].shape)
         global input_dim
         input_dim = self.X[0].shape
 

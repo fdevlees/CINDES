@@ -6,7 +6,7 @@ import os
 logfiles = [ f for f in os.listdir('.') if '.log' in f and not 'zzz' in f ]
 
 for logfile in logfiles:
-    print "logfile:", logfile
+    print("logfile:", logfile)
 
     # open in read mode
     with open(logfile, 'r') as f:
@@ -17,7 +17,7 @@ for logfile in logfiles:
 
         # check if not almost empty file
         if nlines<5: continue
-        print "nlines:", nlines
+        print("nlines:", nlines)
 
         # read backwards until I find a newline character
         chars=[]
@@ -33,11 +33,11 @@ for logfile in logfiles:
 
         # end make a string of it
         lastpartoffile = "".join(chars[::-1])
-        print "last part of file:", lastpartoffile
+        print("last part of file:", lastpartoffile)
 
         # test if 'IGNORED' in string
         if 'IGNORED' in lastpartoffile:
-            print "IGNORED in ", logfile
+            print("IGNORED in ", logfile)
             # now we need the whole file
             f.seek(0)
             totalfile = f.readlines()

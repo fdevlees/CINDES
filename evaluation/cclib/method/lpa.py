@@ -36,7 +36,7 @@ class LPA(Population):
 
     def calculate(self, indices=None, x=0.5, fupdate=0.05):
         """Perform a calculation of Löwdin population analysis.
-        
+
         Inputs:
           indices - list of lists containing atomic orbital indices of fragments
           x - overlap matrix exponent in wavefunxtion projection (x=0.5 for Lowdin)
@@ -135,5 +135,6 @@ class LPA(Population):
 
 
 if __name__ == "__main__":
-    import doctest, lpa
+    import doctest
+    from . import lpa
     doctest.testmod(lpa, verbose=False)

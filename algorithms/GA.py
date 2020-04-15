@@ -53,11 +53,11 @@ class Fitness_Function():
 
     def evaluate_multi(self, confs, gen=0):
         ''' this function is used by my_GSimpleGA class.my_evaluate '''
-        if self.run.write: print "confs:", confs
+        if self.run.write: print("confs:", confs)
 
         individuals = [Molecule(conf=conf) for conf in confs]  # list of molecules
 
-        if self.run.write: print "indivuals:", individuals
+        if self.run.write: print("indivuals:", individuals)
 
         mols, nnewcalcs, made_pred = evaluate_mols(self.run, individuals, self.table, gen, nsite=0)
         self.ncalcs += nnewcalcs
@@ -101,7 +101,7 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
 
         # 1.1. make confs hashable to make it a set and make it list again
         new_confs = tuple(tuple(map(tuple, item)) for item in populationlist)
-        unique_confs = [map(list, item) for item in set(new_confs)]
+        unique_confs = [list(map(list, item)) for item in set(new_confs)]
         logging.info("n unique_confs: {:d}".format(len(unique_confs)))
         if self.track:
             try:
@@ -118,7 +118,7 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
         y_dict = {mol.index: mol.Pvalue for mol in mols}
         for ind in population:
             index = contoind(ind.genomeList)
-            if verbose: print "individual:", ind.genomeList, "y:", y_dict[index], index
+            if verbose: print("individual:", ind.genomeList, "y:", y_dict[index], index)
             ind.score = y_dict[index]
             ind.index = index
         return
@@ -139,7 +139,7 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
 
         crossover_empty = self.select(popID=self.currentGeneration).crossover.isEmpty()
 
-        for i in xrange(0, size_iterate, 2):
+        for i in range(0, size_iterate, 2):
             genomeMom = self.select(popID=self.currentGeneration)
             genomeDad = self.select(popID=self.currentGeneration)
 
@@ -187,11 +187,11 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
         if self.elitism:
             logging.debug("Doing elitism.")
             if self.getMinimax() == Consts.minimaxType["maximize"]:
-                for i in xrange(self.nElitismReplacement):
+                for i in range(self.nElitismReplacement):
                     if self.internalPop.bestRaw(i).score > newPop.bestRaw(i).score:
                         newPop[len(newPop) - 1 - i] = self.internalPop.bestRaw(i)
             elif self.getMinimax() == Consts.minimaxType["minimize"]:
-                for i in xrange(self.nElitismReplacement):
+                for i in range(self.nElitismReplacement):
                     if self.internalPop.bestRaw(i).score < newPop.bestRaw(i).score:
                         newPop[len(newPop) - 1 - i] = self.internalPop.bestRaw(i)
 
@@ -243,16 +243,16 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
         #print "Jos in evolve"
         #print "self.internalPop:", self.internalPop
         #print "self.internalPop.internalPop", self.internalPop.internalPop[0]
-        print "self.internalPop.internalPop.genomeList", self.internalPop.internalPop[1].genomeList
-        print "n start Individuals:", len(self.internalPop)
+        print("self.internalPop.internalPop.genomeList", self.internalPop.internalPop[1].genomeList)
+        print("n start Individuals:", len(self.internalPop))
 
         if self.restart:
             restartPop = self.getLastPopulation()
             for startInd, restartInd in zip(self.internalPop, restartPop):
-                print "i:", startInd.genomeList
+                print("i:", startInd.genomeList)
                 startInd.genomeList = restartInd
-            print "n restart Individuals:", len(restartPop)
-            print "self.internalPop:", self.internalPop
+            print("n restart Individuals:", len(restartPop))
+            print("self.internalPop:", self.internalPop)
             #raise NotImplementedError('bla')
 
         if self.precalculation:
@@ -291,40 +291,40 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
                 if stopFlagTerminationCriteria:
                     logging.debug("Evolution stopped by the Termination Criteria !")
                     if freq_stats:
-                        print "\n\tEvolution stopped by Termination Criteria function !\n"
+                        print("\n\tEvolution stopped by Termination Criteria function !\n")
                     break
 
                 if stopFlagCallback:
                     logging.debug("Evolution stopped by Step Callback function !")
                     if freq_stats:
-                        print "\n\tEvolution stopped by Step Callback function !\n"
+                        print("\n\tEvolution stopped by Step Callback function !\n")
                     break
 
                 if self.interactiveMode:
                     if sys_platform[:3] == "win":
                         if msvcrt.kbhit():
                             if ord(msvcrt.getch()) == Consts.CDefESCKey:
-                                print "Loading modules for Interactive Mode...",
+                                print("Loading modules for Interactive Mode...", end=' ')
                                 logging.debug("Windows Interactive Mode key detected ! generation=%d",
                                               self.getCurrentGeneration())
                                 from CINDES.algorithms.pyevolve import Interaction
-                                print " done !"
+                                print(" done !")
                                 interact_banner = "## Pyevolve v.%s - Interactive Mode ##\nPress CTRL-Z to quit interactive mode." % (
                                     pyevolve.__version__,)
                                 session_locals = {"ga_engine": self,
                                                   "population": self.getPopulation(),
                                                   "pyevolve": pyevolve,
                                                   "it": Interaction}
-                                print
+                                print()
                                 code.interact(interact_banner, local=session_locals)
 
                     if (self.getInteractiveGeneration() >= 0) and (
                             self.getInteractiveGeneration() == self.getCurrentGeneration()):
-                        print "Loading modules for Interactive Mode...",
+                        print("Loading modules for Interactive Mode...", end=' ')
                         logging.debug("Manual Interactive Mode key detected ! generation=%d",
                                       self.getCurrentGeneration())
                         from CINDES.algorithms.pyevolve import Interaction
-                        print " done !"
+                        print(" done !")
                         interact_banner = "## Pyevolve v.%s - Interactive Mode ##" % (pyevolve.__version__,)
                         session_locals = {"ga_engine": self,
                                           "population": self.getPopulation(),
@@ -339,7 +339,7 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
         except KeyboardInterrupt:
             logging.debug("CTRL-C detected, finishing evolution.")
             if freq_stats:
-                print "\n\tA break was detected, you have interrupted the evolution !\n"
+                print("\n\tA break was detected, you have interrupted the evolution !\n")
 
         if freq_stats != 0:
             self.printStats()
@@ -354,10 +354,10 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
         if self.migrationAdapter:
             logging.debug("Closing the Migration Adapter")
             if freq_stats:
-                print "Stopping the migration adapter... ",
+                print("Stopping the migration adapter... ", end=' ')
             self.migrationAdapter.stop()
             if freq_stats:
-                print "done !"
+                print("done !")
 
         return self.bestIndividual()
 
@@ -365,7 +365,7 @@ class My_GSimpleGA(GSimpleGA.GSimpleGA):
         generation, rawPop = self.dbAdapter.getLastPopulation()
         self.currentGeneration = generation
         pop = [ indtocon(ind) for ind in rawPop ]
-        print "new Pop", pop
+        print("new Pop", pop)
         return pop
 
 ###### CALL(s) from __main__.py ###########
@@ -377,9 +377,9 @@ def main(GArun):
     function = Fitness_Function(GArun, table=table, array=GArun.array)
     final_genome = run_pyevolve(GArun.array, GArun, function=function)
     best = final_genome.bestIndividual()
-    print "final_genome:", final_genome
-    print "best:", best
-    print "best.~ score fitness genomelist :", best.score, best.fitness, best.genomeList
+    print("final_genome:", final_genome)
+    print("best:", best)
+    print("best.~ score fitness genomelist :", best.score, best.fitness, best.genomeList)
     return final_genome
 
 
@@ -402,7 +402,7 @@ def run_pyevolve(array, options, level=None, function=None):
     # 2. Set Genome instance using as allelles the sites with the different functionalisations.
     setOfAlleles = GAllele.GAlleles()
     nalleles = options.nsites
-    for i in xrange(nalleles):
+    for i in range(nalleles):
         a = GAllele.GAlleleList(array[i])
         setOfAlleles.add(a)
     genome = G1DList.G1DList(nalleles)

@@ -18,12 +18,12 @@ module, you'll find the adapters above cited.
 """
 
 from CINDES.algorithms.pyevolve import __version__
-import Consts
-import Util
+from . import Consts
+from . import Util
 import logging
 import types
 import datetime
-import Statistics
+from . import Statistics
 
 
 class DBBaseAdapter:
@@ -293,7 +293,7 @@ class DBSQLite(DBBaseAdapter):
       self.resetDB = resetDB
       self.resetIdentify = resetIdentify
       self.dbName = dbname
-      self.typeDict = { types.FloatType : "real" }
+      self.typeDict = { float : "real" }
       self.cursorPool = None
       self.commitFreq = commit_freq
 
@@ -368,7 +368,7 @@ class DBSQLite(DBBaseAdapter):
 
       # p statement make table with identify(text)-generation(integer), (k(real), v(real))**n )
       pstmt = "create table if not exists %s(identify text, generation integer, " % (Consts.CDefSQLiteDBTable)
-      for k, v in stats.items():
+      for k, v in list(stats.items()):
          pstmt += "%s %s, " % (k, self.typeDict[type(v)])
       pstmt = pstmt[:-2] + ")"
       logging.debug("Creating table %s: %s.", Consts.CDefSQLiteDBTable, pstmt)
@@ -393,9 +393,9 @@ class DBSQLite(DBBaseAdapter):
       try:
          c.execute(stmt, (self.getIdentify(),))
          c.execute(stmt2, (self.getIdentify(),))
-      except self.sqlite3mod.OperationalError, expt:
+      except self.sqlite3mod.OperationalError as expt:
          if str(expt).find("no such table") >= 0:
-            print "\n ## The DB Adapter can't find the tables ! Consider enable the parameter resetDB ! ##\n"
+            print("\n ## The DB Adapter can't find the tables ! Consider enable the parameter resetDB ! ##\n")
 
       self.commit()
 
@@ -427,14 +427,14 @@ class DBSQLite(DBBaseAdapter):
 
       c = self.getCursor()
       pstmt = "insert into %s values (?, ?, " % (Consts.CDefSQLiteDBTable)
-      for i in xrange(len(stats)):
+      for i in range(len(stats)):
          pstmt += "?, "
       pstmt = pstmt[:-2] + ")"
       c.execute(pstmt, (self.getIdentify(), generation) + stats.asTuple())
 
       pstmt = "insert into %s values(?, ?, ?, ?, ?, ?)" % (Consts.CDefSQLiteDBTablePop,)
       tups = []
-      for i in xrange(len(population)):
+      for i in range(len(population)):
          ind = population[i]
          tups.append((self.getIdentify(), generation, i, ind.fitness, ind.score, ind.index))
 
@@ -447,7 +447,7 @@ class DBSQLite(DBBaseAdapter):
         statement1 = 'select max(generation) from population where identify = "{}"'.format(self.getIdentify())
         # only fetch one!
         generation = c.execute(statement1).fetchone()[0]
-        print "new generation:", generation
+        print("new generation:", generation)
         statement2 = 'select molindex from population where identify = "{}" and generation={}'.format(self.getIdentify(), generation)
         rawPop = c.execute(statement2).fetchall()
         population = [str(item[0]) for item in rawPop]
@@ -665,7 +665,7 @@ class DBMySQLAdapter(DBBaseAdapter):
       self.port = port
       self.user = user
       self.passwd = passwd
-      self.typeDict = { types.FloatType : "DOUBLE(14,6)" }
+      self.typeDict = { float : "DOUBLE(14,6)" }
       self.cursorPool = None
       self.commitFreq = commit_freq
 
@@ -739,7 +739,7 @@ class DBMySQLAdapter(DBBaseAdapter):
       """
       c = self.getCursor()
       pstmt = "create table if not exists %s(identify VARCHAR(80), generation INTEGER, " % (Consts.CDefMySQLDBTable)
-      for k, v in stats.items():
+      for k, v in list(stats.items()):
          pstmt += "%s %s, " % (k, self.typeDict[type(v)])
       pstmt = pstmt[:-2] + ")"
       logging.debug("Creating table %s: %s.", Consts.CDefSQLiteDBTable, pstmt)
@@ -791,7 +791,7 @@ class DBMySQLAdapter(DBBaseAdapter):
 
       c = self.getCursor()
       pstmt = "insert into " + Consts.CDefMySQLDBTable + " values (%s, %s, "
-      for i in xrange(len(stats)):
+      for i in range(len(stats)):
          pstmt += "%s, "
       pstmt = pstmt[:-2] + ")" 
       c.execute(pstmt, (self.getIdentify(), generation) + stats.asTuple())
@@ -799,7 +799,7 @@ class DBMySQLAdapter(DBBaseAdapter):
       pstmt = "insert into " + Consts.CDefMySQLDBTablePop + " values(%s, %s, %s, %s, %s)"
 
       tups = []
-      for i in xrange(len(population)):
+      for i in range(len(population)):
          ind = population[i]
          tups.append((self.getIdentify(), generation, i, ind.fitness, ind.score))
 

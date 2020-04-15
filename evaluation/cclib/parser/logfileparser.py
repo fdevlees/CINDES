@@ -57,13 +57,13 @@ class FileWrapper(object):
         self.size = self.file.tell()
         self.file.seek(0, 0)
 
-    def next(self):
+    def __next__(self):
         line = next(self.file)
         self.pos += len(line)
         return line
 
     def __next__(self):
-        return self.next()
+        return next(self)
 
     def __iter__(self):
         return self
@@ -353,7 +353,7 @@ class Logfile(object):
         if check and hasattr(self, name):
             if name in ['nmo','nbasis','natom']:
                 if not getattr(self,name)==value:
-                    print ' {}:{}->{} '.format(name,getattr(self,name), value),
+                    print(' {}:{}->{} '.format(name,getattr(self,name), value), end=' ')
             else:
                 try:
                     assert getattr(self, name) == value
@@ -394,7 +394,7 @@ class Logfile(object):
                     self.logger.warning(msg)
 
             # All cases of heterogeneous lines can be dealt with by the same code.
-            for character, keys in expected_characters.items():
+            for character, keys in list(expected_characters.items()):
                 if expected in keys:
                     try:
                         assert all([c == character for c in line.strip() if c != ' '])

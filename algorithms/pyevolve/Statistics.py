@@ -66,7 +66,7 @@ class Statistics:
    def __repr__(self):
       """ Return a string representation of the statistics """
       strBuff  = "- Statistics\n"
-      for k,v in self.internalDict.items():
+      for k,v in list(self.internalDict.items()):
          strBuff += "\t%-45s = %.2f\n" % (self.descriptions.get(k, k), v)
       return strBuff
 
@@ -76,12 +76,12 @@ class Statistics:
 
    def clear(self):
       """ Set all statistics to zero """
-      for k in self.internalDict.keys():
+      for k in list(self.internalDict.keys()):
          self.internalDict[k] = 0
 
    def items(self):
       """ Return a tuple (name, value) for all stored statistics """
-      return self.internalDict.items()
+      return list(self.internalDict.items())
 
    def clone(self):
       """ Instantiate a new Statistic class with the same contents """

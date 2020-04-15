@@ -135,7 +135,7 @@ def round_sig( x, sig=8):
     try:
         return round(x, sig-int(floor(log10(abs(x))))-1)
     except ValueError:
-        if not x==0.0: print "ValueError:", x
+        if not x==0.0: print("ValueError:", x)
         return x
 
 # this function to redirect the output of the optga keyword
@@ -155,11 +155,11 @@ def rm_duplicates(seq, nsig=8):
     seen_add = seen.add
     new_seq = []
     if True: # try to round to numerical precision errors:
-        print "    the sequence(scfenergies?) is rounded to max 10 significant digits"
+        print("    the sequence(scfenergies?) is rounded to max 10 significant digits")
         seq = [ round_sig( item, sig=10 ) for item in seq ]
     for x in seq:
         if x in seen:
-            print "    multiples found in sequence. name probably scfenergies! | value: ", x
+            print("    multiples found in sequence. name probably scfenergies! | value: ", x)
         else:
             new_seq.append(x)
             seen_add(x)
@@ -173,7 +173,7 @@ def import_program(program_name):
     elif program_name=='nwchem':
         import nwchem as program
     else:
-        print "program_name:", program_name
+        print("program_name:", program_name)
         raise SystemExit('not implemented')
     return program
 
@@ -248,7 +248,7 @@ class PartialFormatter(string.Formatter):
 
 def jsonify(data):
     json_data = dict()
-    for key, value in data.iteritems():
+    for key, value in data.items():
         if isinstance(value, list):
             value = [ jsonify(item) if isinstance(item, dict) else item for item in value ]
         if isinstance(value, dict):
@@ -261,7 +261,7 @@ def jsonify(data):
     return json_data
 
 def pythonify(json_data):
-    for key, value in json_data.iteritems():
+    for key, value in json_data.items():
         if isinstance(value, list):
             value = [ pythonify(item) if isinstance(item, dict) else item for item in value ]
         elif isinstance(value, dict):
@@ -285,7 +285,7 @@ def skipper(mols_tocal, mols_nocal, myrun, iprint=True):
             # evaluate function and set to arguments
             Pvalue = myrun.function(molecule)
             result = { func_arg:value for func_arg,value in zip(myrun.func_args, Pvalue) }
-            print 'result', result, Pvalue
+            print('result', result, Pvalue)
             molecule.props.update(result)
             if isinstance(Pvalue, int) or isinstance(Pvalue, float):
                 molecule.Pvalue = Pvalue
@@ -298,7 +298,7 @@ def skipper(mols_tocal, mols_nocal, myrun, iprint=True):
             item = molecule.index
             output = 0
             replaced = item.replace('_', '')
-            replaced = filter(lambda x: x.isalpha(), replaced)
+            replaced = [x for x in replaced if x.isalpha()]
             for i in replaced:
                 try:
                     output += string.uppercase.index(i)
@@ -331,7 +331,7 @@ class SessionID(object):
         splitted = name.split('.')
         zerod = '{}0{}'.format(*splitted)
         numbered = int(zerod)
-        self.names.extend([splitted, map(int, splitted), zerod, numbered])
+        self.names.extend([splitted, list(map(int, splitted)), zerod, numbered])
         return
 
     def __eq__(self, other):

@@ -3,14 +3,14 @@
 import sys
 filename = sys.argv[1]
 import re
-print "filename:",filename
+print("filename:",filename)
 
 multcharge = re.compile('^\*\sint\s\-?[0-9]\s[0-9]') #only set the compiler
 with open(filename) as fid: #again open as fid
     for line in fid:
         if multcharge.match(line): #from where there is a match it reads the subsequant lines as the zmat
-            print "match!"
-            print multcharge.match(line).group()
+            print("match!")
+            print(multcharge.match(line).group())
             zmat=[]
             line=next(fid)
             while not line == '*\n': #until empty line
@@ -18,8 +18,8 @@ with open(filename) as fid: #again open as fid
                 line=next(fid)
             break #so that only the first match is used. after the other matches there is no zmat
 
-print "ZMAT:"
-print zmat
+print("ZMAT:")
+print(zmat)
 
 
 with open(filename + '.com','w') as fid:

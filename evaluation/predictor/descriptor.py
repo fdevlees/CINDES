@@ -84,14 +84,14 @@ class Dataset(): #abstract data class
     def extract(self, table=None, **kwargs):
         #confs, data = self.readfile(cutoff=20.0)
         if table==[]:
-            print "read table from tablebin"
+            print("read table from tablebin")
             column=args.column
-            print("column: ", column)
+            print(("column: ", column))
             self.confs, data = self.readfile(column=column,**kwargs)
             #print "self.confs[20:22]:", self.confs[19:22]
             self.Y = self.extractY(data,column=1)
         else:
-            print "read table from call"
+            print("read table from call")
             inds = [ item[0] for item in table ]
             self.confs = [ indtocon(item) for item in inds]
             data = [ item[1:] for item in table ]
@@ -104,24 +104,24 @@ class Dataset(): #abstract data class
             datadict = dict() #dictionary to avoid duplicates
             for conf, ytje in zip(self.confs, self.Y): #loop over configurations + values
                 conf_np = np.array(conf) #convert to np.array for boolean indexing
-                if debug: print conf_np
+                if debug: print(conf_np)
                 for isomer in self.syms: #for each symmetrical isomer
                     newconf = conf_np[isomer] #create a new conf. 
                     newind = contoind(newconf) #make the conf an index to be used in the dict
                     datadict[newind]=ytje #update the dict. if already present nothing will happen. 
-            self.inds, self.Y = zip( *datadict.items() ) #convert the dictionary back to lists. 
+            self.inds, self.Y = list(zip( *list(datadict.items()) )) #convert the dictionary back to lists. 
             self.confs = [ indtocon(index) for index in self.inds ] #convert the indices back to configurations. 
             if debug:
-                print "len confs:", len(self.confs)
-                print "len Y:", len(self.Y)
-                print "len dict", len(datadict)
+                print("len confs:", len(self.confs))
+                print("len Y:", len(self.Y))
+                print("len dict", len(datadict))
         # output: self.confs(updated) | self.Y(updated) | self.inds | 
 
         self.X = self.extractX(self.confs)
         #print "extraction succesfull"
         if args.verbose<0:
-            print "X:",self.X.shape
-            print "Y:",self.Y.shape
+            print("X:",self.X.shape)
+            print("Y:",self.Y.shape)
 
         test= 0
         if test==1:
@@ -140,20 +140,20 @@ class Dataset(): #abstract data class
 
     def analyze(self,data):
         '''analyzes the structure of the data file'''
-        print "data analyzation"
-        print "verbosity:", args.verbose
+        print("data analyzation")
+        print("verbosity:", args.verbose)
         ldat = len(data)
-        print "data consists of {} elements".format(ldat)
+        print("data consists of {} elements".format(ldat))
         for i in range(ldat):
             datel = data[i]
             dcolumn = [ item[args.column] for item in datel ]
-            print "element {} has {} datapoints".format(i,len(datel)),
+            print("element {} has {} datapoints".format(i,len(datel)), end=' ')
             avg = np.mean(dcolumn)
             std = np.std(dcolumn)
-            print "with average of {} and std of {}".format(avg,std)
+            print("with average of {} and std of {}".format(avg,std))
         if args.verbose>2:
             for i,item in enumerate(data[0]):
-                print i, item
+                print(i, item)
         return
 
     def openfile(self,file='tablebin'):
@@ -168,9 +168,9 @@ class Dataset(): #abstract data class
         if args.analyseinput:
             self.analyze(ruwdata)
         if args.verbose>1:
-            print "first 10 of ruwdata:"
+            print("first 10 of ruwdata:")
             for i in range(10):
-                print ruwdata[0][i]
+                print(ruwdata[0][i])
         return ruwdata
 
     def readfile(self,cutoff=False,column=1,**kwargs):
@@ -183,11 +183,11 @@ class Dataset(): #abstract data class
         else:
             data = datar
         if args.verbose>1:
-            print "first 10 of data:"
+            print("first 10 of data:")
             sprint(10,data)
         ########
         if cutoff:
-            print "cutoff applied 15 eV"
+            print("cutoff applied 15 eV")
             cutoff = 15.0
             data = [ [ item[0], float(item[column])] for item in datar if float(item[1])<cutoff ] 
         if False:
@@ -248,10 +248,10 @@ class Adamantane(Dataset):
         nC= len(confs)
         if args.verbose>2:
             for i in range(20):
-                print confs[i]
-            print "seq:", seq
-            print "len confs:", len(confs)
-            print "len confs[0]:", len(confs[0])
+                print(confs[i])
+            print("seq:", seq)
+            print("len confs:", len(confs))
+            print("len confs[0]:", len(confs[0]))
         site0 = np.zeros([nC,12])
         site1 = np.zeros([nC,12])
         site2 = np.zeros([nC,12])
@@ -263,7 +263,7 @@ class Adamantane(Dataset):
         site8 = np.zeros([nC,15])
         site9 = np.zeros([nC,15])
         if args.verbose>1:
-            print "dim site0", site0.shape
+            print("dim site0", site0.shape)
         for k in range(len(confs)): # for all the configurations:
             for i in range(len(confs[k])): #for all the groups in the configuration
                 group = confs[k][i]
@@ -291,11 +291,11 @@ class Adamantane(Dataset):
                 if i == 9:
                     site9[k,j]=1
                 if i == 10:
-                    print 'too long'
+                    print('too long')
                 if i in [0,1,2,3] and j > 11:
-                    print 'too far index'
+                    print('too far index')
                 if i in [4,5] and j > 14:
-                    print 'too far index'
+                    print('too far index')
         if args.equalsites:
             tertiair = site0 + site1 + site2 + site3
             secondair = site4 + site5 + site6 + site7 + site8 + site9
@@ -329,7 +329,7 @@ class Adamantane(Dataset):
                 #Btotal = np.sum( B , axis = 0)
                 Bflatten = B.flatten()
                 X[k] = Bflatten
-        print "X2 constructed; shape X2:", np.shape(X)
+        print("X2 constructed; shape X2:", np.shape(X))
         return X
 
     def test_conf(confs):
@@ -391,8 +391,8 @@ class Diamantane(Dataset):
                 Btotal = np.concatenate( (Btertapical,Btertmedial),axis=1)
                 Bflatten = Btotal.flatten()
                 X[k] = Bflatten
-        print "X2 constructed; shape X2:", np.shape(X)
-        print "Btotal constructed; shape X2:", np.shape(Btotal)
+        print("X2 constructed; shape X2:", np.shape(X))
+        print("Btotal constructed; shape X2:", np.shape(Btotal))
         return X
 
     def extractX(self,confs):
@@ -409,17 +409,17 @@ class Diamantane(Dataset):
         #seq = newseq
         if args.verbose>2:
             for i in range(10):
-                print confs[i]
-            print "seq:", seq
-            print "len confs:", len(confs)
-            print "len confs[0]:", len(confs[0])
+                print(confs[i])
+            print("seq:", seq)
+            print("len confs:", len(confs))
+            print("len confs[0]:", len(confs[0]))
         site0 = np.zeros([nC,12])
         site1 = np.zeros([nC,12])
         site2 = np.zeros([nC,12])
         site3 = np.zeros([nC,12])
         site4 = np.zeros([nC,15])
         site5 = np.zeros([nC,15])
-        if args.verbose>1: print "dim site0", site0.shape
+        if args.verbose>1: print("dim site0", site0.shape)
         for k in range(len(confs)): # for all the configurations:
             for i in range(len(confs[k])): #for all the groups in the configuration
                 j = seq.index(confs[k][i]) #find the index of the group of that sequence
@@ -436,9 +436,9 @@ class Diamantane(Dataset):
                 if i == 5:
                     site5[k,j]=1
                 if i == 6:
-                    print 'too long'
+                    print('too long')
                 if j > 14:
-                    print 'too far index'
+                    print('too far index')
         X = np.concatenate((site0,site1,site2,site3,site4,site5),axis=1)
         if False: # try to make sites equal
             a1 = site0 + site1
@@ -460,14 +460,14 @@ class Phenalene(Dataset):
         nsites = len(self.ngps)
         if args.verbose>2:
             for i in range(10):
-                print confs[i]
-            print "self.seq:", self.seq
-            print "len confs:", len(confs)
-            print "len confs[0]:", len(confs[0])
+                print(confs[i])
+            print("self.seq:", self.seq)
+            print("len confs:", len(confs))
+            print("len confs[0]:", len(confs[0]))
         LoS = []
         for i in range(nsites):
             LoS.append( np.zeros( [nC, self.ngps[i] ] ) )
-        if args.verbose>1: print "dim site0", LoS[0].shape
+        if args.verbose>1: print("dim site0", LoS[0].shape)
         for k in range(len(confs)): # for all the configurations:
             for i in range(len(confs[k])): #for all the groups in the configuration
                 group = confs[k][i]
@@ -502,7 +502,7 @@ class Phenalene(Dataset):
                 Btotal = np.sum( B , axis = 0)
                 Bflatten = Btotal.flatten()
                 X[k] = Bflatten
-        print "X2 constructed; shape X2:", np.shape(X)
+        print("X2 constructed; shape X2:", np.shape(X))
         return X
 
 class Propane(Dataset):
@@ -531,8 +531,8 @@ class Propane(Dataset):
                 LoS[i][k,j] = 1
         X = np.concatenate(LoS,axis=1)
 
-        print "X:", X
-        print "X.shape:", X.shape
+        print("X:", X)
+        print("X.shape:", X.shape)
         return X
 
 class Thiadiazinyl(Dataset):
@@ -548,19 +548,19 @@ class Thiadiazinyl(Dataset):
         return
 
     def extractX(self,confs):
-        print "confs[0]:", confs[0]
+        print("confs[0]:", confs[0])
         nC= len(confs)
         nsites = len(self.ngps)
         if args.verbose>2:
             for i in range(10):
-                print confs[i]
-            print "self.seq:", self.seq
-            print "len confs:", len(confs)
-            print "len confs[0]:", len(confs[0])
+                print(confs[i])
+            print("self.seq:", self.seq)
+            print("len confs:", len(confs))
+            print("len confs[0]:", len(confs[0]))
         LoS = []
         for i in range(nsites):
             LoS.append( np.zeros( [nC, self.ngps[i] ] ) )
-        if args.verbose>1: print "dim site0", LoS[0].shape
+        if args.verbose>1: print("dim site0", LoS[0].shape)
         for k in range(len(confs)): # for all the configurations:
             for i in range(len(confs[k])): #for all the groups in the configuration
                 group = confs[k][i]
@@ -595,28 +595,28 @@ class Pentacene(Dataset):
             for group in conf:
                 j = self.seq.index(group)
                 X[i,j] += 1
-        print "make categorical X with shape:", X.shape
+        print("make categorical X with shape:", X.shape)
         return X
 
 
     def extractX(self,confs):
         if self.ngps is None:
             nsites = len(confs[0])
-            print "nsites:", nsites
+            print("nsites:", nsites)
             self.ngps = nsites * (len(self.seq),)
-        print "ngps:", self.ngps
+        print("ngps:", self.ngps)
         nC= len(confs)
         nsites = len(self.ngps)
         if args.verbose>=2:
             for i in range(10):
-                print confs[i]
-            print "self.seq:", self.seq
-            print "len confs:", len(confs)
-            print "len confs[0]:", len(confs[0])
+                print(confs[i])
+            print("self.seq:", self.seq)
+            print("len confs:", len(confs))
+            print("len confs[0]:", len(confs[0]))
         LoS = []
         for i in range(nsites):
             LoS.append( np.zeros( [nC, self.ngps[i] ] ) )
-        if args.verbose>1: print "dim site0", LoS[0].shape
+        if args.verbose>1: print("dim site0", LoS[0].shape)
         for k in range(len(confs)): # for all the configurations:
             for i in range(len(confs[k])): #for all the groups in the configuration
                 group = confs[k][i]
@@ -624,8 +624,8 @@ class Pentacene(Dataset):
                 try:
                     LoS[i][k,j] = 1
                 except Exception as e:
-                    print "LoS[i].shape", LoS[i]
-                    print "ijk", i, j, k
+                    print("LoS[i].shape", LoS[i])
+                    print("ijk", i, j, k)
                     raise e
         X = np.concatenate(LoS,axis=1)
         return X
@@ -637,8 +637,8 @@ class Pentacene(Dataset):
         X = np.zeros( [ nC , len(seq)**2 ] )
         if True:
             from itertools import combinations
-            print "nsites:", nsites
-            bonds = list(combinations(range(nsites),2))
+            print("nsites:", nsites)
+            bonds = list(combinations(list(range(nsites)),2))
         else:
             if nsites==7:
                 bonds = ( (0,1),(1,2),(2,3),(3,4),(4,5),(5,6))
@@ -668,7 +668,7 @@ class Pentacene(Dataset):
                 Btotal = np.sum( B , axis = 0)
                 Bflatten = Btotal.flatten()
                 X[k] = Bflatten
-        print "X2 constructed; shape X2:", np.shape(X)
+        print("X2 constructed; shape X2:", np.shape(X))
         return X
 
     def extractNDX(self):
@@ -676,7 +676,7 @@ class Pentacene(Dataset):
         seq = self.seq
         nC = len(confs)
         nsites = len(confs[0])
-        X = np.zeros( [nC, len(combinations(range(nsites), 3))] )
+        X = np.zeros( [nC, len(combinations(list(range(nsites)), 3))] )
         for k in range(nC):
             B = []
         return X
@@ -693,8 +693,8 @@ def supermain(args):
             args.column=column
             run=main(args)
             resultlist.append(run.coeft)
-        print "resultlist:"
-        print resultlist
+        print("resultlist:")
+        print(resultlist)
         plots_lin(resultlist)
     else:
         main(args)
@@ -716,7 +716,7 @@ def main(args):
         pass
         #myrun = Naphtol(args.file)
     else:
-        print "no identify identified but I take adamantane as default!"
+        print("no identify identified but I take adamantane as default!")
         myrun = Adamantane(args.file)
         #raise SystemExit('no identify was identified')
     myrun.extract(file=args.file)
@@ -762,7 +762,7 @@ def get_X_1D(indices, identify, descriptor='1DL',column=2, **kwargs):
     elif 'thi' in identify:
         myrun = Thiadiazinyl()
     else:
-        print "identify:", identify
+        print("identify:", identify)
         raise SystemExit('No identify_ identified')
 
     confs = [ indtocon(index) for index in indices ]

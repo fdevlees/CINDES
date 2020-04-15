@@ -13,7 +13,7 @@
 """Parser for VASP output files"""
 
 
-from __future__ import print_function
+
 import re
 
 import numpy
@@ -50,7 +50,9 @@ class VASP(logfileparser.Logfile):
 
 
 if __name__ == "__main__":
-    import doctest, vaspparser, sys
+    import doctest
+    from . import vaspparser
+    import sys
 
     if len(sys.argv) == 1:
         doctest.testmod(vaspparser, verbose=False)

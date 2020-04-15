@@ -46,7 +46,7 @@ class MyDBSQLiteAdapter(DBAdapters.DBSQLite):
         logging.debug("in insert with:" + repr(stats) + repr(c))
 
         pstmt = "insert into %s values (?, ?, " % ("statistics")
-        for i in xrange(len(stats)):
+        for i in range(len(stats)):
             pstmt += "?, "
         pstmt = pstmt[:-2] + ")"
         c.execute(pstmt, (self.getIdentify(), generation) + stats)
@@ -73,7 +73,7 @@ def rounder(history):
     n=2
     roundn = lambda x:round(x, n)
     for i in range(len(history)):
-        history[i] = map(roundn, history[i])
+        history[i] = list(map(roundn, history[i]))
     return history
 
 def stringify_array(array):
@@ -95,7 +95,7 @@ def main(mprms):
     random.seed(param['seed'])
 
     # 0. setup
-    print mprms
+    print(mprms)
     table = set_table(mprms, mprms.array)
     mprms.array = stringify_array(mprms.array)
 
@@ -110,7 +110,7 @@ def run_pso(mprms, function):
     # 3. Initialize Algorithm:
     minimize = mprms.optimum == 'minimum'
     if mprms.pso['type']=='concrete':
-        from concretePSO import ConcretePSO
+        from .concretePSO import ConcretePSO
         mypso = ConcretePSO(array=mprms.array,
                             npop= mprms.pso['npopulation'],
                             function=FF,
@@ -118,8 +118,8 @@ def run_pso(mprms, function):
                             parallel=True,
                             minimize=minimize)
     else:
-        options = { k:v for k,v in mprms.pso.iteritems() if k in ('w', 'c1', 'c2', 'epsilon') }
-        from probabilityPSO import ProbabilityPSO
+        options = { k:v for k,v in mprms.pso.items() if k in ('w', 'c1', 'c2', 'epsilon') }
+        from .probabilityPSO import ProbabilityPSO
         mypso = ProbabilityPSO(array=mprms.array,
                             npop =mprms.pso['npopulation'],
                             function = function,
@@ -154,7 +154,7 @@ def run_pso(mprms, function):
         localhistory.append(particle.localhistory)
     logging.info("particle.localbest history:" + str(rounder(localhistory)))
 
-    logging.info("global best history:" + str(map(lambda x:round(x,8), mypso.globalhistory)))
+    logging.info("global best history:" + str([round(x,8) for x in mypso.globalhistory]))
 
     # do only when run on commandline and logging level INFO/DEBUG
     if sys.stdin.isatty() and logging.getLogger().isEnabledFor(logging.INFO) and mprms.write:

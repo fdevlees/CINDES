@@ -6,8 +6,8 @@ from sklearn.utils import resample
 
 import numpy as np
 
-from experiment_interface import Experiment
-from descriptor import get_X_1D
+from .experiment_interface import Experiment
+from .descriptor import get_X_1D
 
 class LinRegOneExperiment(Experiment):
 
@@ -34,14 +34,14 @@ class LinRegOneExperiment(Experiment):
         for key in self.hparam:
             if key in kwargs:
                 self.hparam[key] = kwargs[key]
-                print "new default hyperparameter:", key, kwargs[key]
+                print("new default hyperparameter:", key, kwargs[key])
         return
 
 
     def get_estimator(self, **kwargs):
         alpha = self.hparam['alpha']
         intercept = self.hparam['intercept']
-        print "intercept:", intercept
+        print("intercept:", intercept)
         tol = self.hparam['tol']
         subtype = self.subtype
 
@@ -87,7 +87,7 @@ class LinRegOneExperiment(Experiment):
 
         #print clf.coef_
 
-        if verbose: print "\tLearned model: ", clf
+        if verbose: print("\tLearned model: ", clf)
 
         return clf
 
@@ -107,10 +107,10 @@ class LinRegOneExperiment(Experiment):
 
         # same
         y_pred = self.test( X_pred, **kwargs)
-        if debug: print "y_pred:", y_pred
+        if debug: print("y_pred:", y_pred)
         for molecule, y in zip(molecules, y_pred):
             molecule.predictions[self.name] = y
-            print molecule, y
+            print(molecule, y)
         return y_pred
 
     def save_model(self, count, model=None):
@@ -159,20 +159,20 @@ class LinRegOneExperiment(Experiment):
             #X = self.X[:n_train]
             #y = self.y[:n_train]
             X, y = resample(self.X, self.y, n_samples=n_train)
-            print "restricted hparamopt to only {} samples".format(n_train)
+            print("restricted hparamopt to only {} samples".format(n_train))
         else:
             X = self.X
             y = self.y
         stime = time.time()
         clf.fit(X, y)
         time_to_fit = time.time() - stime
-        print "\tTime to fit: ", time_to_fit, ' s'
+        print("\tTime to fit: ", time_to_fit, ' s')
 
         # 3. print results
-        print "clf:", clf
+        print("clf:", clf)
         #print "n clf.best_estimator_.support_", len(clf.best_estimator_.support_)
-        print "best_params_:", clf.best_params_
-        print "best_score_:", clf.best_score_
+        print("best_params_:", clf.best_params_)
+        print("best_score_:", clf.best_score_)
         self.R = clf.best_score_
         # print "cv_results_", clf.cv_results_ # too verbose
 
@@ -186,7 +186,7 @@ class LinRegOneExperiment(Experiment):
 class LinRegOneWithPCAExperiment(LinRegOneExperiment):
 
     def __init__(self, n_principal_components=50, **kwargs):
-        print "         PCA                                                ---PCA init"
+        print("         PCA                                                ---PCA init")
         self.F = None
         super(LinRegOneWithPCAExperiment, self).__init__(**kwargs)
         self.n_principal_components = n_principal_components
@@ -204,10 +204,10 @@ class LinRegOneWithPCAExperiment(LinRegOneExperiment):
         if fit:
             F = PCA(self.n_principal_components)
             F.fit(X)
-            print "\tLeast explained variance:", F.explained_variance_[-1]
+            print("\tLeast explained variance:", F.explained_variance_[-1])
             self.F = F
         X_F = self.F.transform(X)
-        print "\tDimensionality reduction: ", X_F.shape
+        print("\tDimensionality reduction: ", X_F.shape)
         return X_F
 
 #    def train(self, X=None, y=None, **kwargs):

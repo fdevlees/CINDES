@@ -8,7 +8,7 @@ This module have the *selection methods*, like roulette wheel, tournament, ranki
 """
 
 import random
-import Consts
+from . import Consts
 
 def key_raw_score(individual):
    """ A key function to return raw score
@@ -42,12 +42,12 @@ def GRankSelector(population, **args):
    if args["popID"] != GRankSelector.cachePopID:
       if population.sortType == Consts.sortType["scaled"]:
          best_fitness = population.bestFitness().fitness
-         for index in xrange(1, len(population.internalPop)):
+         for index in range(1, len(population.internalPop)):
             if population[index].fitness == best_fitness:
                count += 1
       else:
          best_raw = population.bestRaw().score
-         for index in xrange(1, len(population.internalPop)):
+         for index in range(1, len(population.internalPop)):
             if population[index].score == best_raw:
                count += 1
 
@@ -82,7 +82,7 @@ def GTournamentSelector(population, **args):
    choosen = None
    poolSize = population.getParam("tournamentPool", Consts.CDefTournamentPoolSize)
 
-   tournament_pool = [GRouletteWheel(population, **args) for i in xrange(poolSize) ] 
+   tournament_pool = [GRouletteWheel(population, **args) for i in range(poolSize) ] 
 
    if population.sortType == Consts.sortType["scaled"]:
       choosen = max(tournament_pool, key=key_fitness_score)
@@ -107,7 +107,7 @@ def GTournamentSelectorAlternative(population, **args):
    len_pop = len(population)
    poolSize = population.getParam("tournamentPool", Consts.CDefTournamentPoolSize)
 
-   for i in xrange(poolSize):
+   for i in range(poolSize):
       tryit = population[random.randint(0, len_pop-1)]
       measure = tryit.fitness if population.sortType == Consts.sortType["scaled"] else tryit.score
       if measure > best_measure:
@@ -154,7 +154,7 @@ def GRouletteWheel_PrepareWheel(population):
 
    len_pop = len(population)
    
-   psum = [i for i in xrange(len_pop)]
+   psum = [i for i in range(len_pop)]
 
    population.statistics()
 
@@ -163,43 +163,43 @@ def GRouletteWheel_PrepareWheel(population):
       pop_fitMin = population.stats["fitMin"]
 
       if pop_fitMax == pop_fitMin:
-         for index in xrange(len_pop):
+         for index in range(len_pop):
             psum[index] = (index+1) / float(len_pop)
       elif (pop_fitMax > 0 and pop_fitMin >= 0) or (pop_fitMax <= 0 and pop_fitMin < 0):
          population.sort()
          if population.minimax == Consts.minimaxType["maximize"]:
             psum[0] = population[0].fitness
-            for i in xrange(1, len_pop):
+            for i in range(1, len_pop):
                psum[i] = population[i].fitness + psum[i-1]
-            for i in xrange(len_pop):
+            for i in range(len_pop):
                psum[i] /= float(psum[len_pop - 1])
          else:
             psum[0] = -population[0].fitness + pop_fitMax + pop_fitMin
-            for i in xrange(1, len_pop):
+            for i in range(1, len_pop):
                psum[i] = -population[i].fitness + pop_fitMax + pop_fitMin + psum[i-1]
-            for i in xrange(len_pop):
+            for i in range(len_pop):
                psum[i] /= float(psum[len_pop - 1])
    else:
       pop_rawMax = population.stats["rawMax"]
       pop_rawMin = population.stats["rawMin"]
 
       if pop_rawMax == pop_rawMin:
-         for index in xrange(len_pop):
+         for index in range(len_pop):
             psum[index] = (index+1) / float(len_pop)
       
       elif (pop_rawMax > 0 and pop_rawMin >= 0) or (pop_rawMax <= 0 and pop_rawMin < 0):
          population.sort()
          if population.minimax == Consts.minimaxType["maximize"]:
             psum[0] = population[0].score
-            for i in xrange(1, len_pop):
+            for i in range(1, len_pop):
                psum[i] = population[i].score + psum[i-1]
-            for i in xrange(len_pop):
+            for i in range(len_pop):
                psum[i] /= float(psum[len_pop-1])
          else:
             psum[0] = - population[0].score + pop_rawMax + pop_rawMin
-            for i in xrange(1, len_pop):
+            for i in range(1, len_pop):
                psum[i] = - population[i].score + pop_rawMax + pop_rawMin + psum[i-1]
-            for i in xrange(len_pop):
+            for i in range(len_pop):
                psum[i] /= float(psum[len_pop-1])
 
    return psum

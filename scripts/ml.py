@@ -26,11 +26,11 @@ def main_single(show=True,
 
     # going to set the estimator: 
     gamma = 1. / (2* args.sigma**2 )
-    print "sigma:", args.sigma
-    print "gamma:", gamma
+    print("sigma:", args.sigma)
+    print("gamma:", gamma)
     clf = KernelRidge( alpha = args.labda, kernel= 'rbf' , gamma = gamma)
     my_ML.set_estimator(clf)
-    print my_ML
+    print(my_ML)
 
 
     if True: # make True for a gridsearch
@@ -45,16 +45,16 @@ def main_single(show=True,
     if True: # 
         # test on validation set
         y_val_pred = my_ML.predict()
-        print "y_val_pred:", y_val_pred
+        print("y_val_pred:", y_val_pred)
 
 
     if True: # analysis of results
         rmse = learning_xyz.RMSE(     y_val_pred, my_ML.y_val)
         mae  = learning_xyz.MAE(      y_val_pred, my_ML.y_val)
         pearsonr =  learning_xyz.pearsonr( y_val_pred, my_ML.y_val)
-        print "RMSE     :", rmse
-        print "MAE      :", mae
-        print "pearsonr :", pearsonr
+        print("RMSE     :", rmse)
+        print("MAE      :", mae)
+        print("pearsonr :", pearsonr)
         scores = [ rmse, mae, pearsonr ]
     else: scores = None
 
@@ -86,7 +86,7 @@ def main_multiple():
     for fraction in validation_fractions:
         logdens, scores = main_single(show=False, validation_fraction = fraction )
         kdes.append(logdens)
-    print "kdes:", kdes
+    print("kdes:", kdes)
 
     fig, ax = plt.subplots()
     xlim=20
@@ -130,7 +130,7 @@ if __name__=='__main__':
 
     #if args.timer:
     if False:
-        print "use sklearn:", args.use_sklearn
+        print("use sklearn:", args.use_sklearn)
         from CINDES.utils.timer import Timer
         with Timer() as t:
             learning.Amachinelearning2( sigma = args.sigma,
@@ -139,9 +139,9 @@ if __name__=='__main__':
                                descriptor = args.descriptor,
                                kernel = args.kernel ,
                                args= args)
-        print "=> elapsed learning5: %s s" % t.secs
+        print("=> elapsed learning5: %s s" % t.secs)
     elif args.multiple:
         main_multiple()
     else:
         main_single(validation_fraction = args.validation_fraction)
-    print "DONE LEARNING.PY"
+    print("DONE LEARNING.PY")

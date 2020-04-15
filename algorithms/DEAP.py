@@ -7,7 +7,7 @@ import numpy as np
 random = np.random.random
 #import pickle
 import json
-from itertools import izip
+
 import pprint
 
 # needed by evolve
@@ -31,20 +31,20 @@ from CINDES.algorithms.GA import Fitness_Function
 from CINDES.evaluation.predictions import predictor
 from CINDES.evaluation.calculator import evaluate_mols
 from CINDES.evaluation.construction import indtocon, contoind
-import procedures
+from . import procedures
 
-from deap import tools
-from deap import base
-from deap import creator
-from deap import algorithms
-from DEAP_GA import *
-from DEAP_utils import *
+from .deap import tools
+from .deap import base
+from .deap import creator
+from .deap import algorithms
+from .DEAP_GA import *
+from .DEAP_utils import *
 
 def main(run):
-    print run
+    print(run)
     table = set_table(run, run.array)
     function = Fitness_Function(run, table=table, array=run.array)
-    print "run.genalg['algorithm']:", run.genalg['algorithm'], 'test:', test
+    print("run.genalg['algorithm']:", run.genalg['algorithm'], 'test:', test)
     if run.genalg['algorithm']=='GA':
         if test:
             final_genome = run_test_GA(run.array, run, function=function)
@@ -52,7 +52,7 @@ def main(run):
             final_genome = run_GA(run.array, run, function=function)
     else:
         final_genome = run_nsgaii(run.array, run, function=function)
-    print "final genome"
+    print("final genome")
     return final_genome
 
 
@@ -90,7 +90,7 @@ def run_nsgaii(array, options, level=None, function=None):
     groups = options.array[0]
     groups_joined = [ "".join(item) for item in groups ]
     get_group = lambda : np.random.choice(groups_joined)
-    print "WARNING: assuming all sites have the same group!"
+    print("WARNING: assuming all sites have the same group!")
     toolbox.register("get_group", get_group)
     toolbox.register("individual", tools.initRepeat, creator.Individual,
             toolbox.get_group, n=options.nsites)
@@ -99,18 +99,18 @@ def run_nsgaii(array, options, level=None, function=None):
     toolbox.register("population", tools.initRepeat, list, toolbox.individual, n=options.genalg['npopulation'])
 
     def evaluate_multi(population, gen=None):
-        print "population:", population
-        P = [ map(list,p) for p in population[:] ]
+        print("population:", population)
+        P = [ list(map(list,p)) for p in population[:] ]
         mols = function.evaluate_multi(P, gen=gen)
 
-        print "props:", [ mol.props for mol in mols ]
+        print("props:", [ mol.props for mol in mols ])
 
         vals = [ mol.Pvalue for mol in mols ]
         return vals
 
     def mutateF(individual, MUP):
         newindividual = deepcopy(individual)
-        for i in xrange(len(individual)):
+        for i in range(len(individual)):
             if np.random.random() < MUP:
                 newindividual[i] = np.random.choice(groups_joined)
         return newindividual,
@@ -126,10 +126,10 @@ def run_nsgaii(array, options, level=None, function=None):
     population = toolbox.population()
     if options.genalg['restart']:
         startgen = restart_population(population)
-        print "start generation at:", startgen
-        print "with population:\n",
+        print("start generation at:", startgen)
+        print("with population:\n", end=' ')
         for i in population:
-            print i
+            print(i)
     else:
         startgen = 1
 
@@ -139,7 +139,7 @@ def run_nsgaii(array, options, level=None, function=None):
         try:
             ind.fitness.values = fit
         except TypeError as e:
-            print "fit:", fit
+            print("fit:", fit)
 
     for gen in range(startgen, options.genalg['ngenerations']):
         print_title("Generation No.: " + str(gen), outline='l', signator="-")
@@ -152,20 +152,20 @@ def run_nsgaii(array, options, level=None, function=None):
 
         # 2. evaluate fitness
         fits = evaluate_multi(offspring, gen=gen)
-        print "fits:", fits
+        print("fits:", fits)
         for fit, ind in zip(fits, offspring):
             ind.fitness.values = fit
 
         # 3. loggings
         halloffame.update(population)
         paretofront.update(population)
-        print "hall of fame:", halloffame
+        print("hall of fame:", halloffame)
 
         record = stats.compile(population)
-        print "record:", record
+        print("record:", record)
         logbook.record(gen=gen, **record)
         best_ind = selBestSum(population, 1)[0]
-        print "best_ind:", contoind(best_ind), "fitness values:", best_ind.fitness
+        print("best_ind:", contoind(best_ind), "fitness values:", best_ind.fitness)
         history.append({
             'gen':gen,
             'ncalcs':function.ncalcs,
@@ -177,9 +177,9 @@ def run_nsgaii(array, options, level=None, function=None):
         population = toolbox.select(offspring + population,
             k=options.genalg['npopulation'])
 
-    print "pareto front", paretofront
-    print population
-    print logbook
+    print("pareto front", paretofront)
+    print(population)
+    print(logbook)
     best_index = contoind(best_ind)
 
     result = {'p':best_ind.fitness.values[0], 'index':best_index, 'history':history, 'ncalcs':history[-1]['ncalcs'], 'gen':options.genalg['ngenerations']}
@@ -204,7 +204,7 @@ def run_nsgaii(array, options, level=None, function=None):
     groups = options.array[0]
     groups_joined = [ "".join(item) for item in groups ]
     get_group = lambda : np.random.choice(groups_joined)
-    print "WARNING: assuming all sites have the same group!"
+    print("WARNING: assuming all sites have the same group!")
     toolbox.register("get_group", get_group)
     toolbox.register("individual", tools.initRepeat, creator.Individual,
             toolbox.get_group, n=options.nsites)
@@ -213,11 +213,11 @@ def run_nsgaii(array, options, level=None, function=None):
     toolbox.register("population", tools.initRepeat, list, toolbox.individual, n=options.genalg['npopulation'])
 
     def evaluate_multi(population, gen=None):
-        print "population:", population
-        P = [ map(list,p) for p in population[:] ]
+        print("population:", population)
+        P = [ list(map(list,p)) for p in population[:] ]
         mols = function.evaluate_multi(P, gen=gen)
 
-        print "props:", [ mol.props for mol in mols ]
+        print("props:", [ mol.props for mol in mols ])
 
         vals = [ mol.Pvalue for mol in mols ]
         return vals
@@ -225,7 +225,7 @@ def run_nsgaii(array, options, level=None, function=None):
 
     def mutateF(individual, MUP):
         newindividual = deepcopy(individual)
-        for i in xrange(len(individual)):
+        for i in range(len(individual)):
             if np.random.random() < MUP:
                 newindividual[i] = np.random.choice(groups_joined)
         return newindividual,
@@ -264,18 +264,18 @@ def run_nsgaii(array, options, level=None, function=None):
         try:
             ind.fitness.values = fit
         except TypeError as e:
-            print "fit:", fit
+            print("fit:", fit)
 
     # This is just to assign the crowding distance to the individuals
     # no actual selection is done
     pop = toolbox.select(pop, len(pop))
     best_ind = selBestSum(pop, 1)[0]
-    print "pop type:", type(pop[0])
-    print "best type:", type(best_ind)
+    print("pop type:", type(pop[0]))
+    print("best type:", type(best_ind))
     
     record = stats.compile(pop)
     logbook.record(gen=0, evals=len(invalid_ind), **record)
-    print(logbook.stream)
+    print((logbook.stream))
 
     # Begin the generational process
     for gen in range(1, options.genalg['ngenerations']):
@@ -286,11 +286,11 @@ def run_nsgaii(array, options, level=None, function=None):
             #offspring = offspring1 + offspring2
         else:
             offspring = tools.selTournamentDCD(pop, len(pop))
-        print "type offspring:", type(offspring), "type offspring[0]:", type(offspring[0])
+        print("type offspring:", type(offspring), "type offspring[0]:", type(offspring[0]))
         for ind in offspring:
-            print "ind.fitness", ind.fitness
-        print "best_ind", best_ind, "type:", type(best_ind)
-        print best_ind.fitness
+            print("ind.fitness", ind.fitness)
+        print("best_ind", best_ind, "type:", type(best_ind))
+        print(best_ind.fitness)
         
         offspring = [toolbox.clone(ind) for ind in offspring]
         
@@ -323,8 +323,8 @@ def run_nsgaii(array, options, level=None, function=None):
         best_ind = selBestSum(offspring, 1)[0]
         record = stats.compile(pop)
         logbook.record(gen=gen, evals=len(invalid_ind), **record)
-        print(logbook.stream)
-        print "best_ind:", contoind(best_ind), "fitness values:", best_ind.fitness
+        print((logbook.stream))
+        print("best_ind:", contoind(best_ind), "fitness values:", best_ind.fitness)
         history.append({
             'gen':gen,
             'ncalcs':function.ncalcs,
@@ -334,7 +334,7 @@ def run_nsgaii(array, options, level=None, function=None):
 
     best_index = contoind(best_ind)
     result = {'p':sum(best_ind.fitness.values), 'index':best_index, 'history':history, 'ncalcs':history[-1]['ncalcs'], 'gen':options.genalg['ngenerations']}
-    print "best:", best
+    print("best:", best)
 
     return result
 

@@ -111,7 +111,7 @@ def get_homo(conf,printi=False):
         if fnmatch.fnmatch(file,  'diap_' + conf + '.log'):  
             filetje = file
             filetje = path + '/databc/' + filetje
-            if printi: print filetje
+            if printi: print(filetje)
     f = ccopen(filetje)
     f.logger.setLevel(logging.ERROR)
     datatje = f.parse()
@@ -121,9 +121,9 @@ def get_homo(conf,printi=False):
     #print 'conf:', conf, 'Ehomo:', Ehomo, 'Ehomo/27.211:', Ehomo/27.211
     Elumo= datatje.moenergies[0][datatje.homos[0]+1]
     if printi:
-        print "myhomos:", datatje.myhomos
-        print "moenergies:", datatje.mymos
-        print "mymos[1]['alpha'][0][myhomos[1]]"
+        print("myhomos:", datatje.myhomos)
+        print("moenergies:", datatje.mymos)
+        print("mymos[1]['alpha'][0][myhomos[1]]")
     return Ehomo
 
 def make_table(confs,data):
@@ -141,8 +141,8 @@ def complexprint(data, func=lambda arg: arg, strfunc= lambda *s: s):
     '''
     def printje(item, level=0):
         if level>10:
-            print "type was:", type(item)
-            print "max recursion reached"
+            print("type was:", type(item))
+            print("max recursion reached")
             raise SystemExit('stop')
         if type(item) in [list,tuple,dict]:
             for it in item:
@@ -150,29 +150,29 @@ def complexprint(data, func=lambda arg: arg, strfunc= lambda *s: s):
         else:
             if type(item)==str:
                 for it in strfunc(item):
-                    print it,
+                    print(it, end=' ')
             else:
-                print item,
+                print(item, end=' ')
         return
 
     for totalcycle in data:
         for siterun in totalcycle:
             item = func(siterun)
             printje(item)
-            print
+            print()
     else:
-        print "&"*20
+        print("&"*20)
     return
 
 def Lplot(indices, values):
     from CINDES.evaluation.predictor.descriptor import get_X_1D
     from string import digits
     from sklearn import linear_model, metrics
-    print indices[:10]
-    print values[:10]
+    print(indices[:10])
+    print(values[:10])
     # get y
     Y = [ item[args.datacolumn] for item in values ]
-    print Y[:10]
+    print(Y[:10])
     # get x
     # remove dihedral numbers from indices
     indices = [ index.translate(None, digits) for index in indices ]
@@ -185,10 +185,10 @@ def Lplot(indices, values):
             fit_intercept=False, store_cv_values=False, cv=6)
     clf.fit(X, Y)
     Y_pred = clf.predict(X)
-    print "score 1D:", clf.score(X, Y)
-    print "best 1D alpha:", clf.alpha_
-    print "1D coefs:", clf.coef_
-    print "R2:", metrics.r2_score(Y, Y_pred)
+    print("score 1D:", clf.score(X, Y))
+    print("best 1D alpha:", clf.alpha_)
+    print("1D coefs:", clf.coef_)
+    print("R2:", metrics.r2_score(Y, Y_pred))
     plt.scatter(Y, Y_pred)
     ax = plt.gca()
     plt.axis('equal')
@@ -198,7 +198,7 @@ def Lplot(indices, values):
     xr = plt.xlim()
     zmin = min((xr[0],yr[0]))
     zmax = max((xr[1],yr[1]))
-    print yr, xr, zmin, zmax
+    print(yr, xr, zmin, zmax)
     plt.ylim(zmin, zmax)
     plt.xlim(zmin, zmax)
     plt.show()
@@ -213,9 +213,9 @@ def main():
     values=[]
     prop=1
     n=len(data)
-    print 'len(data)', n
+    print('len(data)', n)
     rows, columns = os.popen('stty size', 'r').read().split()
-    print 'console width=', columns
+    print('console width=', columns)
     homos = []
     for item in data:
         #print "item:",item
@@ -232,21 +232,21 @@ def main():
                 value = (float(item[1]),float(item[2]),float(item[3]),int(item[4]),int(item[5]),int(item[6]))
             elif len(item)>7:
                 #print "I'm here"
-                indices = map(int,item[-3:])
-                rest = map(float,item[1:-3])
+                indices = list(map(int,item[-3:]))
+                rest = list(map(float,item[1:-3]))
                 value = rest + indices
                 item = [ item[0].replace("'","") ] + value
         else:
             sys.stdout.write('#')
-            indices = map(int,item[-3:])
-            rest = map(float,item[1:-3])
+            indices = list(map(int,item[-3:]))
+            rest = list(map(float,item[1:-3]))
             homo = get_homo(conf)
             homos.append([conf,homo])
             IP = rest[0] * 27.2113838
             value = [ IP] + [-homo] + rest[1:] + indices
             item = [ item[0].replace("'","") ] + value
             if -homo> 5.0 and IP<6.6:
-                print "outlier:", conf, " ", item
+                print("outlier:", conf, " ", item)
                 get_homo(conf,True)
                 continue
         item[0]=item[0].split('_')
@@ -254,21 +254,21 @@ def main():
             datar.append(item)
             confs.append(conf)
             values.append(value)
-    print "homos:", homos
+    print("homos:", homos)
     with open('homofile','w') as fid:
         for item in homos:
             line = '%s %s' % ( item[0], str(item[1]) )
             fid.write(str(item)+'\n')
     for br in datar:
         # each site wordt geformat tot 8 width. die worden samen gejoind en weer geformat samen met de rest
-        print '{0} {1:8.5}  {2:3}  {3:3}  {4:3}'.format(' '.join(['{:8}'.format(item) for item in br[0]]),br[prop],br[-3],br[-2],br[-1])
+        print('{0} {1:8.5}  {2:3}  {3:3}  {4:3}'.format(' '.join(['{:8}'.format(item) for item in br[0]]),br[prop],br[-3],br[-2],br[-1]))
     #print confs
     #print "values:",values
-    print "len(values):", len(values)
+    print("len(values):", len(values))
     maxmacrocycles= values[-1][-3]
     nsites = values[-1][-1]
-    print "maxcycles:",maxmacrocycles #starts counting at 1
-    print "nsites:", nsites+1 #starts counting at 0
+    print("maxcycles:",maxmacrocycles) #starts counting at 1
+    print("nsites:", nsites+1) #starts counting at 0
     sites=[] #list of all the changing sites only
     for conf,value in zip(confs,values):
         siteindex=value[-2]
@@ -336,9 +336,9 @@ def main():
     #print "runsA"
     #pp.pprint(runsA)
 
-    print "TOTAL CONF DATA:"
+    print("TOTAL CONF DATA:")
     #print "total_conf_data[0]:", total_conf_data[0]
-    print "args.datacolumn:", args.datacolumn
+    print("args.datacolumn:", args.datacolumn)
     complexprint(total_conf_data,                                                              ##############
                  func = lambda y: min(y, key= lambda x: x[1][args.datacolumn]),     #########    MIN MAX    !!!!!!!!!!!!!  MIN MAX CHANGE HERE!!!!
                  strfunc = lambda z: z.split('_') )                                           ##############
@@ -353,12 +353,12 @@ def main():
 
     #print "totalruns:"
     #pp.pprint(totalruns)
-    print "best substituent per site per run:"
+    print("best substituent per site per run:")
     complexprint(totalruns, func = lambda y: min(y, key= lambda x: x[1][args.datacolumn] ) )
     #for run in totalruns:
     #    for site in run:
     #        print min(site, key= lambda x: x[1][0])
-    print '='*20
+    print('='*20)
 
 
     #################  MAKE totalsites ####################
@@ -368,12 +368,12 @@ def main():
        runs.sort(key= lambda x: x[0][1][-2]) #runs sorts by number of site. the [0] is just arbitrary here because each elements has same values
     #print "totalsites:"
     #pp.pprint(totalsites)
-    print '='*20
+    print('='*20)
 
     ################## MAKE table with only single attendance:
     if args.table:
         table = make_table(confs,values)
-        pp.pprint(table.items()[0:4])
+        pp.pprint(list(table.items())[0:4])
 
 
     if args.Lplot:
@@ -399,13 +399,13 @@ def main():
             for j in range(len(totalsites[i])):
             #for run in totalruns[i]:
                 run=totalsites[i][j]
-                x = np.array(range(len(run)))
+                x = np.array(list(range(len(run))))
                 if len(run) == maxnsites:
                     #my_xticks = [ funcs[ item[0] ] for item in run ] 
                     my_xticks = [ funcs[ re.split('[0-9]',item[0])[0] ] for item in run ] 
                     plt.xticks(x,my_xticks)
                     plt.xticks(rotation=45)
-                    print "my_xticks", my_xticks
+                    print("my_xticks", my_xticks)
                 y = [ item[1][args.datacolumn] for item in run ]
                 #print "y=", y
                 #itje = 2*(len(totalruns)-1)*i+j #index that cares for different dots/squares per site per cycle
@@ -432,14 +432,14 @@ def main():
         # only for particular case: 
         def get_label():
             #labels = ('1.1','1.2', '1.3', '1.4','2.1','2.2','2.3','3.1', '3.2', '3.3')
-            labels = xrange(100)
+            labels = range(100)
             for label in labels:
                 yield str(label)
         labels = get_label() # this is now an iterator !
         import seaborn as sb
         sb.set_style('whitegrid')
         colors = sb.hls_palette(nsites+1,l=.4) #l=lightness the smaller the darker. 
-        print "tablebin-like plot"
+        print("tablebin-like plot")
         binlist = []
         start=0
         propertycount = args.datacolumn #which column to chose the data from. 0 = all 1.0
@@ -465,7 +465,7 @@ def main():
                 # cutoff 
                 if True:
                     a[a>1000] = None
-                    if np.isnan(a).any(): print "cutoff is applied and used!"
+                    if np.isnan(a).any(): print("cutoff is applied and used!")
 
                 b, = plt.plot(a[0],a[1],tags[site]+'-',color=colors[site],
                                                        markersize=5)
@@ -485,7 +485,7 @@ def main():
         ax = plt.gca()
         handles, labels = ax.get_legend_handles_labels()
         # sort both labels and handles by labels
-        labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: int(t[0][5:])))
+        labels, handles = list(zip(*sorted(zip(labels, handles), key=lambda t: int(t[0][5:]))))
         if True: #place legend outside plot
             box = ax.get_position()
             ax.set_position([box.x0, box.y0, box.width*0.8, box.height])
@@ -507,7 +507,7 @@ def main():
         xs = [ item[1][0] for listje in totalsites[0] for item in listje ] #values of first run
         ys = [ item[1][0] for listje in totalsites[-1] for item in listje ] #values of last run
         labels = [ item[0] for listje in totalsites[0] for item in listje ] 
-        print "labels= " , labels
+        print("labels= " , labels)
         plt.plot(xs,ys,'ro')
         for label, x, y in zip(labels,xs,ys):
             plt.annotate(
@@ -517,7 +517,7 @@ def main():
                 arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3,rad=0'))
         xm = min([ min(xs),min(ys) ] )
         ym = max([ max(xs),max(ys) ] )
-        print "xm:",xm, "ym:",ym
+        print("xm:",xm, "ym:",ym)
         xl = np.linspace(xm,ym,100)
         yl = xl
         plt.plot(xl,yl, 'k-')
@@ -535,18 +535,18 @@ def main():
         X = []
         Y = []
         index = args.datacolumn
-        print "len:" + "totalsites[0]:", len(totalsites[0]), "totalsites:", len(totalsites)
-        print "tags[:len(totalsites[0])]", tags[:len(totalsites[0])]
+        print("len:" + "totalsites[0]:", len(totalsites[0]), "totalsites:", len(totalsites))
+        print("tags[:len(totalsites[0])]", tags[:len(totalsites[0])])
         tags_new = [ tags[i] for i in range(len(totalsites[0])) ]
-        for site0,site1,tag,i in zip(totalsites[0],totalsites[-1],tags_new,range(len(totalsites[0]))):
-            print "totalsites[0]:", len(totalsites[0])
-            print "totalsites[-1]:", len(totalsites[-1])
+        for site0,site1,tag,i in zip(totalsites[0],totalsites[-1],tags_new,list(range(len(totalsites[0])))):
+            print("totalsites[0]:", len(totalsites[0]))
+            print("totalsites[-1]:", len(totalsites[-1]))
             xs = [ item[1][args.datacolumn] for item in site0 ]
             ys = [ item[1][args.datacolumn] for item in site1 ]
             labels = [ item[0] for item in site0 ]
             a, = plt.plot(xs,ys,tag)
             a.set_label('site:'+str(i+1))
-            print "i:", i
+            print("i:", i)
             for label, x, y in zip(labels,xs,ys):
                 if True: #for boxes set to True
                     plt.annotate(
@@ -557,7 +557,7 @@ def main():
             X.append(min([ min(xs),min(ys) ] ))
             Y.append(max([ max(xs),max(ys) ] ))
             #plt.legend(handler_map={a:HandlerLine2D(numpoints=4)})
-        print "xm:",min(X), "ym:",max(Y)
+        print("xm:",min(X), "ym:",max(Y))
         plt.legend(loc='best', shadow= True)
         #xl = np.linspace(min(X)*0.9,max(Y)*1.1,100)
         xl = np.linspace(min(X),max(Y),100)
@@ -587,13 +587,13 @@ def main():
         Y = []
         #f, axs = plt.subplots(3,2,sharex=True,sharey=True)
         nx,ny = set_nxy(len(totalsites[0]))
-        print nx, ny
+        print(nx, ny)
         f, axs = plt.subplots(ny,nx)
         axs2d = [ item for sublist in axs for item in sublist ]
-        print "axs2d:",axs2d
+        print("axs2d:",axs2d)
         index = args.datacolumn
         tags_new = [ tags[i] for i in range(len(totalsites[0])) ]
-        for site0,site1,tag,i in zip(totalsites[0],totalsites[-1],tags_new,range(len(totalsites[0]))):
+        for site0,site1,tag,i in zip(totalsites[0],totalsites[-1],tags_new,list(range(len(totalsites[0])))):
             xs = [ item[1][index] for item in site0 ]
             ys = [ item[1][index] for item in site1 ]
             labels = [ item[index] for item in site0 ]
@@ -601,7 +601,7 @@ def main():
             #a, = plt.plot(xs,ys,tag)
             a=axs2d[i]
             a.axis('equal')
-            print a
+            print(a)
             a.plot(xs,ys,tag,label='site:' + str(i+1))
             #f.set_label('site:'+str(i))
             for label, x, y in zip(labels,xs,ys):
@@ -614,7 +614,7 @@ def main():
             X.append(min([ min(xs),min(ys) ] ))
             Y.append(max([ max(xs),max(ys) ] ))
             #plt.legend(handler_map={a:HandlerLine2D(numpoints=4)})
-            print "xm:",min(X), "ym:",max(Y)
+            print("xm:",min(X), "ym:",max(Y))
             #xl = np.linspace(min(X)*0.9,max(Y)*1.1,100)
             xl = np.linspace(min(X),max(Y),100)
             yl = xl
@@ -626,7 +626,7 @@ def main():
         # how many unneeded plots are there?
         unneed = nx*ny - len(totalsites[0])
         for i in range(1,unneed+1):
-            print "i:", i
+            print("i:", i)
             axs2d[-i].set_frame_on(False)
             axs2d[-i].axes.get_yaxis().set_visible(False)
             axs2d[-i].axes.get_xaxis().set_visible(False)
@@ -652,14 +652,14 @@ def main():
         from scipy import stats
         propx = [ item[0] for item in values ] 
         propy = [ item[1] for item in values ]
-        propx,propy = zip(*list(set(zip(propx,propy))))
+        propx,propy = list(zip(*list(set(zip(propx,propy)))))
         plt.plot(propx,propy,'.r')
         slope, intersept, r_value, p_value, std_err = stats.linregress(propx,propy)
-        print "slope:", slope
-        print "intersept:", intersept
-        print "p_value:", p_value
-        print "std_err:", std_err
-        print "R=",r_value**2
+        print("slope:", slope)
+        print("intersept:", intersept)
+        print("p_value:", p_value)
+        print("std_err:", std_err)
+        print("R=",r_value**2)
         x = sorted(propx)
         y = [ slope*xje+intersept for xje in x ]
         plt.plot(x, y, '-')

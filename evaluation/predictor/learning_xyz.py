@@ -96,13 +96,13 @@ class MachineLearning(object):
                     line = fid.readline().split()
                     y.append( float(line[1]) )   # 0: gap, 1: homo 2: lumo 3: Etotal
                 xyz = []
-                for i in xrange(natoms): #for each atom
+                for i in range(natoms): #for each atom
                     line = fid.readline().split()
                     #print 'line:', line
                     assert not line=='\n'
                     xyztje = np.zeros([3])
                     #print "xyztje", xyztje
-                    for j in xrange(3): #for x,y,z
+                    for j in range(3): #for x,y,z
                         xyztje[j] = line[j+1]
                     xyz.append([line[0],xyztje,converter.masses[line[0]]])
                 xyzs.append(xyz)
@@ -110,11 +110,11 @@ class MachineLearning(object):
 
         if self.cutoff and data:
             valcutoffmin, valcutoffplus = args.cutoff
-            print "cutoff applied of ", str(valcutoffmin), "and", str(valcutoffplus), " eV"
+            print("cutoff applied of ", str(valcutoffmin), "and", str(valcutoffplus), " eV")
             nbefore = len(y)
-            xyzs, y =  zip ( *[ item for item in zip(xyzs,y) if not ( item[1]<valcutoffmin  or item[1]>valcutoffplus )] )
+            xyzs, y =  list(zip( *[ item for item in zip(xyzs,y) if not ( item[1]<valcutoffmin  or item[1]>valcutoffplus )] ))
             nafter = len(y)
-            print str( nbefore - nafter ) ,"elements were removed from list"
+            print(str( nbefore - nafter ) ,"elements were removed from list")
             #data = [ [ item[0], float(item[1])] for item in datar if float(item[1])<cutoff ] 
 
         if data:  #total set. with data
@@ -134,7 +134,7 @@ class MachineLearning(object):
         #print "xyz:", xyz
         l = len(xyz)
         C = np.zeros([l,l])
-        for i in xrange(l):
+        for i in range(l):
             for j in range(l): #changed this from i+1 to j
                 if i==j:
                     C[i][i]= 0.5*xyz[i][2]**(2.4)
@@ -146,7 +146,7 @@ class MachineLearning(object):
                                     xyz[i][1] - xyz[j][1] ) ) )
                     C[i][j] = t/n
                     # let not make it symmetric. because we don't use these elements                  
-        print "&",
+        print("&", end=' ')
         if self.type=='norm1': #return a sorted Coulomb matrix based on norm
             return symsort(C)
         elif self.type=='norm2':
@@ -184,21 +184,21 @@ class MachineLearning(object):
                              ( 'F' , 30 ),
                              ( 'S' , 10 ),
                              ( 'Cl', 10 ) ) )
-        types = typef.keys()
+        types = list(typef.keys())
         # make a list of typef with max no of combination of atom1 with atom2 
         def trianglen(typef,key1,key2):
             if key1==key2: return int( .5 * typef[key1] * ( typef[key1] - 1 ) )
             else:          return typef[key1]*typef[key2]
-        ncombis = OrderedDict( ( (''.join(sorted((key1,key2),key = lambda x: typef.keys().index(x)) ), trianglen(typef,key1, key2) ) for key1 in
+        ncombis = OrderedDict( ( (''.join(sorted((key1,key2),key = lambda x: list(typef.keys()).index(x)) ), trianglen(typef,key1, key2) ) for key1 in
             types for key2 in types ) )
         ntypes= len(types)
         monos = OrderedDict(( (key,[]) for key in types ))
         # the next line makes dicts of every possible atom combination with combined keys. combined in order as in typef!
         duos  = OrderedDict( ( (''.join(sorted((key1,key2),key = lambda x: types.index(x)) ), [] ) for key1 in types for key2 in types ) )
         if d:
-            print "monos, duos:", monos, duos
-            print "typef, ncombis", typef, ncombis
-        for i in xrange(l): # for every atom
+            print("monos, duos:", monos, duos)
+            print("typef, ncombis", typef, ncombis)
+        for i in range(l): # for every atom
             for j in range(i,l): #so for every combination with that atom not yet visited
                 if i==j:
                     nuclear = 0.5*xyz[i][2]**(2.4)
@@ -215,22 +215,22 @@ class MachineLearning(object):
                     duos[duo_key].append(force)
         # now sorted every item in the dictionaries and pad with zeros
         if d:
-            print "monos, duos:", monos, duos
+            print("monos, duos:", monos, duos)
         for dictio, ntypes in ( (monos, typef  ),
                                 (duos , ncombis)):
-            for key,value in dictio.iteritems():
+            for key,value in dictio.items():
                 N = ntypes[key]
                 dictio[key] = sorted(dictio[key])[::-1] + [0.0] * ( N - len(value) )
         if d:
-            print "monos, duos:", monos, duos
+            print("monos, duos:", monos, duos)
         # merge everything together orderly
-        monos_flat = [ x for v in monos.itervalues() for x in v ]
-        duos_flat  = [ x for v in duos.itervalues()  for x in v ]
+        monos_flat = [ x for v in monos.values() for x in v ]
+        duos_flat  = [ x for v in duos.values()  for x in v ]
         Bag = monos_flat + duos_flat
-        print "B",
+        print("B", end=' ')
         if d:
-            print "Bag:", Bag
-            print "len(Bag):", len(Bag)
+            print("Bag:", Bag)
+            print("len(Bag):", len(Bag))
             raise SystemExit('stop')
         return Bag
 
@@ -259,12 +259,12 @@ class MachineLearning(object):
                             iid   = False, # no assumption of universal distribution of data 
                             refit = True,  # refit the best estimator with the entire dataset
                             return_train_score = True )
-        print "krr:", krr
+        print("krr:", krr)
         krr_out = krr.fit(self.X, self.y)
-        print "krr_out:", krr_out
+        print("krr_out:", krr_out)
         #print "krr_out results:", krr_out.cv_results_
-        print "best parameters:", krr.best_params_
-        print "best score:", krr.best_score_
+        print("best parameters:", krr.best_params_)
+        print("best score:", krr.best_score_)
 
         if set_new_clf:
             self.clf = krr_out
@@ -289,7 +289,7 @@ def KDE(data1,data2):
             grid = GridSearchCV( KernelDensity(),
                                  { 'bandwidth': np.logspace(-3, 1,20) } , cv=8)
             grid.fit(scores[:,np.newaxis])
-            print "gridsearch cv for best bandwidth for KDE:", grid.best_params_
+            print("gridsearch cv for best bandwidth for KDE:", grid.best_params_)
             xlim = grid.best_params_['bandwidth']* 20
             kde = grid.best_estimator_
         else:
@@ -297,7 +297,7 @@ def KDE(data1,data2):
             xlim = 20*args.bandwidth
         X_plot = np.linspace(-xlim, xlim, 1000)[:, np.newaxis]
         log_dens = kde.score_samples(X_plot)
-        print "logdens:"
+        print("logdens:")
         sprint(10,log_dens)
         ax.plot(X_plot, np.exp(log_dens), 'r-')
         #plt.show()
@@ -310,8 +310,8 @@ def KDE(data1,data2):
         n, bins, patches = plt.hist(scores, nbars, normed=1, facecolor='green', alpha=0.75)
         mu = np.mean(scores)
         std = np.std(scores)
-        print "mu:", mu
-        print "std:", std
+        print("mu:", mu)
+        print("std:", std)
         y = mlab.normpdf( bins,mu,std)
         l = ax.plot(bins, y, 'r--', linewidth=1)
         f_y = mlab.normpdf( bins,f_mu,f_std)
@@ -331,7 +331,7 @@ def get_sigma( Cs ):
             d = distance( Cs[i], Cs[j] )
             if d > maxd:
                 maxd = d
-    print "maxd:", maxd
+    print("maxd:", maxd)
     return maxd / np.log(2)
 
 def distance(C1, C2, kerneltype='gaussian'):
@@ -363,7 +363,7 @@ def MAE(data1,data2):
     assert len(data1)==len(data2)
     npoints = len(data1)
     mae = 0
-    for i in xrange(npoints):
+    for i in range(npoints):
         mae += abs( data1[i] - data2[i] )
     return mae / float(npoints)
 
@@ -371,7 +371,7 @@ def RMSE(data1,data2):
     assert len(data1)==len(data2)
     npoints = len(data1)
     rmse = 0
-    for i in xrange(npoints):
+    for i in range(npoints):
         rmse += ( data1[i] - data2[i] )**2
     return np.sqrt( rmse / float(npoints) )
 
@@ -427,7 +427,7 @@ def generate_xyz(indices,converter,outputfile='table.xyz',y=0,*args,**kwargs):
     with open(outputfile,'w') as fid:
 
         for i in range(len(confs)):
-            print i, "indices[i]", indices[i]
+            print(i, "indices[i]", indices[i])
             logging.debug("i=" + str(i))
             mat = contozma(confs[i],**kwargs)
             xyz = zmatoxyz(converter,mat)

@@ -4,7 +4,7 @@ from sklearn.externals import joblib
 from sklearn.utils import resample
 import numpy as np
 
-from experiment_interface import Experiment
+from .experiment_interface import Experiment
 
 supervised = True
 
@@ -35,7 +35,7 @@ class NearestNeighborExperiment(Experiment):
         for key in self.hparam:
             if key in kwargs:
                 self.hparam[key] = kwargs[key]
-                print "new default hyperparameter:", key, kwargs[key]
+                print("new default hyperparameter:", key, kwargs[key])
 
         return
 
@@ -60,7 +60,7 @@ class NearestNeighborExperiment(Experiment):
         else:
             NN = self.get_estimator(**kwargs).fit(X)
 
-        if verbose: print "\tLearned model: ", NN
+        if verbose: print("\tLearned model: ", NN)
 
         return (NN,y)
 
@@ -117,10 +117,10 @@ class NearestNeighborWithPCAExperiment(NearestNeighborExperiment):
         if fit:
             F = PCA(self.n_principal_components)
             F.fit(X)
-            print "\tLeast explained variance:", F.explained_variance_[-1]
+            print("\tLeast explained variance:", F.explained_variance_[-1])
             self.F = F
         X_F = self.F.transform(X)
-        print "\tDimensionality reduction: ", X_F.shape
+        print("\tDimensionality reduction: ", X_F.shape)
         return X_F
 
 #    def train(self, X=None, y=None, **kwargs):

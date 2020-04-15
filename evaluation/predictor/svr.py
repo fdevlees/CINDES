@@ -5,7 +5,7 @@ from sklearn.utils import resample
 import pandas as pd
 import numpy as np
 
-from experiment_interface import Experiment
+from .experiment_interface import Experiment
 
 # svr with rbf kernel. C controls simplisity or decision surface. High C will
 # try to fit all data and select more support vector. Low C will give a more
@@ -42,7 +42,7 @@ class SupportVectorExperiment(Experiment):
         for key in self.hparam:
             if key in kwargs:
                 self.hparam[key] = kwargs[key]
-                print "new default hyperparameter:", key, kwargs[key]
+                print("new default hyperparameter:", key, kwargs[key])
 
         return
 
@@ -54,10 +54,10 @@ class SupportVectorExperiment(Experiment):
         if y is None: y=self.y
 
         svr_rbf = self.get_estimator()
-        print "Fitting...",
+        print("Fitting...", end=' ')
         svr_rbf.fit(X, y)
 
-        if verbose: print "\tLearned model: ", svr_rbf
+        if verbose: print("\tLearned model: ", svr_rbf)
 
         return svr_rbf
 
@@ -106,20 +106,20 @@ class SupportVectorExperiment(Experiment):
             #X = self.X[:n_train]
             #y = self.y[:n_train]
             X, y = resample(self.X, self.y, n_samples=n_train)
-            print "restricted hparamopt to only {} samples".format(n_train)
+            print("restricted hparamopt to only {} samples".format(n_train))
         else:
             X = self.X
             y = self.y
         stime = time.time()
         svr.fit(X, y)
         time_to_fit = time.time() - stime
-        print "\tTime to fit: ", time_to_fit, ' s'
+        print("\tTime to fit: ", time_to_fit, ' s')
 
         # 3. print results
-        print "svr:", svr
-        print "n svr.best_estimator_.support_", len(svr.best_estimator_.support_)
-        print "best_params_:", svr.best_params_
-        print "best_score_:", svr.best_score_
+        print("svr:", svr)
+        print("n svr.best_estimator_.support_", len(svr.best_estimator_.support_))
+        print("best_params_:", svr.best_params_)
+        print("best_score_:", svr.best_score_)
         self.R = svr.best_score_
         #print "cv_results_", svr.cv_results_ # too verbose
 
@@ -144,13 +144,13 @@ class SupportVectorExperiment(Experiment):
             stats_df_train['C'][i] = gamma
             stats_df_test['C'][i] = gamma
 
-        print "end of hyper opt:"
-        print "stats_df_train:\n", stats_df_train
-        print "stats_df_test:\n", stats_df_test
+        print("end of hyper opt:")
+        print("stats_df_train:\n", stats_df_train)
+        print("stats_df_test:\n", stats_df_test)
 
         # get hyperparameter with highest R**2
         C = stats_df_test.loc[stats_df_test['r'].idxmax()]['C']
-        print "self.C:", C
+        print("self.C:", C)
         self.hparam['C'] = C
 
         #raise SystemExit('stop')
@@ -171,8 +171,8 @@ class SupportVectorWithPCAExperiment(SupportVectorExperiment):
         F.fit(X)
         X_F = F.transform(X)
 
-        print "\tLeast explained variance:", F.explained_variance_[-1]
-        print "\tDimensionality reduction: ", X_F.shape
+        print("\tLeast explained variance:", F.explained_variance_[-1])
+        print("\tDimensionality reduction: ", X_F.shape)
 
         # Nearest neighbor
         svr = super(SupportVectorWithPCAExperiment, self).train(X_F, y, **kwargs)
@@ -204,7 +204,7 @@ class SupportVectorWithPCAExperiment(SupportVectorExperiment):
 
 if __name__=="__main__":
     import pickle
-    print "SVR:"
+    print("SVR:")
     class Run:
         pass
     retrain = True
@@ -215,7 +215,7 @@ if __name__=="__main__":
     regressor = SupportVectorExperiment(table=table, retrain=True, n_folds=n_folds, run=run, identify='ada_',
                                         descriptor= '1DL' )
 
-    print "regressor:", regressor
+    print("regressor:", regressor)
 
 
 

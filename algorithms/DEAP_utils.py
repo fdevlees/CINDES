@@ -7,7 +7,7 @@ import numpy as np
 random = np.random.random
 #import pickle
 import json
-from itertools import izip
+
 import pprint
 
 # needed by evolve
@@ -31,12 +31,12 @@ from CINDES.algorithms.GA import Fitness_Function
 from CINDES.evaluation.predictions import predictor
 from CINDES.evaluation.calculator import evaluate_mols
 from CINDES.evaluation.construction import indtocon, contoind
-import procedures
+from . import procedures
 
-from deap import tools
-from deap import base
-from deap import creator
-from deap import algorithms
+from .deap import tools
+from .deap import base
+from .deap import creator
+from .deap import algorithms
 
 
 def eaSimple(population, 
@@ -113,7 +113,7 @@ def eaSimple(population,
     record = stats.compile(population) if stats else {}
     logbook.record(gen=0, nevals=len(invalid_ind), **record)
     if verbose:
-        print logbook.stream
+        print(logbook.stream)
 
     # Begin the generational process
     for gen in range(1, ngen + 1):
@@ -144,7 +144,7 @@ def eaSimple(population,
         record = stats.compile(population) if stats else {}
         logbook.record(gen=gen, nevals=len(invalid_ind), **record)
         if verbose:
-            print logbook.stream
+            print(logbook.stream)
         best_ind = tools.selBest(population, 1)[0]
         history.append({
             'gen':gen,
@@ -200,9 +200,9 @@ def selBestSum(individuals, k, fit_attr="fitness"):
     :returns: A list containing the k best individuals.
     """
     #return sorted(individuals, key=attrgetter(fit_attr), reverse=True)[:k]
-    print individuals[0].fitness
-    print repr(individuals[0].fitness)
-    print individuals[0].fitness.values
+    print(individuals[0].fitness)
+    print(repr(individuals[0].fitness))
+    print(individuals[0].fitness.values)
     return sorted(individuals, key=lambda x:sum(getattr(x, fit_attr).values), reverse=True)[:k]
     #try:
     #    return sorted(individuals, key=lambda x:sum(getattr(x, fit_attr)), reverse=True)[:k]
@@ -219,7 +219,7 @@ def selRandom(individuals, k):
     This function uses the :func:`~random.choice` function from the
     python base :mod:`random` module.
     """
-    return [rrandom.choice(individuals) for i in xrange(k)]
+    return [rrandom.choice(individuals) for i in range(k)]
 
 
 def selTournamentSum(individuals, k, tournsize, fit_attr="fitness"):
@@ -235,7 +235,7 @@ def selTournamentSum(individuals, k, tournsize, fit_attr="fitness"):
     :mod:`random` module.
     """
     chosen = []
-    for i in xrange(k):
+    for i in range(k):
         aspirants = selRandom(individuals, tournsize)
         #chosen.append(max(aspirants, key=attrgetter(fit_attr)))
         chosen.append(max(aspirants, key=lambda x:sum(getattr(x, fit_attr).values)))

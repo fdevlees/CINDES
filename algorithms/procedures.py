@@ -8,7 +8,7 @@
     6. do a Steepest Descent algorithm.
 '''
 # this line must be at the beginning of the file!
-from __future__ import division
+
 
 # debug flag
 debug = 1
@@ -35,7 +35,7 @@ from CINDES.utils.table import set_table, get_property_table
 
 once = 0
 
-print "time for imports:", time.clock() - start
+print("time for imports:", time.clock() - start)
 
 
 def genconf(myrun):
@@ -44,21 +44,21 @@ def genconf(myrun):
     param = myrun.__dict__
     conf = zcon.indtocon(param['startind'])
     mol = Molecule(conf=conf)
-    print "defaultgroups:", myrun.defaultgroups
-    print "in GENCONF: conf is:", conf
+    print("defaultgroups:", myrun.defaultgroups)
+    print("in GENCONF: conf is:", conf)
     param['workdir'] = os.getcwd()
     path = param['workdir']
     param["path"] = str(path)
 
     if isinstance(myrun.zmatrixfile, list):
-        print "myrun.zmatrixfile:", myrun.zmatrixfile
+        print("myrun.zmatrixfile:", myrun.zmatrixfile)
         for zmatfile in myrun.zmatrixfile:
             tzmat = myrun.TZmatrices[zmatfile]
-            c, a, p = map(deepcopy, (tzmat['core'], tzmat['active'], tzmat['passive']))
+            c, a, p = list(map(deepcopy, (tzmat['core'], tzmat['active'], tzmat['passive'])))
             mtzmat = zcon.constructor2(mol.conf, c, a, p, links=myrun.symlinks, defaultgroups=myrun.defaultgroups)
             setattr(mol, zmatfile, mtzmat)
     else:
-        print "zmatrixfile = single file"
+        print("zmatrixfile = single file")
         TZmat = myrun.TZmat
         c = deepcopy(TZmat['core'])
         a = deepcopy(TZmat['active'])
@@ -78,12 +78,12 @@ def genconf(myrun):
             calc = calc
             for cal in calc:
                 program.filewriter(mol, cal)
-                print "\n\tprinter file with:"
+                print("\n\tprinter file with:")
                 pprint.pprint(cal)
         else:
             calc = calcs[0]
             program.filewriter(mol, calc)
-            print "\n\tprinter file with:"
+            print("\n\tprinter file with:")
             pprint.pprint(calc)
     return
 
@@ -93,15 +93,15 @@ def generate_procedure(myrun):
 
     table = set_table(myrun)
     array = myrun.array
-    print myrun
+    print(myrun)
 
     # get all structures
-    print "len table:", len(table)
+    print("len table:", len(table))
 
     if hasattr(myrun, 'ngenerate'):
         from CINDES.utils.molecule import Molecule
         mols = [ Molecule(conf=zcon.indtocon(ind)) for ind in myrun.generatemols ]
-        print "mols:", mols
+        print("mols:", mols)
     else:
         mols = get_all_molecules(array)
     # 1b check already in database
@@ -114,9 +114,9 @@ def generate_procedure(myrun):
 
     count = 0
     if myrun.batchsize is None:
-        print "molecules:"
+        print("molecules:")
         for i, mol in enumerate(mols):
-            print i, mol.index
+            print(i, mol.index)
         if not myrun.nosub == 1:
             mols_all = calculator.procedure(myrun, mols_tocal, mols_nocal)
             #mols_all = submittingprocedure(mols_tocal,
@@ -131,12 +131,12 @@ def generate_procedure(myrun):
         def chunks(l, n):
             '''yields successive n-sized chunks of l'''
             for i in range(0, len(l), n):
-                print "    yielding:", i, "to:", i+n, "from total:", len(l)
+                print("    yielding:", i, "to:", i+n, "from total:", len(l))
                 yield l[i:i + n]
 
         mols_all = []
         for i, batch in enumerate(chunks(mols_tocal, myrun.batchsize)):
-            print "chunk nr:", i, "with ", len(batch), "structures"
+            print("chunk nr:", i, "with ", len(batch), "structures")
             if not myrun.nosub == 1:
                 batch = calculator.procedure(myrun, batch, [])
                 #batch = submittingprocedure(batch,
@@ -158,22 +158,22 @@ def generate_procedure(myrun):
         # make file with all the filenames:
         with open('./CALC/filenames.txt', 'w') as fout:
             fout.write('\n'.join([myrun.identify + mol.index for mol in mols_tocal]))
-        print "njobs:", len(mols_tocal)
+        print("njobs:", len(mols_tocal))
 
         # generate all inputfiles
         calculator.geommaker(mols_tocal, myrun)
         calculator.filemaker(mols_tocal, myrun)  # ----------------------------------HERE IS THE FILEWRITER CALL
 
     # final logging
-    print "mols_all:", mols_all
+    print("mols_all:", mols_all)
     table = loggings(mols_all, table, count, 1, 1, made_pred=made_pred, tablename=myrun.tablename)
-    print "DONE"
+    print("DONE")
     return
 
 
 def get_all_molecules(array):
     from CINDES.molecule import Molecule
-    print "in get_all_molecules"
+    print("in get_all_molecules")
     #A = [ map(''.join,item) for item in array ]
     A = array
     C = [[]]
@@ -221,14 +221,14 @@ def generate2(core, active, passive, converter, **kwargs):
 
 def genrandom(param, array):
     ''' generate random structures and print '''
-    print
-    for _ in xrange(param['nrandom']):
+    print()
+    for _ in range(param['nrandom']):
         conf = []
         for i in range(len(array)):
             group = random.choice(array[i])
             conf.append(group)
-        print zcon.contoind(conf)
-    print
+        print(zcon.contoind(conf))
+    print()
     return True
 
 # 5: testrun
@@ -262,7 +262,7 @@ def SteepestDescent(param, array):
     raise NotImplementedError('this method is too old and out of date compared to the BFS procedure')
 
     # defines which sites will be changed. only relevant for steepest2 algorithm
-    myrun.restingsites = range(myrun.nsites)
+    myrun.restingsites = list(range(myrun.nsites))
 
     # ------------------------------------- #
     # --- HERE THE MAIN LOOP STARTS --- --- #
@@ -277,7 +277,7 @@ def SteepestDescent(param, array):
             startconf = optsite.conf
         else:
             startconf = get_startconf(param, array)
-        print "start configuration: ", startconf
+        print("start configuration: ", startconf)
 
         # STEP 1: INDEXMAKER
         # get indices_all and the indices that still need to be calculated
@@ -294,24 +294,24 @@ def SteepestDescent(param, array):
 
         # STEP 5: UPDATE OPTIMUM STRUCTURE
         # decide what the optimum site is and if the bc if fullfilled
-        print "BCOK:", bcok
+        print("BCOK:", bcok)
         optsite, bcok = testmax(myrun, mols_all, bcok)
 
         if myrun.procedure == 'steepest2':
             maxconf = zcon.indtocon(optsite[0])
-            print "maxconf:", maxconf, 'while startconf:', startconf
+            print("maxconf:", maxconf, 'while startconf:', startconf)
             try:
                 changedsite = [siteM == siteS for siteM, siteS in zip(maxconf, startconf)].index(False)
             except ValueError:
-                print "no site changed"
+                print("no site changed")
             else:
                 myrun.restingsites.remove(changedsite)
             if myrun.restingsites == []:
-                print "all sites changed once"
+                print("all sites changed once")
                 break
 
-        print("--- %s seconds ---" % (time.time() - myrun.starttime))
-        print(myrun.currenttime())
+        print(("--- %s seconds ---" % (time.time() - myrun.starttime)))
+        print((myrun.currenttime()))
         # END LOOP OVER SITES
 
         # get optimum and test convergence
@@ -320,11 +320,11 @@ def SteepestDescent(param, array):
             break
         count += 1
         if count > param['maxiter']:
-            print "maxiterations is reached"
-            print "optimum is: ", optimum
+            print("maxiterations is reached")
+            print("optimum is: ", optimum)
             break
     # ---------------------------- #
     # ------ END OF LOOPING ------ #
     # ---------------------------- #
-    print "DONE"
+    print("DONE")
     return

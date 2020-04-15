@@ -1,14 +1,14 @@
 
-import fafoomga
+from . import fafoomga
 from rdkit import Chem
 import os, sys
 
 debug=True
 
 def GetLowestXYZ(mol):
-    print "in GetLowestXYZ"
+    print("in GetLowestXYZ")
     if debug:
-        print "mol:", mol, "mol.smiles:", mol.smiles
+        print("mol:", mol, "mol.smiles:", mol.smiles)
     for filename in ['kill.dat', 'optimized_structures.sdf']:
         if os.path.exists(filename): os.remove(filename)
     try:
@@ -19,24 +19,24 @@ def GetLowestXYZ(mol):
         if debug:
             import traceback
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            print repr(" ".join(traceback.format_exception(exc_type, exc_value,
-                                                          exc_traceback)))
-            print e
+            print(repr(" ".join(traceback.format_exception(exc_type, exc_value,
+                                                          exc_traceback))))
+            print(e)
     suppl = Chem.SDMolSupplier('optimized_structures.sdf', removeHs=False)
     mols = [ mol for mol in suppl ]
     lowmol = sorted(mols, key=lambda mol:mol.GetDoubleProp('Energy'))[0]
     xyz = XYZFromMol(lowmol)
-    print "xyz:", xyz
+    print("xyz:", xyz)
     return xyz
 
 def GetConformers(mol):
-    print "in GetConformers"
+    print("in GetConformers")
     for filename in ['kill.dat', 'optimized_structures.sdf']:
         if os.path.exists(filename): os.remove(filename)
     try:
         fafoomga.main(mol.smiles)
     except SystemExit as e:
-        print e
+        print(e)
     suppl = Chem.SDMolSupplier('optimized_structures.sdf', removeHs=False)
     mols = [ mol for mol in suppl ]
     mols = sorted(mols, key=lambda mol:mol.GetDoubleProp('Energy'))
@@ -56,12 +56,12 @@ def XYZFromMol(mol):
     #get number of atoms
     num = int(molStr2List[3].split()[0])
 
-    for i in xrange(4,4+num):
+    for i in range(4,4+num):
         coords = molStr2List[i].split()[0:4]
         molCoords.append(coords)
 
     reorder   = lambda xyz:"{3} {0} {1} {2}".format(*xyz)
-    cartesian = map(reorder, molCoords)
+    cartesian = list(map(reorder, molCoords))
     xyz       = "\n".join(cartesian)
     xyz      += '\n\n'
 

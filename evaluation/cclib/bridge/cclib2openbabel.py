@@ -71,7 +71,7 @@ def readfile(fname, format):
         obc.ReadFile(mol, fname)
         return makecclib(mol)
     else:
-        print("Unable to load the %s reader from OpenBabel." % format)
+        print(("Unable to load the %s reader from OpenBabel." % format))
         return {}
 
 

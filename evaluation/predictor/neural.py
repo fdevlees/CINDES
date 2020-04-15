@@ -35,14 +35,14 @@ def run_example(X, Y):
     if False:
         estimator = KerasRegressor( build_fn = baseline_model, nb_epoch=50, batch_size=10, verbose=1)
         results = cross_val_score(estimator, X, Y, cv=kfold)
-        print("Results: %.2f (%.2f) MSE" % (results.mean(), results.std()))
+        print(("Results: %.2f (%.2f) MSE" % (results.mean(), results.std())))
     else:
         estimators = []
         estimators.append(( 'standardize', StandardScaler() ) )
         estimators.append(( 'mlp'        , KerasRegressor( build_fn = baseline_model, nb_epoch=50, batch_size=5, verbose=1)))
         pipeline = Pipeline(estimators)
         results = cross_val_score(pipeline, X, Y, cv=kfold)
-        print "Standardized: %.2f (%.2f) MSE" % (results.mean(), results.std() )
+        print("Standardized: %.2f (%.2f) MSE" % (results.mean(), results.std() ))
 
     return
 
@@ -55,7 +55,7 @@ def RMSE(data1,data2):
     assert len(data1)==len(data2)
     npoints = len(data1)
     rmse = 0
-    for i in xrange(npoints):
+    for i in range(npoints):
         rmse += ( data1[i] - data2[i] )**2
     return np.sqrt( rmse / float(npoints) )
 
@@ -140,7 +140,7 @@ class neural(object):
         assert len(self.X)==len(self.y)
         self.ndim = len(self.X)
         self.xdim = len(self.X[0])
-        print "ndim,xdim", self.ndim, self.xdim
+        print("ndim,xdim", self.ndim, self.xdim)
         return
 
     def scaler(self,X):
@@ -165,12 +165,12 @@ class neural(object):
             pred_test  = self.test_new( X_test)
             sprint(10, pred_train, y_train)
             sprint(10, pred_test, y_test)
-            print 'train error:', RMSE( pred_train, y_train)
-            print ' test error:', RMSE( pred_test, y_test)
+            print('train error:', RMSE( pred_train, y_train))
+            print(' test error:', RMSE( pred_test, y_test))
             plot_error( pred_train, y_train, 'ro')
             plot_error( pred_test,  y_test, 'bo', alpha=0.5)
             plt.show()
-        print scores
+        print(scores)
         self.scores = scores
         return
 
@@ -179,7 +179,7 @@ class neural(object):
         # optimize parameters
         if self.grid_search:
             hyperparameters = self.grid_search(self.X, self.y)
-            print "hyperparameters:", hyperparameters
+            print("hyperparameters:", hyperparameters)
         else:
             self.model = get_model(input_dim        = self.xdim,
                                    dropout_rate     = 0.3,
@@ -204,8 +204,8 @@ class neural(object):
         estimator = KerasRegressor(build_fn=test_model, nb_epoch=100, batch_size=5, verbose=1)
         kfold = KFold(n_splits=3, random_state=seed)
         results = cross_val_score( estimator, X,y, cv=kfold)
-        print("Results: %.2f (%.2f) MSE" % (results.mean(), results.std()))
-        print "results:", results
+        print(("Results: %.2f (%.2f) MSE" % (results.mean(), results.std())))
+        print("results:", results)
         return
 
     def grid_search(self, X, y):
@@ -245,18 +245,18 @@ class neural(object):
                          #  init_mode        = init_mode   )
 
         grid = GridSearchCV(estimator=estimator, param_grid=param_grid, cv=kfold)
-        print "before fit"
+        print("before fit")
         grid_result = grid.fit(X,y)
 
         # summarize results:
-        print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
+        print(("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_)))
         means = grid_result.cv_results_['mean_test_score']
         stds = grid_result.cv_results_['std_test_score']
         params = grid_result.cv_results_['params']
         for mean, stdev, param in zip(means, stds, params):
-            print("%f (%f) with: %r" % (mean, stdev, param))
+            print(("%f (%f) with: %r" % (mean, stdev, param)))
 
-        print "grid_result:", grid_result
+        print("grid_result:", grid_result)
         return grid_result
 
     def setup_works(self):
@@ -317,12 +317,12 @@ class neural(object):
                                    nb_epoch=200,
                                    batch_size=32,
                                    validation_data=(X_test,y_test) ) # each individual is seen n epoch times. 
-        if debug: print "model_out:", model_out
+        if debug: print("model_out:", model_out)
         return
 
     def test(self, X_test, y_test):
         loss_and_metrics = self.model.evaluate(X_test, y_test, batch_size=32)
-        if debug: print "loss_and_metrics:", loss_and_metrics
+        if debug: print("loss_and_metrics:", loss_and_metrics)
         return loss_and_metrics
 
     def test_new( self, X_test_new):

@@ -12,12 +12,12 @@ maxcount = 100
 
 with open(args.inputfile,'r') as fid:
    line = next(fid)
-   print "firstline:", line
+   print("firstline:", line)
    while True:  #maxcount
         assert 'COUNT' in line, line # first line
         counter = line.split()[1]
         if int(counter) >= maxcount: break
-        print "counter:", counter
+        print("counter:", counter)
         line = next(fid) #go to next line
         while True:
             if 'COUNT' in line: break

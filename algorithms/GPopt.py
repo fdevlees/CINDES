@@ -1,6 +1,6 @@
 #!/bin/env python
 # this line must be at the beginning of the file!
-from __future__ import division
+
 
 # debug flag
 debug = 1
@@ -14,8 +14,8 @@ import time
 # import my own modules
 from CINDES.evaluation import construction as zcon  # all functions needed for constructing new geometries
 from CINDES.evaluation.predictions import predictor
-from loggings import loggings
-from BFS import testmax
+from .loggings import loggings
+from .BFS import testmax
 from CINDES.evaluation.calculator import evaluate_mols
 
 # import utils
@@ -79,9 +79,9 @@ class GaussianProcess(Algorithm):
         return
 
     def set_space(self):
-        print "array:", self.array
+        print("array:", self.array)
         space = normalize_dimensions(self.array_joined)
-        print "space:", space
+        print("space:", space)
         self.space = space
         return
 
@@ -98,7 +98,7 @@ class GaussianProcess(Algorithm):
         mols, nnewcalcs, made_pred = evaluate_mols(self.run, mols, self.table, gen, nsite=0)
         self.ncalcs += nnewcalcs
         self.optimum, _ = testmax(self.run, mols)
-        print "mols_all:", mols
+        print("mols_all:", mols)
 
         # 5. log new results
         self.table = loggings(mols,
@@ -122,7 +122,7 @@ class GaussianProcess(Algorithm):
         # algorithms: GP(default), RF, ET, GBRT
         # acq_func: gp_hedge(default), LCB, EI, PI
         # acq_optimizer: sampling(for categorical) lbfgs
-        print "self.param:", self.param
+        print("self.param:", self.param)
 
         optimizer = Optimizer(
             dimensions=self.space,
@@ -134,8 +134,8 @@ class GaussianProcess(Algorithm):
             )
 
 
-        print "optimizer model:", optimizer.base_estimator_
-        print "eta: {}, acq-function: {}, acq-optimizer: {}".format(optimizer.eta, optimizer.acq_func, optimizer.acq_optimizer)
+        print("optimizer model:", optimizer.base_estimator_)
+        print("eta: {}, acq-function: {}, acq-optimizer: {}".format(optimizer.eta, optimizer.acq_func, optimizer.acq_optimizer))
 
         for gen in range(self.run.maxiter):
             print_title("BATCH-NO: " + str(gen), outline='l', signator="-")
@@ -163,16 +163,16 @@ class GaussianProcess(Algorithm):
 
             logging.info("--- %s seconds ---" % (time.time() - self.run.starttime))
 
-        print "\n\tOptimum:", min(zip(optimizer.yi, optimizer.Xi))
+        print("\n\tOptimum:", min(list(zip(optimizer.yi, optimizer.Xi))))
         result = {'p':best[1], 'index':best[0], 'history':self.history, 'ncalcs':self.ncalcs, 'count':self.run.maxiter}
         return result
 
     @staticmethod
     def only_finite(X, Y):
-        print "X, Y before:", X, Y
+        print("X, Y before:", X, Y)
         # Y  is converted to np.float array so None values become np.nan values since
         # isfinite cannot handle None's
-        X, Y = zip(*[ (x,y) for x,y in zip(X,np.array(Y, dtype=np.float)) if np.isfinite(y) ])
-        print "X, Y after:", X, Y
+        X, Y = list(zip(*[ (x,y) for x,y in zip(X,np.array(Y, dtype=np.float)) if np.isfinite(y) ]))
+        print("X, Y after:", X, Y)
         return X, Y
 

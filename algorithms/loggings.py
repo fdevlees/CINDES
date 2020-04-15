@@ -35,7 +35,7 @@ def formatitem(opt, item, maxlenconf=49):
         datar = [formatter(datatje) for datatje in item[2:]]
         datas = ' '.join(datar) + "  |"
     except ValueError:
-        print item[2:]
+        print(item[2:])
         raise
     itemstring = index + abin + datas
     return itemstring
@@ -89,7 +89,7 @@ def log_table(mols, table, tablename='table', write=True):
             json_table = dict()
 
         # 2 update (nested)
-        for key, value in table.iteritems():
+        for key, value in table.items():
             if key in json_table:
                 json_table[key].update(value)
             else:
@@ -128,14 +128,14 @@ def log_screen(mols):
     # first print the properties of the first molecule
     if logging.getLogger().isEnabledFor(logging.INFO):
         try:
-            print "first molecule:", mols[0].index
-            for k, v in mols[0].props.iteritems():
-                print "{:15s}:".format(k),
+            print("first molecule:", mols[0].index)
+            for k, v in mols[0].props.items():
+                print("{:15s}:".format(k), end=' ')
                 if len(repr(v))>100:
-                    print
+                    print()
                     pprint.pprint(v, indent=2, width=160)
                 else:
-                    print v
+                    print(v)
         except IndexError:
             return
 
@@ -147,7 +147,7 @@ def log_screen(mols):
     noprintprops = set()
     for mol in mols:
         try:
-            for prop, value in mol.props.items():
+            for prop, value in list(mol.props.items()):
                 if prop in props:
                     continue
                 if issinglevalued(value):
@@ -169,9 +169,7 @@ def log_screen(mols):
     p = None
     while j < len(mols):
         try:
-            keys, values = zip(*filter(
-                lambda x:issinglevalued(x[1]), mols[j].props.items()
-                ))
+            keys, values = list(zip(*[x for x in list(mols[j].props.items()) if issinglevalued(x[1])]))
             # check if Pvalue is one of these singular props
             if mols[j].Pvalue in values:
                 # so yes. Pvalue is one of the propvalues. but which one?
@@ -193,7 +191,7 @@ def log_screen(mols):
     try:
         props = sorted(props)
     except Exception as e:
-        print 'failed props sort:', e
+        print('failed props sort:', e)
     # remove 'smiles' from props:
     if 'smiles' in props:
         props.remove('smiles')
@@ -201,7 +199,7 @@ def log_screen(mols):
 
     # print everything:
     # .1 decide max conf lenght
-    maxlenconf = max(map(lambda x: len(x.index), mols))
+    maxlenconf = max([len(x.index) for x in mols])
 
     # decide how many props per line and how many table need to be printed
     propsets=[]
@@ -257,7 +255,7 @@ def log_screen(mols):
 
 def log_screen_pred(mols):
     import pandas as pd
-    print
+    print()
     preds = [mol.predictions for mol in mols]
     indices = [mol.index for mol in mols]
     pvalues = [mol.Pvalue for mol in mols]
@@ -267,12 +265,12 @@ def log_screen_pred(mols):
     # ----- pretty print df -----
     s = df.to_string().split('\n')
     ls = len(s[0])
-    print "+{}+".format((ls + 2) * "-")
-    print "| {} |".format(s[0])
-    print "+{}+".format((ls + 2) * "-")
+    print("+{}+".format((ls + 2) * "-"))
+    print("| {} |".format(s[0]))
+    print("+{}+".format((ls + 2) * "-"))
     for item in s[1:]:
-        print "| {} |".format(item)
-    print "+{}+".format((ls + 2) * "-")
+        print("| {} |".format(item))
+    print("+{}+".format((ls + 2) * "-"))
     # ----- end pretty print-----
 
     return df
@@ -309,10 +307,10 @@ def pstats(predinfo):
 
     # get all the pearson coefficients:
     pearsonr = [predinfo['pvalues'].corr(predinfo[str(ml)]) for ml in map(str, predinfo.columns[1:-3])]
-    print "pearsonr:", pearsonr
+    print("pearsonr:", pearsonr)
 
     with open('PRs', 'a') as p:
-        p.write(' '.join(map(str, pearsonr) + map(str, predinfo.iloc[0, -3:])))
+        p.write(' '.join(list(map(str, pearsonr)) + list(map(str, predinfo.iloc[0, -3:]))))
         p.write('\n')
     return
 

@@ -1,4 +1,4 @@
-from knn import NearestNeighborExperiment, NearestNeighborWithPCAExperiment
+from .knn import NearestNeighborExperiment, NearestNeighborWithPCAExperiment
 
 '''Format: setting, # folds, # principal components'''
 hlg_knn = NearestNeighborWithPCAExperiment("HLG", 5, 100)

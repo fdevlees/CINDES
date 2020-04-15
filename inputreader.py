@@ -30,21 +30,21 @@ def read_input(inputfilename='INPUT'):
 
     # here we set the fragment library per site, called array
     if param['procedure'] in ['genconf']:
-        print "Generate Configuration Procedure Active"
+        print("Generate Configuration Procedure Active")
         array = []
     else:
         array = substireader(param['nsites'], subinp)
         if not param['procedure'] in ['getrandom', 'genrandom', 'testpred']:
-            print "ARRAY:"
+            print("ARRAY:")
             for i, item in enumerate(array):
-                print "site{:>2d}:  |".format(i),
+                print("site{:>2d}:  |".format(i), end=' ')
                 for sub in item:
-                    print " {} ".format("".join(sub)),
-                    print "|",
-                print
+                    print(" {} ".format("".join(sub)), end=' ')
+                    print("|", end=' ')
+                print()
     if not param['procedure'] in ['getrandom', 'genrandom']:
         logging.debug("INPUT PARAMETERS:")
-        for key, value in param.iteritems():
+        for key, value in param.items():
             logging.debug(key + ' : ' + str(value))
 
     # This is new and not yet fully functional
@@ -86,7 +86,7 @@ def get_preds(subinp, line):
                 'qml': {'type': 'qml', 'kernel': 'rbf'}
                 }
     # set n_folds default for each experiment:
-    for experiment in defaults.values():
+    for experiment in list(defaults.values()):
         experiment.update({'n_folds': 5,
                            'pca': False,
                            'n_principal_components': 100,
@@ -132,7 +132,7 @@ def get_prop_function(subinp, line):
     line = subinp.readline()
     isword = re.compile('(^[a-zA-Z_]+[0-9]?\(?$)')
     splitted1 = re.split('(\[|\])', line)
-    splitted2 = map(lambda x:x.split(), splitted1)
+    splitted2 = [x.split() for x in splitted1]
 
     props = set()
     inkey = False
@@ -146,7 +146,7 @@ def get_prop_function(subinp, line):
                 props.add(split)
     arguments = ",".join(props)
     funcstr = "lambda {}:{}".format(arguments, line)
-    print "funcstr:", funcstr
+    print("funcstr:", funcstr)
     func = eval(funcstr)
     func.__doc__ = 'lambda function: {}'.format(line.strip())
 
@@ -163,7 +163,7 @@ def get_calcs(subinp, line):
         if line.strip()=='{:d}.{:d}'.format(i,j):
             line = subinp.readline()
         else:
-            print "only one job!"
+            print("only one job!")
         calc, line = get_jobs(subinp, line, index=0)
         calcs.append(calc)
         # try to see if yet another job is given
@@ -177,7 +177,7 @@ def get_calcs(subinp, line):
             calcs = []
         if line=='endcalcs':
             break
-        i, j = map(int, line.split('.'))
+        i, j = list(map(int, line.split('.')))
     return supercalcs
 
 
@@ -194,7 +194,7 @@ def get_jobs(subinp, line, index=1):
         if key in ['nosub', 'nprocs', 'fafoom', 'mem']:
             value = int(value)
         elif key in ['positions']:
-            value = map(int, value.split())
+            value = list(map(int, value.split()))
         calc[key] = value
         return
     calc = dict()
@@ -266,13 +266,13 @@ def get_genalg_params(subinp, line):
     try:
         n_extra_lines = int(line.split()[2])
     except IndexError:
-        print "WARNING: all default values for the genetic algorithms will be used:"
+        print("WARNING: all default values for the genetic algorithms will be used:")
     else:  # execute only when no exception is thrown
         for _ in range(n_extra_lines):
             line = subinp.readline()
             key = line.split()[0]
             if not key in defaults:
-                print "keyword in GA section not recognized:", key
+                print("keyword in GA section not recognized:", key)
                 raise SystemExit('program stopped')
             value_type = type(defaults[key])
             if value_type is bool:
@@ -281,7 +281,7 @@ def get_genalg_params(subinp, line):
                 defaults[key] = tuple(map(float, line.split()[1:]))
             else:
                 defaults[key] = value_type(line.split()[1])
-        print " defaults of genetic algorithm are changed. new values:"
+        print(" defaults of genetic algorithm are changed. new values:")
     return subinp, defaults
 
 def get_pso_params(subinp, line):
@@ -300,17 +300,17 @@ def get_pso_params(subinp, line):
     try:
         n_extra_lines = int(line.split()[2])
     except IndexError:
-        print "WARNING: all default values for the genetic algorithms will be used:"
+        print("WARNING: all default values for the genetic algorithms will be used:")
     else:  # execute only when no exception is thrown
         for _ in range(n_extra_lines):
             line = subinp.readline()
             key = line.split()[0]
             if not key in defaults:
-                print "keyword in PSO section not recognized:", key
+                print("keyword in PSO section not recognized:", key)
                 raise SystemExit('program stopped')
             value_type = type(defaults[key])
             defaults[key] = value_type(line.split()[1])
-        print " defaults for particle swarm optimization are changed. new values:"
+        print(" defaults for particle swarm optimization are changed. new values:")
 
     # change defaults of c1/c2 for PPSO
     if not defaults['type'] == 'concrete':
@@ -331,17 +331,17 @@ def get_gprf_params(subinp, line):
     try:
         n_extra_lines = int(line.split()[2])
     except IndexError:
-        print "WARNING: all default values for the genetic algorithms will be used:"
+        print("WARNING: all default values for the genetic algorithms will be used:")
     else:  # execute only when no exception is thrown
         for _ in range(n_extra_lines):
             line = subinp.readline()
             key = line.split()[0]
             if not key in defaults:
-                print "keyword in GP/RF section not recognized:", key
+                print("keyword in GP/RF section not recognized:", key)
                 raise SystemExit('program stopped')
             value_type = type(defaults[key])
             defaults[key] = value_type(line.split()[1])
-        print " defaults for GP/RF are changed. new values:", defaults
+        print(" defaults for GP/RF are changed. new values:", defaults)
     return subinp, defaults
 
 
@@ -453,7 +453,7 @@ def readfile(subinp):
             if len(splitted[1:])==1:
                 paras['zmatrixfile'] = splitted[1]
             else:
-                print "multiple ZMAT files!"
+                print("multiple ZMAT files!")
                 paras['zmatrixfile'] = splitted[1:]
             continue
         elif key=='defaultgroups':
@@ -615,7 +615,7 @@ def readfile(subinp):
                 try:
                     paras['datacolumn'] = int(line.split()[2])
                 except IndexError:
-                    print "first column of table is taken as datacolumn. (default)"
+                    print("first column of table is taken as datacolumn. (default)")
                     paras['datacolumn'] = 1
                 paras['restart'] = 1
                 paras['readtable'] = True
@@ -627,14 +627,14 @@ def readfile(subinp):
                 try:
                     paras['ngenerate'] = int(line.split()[2])
                 except IndexError:
-                    print "all possible molecules from site array will be calculated!"
+                    print("all possible molecules from site array will be calculated!")
                 else: # do only when no error catched
                     indices = []
                     for _ in range(paras['ngenerate']):
                         line = subinp.readline()
                         indices.append(line.strip())
                     paras['generatemols'] = indices
-                    print "read {:d} indices to generate".format(paras['ngenerate'])
+                    print("read {:d} indices to generate".format(paras['ngenerate']))
             elif paras['procedure'] in ['empty']:
                 paras['sites']=[]
         elif 'regression' in line:
@@ -642,7 +642,7 @@ def readfile(subinp):
         elif any(keyword in line for keyword in ['readtable', 'read_table']):
             paras['readtable'] = True
         elif 'restart' in line:
-            print "RESTART KEYWORD IS DEPRECATED: USE READTABLE INSTEAD"
+            print("RESTART KEYWORD IS DEPRECATED: USE READTABLE INSTEAD")
             paras['restart'] = int(line.split()[1])
             if paras['restart'] >= 1:
                 paras['readtable'] = True
@@ -672,7 +672,7 @@ def readfile(subinp):
                 links.append(link)
             paras['nlinks'] = nlinks
             paras['symlinks'] = links
-            print "SYMMETRY ACTIVATED!"
+            print("SYMMETRY ACTIVATED!")
         elif 'simple' in line:
             paras['simple'] = 1
         elif key == 'sites':
@@ -704,7 +704,7 @@ def readfile(subinp):
         elif 'identif' in line:
             paras['identify'] = line.split()[1]
             if not paras['identify'].endswith('_'):
-                print "underscore appended to identify"
+                print("underscore appended to identify")
                 paras['identify'] += '_'
             continue
         elif key=='worker':
@@ -728,7 +728,7 @@ def readfile(subinp):
 
         else:
             if line.strip():  # so if not just an empty line:
-                print "line: \"{}\" is not interpreted".format(line.strip('\n')),
+                print("line: \"{}\" is not interpreted".format(line.strip('\n')), end=' ')
                 raise SystemExit('program stopped')
 
     # get a list of all properties that need to be calculated:
@@ -761,7 +761,7 @@ def substireader(nsit, subinp):
             line2 = subinp.readline().split()
             nsubsit = int(line2[1])
         except IndexError:
-            print "no functional groups present or wrong formatted"
+            print("no functional groups present or wrong formatted")
             break
         logging.debug("site number: " + str(i + 1))
         logging.debug("nsubsit: " + str(nsubsit))
@@ -777,9 +777,9 @@ if __name__ == "__main__":
     import sys
     fid = openfile(sys.argv[1])
     line1, line2 = readfile(fid)
-    print "inputline: ", line1
-    print "tweede inputline: ", line2
+    print("inputline: ", line1)
+    print("tweede inputline: ", line2)
     nsit = len(line1[-1])
     subs = substireader(nsit, fid)
-    print "subs:",
+    print("subs:", end=' ')
     pprint(subs)

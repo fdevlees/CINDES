@@ -8,19 +8,19 @@ class DB(object):
         try:
             self.con = lite.connect(dbname)
         except lite.Error as e:
-            print "error opening db"
+            print("error opening db")
             raise
         else:
             self.cur = self.con.cursor()
         return
 
     def __enter__(self):
-        print "enter db..."
+        print("enter db...")
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.con:
-            print "exiting db..."
+            print("exiting db...")
             self.con.commit()
             self.cur.close()
             self.con.close()
@@ -37,7 +37,7 @@ class DB(object):
 
     def do_query(self,sql):
         result = self.cur.execute(sql)
-        description = list(map(lambda x:x[0], result.description))
+        description = list([x[0] for x in result.description])
         return result.fetchall(), description
 
 def to_tablebin( table ):
@@ -47,22 +47,22 @@ def to_tablebin( table ):
         index = '_'.join( item[2:7] )
         value = float(item[7])
         ftable.append( [ index, value ] )
-    print "len table:", len(ftable)
+    print("len table:", len(ftable))
 
     with open('tablebin','wb') as f:
         pickle.dump( ftable, f)
 
 def main():
     with DB(dbname) as mydb:
-        print "tables:", mydb.get_tablenames()
+        print("tables:", mydb.get_tablenames())
         names = mydb.get_tablenames()
         for i,name in enumerate(names):
-            print "i:", i, "name:", name
+            print("i:", i, "name:", name)
             table1 = mydb.get_table( name )
             for item in table1[:3]:
-                print " | ".join(map(str,item))
-            print "n:", len(table1)
-            print
+                print(" | ".join(map(str,item)))
+            print("n:", len(table1))
+            print()
 
         to_tablebin( mydb.get_table( names[2] ) )
 

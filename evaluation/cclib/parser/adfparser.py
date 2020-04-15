@@ -12,7 +12,7 @@
 
 """Parser for ADF output files"""
 
-from __future__ import print_function
+
 
 import re
 
@@ -95,7 +95,7 @@ class ADF(logfileparser.Logfile):
 
         # Used to avoid extracting the final geometry twice in a GeoOpt
         self.NOTFOUND, self.GETLAST, self.NOMORE = list(range(3))
-        self.finalgeometry = self.NOTFOUND 
+        self.finalgeometry = self.NOTFOUND
 
         # Used for calculating the scftarget (variables names taken from the ADF manual)
         self.accint = self.SCFconv = self.sconv2 = None
@@ -136,7 +136,7 @@ class ADF(logfileparser.Logfile):
         # this with the previous block, if possible.
         if line[:6] == "Create":
             while line[:5] != "title":
-                line = inputfile.next()
+                line = next(inputfile)
 
         if line[1:10] == "Symmetry:":
             info = line.split()
@@ -298,7 +298,7 @@ class ADF(logfileparser.Logfile):
                     line = next(inputfile)
                 except StopIteration: #EOF reached?
                     self.logger.warning("SCF did not converge, so attributes may be missing")
-                    break            
+                    break
 
             if line.find("SCF not fully converged, result acceptable") > 0:
                 self.logger.warning("SCF not fully converged, results acceptable")
@@ -351,7 +351,7 @@ class ADF(logfileparser.Logfile):
         # ==========================
         # Geometry Convergence Tests
         # ==========================
-        #  
+        #
         # Energy  old :         -5.14170647
         #         new :         -5.15951374
         #
@@ -519,7 +519,7 @@ class ADF(logfileparser.Logfile):
             line = next(inputfile)
             while len(line) > 5:
                 info = line.split()
-                if info[2] == 'A': 
+                if info[2] == 'A':
                     self.mosyms[0].append('A')
                     moenergies[0].append(utils.convertor(float(info[4]), 'hartree', 'eV'))
                     if info[3] != '0.00':
@@ -671,7 +671,7 @@ class ADF(logfileparser.Logfile):
             line = next(inputfile).strip()
             while line:
                 temp = line.split()
-                self.vibfreqs.append(float(temp[0]))                    
+                self.vibfreqs.append(float(temp[0]))
                 self.vibirs.append(float(temp[2])) # or is it temp[1]?
                 line = next(inputfile).strip()
             self.vibfreqs = numpy.array(self.vibfreqs, "d")
@@ -841,7 +841,7 @@ class ADF(logfileparser.Logfile):
             while line[0] != "1":
                 line = next(inputfile)
 
-                # If spin is specified, then there will be two coefficient matrices. 
+                # If spin is specified, then there will be two coefficient matrices.
                 if line.strip() == "***** SPIN 1 *****":
                     self.mocoeffs = [numpy.zeros((self.nbasis, self.nbasis), "d"),
                                      numpy.zeros((self.nbasis, self.nbasis), "d")]
@@ -897,8 +897,8 @@ class ADF(logfileparser.Logfile):
         # *                                                                        *
         # **************************************************************************
         #
-        #     Number of loops in Davidson routine     =   20                    
-        #     Number of matrix-vector multiplications =   24                    
+        #     Number of loops in Davidson routine     =   20
+        #     Number of matrix-vector multiplications =   24
         #     Type of excitations = SINGLET-SINGLET
         #
         # Symmetry B.u
@@ -965,7 +965,7 @@ class ADF(logfileparser.Logfile):
                 syms.append(str(counts[mosym]) + mosym)
 
             etsecs = []
-            printed_warning = False 
+            printed_warning = False
             for i in range(len(etenergies)):
 
                 etsec = []
@@ -1051,7 +1051,7 @@ class ADF(logfileparser.Logfile):
         # =============
         # Dipole Moment  ***  (Debye)  ***
         # =============
-        #  
+        #
         # Vector   :         0.00000000      0.00000000      0.00000000
         # Magnitude:         0.00000000
         #
@@ -1081,5 +1081,6 @@ class ADF(logfileparser.Logfile):
 
 
 if __name__ == "__main__":
-    import doctest, adfparser
+    import doctest
+    from . import adfparser
     doctest.testmod(adfparser, verbose=False)

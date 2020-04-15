@@ -51,7 +51,7 @@ class Particle(object):
             try:
                 group = np.random.choice(sitegroup, p=siteprobs)
             except ValueError:
-                print siteprobs
+                print(siteprobs)
             sample.append(group)
         self.sample = sample
         return
@@ -82,7 +82,7 @@ class Particle(object):
             n=0
             # get the index of the site that was performing best
             sampleindex = list(array[i]).index(self.sample[i])
-            if debug: print "site:", i, "epsilon:", epsilon, "sampleindex", sampleindex
+            if debug: print("site:", i, "epsilon:", epsilon, "sampleindex", sampleindex)
             totalcorrection = 0.0
 
             # change every group
@@ -98,20 +98,20 @@ class Particle(object):
 
             self.localbestX[i][sampleindex] += totalcorrection
             if not n==1:
-                 print "Assertion Error!"
-                 print "n:", n
-                 print "self.sample", self.sample
+                 print("Assertion Error!")
+                 print("n:", n)
+                 print("self.sample", self.sample)
                  raise AssertionError()
 
         if debug:
-            print "new self.local_best:", self.name
+            print("new self.local_best:", self.name)
             pp.pprint(self.localbestX)
         self.localbestX = normalize(self.localbestX)
         return
 
     def updateV(self, globalbestX, options):
         if debug:
-            print "old V:", self.name
+            print("old V:", self.name)
             pp.pprint(self.V)
         #cognitive term:
         c1 = options['c1']
@@ -121,9 +121,9 @@ class Particle(object):
         w  = options['w']
 
         if debug:
-            print "X:"
+            print("X:")
             pp.pprint(self.X)
-            print "localbestX:"
+            print("localbestX:")
             pp.pprint(self.localbestX)
 
         for i in range(self.nDim):
@@ -135,8 +135,8 @@ class Particle(object):
                 vel_social    = c2*r2*(globalbestX[i][j]    -self.X[i][j])
                 vel_inertia   =  w*self.V[i][j]
                 if (abs(vel_cognitive)>1.0 or abs(vel_social)>1.0 or abs(vel_inertia)>1.0) and debug:
-                    print "inertia, cognitive, social, w, r1, r2, c1, c2"
-                    print "vel corrections!:", vel_inertia, vel_cognitive, vel_social, w, r1, r2, c1, c2
+                    print("inertia, cognitive, social, w, r1, r2, c1, c2")
+                    print("vel corrections!:", vel_inertia, vel_cognitive, vel_social, w, r1, r2, c1, c2)
                 newv  = vel_inertia + vel_cognitive + vel_social
                 #if newv>1.0:
                 #    newv=1.0
@@ -145,7 +145,7 @@ class Particle(object):
                 self.V[i][j]=newv
 
         if debug:
-            print "updated V:"
+            print("updated V:")
             pp.pprint(self.V)
 
         # do we have to normalize V here?"
@@ -164,10 +164,10 @@ class Particle(object):
         try:
             self.X = normalize(self.X)
         except ZeroDivisionError:
-            print "V:"
-            print self.V
-            print "X:"
-            print self.X
+            print("V:")
+            print(self.V)
+            print("X:")
+            print(self.X)
 
             raise
         return
@@ -219,7 +219,7 @@ class ProbabilityPSO(object):
     def init_concrete_swarm(self):
         shuffles=[]
         ndim = len(self.array)
-        maxdim = max(map(len, self.array))
+        maxdim = max(list(map(len, self.array)))
         div = list(divmod(self.n, maxdim)) # returns (n, rest)
         if div[1]: div[0]+=1 # if there is a rest an extra shuffle is needed
         logging.debug("nshuffle" + str(div[0]))
@@ -244,7 +244,7 @@ class ProbabilityPSO(object):
                     try:
                         index = list(map(tuple, self.array[i])).index(group)
                     except ValueError as e:
-                        print self.array, i, group
+                        print(self.array, i, group)
                         raise e
                 X[i][index]=3.0
 
@@ -335,8 +335,8 @@ class ProbabilityPSO(object):
 
             for particle in self.swarm:
                 if debug:
-                    print "after evaluate for:", particle.name, "property:", particle.P, "from "\
-                          "sample:",particle.sample
+                    print("after evaluate for:", particle.name, "property:", particle.P, "from "\
+                          "sample:",particle.sample)
 
                 if self.minimize:
                     if particle.P <= particle.localbestP or particle.localbestP is None:
@@ -367,10 +367,10 @@ class ProbabilityPSO(object):
             # decide if last iteration    
             self.iter+=1
             if self.iter>self.maxiter:
-                print "Run terminated. Max number of generations"
+                print("Run terminated. Max number of generations")
                 break
             if nconvergence>1:
-                print "Run Terminated due to convergence criteria"
+                print("Run Terminated due to convergence criteria")
                 break
 
         self.dbAdapter.commitAndClose()

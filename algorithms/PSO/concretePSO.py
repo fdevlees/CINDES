@@ -36,7 +36,7 @@ c1 = None
 def permutate(array):
     array = np.array(array)
     nrows, ncols = array.shape
-    print "ncols:", ncols
+    print("ncols:", ncols)
     for i in range(len(array)):
         np.random.shuffle(array[i])
     return array
@@ -178,19 +178,19 @@ class ConcretePSO(object):
     def init_concrete_swarm(self):
         shuffles=[]
         ndim = len(self.array)
-        maxdim = max(map(len, self.array))
+        maxdim = max(list(map(len, self.array)))
         div = list(divmod(self.n, maxdim)) # returns (n, rest)
         if div[1]: div[0]+=1 # if there is a rest an extra shuffle is needed
-        print "nshuffle", div[0]
+        print("nshuffle", div[0])
         for i in range(div[0]):
             # generate a randomly ordered array. we do not need permutate only shuffle!
-            newarray = map(list, zip(*permutate(np.array(deepcopy(self.array)))))
-            print "newarray:", newarray
+            newarray = list(map(list, list(zip(*permutate(np.array(deepcopy(self.array)))))))
+            print("newarray:", newarray)
             shuffles.append(newarray)
-        print "shuffles:", shuffles
+        print("shuffles:", shuffles)
         swarm = np.concatenate(shuffles)[:self.n]
-        print "swarm:", swarm
-        return map(list,swarm)
+        print("swarm:", swarm)
+        return list(map(list,swarm))
 
     def init_swarm(self):
         concrete_swarm = self.init_concrete_swarm()
@@ -213,7 +213,7 @@ class ConcretePSO(object):
         Ps = [ particle.P for particle in self.swarm ]
         pop_rawAve = np.average(Ps)
         pop_rawDev = np.std(Ps)
-        for i in xrange(len(self.swarm)):
+        for i in range(len(self.swarm)):
             f = self.swarm[i].P - pop_rawAve
             f+= c * pop_rawDev
             if f < 0:
@@ -227,21 +227,21 @@ class ConcretePSO(object):
         populationlist = []
         for particle in self.swarm:
             populationlist.append(particle.X)
-        print "populationlist", populationlist, "len:", len(populationlist)
+        print("populationlist", populationlist, "len:", len(populationlist))
 
         # 1.1. make confs hashable to make it a set and make it list again
         new_confs = tuple( '_'.join(item) for item in populationlist )
-        print "new_confs:", new_confs
+        print("new_confs:", new_confs)
         unique_confs = [ indtocon(item) for item in set(new_confs)]
-        print "n unique_confs:", len(unique_confs)
-        print "unique_confs:", unique_confs
+        print("n unique_confs:", len(unique_confs))
+        print("unique_confs:", unique_confs)
 
         # 2. call CINDES via FF to calculate the configurations
         mols = self.function.evaluate_multi(unique_confs, gen=self.iter)
 
         # 3. set the calculations to the correct indivual score
         y_dict = {mol.index: mol.Pvalue for mol in mols}
-        print "y_dict:", y_dict
+        print("y_dict:", y_dict)
         for particle in self.swarm:
             index = "_".join(particle.X)
             particle.setproperty(y_dict[index])
@@ -250,7 +250,7 @@ class ConcretePSO(object):
     def evolve(self):
         self.iter=1
         while True:
-            print "----------- Generation {} -----------".format(self.iter)
+            print("----------- Generation {} -----------".format(self.iter))
 
             # evaluate and set global best
             if self.parallel:
@@ -279,7 +279,7 @@ class ConcretePSO(object):
 
             # log values
             # to screen
-            print "globalbest:", self.globalbestX, self.globalbestP
+            print("globalbest:", self.globalbestX, self.globalbestP)
             # and to history
             self.globalhistory.append(self.globalbestP)
             for particle in self.swarm:

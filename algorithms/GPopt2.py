@@ -1,6 +1,6 @@
 #!/bin/env python
 # this line must be at the beginning of the file!
-from __future__ import division
+
 
 # debug flag
 debug = 1
@@ -14,8 +14,8 @@ import time
 # import my own modules
 from CINDES.evaluation import construction as zcon  # all functions needed for constructing new geometries
 from CINDES.evaluation.predictions import predictor
-from loggings import loggings
-from BFS import testmax
+from .loggings import loggings
+from .BFS import testmax
 from CINDES.evaluation.calculator import evaluate_mols
 
 # import utils
@@ -82,7 +82,7 @@ class GaussianProcess(Algorithm):
         return
 
     def set_space(self):
-        print "array:", self.array
+        print("array:", self.array)
         domain = []
         for i, iarray in enumerate(self.array):
             dimension = {'name': 'var{:d}'.format(i),
@@ -90,7 +90,7 @@ class GaussianProcess(Algorithm):
                          'domain':iarray,
                          'dimensionality': 1}
             domain.append(dimension)
-        print "space:", domain
+        print("space:", domain)
         self.space = domain
         return
 
@@ -107,7 +107,7 @@ class GaussianProcess(Algorithm):
         mols, nnewcalcs, made_pred = evaluate_mols(self.run, mols, self.table, gen, nsite=0)
         self.ncalcs += nnewcalcs
         self.optimum, _ = testmax(self.run, mols)
-        print "mols_all:", mols
+        print("mols_all:", mols)
 
         # 5. log new results
         self.table = loggings(mols,
@@ -144,16 +144,16 @@ class GaussianProcess(Algorithm):
         myBopt.run_optimization(max_iter,eps=0)
 
 
-        print myBopt
+        print(myBopt)
 
         return optimizer
 
     @staticmethod
     def only_finite(X, Y):
-        print "X, Y before:", X, Y
+        print("X, Y before:", X, Y)
         # Y  is converted to np.float array so None values become np.nan values since
         # isfinite cannot handle None's
-        X, Y = zip(*[ (x,y) for x,y in zip(X,np.array(Y, dtype=np.float)) if np.isfinite(y) ])
-        print "X, Y after:", X, Y
+        X, Y = list(zip(*[ (x,y) for x,y in zip(X,np.array(Y, dtype=np.float)) if np.isfinite(y) ]))
+        print("X, Y after:", X, Y)
         return X, Y
 

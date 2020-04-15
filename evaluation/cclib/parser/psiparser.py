@@ -28,7 +28,7 @@ class Psi(logfileparser.Logfile):
 
         # Call the __init__ method of the superclass
         super(Psi, self).__init__(logname="Psi", *args, **kwargs)
-        
+
     def __str__(self):
         """Return a string representation of the object."""
         return "Psi log file %s" % (self.filename)
@@ -113,7 +113,7 @@ class Psi(logfileparser.Logfile):
         #
         #    Geometry (in Angstrom), charge = 0, multiplicity = 1:
         #
-        #       Center              X                  Y                   Z       
+        #       Center              X                  Y                   Z
         #    ------------   -----------------  -----------------  -----------------
         #           C         -1.415253322400     0.230221785400     0.000000000000
         #           C          1.415253322400    -0.230221785400     0.000000000000
@@ -169,7 +169,7 @@ class Psi(logfileparser.Logfile):
             while line.strip():
                 if "Number of AO" in line:
                     self.set_attribute('nbasis', int(line.split()[-1]))
-                line = next(inputfile)            
+                line = next(inputfile)
 
         # Psi4 repeats the charge and multiplicity after the geometry.
         if (self.section == "Geometry") and (line[2:16].lower() == "charge       ="):
@@ -194,10 +194,10 @@ class Psi(logfileparser.Logfile):
                 expression = expression.replace('d', '*6')
                 nfuncs = eval(expression)
                 if len(indices) == 0:
-                    indices.append(range(nfuncs))
+                    indices.append(list(range(nfuncs)))
                 else:
                     start = indices[-1][-1] + 1
-                    indices.append(range(start, start+nfuncs))
+                    indices.append(list(range(start, start+nfuncs)))
                 line = next(inputfile)
 
             self.set_attribute('atombasis', indices)
@@ -268,9 +268,9 @@ class Psi(logfileparser.Logfile):
         #  -Contraction Scheme:
         #    Atom   Type   All Primitives // Shells:
         #   ------ ------ --------------------------
-        #       1     C     6s 3p // 2s 1p 
-        #       2     C     6s 3p // 2s 1p 
-        #       3     C     6s 3p // 2s 1p 
+        #       1     C     6s 3p // 2s 1p
+        #       2     C     6s 3p // 2s 1p
+        #       3     C     6s 3p // 2s 1p
         # ...
         if (self.section == "Primary Basis" or self.section == "DFT Potential") and line.strip() == "-Contraction Scheme:":
 
@@ -471,20 +471,20 @@ class Psi(logfileparser.Logfile):
         #	Orbital Energies (a.u.)
         #	-----------------------
         #
-        #	Doubly Occupied:                                                      
+        #	Doubly Occupied:
         #
-        #	   1Bu   -11.040586     1Ag   -11.040524     2Bu   -11.031589  
-        #	   2Ag   -11.031589     3Bu   -11.028950     3Ag   -11.028820 
+        #	   1Bu   -11.040586     1Ag   -11.040524     2Bu   -11.031589
+        #	   2Ag   -11.031589     3Bu   -11.028950     3Ag   -11.028820
         # (...)
-        #	  15Ag    -0.415620     1Bg    -0.376962     2Au    -0.315126  
-        #	   2Bg    -0.278361     3Bg    -0.222189  
+        #	  15Ag    -0.415620     1Bg    -0.376962     2Au    -0.315126
+        #	   2Bg    -0.278361     3Bg    -0.222189
         #
-        #	Virtual:                                                              
+        #	Virtual:
         #
-        #	   3Au     0.198995     4Au     0.268517     4Bg     0.308826  
-        #	   5Au     0.397078     5Bg     0.521759    16Ag     0.565017 
+        #	   3Au     0.198995     4Au     0.268517     4Bg     0.308826
+        #	   5Au     0.397078     5Bg     0.521759    16Ag     0.565017
         # (...)
-        #	  24Ag     0.990287    24Bu     1.027266    25Ag     1.107702  
+        #	  24Ag     0.990287    24Bu     1.027266    25Ag     1.107702
         #	  25Bu     1.124938
         #
         # The case is different in the trigger string.
@@ -660,7 +660,7 @@ class Psi(logfileparser.Logfile):
         #  Measures of convergence in internal coordinates in au.
         #  Criteria marked as inactive (o), active & met (*), and active & unmet ( ).
         #  ---------------------------------------------------------------------------------------------
-        #   Step     Total Energy     Delta E     MAX Force     RMS Force      MAX Disp      RMS Disp   
+        #   Step     Total Energy     Delta E     MAX Force     RMS Force      MAX Disp      RMS Disp
         #  ---------------------------------------------------------------------------------------------
         #    Convergence Criteria    1.00e-06 *    3.00e-04 *             o    1.20e-03 *             o
         #  ---------------------------------------------------------------------------------------------
@@ -873,5 +873,6 @@ class Psi(logfileparser.Logfile):
 
 
 if __name__ == "__main__":
-    import doctest, psiparser
+    import doctest
+    from . import psiparser
     doctest.testmod(psiparser, verbose=False)

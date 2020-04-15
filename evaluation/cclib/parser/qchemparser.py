@@ -12,7 +12,7 @@
 
 """Parser for Q-Chem output files"""
 
-from __future__ import print_function
+
 
 import re
 import numpy
@@ -70,7 +70,7 @@ class QChem(logfileparser.Logfile):
         # calculations, so make sure we parse only the first occurance.
         if '$molecule' in line:
             line = next(inputfile)
-            charge, mult = map(int, line.split())
+            charge, mult = list(map(int, line.split()))
             if not hasattr(self, 'charge'):
                 self.set_attribute('charge', charge)
             if not hasattr(self, 'mult'):
@@ -670,9 +670,9 @@ class QChem(logfileparser.Logfile):
 
             # This line appears not by default, but only when
             # `multipole_order` > 4:
-            line = inputfile.next()
+            line = next(inputfile)
             if 'LMN = < X^L Y^M Z^N >' in line:
-                line = inputfile.next()
+                line = next(inputfile)
 
             # The reference point is always the origin, although normally the molecule
             # is moved so that the center of charge is at the origin.
@@ -682,7 +682,7 @@ class QChem(logfileparser.Logfile):
             # Watch out! This charge is in statcoulombs without the exponent!
             # We should expect very good agreement, however Q-Chem prints
             # the charge only with 5 digits, so expect 1e-4 accuracy.
-            charge_header = inputfile.next()
+            charge_header = next(inputfile)
             assert charge_header.split()[0] == "Charge"
             charge = float(inputfile.next().strip())
             charge = utils.convertor(charge, 'statcoulomb', 'e') * 1e-10
@@ -690,7 +690,7 @@ class QChem(logfileparser.Logfile):
             # assert abs(charge - self.charge) < 1e-4
 
             # This will make sure Debyes are used (not sure if it can be changed).
-            line = inputfile.next()
+            line = next(inputfile)
             assert line.strip() == "Dipole Moment (Debye)"
 
             while "-----" not in line:
@@ -698,14 +698,14 @@ class QChem(logfileparser.Logfile):
                 # The current multipole element will be gathered here.
                 multipole = []
 
-                line = inputfile.next()
+                line = next(inputfile)
                 while ("-----" not in line) and ("Moment" not in line):
 
                     cols = line.split()
 
                     # The total (norm) is printed for dipole but not other multipoles.
                     if cols[0] == 'Tot':
-                        line = inputfile.next()
+                        line = next(inputfile)
                         continue
 
                     # Find and replace any 'stars' with NaN before moving on.
@@ -734,7 +734,7 @@ class QChem(logfileparser.Logfile):
                             m = cols[4*i + 3]
                             multipole.append([lbl, m])
 
-                    line = inputfile.next()
+                    line = next(inputfile)
 
                 # Sort should use the first element when sorting lists,
                 # so this should simply work, and afterwards we just need
@@ -849,19 +849,19 @@ class QChem(logfileparser.Logfile):
                 if 'Frequency:' in line:
                     if not hasattr(self, 'vibfreqs'):
                         self.vibfreqs = []
-                    vibfreqs = map(float, line.split()[1:])
+                    vibfreqs = list(map(float, line.split()[1:]))
                     self.vibfreqs.extend(vibfreqs)
 
                 if 'IR Intens:' in line:
                     if not hasattr(self, 'vibirs'):
                         self.vibirs = []
-                    vibirs = map(float, line.split()[2:])
+                    vibirs = list(map(float, line.split()[2:]))
                     self.vibirs.extend(vibirs)
 
                 if 'Raman Intens:' in line:
                     if not hasattr(self, 'vibramans'):
                         self.vibramans = []
-                    vibramans = map(float, line.split()[2:])
+                    vibramans = list(map(float, line.split()[2:]))
                     self.vibramans.extend(vibramans)
 
                 # This is the start of the displacement block.
@@ -986,7 +986,8 @@ class QChem(logfileparser.Logfile):
 
 if __name__ == '__main__':
     import sys
-    import doctest, qchemparser
+    import doctest
+    from . import qchemparser
 
     if len(sys.argv) == 1:
         doctest.testmod(qchemparser, verbose=False)

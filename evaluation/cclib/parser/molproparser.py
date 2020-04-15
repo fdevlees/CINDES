@@ -75,18 +75,18 @@ class Molpro(logfileparser.Logfile):
         return ans
 
     def before_parsing(self):
-        
+
         self.electronorbitals = ""
         self.insidescf = False
 
     def after_parsing(self):
-    
+
         # If optimization thresholds are default, they are normally not printed and we need
         # to set them to the default after parsing. Make sure to set them in the same order that
         # they appear in the in the geometry optimization progress printed in the output,
         # namely: energy difference, maximum gradient, maximum step.
         if not hasattr(self, "geotargets"):
-            self.geotargets = []        
+            self.geotargets = []
             # Default THRENERG (required accuracy of the optimized energy).
             self.geotargets.append(1E-6)
             # Default THRGRAD (required accuracy of the optimized gradient).
@@ -98,13 +98,13 @@ class Molpro(logfileparser.Logfile):
         """Extract information from the file object inputfile."""
 
         if line[1:19] == "ATOMIC COORDINATES":
-            
+
             if not hasattr(self,"atomcoords"):
                 self.atomcoords = []
 
             atomcoords = []
             atomnos = []
-            
+
             self.skip_lines(inputfile, ['line', 'line', 'line'])
 
             line = next(inputfile)
@@ -113,12 +113,12 @@ class Molpro(logfileparser.Logfile):
                 atomcoords.append([utils.convertor(float(x), "bohr", "Angstrom") for x in temp[3:6]]) #bohrs to angs
                 atomnos.append(int(round(float(temp[2]))))
                 line = next(inputfile)
-                
+
             self.atomcoords.append(atomcoords)
 
             self.set_attribute('atomnos', atomnos)
             self.set_attribute('natom', len(self.atomnos))
-        
+
         # Use BASIS DATA to parse input for gbasis, aonames and atombasis. If symmetry is used,
         # the function number starts from 1 for each irrep (the irrep index comes after the dot).
         #
@@ -134,7 +134,7 @@ class Molpro(logfileparser.Logfile):
         # ...
         #
         if line[1:11] == "BASIS DATA":
-            
+
             # We can do a sanity check with the header.
             self.skip_line(inputfile, 'blank')
             header = next(inputfile)
@@ -171,7 +171,7 @@ class Molpro(logfileparser.Logfile):
                     # find a match in that dictionary, so we can check for that here and will need to
                     # update the dict if something unexpected comes up.
                     funcbasis = None
-                    for fb, names in self.atomic_orbital_names.items():
+                    for fb, names in list(self.atomic_orbital_names.items()):
                         if functype in names:
                             funcbasis = fb
                     assert funcbasis
@@ -232,7 +232,7 @@ class Molpro(logfileparser.Logfile):
         # Use this information instead of 'SETTING ...', in case the defaults are standard.
         # Note that this is sometimes printed in each geometry optimization step.
         if line[1:20] == "NUMBER OF ELECTRONS":
-            
+
             spinup = int(line.split()[3][:-1])
             spindown = int(line.split()[4][:-1])
             # Nuclear charges (atomnos) should be parsed by now.
@@ -243,7 +243,7 @@ class Molpro(logfileparser.Logfile):
 
             mult = spinup - spindown + 1
             self.set_attribute('mult', mult)
-        
+
         # Convergenve thresholds for SCF cycle, should be contained in a line such as:
         #   CONVERGENCE THRESHOLDS:    1.00E-05 (Density)    1.40E-07 (Energy)
         if self.insidescf and line[1:24] == "CONVERGENCE THRESHOLDS:":
@@ -264,16 +264,16 @@ class Molpro(logfileparser.Logfile):
         #     4      0.213D-02      0.571D-03      -379.74658063   1162.159929   0.000000   0.000000   0.000000    3
         #     5      0.799D-03      0.166D-03      -379.74660889   1162.144256   0.000000   0.000000   0.000000    4
         if self.insidescf and line[1:10] == "ITERATION":
-        
+
             if not hasattr(self, "scfvalues"):
                 self.scfvalues = []
-        
+
             line = next(inputfile)
             energy = 0.0
             scfvalues = []
             while line.strip() != "":
                 if line.split()[0].isdigit():
-                
+
                     ddiff = float(line.split()[1].replace('D','E'))
                     newenergy = float(line.split()[3])
                     ediff = newenergy - energy
@@ -296,36 +296,36 @@ class Molpro(logfileparser.Logfile):
         # SCF result - RHF/UHF and DFT (RKS) energies.
         if (line[1:5] in ["!RHF", "!UHF", "!RKS"] and
             line[16:22].lower() == "energy"):
-            
+
             if not hasattr(self, "scfenergies"):
                 self.scfenergies = []
             scfenergy = float(line.split()[4])
             self.scfenergies.append(utils.convertor(scfenergy, "hartree", "eV"))
-            
+
             # We are now done with SCF cycle (after a few lines).
             self.insidescf = False
 
         # MP2 energies.
         if line[1:5] == "!MP2":
-        
+
             if not hasattr(self, 'mpenergies'):
                 self.mpenergies = []
             mp2energy = float(line.split()[-1])
             mp2energy = utils.convertor(mp2energy, "hartree", "eV")
             self.mpenergies.append([mp2energy])
-            
+
         # MP2 energies if MP3 or MP4 is also calculated.
         if line[1:5] == "MP2:":
-        
+
             if not hasattr(self, 'mpenergies'):
                 self.mpenergies = []
             mp2energy = float(line.split()[2])
             mp2energy = utils.convertor(mp2energy, "hartree", "eV")
             self.mpenergies.append([mp2energy])
-            
+
         # MP3 (D) and MP4 (DQ or SDQ) energies.
         if line[1:8] == "MP3(D):":
-        
+
             mp3energy = float(line.split()[2])
             mp2energy = utils.convertor(mp3energy, "hartree", "eV")
             line = next(inputfile)
@@ -340,7 +340,7 @@ class Molpro(logfileparser.Logfile):
 
         # The CCSD program operates all closed-shel coupled cluster runs.
         if line[1:15] == "PROGRAM * CCSD":
-        
+
             if not hasattr(self, "ccenergies"):
                 self.ccenergies = []
             while line[1:20] != "Program statistics:":
@@ -401,7 +401,7 @@ class Molpro(logfileparser.Logfile):
             # For unrestricted calcualtions, ELECTRON ORBITALS is followed on the same line
             # by FOR POSITIVE SPIN or FOR NEGATIVE SPIN as appropriate.
             spin = (line[19:36] == "FOR NEGATIVE SPIN") or (self.electronorbitals[19:36] == "FOR NEGATIVE SPIN")
-            
+
             if not self.electronorbitals:
                 self.skip_line(inputfile, 'equals')
             self.skip_lines(inputfile, ['b', 'b', 'headers', 'b'])
@@ -509,7 +509,7 @@ class Molpro(logfileparser.Logfile):
         # Note that is the entire matrix is not printed, then aooverlaps
         #   will not have dimensions nbasis x nbasis.
         if line[1:9] == "MATRIX S":
-        
+
             if not hasattr(self, "aooverlaps"):
                 self.aooverlaps = [[]]
 
@@ -597,7 +597,7 @@ class Molpro(logfileparser.Logfile):
             index_THRSTEP = headers.index('STEPMAX')
 
             line = next(inputfile)
-            self.geovalues = []            
+            self.geovalues = []
             while line.strip():
 
                 line = line.split()
@@ -633,7 +633,7 @@ class Molpro(logfileparser.Logfile):
         # This block should look like this:
         #   Normal Modes
         #
-        #                                1 Au        2 Bu        3 Ag        4 Bg        5 Ag 
+        #                                1 Au        2 Bu        3 Ag        4 Bg        5 Ag
         #   Wavenumbers [cm-1]          151.81      190.88      271.17      299.59      407.86
         #   Intensities [km/mol]          0.33        0.28        0.00        0.00        0.00
         #   Intensities [relative]        0.34        0.28        0.00        0.00        0.00
@@ -648,7 +648,7 @@ class Molpro(logfileparser.Logfile):
         #   which also contains zero frequency modes, with the title:
         #   Normal Modes of low/zero frequencies
         if line[1:13] == "Normal Modes":
-            
+
             if line[1:37] == "Normal Modes of low/zero frequencies":
                 islow = True
             else:
@@ -667,7 +667,7 @@ class Molpro(logfileparser.Logfile):
 
                 if line[1:12] == "Wavenumbers":
                     vibfreqs = list(map(float, line.strip().split()[2:]))
-                    
+
                 if line[1:21] == "Intensities [km/mol]":
                     vibirs = list(map(float, line.strip().split()[2:]))
 
@@ -694,7 +694,7 @@ class Molpro(logfileparser.Logfile):
 
                 line = next(inputfile)
                 if not line.strip():
-            
+
                     if not hasattr(self, "vibfreqs"):
                         self.vibfreqs = []
                     if not hasattr(self, "vibsyms"):
@@ -711,7 +711,7 @@ class Molpro(logfileparser.Logfile):
                             self.vibirs.extend(vibirs)
                         if "vibdisps" in dir():
                             self.vibdisps.extend(vibdisps)
-                    else:        
+                    else:
                         nonzero = [f > 0 for f in vibfreqs]
                         vibfreqs = [f for f in vibfreqs if f > 0]
                         self.vibfreqs = vibfreqs + self.vibfreqs
@@ -725,50 +725,50 @@ class Molpro(logfileparser.Logfile):
                             self.vibdisps = vibdisps + self.vibdisps
 
                     line = next(inputfile)
-            
+
         if line[1:16] == "Force Constants":
-            
+
             self.logger.info("Creating attribute hessian")
             self.hessian = []
             line = next(inputfile)
             hess = []
             tmp = []
-            
+
             while line.strip():
                 try: list(map(float, line.strip().split()[2:]))
-                except: 
+                except:
                     line = next(inputfile)
                 line.strip().split()[1:]
                 hess.extend([list(map(float, line.strip().split()[1:]))])
                 line = next(inputfile)
             lig = 0
-            
+
             while (lig==0) or (len(hess[0]) > 1):
                 tmp.append(hess.pop(0))
                 lig += 1
             k = 5
-            
+
             while len(hess) != 0:
                 tmp[k] += hess.pop(0)
                 k += 1
                 if (len(tmp[k-1]) == lig): break
                 if k >= lig: k = len(tmp[-1])
             for l in tmp: self.hessian += l
-            
+
         if line[1:14] == "Atomic Masses" and hasattr(self,"hessian"):
-            
+
             line = next(inputfile)
             self.amass = list(map(float, line.strip().split()[2:]))
-            
+
             while line.strip():
                 line = next(inputfile)
-                self.amass += list(map(float, line.strip().split()[2:]))        
+                self.amass += list(map(float, line.strip().split()[2:]))
 
         #1PROGRAM * POP (Mulliken population analysis)
         #
         #
         # Density matrix read from record         2100.2  Type=RHF/CHARGE (state 1.1)
-        # 
+        #
         # Population analysis by basis function type
         #
         # Unique atom        s        p        d        f        g    Total    Charge
@@ -795,5 +795,6 @@ class Molpro(logfileparser.Logfile):
 
 
 if __name__ == "__main__":
-    import doctest, molproparser
+    import doctest
+    from . import molproparser
     doctest.testmod(molproparser, verbose=False)

@@ -33,7 +33,7 @@ class Unbuffered(object):
 sys.stdout = Unbuffered(sys.stdout)
 
 if True:
-    print time.ctime()
+    print(time.ctime())
     print_title(
         "C I N D E S\nAn Inverse Molecular Design Program\nwritten by Jos L. Teunissen",
         newlines=True)
@@ -60,60 +60,60 @@ if True:
 
     # START PROGRAM PROCEDURE
     if run.procedure in ['standard', 'bfs']:
-        from algorithms.BFS import BFS
+        from .algorithms.BFS import BFS
         BFS(run)
 
     elif run.procedure in ['sd', 'rsd'
                            ]:  # can be sd or reduced steepest descent, rsd
-        from algorithms.BFS import SD
+        from .algorithms.BFS import SD
         SD(run)
 
     elif run.procedure in ['empty'
                            ]:  # can be sd or reduced steepest descent, rsd
-        from algorithms.BFS import runEmpty
+        from .algorithms.BFS import runEmpty
         runEmpty(run)
 
     elif run.procedure in ['ga', 'genetic algorithm', 'genalg']:
-        from algorithms import GA
+        from .algorithms import GA
         GA.main(run)
 
     elif run.procedure in ['deap']:
-        from algorithms import DEAP
+        from .algorithms import DEAP
         DEAP.main(run)
 
     elif run.procedure in ['pso', 'cpso', 'particleswarm']:
-        from algorithms import PSO
+        from .algorithms import PSO
         PSO.main(run)
 
     elif run.procedure in ['gp']:
-        from algorithms import GPopt
+        from .algorithms import GPopt
         GPopt.GP(run)
 
     elif run.procedure == 'test':
-        from algorithms.procedures import testrun
+        from .algorithms.procedures import testrun
         testrun(run)
 
     elif run.procedure == 'generate':
-        from algorithms.procedures import generate_procedure
+        from .algorithms.procedures import generate_procedure
         generate_procedure(run)
 
     elif run.procedure == 'genconf':
-        from algorithms.procedures import genconf
+        from .algorithms.procedures import genconf
         genconf(run)
 
     elif run.procedure in ['getrandom', 'genrandom']:
-        from algorithms.procedures import genrandom
+        from .algorithms.procedures import genrandom
         genrandom(run)
 
     elif run.procedure == "testpred":
-        from algorithms.procedures import testpred
+        from .algorithms.procedures import testpred
         testpred(run)
 
     elif run.procedure == 'getdivers':
-        from utils.getdivers import database_construction
+        from .utils.getdivers import database_construction
         database_construction(run)
 
     else:
         logging.warning('proceduretype not recognized')
 
-    print "EOF __main__.py"
+    print("EOF __main__.py")

@@ -68,7 +68,7 @@ class Converter():
                                [int(atom3) - 1, m.radians( float(dihedral) ) ] ],
                                 self.masses[name] ]
             except KeyError:
-                print item
+                print(item)
                 raise
             self.zmatrix.append( atom )
         return self.zmatrix
@@ -96,7 +96,7 @@ class Converter():
         self.cartesian = []
         for xyztje in xyz:
             name = xyztje[0]
-            position = map(float,xyztje[1:4])
+            position = list(map(float,xyztje[1:4]))
             self.cartesian.append( [ name, np.array( position ), self.masses[name] ] )
         return self.cartesian
 
@@ -154,9 +154,9 @@ class Converter():
             r = self.cartesian[atom2][1] # atom 2
             s = self.cartesian[atom3][1] # atom 3
         except IndexError:
-            print "atom1,2,3:", atom1, atom2, atom3
-            print "self.cartesian:"
-            for i,item in enumerate(self.cartesian): print i,item
+            print("atom1,2,3:", atom1, atom2, atom3)
+            print("self.cartesian:")
+            for i,item in enumerate(self.cartesian): print(i,item)
             raise
         # Vector pointing from q to r
         a = r - q
@@ -189,7 +189,7 @@ class Converter():
             try:
                 self.add_atom_to_cartesian( self.zmatrix[i] )
             except IndexError:
-                print "self.zmatrix[i]", self.zmatrix[i]
+                print("self.zmatrix[i]", self.zmatrix[i])
                 raise
 
         self.remove_dummy_atoms()
@@ -307,7 +307,7 @@ class Converter():
     def print_cartesian( self ):
         '''Print the cartesian coordinates'''
         for line in self.cartesian:
-            print line[0] + '\t' + '\t'.join( str(x) for x in line[1] )
+            print(line[0] + '\t' + '\t'.join( str(x) for x in line[1] ))
 
     def output_zmatrix( self, output_file='zmatrix.dat' ):
         '''Output the zmatrix to the file'''
@@ -324,7 +324,7 @@ class Converter():
     def print_zmatrix( self ):
         '''Print the zmatrix'''
         for line in self.zmatrix:
-            print line[0] + '\t' + '\t'.join( str(x) for x in line[1] )
+            print(line[0] + '\t' + '\t'.join( str(x) for x in line[1] ))
 
     def run_zmatrix( self, input_file='zmatrix.dat', output_file='cartesian.dat' ):
         '''Read in the zmatrix, converts it to cartesian, and outputs it to a file'''

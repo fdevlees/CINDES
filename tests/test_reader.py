@@ -57,7 +57,7 @@ class Test_reader(unittest.TestCase):
     def setUp(self):
         import os
         pwd = os.getcwd()
-        if debug: print "pwd:", pwd
+        if debug: print("pwd:", pwd)
         self.zmatfile = path + '/testfiles/' + 'ZMAT'
         (zmat, fileid) = reader.zmatread(self.zmatfile)
         self.zmat      = zmat
@@ -69,13 +69,13 @@ class Test_reader(unittest.TestCase):
     # reads the initial zmatfile part
     def test_zmatread1(self):
         nlines = len(reader.zmatread(self.zmatfile)[0])
-        if debug: print "nlines zmat:", nlines
+        if debug: print("nlines zmat:", nlines)
         self.assertTrue( nlines==21 )
 
     # reads the values concerned with the zmatfile
     def test_zmatvalues(self):
         nentries       = len(self.zdic)
-        if debug: print "nentries", nentries
+        if debug: print("nentries", nentries)
         self.assertTrue( nentries == 54 )
 
     def test_zmatprinter(self):

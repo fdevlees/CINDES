@@ -28,12 +28,12 @@ def func(x):
 
 class OPA(Method):
     """Overlap population analysis."""
-    
+
     def __init__(self, *args):
 
         # Call the __init__ method of the superclass.
         super(OPA, self).__init__(logname="OPA", *args)
-        
+
     def __str__(self):
         """Return a string representation of the object."""
         return "OPA of" % (self.data)
@@ -41,10 +41,10 @@ class OPA(Method):
     def __repr__(self):
         """Return a representation of the object."""
         return 'OPA("%s")' % (self.data)
-    
+
     def calculate(self, indices=None, fupdate=0.05):
         """Perform an overlap population analysis given the results of a parser"""
-    
+
         # Do we have the needed info in the ccData object?
         if not hasattr(self.data, "mocoeffs") \
           and not ( hasattr(self.data, "aooverlaps") \
@@ -91,7 +91,7 @@ class OPA(Method):
             beta = len(self.data.mocoeffs[1])
             results.append(numpy.zeros([nfrag, nfrag, beta], "d"))
             nstep *= 2
-            
+
         if hasattr(self.data, "aooverlaps"):
             overlap = self.data.aooverlaps
         elif hasattr(self.data,"fooverlaps"):
@@ -123,7 +123,7 @@ class OPA(Method):
                         ca = self.data.mocoeffs[spin][:,a]
 
                         for b in indices[B]:
-                            
+
                             cb = self.data.mocoeffs[spin][:,b]
                             temp = ca * cb * two *overlap[a,b]
                             results[spin][A,B] = numpy.add(results[spin][A,B],temp)
@@ -144,5 +144,6 @@ class OPA(Method):
 
 
 if __name__ == "__main__":
-    import doctest, opa
+    import doctest
+    from . import opa
     doctest.testmod(opa, verbose=False)

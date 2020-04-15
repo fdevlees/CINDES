@@ -29,7 +29,7 @@ class NWChem(logfileparser.Logfile):
 
         # Call the __init__ method of the superclass
         super(NWChem, self).__init__(logname="NWChem", *args, **kwargs)
-        
+
     def __str__(self):
         """Return a string representation of the object."""
         return "NWChem log file %s" % (self.filename)
@@ -37,7 +37,7 @@ class NWChem(logfileparser.Logfile):
     def __repr__(self):
         """Return a representation of the object."""
         return 'NWChem("%s")' % (self.filename)
-    
+
     def normalisesym(self, label):
         """Use standard symmetry labels instead of NWChem labels.
 
@@ -152,7 +152,7 @@ class NWChem(logfileparser.Logfile):
         #                      -----
         #  O (Oxygen)
         #  ----------
-        #            Exponent  Coefficients 
+        #            Exponent  Coefficients
         #       -------------- ---------------------------------------------------------
         #  1 S  1.30709320E+02  0.154329
         #  1 S  2.38088610E+01  0.535328
@@ -160,14 +160,14 @@ class NWChem(logfileparser.Logfile):
         #
         #  H1 (Hydrogen)
         #  -------------
-        #            Exponent  Coefficients 
+        #            Exponent  Coefficients
         #       -------------- ---------------------------------------------------------
         #  1 S  3.42525091E+00  0.154329
         # (...)
         #
         #  H2 (Hydrogen)
         #  -------------
-        #            Exponent  Coefficients 
+        #            Exponent  Coefficients
         #       -------------- ---------------------------------------------------------
         #  1 S  3.42525091E+00  0.154329
         # (...)
@@ -214,7 +214,7 @@ class NWChem(logfileparser.Logfile):
                         pass
                 self.set_attribute('gbasis', gbasis)
             except AttributeError:
-                print "natoms not yet known"
+                print("natoms not yet known")
 
         # Normally the indexes of AOs assigned to specific atoms are also not printed,
         # so we need to infer that. We could do that from the previous section,
@@ -249,7 +249,7 @@ class NWChem(logfileparser.Logfile):
                      last = atombasis[-1][-1] + 1
                  self.set_attribute('atombasis', atombasis)
             except AttributeError:
-                print "natoms not yet known"
+                print("natoms not yet known")
 
 
         # This section contains general parameters for DFT calculations, as well as
@@ -394,19 +394,19 @@ class NWChem(logfileparser.Logfile):
         #@ Step       Energy      Delta E   Gmax     Grms     Xrms     Xmax   Walltime
         #@ ---- ---------------- -------- -------- -------- -------- -------- --------
         #@    0    -379.76896249  0.0D+00  0.04567  0.01110  0.00000  0.00000      4.2
-        #                                                       ok       ok  
+        #                                                       ok       ok
         #
         # However, for subsequent step the format is a bit different:
         #
         #  Step       Energy      Delta E   Gmax     Grms     Xrms     Xmax   Walltime
         #  ---- ---------------- -------- -------- -------- -------- -------- --------
         #@    2    -379.77794602 -7.4D-05  0.00118  0.00023  0.00440  0.01818     14.8
-        #                                              ok     
+        #                                              ok
         #
         # There is also a summary of the line search (which we don't use now), like this:
         #
-        # Line search: 
-        #     step= 1.00 grad=-1.8D-05 hess= 8.9D-06 energy=   -379.777955 mode=accept  
+        # Line search:
+        #     step= 1.00 grad=-1.8D-05 hess= 8.9D-06 energy=   -379.777955 mode=accept
         # new step= 1.00                   predicted energy=   -379.777955
         #
         if line[10:14] == "Step":
@@ -480,14 +480,14 @@ class NWChem(logfileparser.Logfile):
         #       Symmetry analysis of molecular orbitals - final
         #       -----------------------------------------------
         #
-        #  Numbering of irreducible representations: 
+        #  Numbering of irreducible representations:
         #
-        #     1 ag          2 au          3 bg          4 bu      
+        #     1 ag          2 au          3 bg          4 bu
         #
         #  Orbital symmetries:
         #
-        #     1 bu          2 ag          3 bu          4 ag          5 bu      
-        #     6 ag          7 bu          8 ag          9 bu         10 ag 
+        #     1 bu          2 ag          3 bu          4 ag          5 bu
+        #     6 ag          7 bu          8 ag          9 bu         10 ag
         # ...
         if line.strip() == "Symmetry analysis of molecular orbitals - final":
 
@@ -522,25 +522,25 @@ class NWChem(logfileparser.Logfile):
         #
         # Vector    1  Occ=2.000000D+00  E=-1.104059D+01  Symmetry=bu
         #              MO Center=  1.4D-17,  0.0D+00, -6.5D-37, r^2= 2.1D+00
-        #   Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
+        #   Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function
         #  ----- ------------  ---------------      ----- ------------  ---------------
-        #     1      0.701483   1 C  s                 6     -0.701483   2 C  s         
+        #     1      0.701483   1 C  s                 6     -0.701483   2 C  s
         #
         # Vector    2  Occ=2.000000D+00  E=-1.104052D+01  Symmetry=ag
         # ...
         # Vector   12  Occ=2.000000D+00  E=-1.020253D+00  Symmetry=bu
         #              MO Center= -1.4D-17, -5.6D-17,  2.9D-34, r^2= 7.9D+00
-        #   Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
+        #   Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function
         #  ----- ------------  ---------------      ----- ------------  ---------------
-        #    36     -0.298699  11 C  s                41      0.298699  12 C  s         
-        #     2      0.270804   1 C  s                 7     -0.270804   2 C  s         
+        #    36     -0.298699  11 C  s                41      0.298699  12 C  s
+        #     2      0.270804   1 C  s                 7     -0.270804   2 C  s
         #    48     -0.213655  15 C  s                53      0.213655  16 C  s
         # ...
         #
         if "Final" in line and "Molecular Orbital Analysis" in line:
 
             # Unrestricted jobs have two such blocks, for alpha and beta orbitals, and
-            # we need to keep track of which one we're parsing (always alpha in restricted case). 
+            # we need to keep track of which one we're parsing (always alpha in restricted case).
             unrestricted = ("Alpha" in line) or ("Beta" in line)
             alphabeta = int("Beta" in line)
 
@@ -605,9 +605,9 @@ class NWChem(logfileparser.Logfile):
         #                                 ----------------
         #
         #
-        # global array: alpha evecs[1:60,1:60],  handle: -995 
+        # global array: alpha evecs[1:60,1:60],  handle: -995
         #
-        #            1           2           3           4           5           6  
+        #            1           2           3           4           5           6
         #       ----------- ----------- ----------- ----------- ----------- -----------
         #   1      -0.69930    -0.69930    -0.02746    -0.02769    -0.00313    -0.02871
         #   2      -0.03156    -0.03135     0.00410     0.00406     0.00078     0.00816
@@ -633,7 +633,7 @@ class NWChem(logfileparser.Logfile):
                 nmo = int(size.split(',')[1].split(':')[1])
                 self.set_attribute('nbasis', nbasis)
                 self.set_attribute('nmo', nmo)
-            
+
                 self.skip_line(inputfile, 'blank')
                 mocoeffs = []
                 while len(mocoeffs) < self.nmo:
@@ -642,7 +642,7 @@ class NWChem(logfileparser.Logfile):
                     for n in nmos:
                         mocoeffs.append([])
                     self.skip_line(inputfile, 'dashes')
-                    for nb in range(nbasis):                
+                    for nb in range(nbasis):
                         line = next(inputfile)
                         index = int(line.split()[0])
                         assert index == nb+1
@@ -757,7 +757,7 @@ class NWChem(logfileparser.Logfile):
         # to the values in Debye, which are also printed. But we can also just convert them
         # right away and so parse a little bit less. Note how the reference point is print
         # here within the block nicely, as it is for all moment later.
-        # 
+        #
         #          -------------
         #          Dipole Moment
         #          -------------
@@ -813,8 +813,8 @@ class NWChem(logfileparser.Logfile):
         # Center of charge (in au) is the expansion point
         #         X =       0.0000000 Y =       0.0000000 Z =       0.0000000
         #
-        # < R**2 > = ********** a.u.  ( 1 a.u. = 0.280023 10**(-16) cm**2 ) 
-        # ( also called diamagnetic susceptibility ) 
+        # < R**2 > = ********** a.u.  ( 1 a.u. = 0.280023 10**(-16) cm**2 )
+        # ( also called diamagnetic susceptibility )
         #
         #   Second moments in atomic units
         #
@@ -941,5 +941,6 @@ class NWChem(logfileparser.Logfile):
 
 
 if __name__ == "__main__":
-    import doctest, nwchemparser
+    import doctest
+    from . import nwchemparser
     doctest.testmod(nwchemparser, verbose=False)

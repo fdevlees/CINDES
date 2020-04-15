@@ -5,7 +5,7 @@ from GPy.kern.src.rbf import RBF
 from GPy.models.gp_regression import GPRegression
 from sklearn.decomposition.pca import PCA
 
-from experiment_interface import Experiment
+from .experiment_interface import Experiment
 
 from CINDES.utils.statistics import print_stats
 
@@ -26,7 +26,7 @@ class GaussianProcessExperiment(Experiment):
         if y is None: y=self.y
 
         if verbose:
-            print "an example input vector:", X[3]
+            print("an example input vector:", X[3])
 
         # Get subset for hyperparameter optimization
         ind = np.arange(X.shape[0])
@@ -58,7 +58,7 @@ class GaussianProcessExperiment(Experiment):
         gpr.set_XY(X, y[:,None])
         self.retrained=True
 
-        if verbose: print "\tLearned model: ", gpr
+        if verbose: print("\tLearned model: ", gpr)
 
         return gpr
 
@@ -110,7 +110,7 @@ class GaussianProcessExperiment(Experiment):
         #model.update_model(True)
 
         model = pickle.load(open(modelname2,'rb'))
-        print "loaded model:", model
+        print("loaded model:", model)
 
         # try to take R from the model:
         try:
@@ -158,8 +158,8 @@ class GaussianProcessExperiment_skl(Experiment):
 
         gpr.fit(X,y)
 
-        if verbose: print "\tLearned model: ", gpr
-        print "score:", gpr.score(X,y)
+        if verbose: print("\tLearned model: ", gpr)
+        print("score:", gpr.score(X,y))
 
         return gpr
 
@@ -207,7 +207,7 @@ class GaussianProcessExperiment_skl(Experiment):
         #model.update_model(True)
 
         model = pickle.load(open(modelname2,'rb'))
-        print "loaded model:", model
+        print("loaded model:", model)
         try:
             self.R = model.R
         except AttributeError:
@@ -246,10 +246,10 @@ class GaussianProcessWithPCAExperiment(GaussianProcessExperiment_skl):
         if fit:
             F = PCA(self.n_principal_components)
             F.fit(X)
-            print "\tLeast explained variance:", F.explained_variance_[-1]
+            print("\tLeast explained variance:", F.explained_variance_[-1])
             self.F = F
         X_F = self.F.transform(X)
-        print "\tDimensionality reduction: ", X_F.shape
+        print("\tDimensionality reduction: ", X_F.shape)
         return X_F
 
 #    def train(self, X=None, y=None, **kwargs):
@@ -296,7 +296,7 @@ class GaussianProcessWithPCAExperiment(GaussianProcessExperiment_skl):
 
         model, self.F  = pickle.load(open(modelname2,'rb'))
 
-        print "loaded model:", model
+        print("loaded model:", model)
 
         try:
             self.R = model.R

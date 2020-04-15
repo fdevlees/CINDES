@@ -47,10 +47,10 @@ def plot3(data, ycolumns, xcolumn=None): # plot some data columns vs another col
         x = data[:, xcolumn]
 
     nx,ny = set_nxy(len(ycolumns))
-    print nx, ny
+    print(nx, ny)
     f, axs = plt.subplots(ny,nx)
     axs2d = [ item for sublist in axs for item in sublist ]
-    print "axs2d:",axs2d
+    print("axs2d:",axs2d)
     for i,column in enumerate(ycolumns):
         a=axs2d[i]
         a.plot(x, data[:,column], label=str(column))
@@ -84,7 +84,7 @@ if __name__=='__main__':
     parser.add_argument("-x", "--xcolumn", type=int, help='the column that represents the x axis if -1 no x is used')
     args=parser.parse_args()
 
-    print args.ycolumns
-    print "args:", args
+    print(args.ycolumns)
+    print("args:", args)
 
     main(**vars(args))

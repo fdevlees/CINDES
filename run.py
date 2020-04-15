@@ -4,7 +4,7 @@
 '''
 
 # this line must be at the beginning of the file!
-from __future__ import division
+
 
 # debug flag
 debug = 1
@@ -24,8 +24,8 @@ from platform import node
 from pprint import pformat
 
 # import my own modules
-from evaluation import construction as zcon  # all functions needed for constructing new geometries
-from evaluation import reader as r  # this reads the zmatrix in gaussian format
+from .evaluation import construction as zcon  # all functions needed for constructing new geometries
+from .evaluation import reader as r  # this reads the zmatrix in gaussian format
 
 # import utils
 from CINDES.utils.writings import dump
@@ -63,7 +63,7 @@ class BaseRun(object):
 
         # if property is a class it has to be initialized:
         if self.property=='func' and inspect.isclass(self.function):
-            print "initializing function..."
+            print("initializing function...")
             self.function = self.function(self)
 
         return
@@ -72,14 +72,14 @@ class BaseRun(object):
         ''' dumps the input to yaml.
 
         YAML because it can handle python sets better than json '''
-        data = { k:v for k,v in self.__dict__.iteritems() if not (callable(v) or v is Ellipsis) and not k=='adj'}
+        data = { k:v for k,v in self.__dict__.items() if not (callable(v) or v is Ellipsis) and not k=='adj'}
         #print data
         try:
             import yaml
             with open("input.yaml", "w") as f:
                 yaml.dump(data, f)
-        except ImportError
-            print "pyyaml not installed"
+        except ImportError:
+            print("pyyaml not installed")
         return
 
     def __str__(self):
@@ -276,6 +276,6 @@ class FrameRun(BaseRun):
                 adj[j][i] = adj[i][j]
         sites = [int(methyl[0][1]) - 1 for methyl in active]
         sites_adj = adj[sites][:, sites]
-        self.adj = map(list,adj)
+        self.adj = list(map(list,adj))
         return
 

@@ -13,7 +13,7 @@
 """Parser for GAMESS(US) output files"""
 
 
-from __future__ import print_function
+
 import re
 
 import numpy
@@ -68,7 +68,7 @@ class GAMESS(logfileparser.Logfile):
         self.firststdorient = True # Used to decide whether to wipe the atomcoords clean
         self.cihamtyp = "none" # Type of CI Hamiltonian: saps or dets.
         self.scftype = "none" # Type of SCF calculation: BLYP, RHF, ROHF, etc.
-    
+
     def extract(self, inputfile, line):
         """Extract information from the file object inputfile."""
 
@@ -83,7 +83,7 @@ class GAMESS(logfileparser.Logfile):
             if not hasattr(self, "geotargets"):
                 opttol = float(line.split()[2])
                 self.geotargets = numpy.array([opttol, 3. / opttol], "d")
-                        
+
         # Has to deal with such lines as:
         #  FINAL R-B3LYP ENERGY IS     -382.0507446475 AFTER  10 ITERATIONS
         #  FINAL ENERGY IS     -379.7594673378 AFTER   9 ITERATIONS
@@ -104,14 +104,14 @@ class GAMESS(logfileparser.Logfile):
         # where E(MP2) = E(0) + E(2)
         #
         # With GAMESS-US 12 Jan 2009 (R3), the preceding text is different:
-        #      DIRECT 4-INDEX TRANSFORMATION 
+        #      DIRECT 4-INDEX TRANSFORMATION
         #      SCHWARZ INEQUALITY TEST SKIPPED          0 INTEGRAL BLOCKS
         #                     E(SCF)=       -76.0088477471
         #                       E(2)=        -0.1403745370
         #                     E(MP2)=       -76.1492222841
         #
         if line.find("RESULTS OF MOLLER-PLESSET") >= 0 or line[6:37] == "SCHWARZ INEQUALITY TEST SKIPPED":
-       
+
             if not hasattr(self, "mpenergies"):
                 self.mpenergies = []
 
@@ -120,7 +120,7 @@ class GAMESS(logfileparser.Logfile):
 
             # GAMESS-US presently supports only second order corrections (MP2)
             # PC GAMESS also has higher levels (3rd and 4th), with different output
-            # Only the highest level MP4 energy is gathered (SDQ or SDTQ)            
+            # Only the highest level MP4 energy is gathered (SDQ or SDTQ)
             while re.search("DONE WITH MP(\d) ENERGY", line) is None:
 
                 line = next(inputfile)
@@ -299,7 +299,7 @@ class GAMESS(logfileparser.Logfile):
         # STATE #   1  ENERGY =    3.027297 EV
         # OSCILLATOR STRENGTH =    0.000000
         # LAMBDA DIAGNOSTIC   =    0.925 (RYDBERG/CHARGE TRANSFER CHARACTER)
-        # SYMMETRY OF STATE   =    A   
+        # SYMMETRY OF STATE   =    A
         #                 EXCITATION  DE-EXCITATION
         #     OCC     VIR  AMPLITUDE      AMPLITUDE
         #      I       A     X(I->A)        Y(A->I)
@@ -355,7 +355,7 @@ class GAMESS(logfileparser.Logfile):
                     if "->" in line:
                         i_occ_vir = [2, 4]
                         i_coeff = 1
-                        
+
                     else:
                         i_occ_vir = [0, 1]
                         i_coeff = 2
@@ -369,18 +369,18 @@ class GAMESS(logfileparser.Logfile):
             # The symmetries are not always present.
             if etsyms:
                 self.etsyms = etsyms
-         
+
         # Maximum and RMS gradients.
         if "MAXIMUM GRADIENT" in line or "RMS GRADIENT" in line:
 
             parts = line.split()
 
             # Avoid parsing the following...
-            
+
             ## YOU SHOULD RESTART "OPTIMIZE" RUNS WITH THE COORDINATES
             ## WHOSE ENERGY IS LOWEST.  RESTART "SADPOINT" RUNS WITH THE
             ## COORDINATES WHOSE RMS GRADIENT IS SMALLEST.  THESE ARE NOT
-            ## ALWAYS THE LAST POINT COMPUTED!            
+            ## ALWAYS THE LAST POINT COMPUTED!
 
             if parts[0] not in ["MAXIMUM", "RMS", "(1)"]:
                 return
@@ -393,7 +393,7 @@ class GAMESS(logfileparser.Logfile):
             if len(parts) == 8:
                 maximum = float(parts[3])
                 rms = float(parts[7])
-            
+
             # In older versions of GAMESS, this spanned two lines, like this:
             #       MAXIMUM GRADIENT =    0.057578167
             #           RMS GRADIENT =    0.027589766
@@ -443,7 +443,7 @@ class GAMESS(logfileparser.Logfile):
         if "GEOMETRY SEARCH IS NOT CONVERGED" in line:
             if not hasattr(self, 'optdone'):
                 self.optdone = []
-        
+
         # This is the standard orientation, which is the only coordinate
         # information available for all geometry optimisation cycles.
         # The input orientation will be overwritten if this is a geometry optimisation
@@ -457,18 +457,18 @@ class GAMESS(logfileparser.Logfile):
                 self.firststdorient = False
                 # Wipes out the single input coordinate at the start of the file
                 self.atomcoords = []
-                
+
             self.skip_lines(inputfile, ['line', '-'])
 
             atomcoords = []
-            line = next(inputfile)                
+            line = next(inputfile)
 
             for i in range(self.natom):
                 temp = line.strip().split()
                 atomcoords.append(list(map(float, temp[2:5])))
                 line = next(inputfile)
             self.atomcoords.append(atomcoords)
-        
+
         # Section with SCF information.
         #
         # The space at the start of the search string is to differentiate from MCSCF.
@@ -583,7 +583,7 @@ class GAMESS(logfileparser.Logfile):
         #     REDUCED MASSES IN AMU.
         #
         #                          1           2           3           4           5
-        #       FREQUENCY:        52.49       41.45       17.61        9.23       10.61  
+        #       FREQUENCY:        52.49       41.45       17.61        9.23       10.61
         #    REDUCED MASS:      3.92418     3.77048     5.43419     6.44636     5.50693
         #    IR INTENSITY:      0.00013     0.00001     0.00004     0.00000     0.00003
         #
@@ -595,9 +595,9 @@ class GAMESS(logfileparser.Logfile):
         #     REDUCED MASSES IN AMU.
         #
         #                          1           2           3           4           5
-        #       FREQUENCY:         0.05        0.03        0.03       30.89       30.94  
+        #       FREQUENCY:         0.05        0.03        0.03       30.89       30.94
         #    REDUCED MASS:      8.50125     8.50137     8.50136     1.06709     1.06709
-        #       
+        #
         # ...whereas PC-GAMESS has...
         #
         # MODES 1 TO 6 ARE TAKEN AS ROTATIONS AND TRANSLATIONS.
@@ -605,7 +605,7 @@ class GAMESS(logfileparser.Logfile):
         #     FREQUENCIES IN CM**-1, IR INTENSITIES IN DEBYE**2/AMU-ANGSTROM**2
         #
         #                          1           2           3           4           5
-        #       FREQUENCY:         5.89        1.46        0.01        0.01        0.01  
+        #       FREQUENCY:         5.89        1.46        0.01        0.01        0.01
         #    IR INTENSITY:      0.00000     0.00000     0.00000     0.00000     0.00000
         #
         # If Raman is present we have (for PC-GAMESS)...
@@ -616,7 +616,7 @@ class GAMESS(logfileparser.Logfile):
         #     RAMAN INTENSITIES IN ANGSTROM**4/AMU, DEPOLARIZATIONS ARE DIMENSIONLESS
         #
         #                          1           2           3           4           5
-        #       FREQUENCY:         5.89        1.46        0.04        0.03        0.01  
+        #       FREQUENCY:         5.89        1.46        0.04        0.03        0.01
         #    IR INTENSITY:      0.00000     0.00000     0.00000     0.00000     0.00000
         # RAMAN INTENSITY:       12.675       1.828       0.000       0.000       0.000
         #  DEPOLARIZATION:        0.750       0.750       0.124       0.009       0.750
@@ -701,7 +701,7 @@ class GAMESS(logfileparser.Logfile):
 
                 # Not present in numerical Hessian calculations.
                 if line.find("IR INTENSITY") >= 0:
-                    irIntensity = map(float, line.strip().split()[2:])
+                    irIntensity = list(map(float, line.strip().split()[2:]))
                     self.vibirs.extend([utils.convertor(x, "Debye^2/amu-Angstrom^2", "km/mol") for x in irIntensity])
                     line = next(inputfile)
 
@@ -733,10 +733,10 @@ class GAMESS(logfileparser.Logfile):
                 # Skip the Sayvetz stuff at the end.
                 for j in range(10):
                     line = next(inputfile)
-                
+
                 self.skip_line(inputfile, 'blank')
                 line = next(inputfile)
-            
+
             # Exclude rotations and translations.
             self.vibfreqs = numpy.array(self.vibfreqs[:startrot-1]+self.vibfreqs[endrot:], "d")
             self.vibirs = numpy.array(self.vibirs[:startrot-1]+self.vibirs[endrot:], "d")
@@ -796,7 +796,7 @@ class GAMESS(logfileparser.Logfile):
                     line = next(inputfile)
                 # either the start of the next block or the start of a new atom or
                 # the end of the basis function section
-                
+
                 numtoadd = 1 + (shellgap // shellsize)
                 shellcounter = shellno + shellsize
                 for x in range(numtoadd):
@@ -808,10 +808,10 @@ class GAMESS(logfileparser.Logfile):
         #           ------------
         #           EIGENVECTORS
         #           ------------
-        # 
+        #
         #                       1          2          3          4          5
         #                   -10.0162   -10.0161   -10.0039   -10.0039   -10.0029
-        #                      BU         AG         BU         AG         AG  
+        #                      BU         AG         BU         AG         AG
         #     1  C  1  S    0.699293   0.699290  -0.027566   0.027799   0.002412
         #     2  C  1  S    0.031569   0.031361   0.004097  -0.004054  -0.000605
         #     3  C  1  X    0.000908   0.000632  -0.004163   0.004132   0.000619
@@ -826,7 +826,7 @@ class GAMESS(logfileparser.Logfile):
         #    12  C  3  S   -0.007748  -0.006932   0.000680  -0.000695  -0.024917
         #    13  C  3  X    0.002628   0.002997   0.000018   0.000061  -0.003608
         # ...
-        # 
+        #
         # There are blanks lines between each block.
         #
         # Warning! There are subtle differences between GAMESS-US and PC-GAMES
@@ -873,7 +873,7 @@ class GAMESS(logfileparser.Logfile):
                 # which happens in regression 2CO.ccsd.aug-cc-pVDZ.out.
                 if line.strip() != "":
                     break;
-                
+
                 numbers = next(inputfile) # Eigenvector numbers.
 
                 # Sometimes there are some blank lines here.
@@ -891,7 +891,7 @@ class GAMESS(logfileparser.Logfile):
                 line = next(inputfile)
                 if line.strip():
                     self.mosyms[0].extend(list(map(self.normalisesym, line.split())))
-                
+
                 # Now we have nbasis lines. We will use the same method as in normalise_aonames() before.
                 p = re.compile("(\d+)\s*([A-Z][A-Z]?)\s*(\d+)\s*([A-Z]+)")
                 oldatom = '0'
@@ -923,7 +923,7 @@ class GAMESS(logfileparser.Logfile):
                                 i_atom = i_atom + 100
                                 flag_w = False # handle subsequent AO's
                             if g2 != 0:
-                                flag_w = True # reset flag 
+                                flag_w = True # reset flag
                             g2 = g2 + i_atom
 
                             aoname = "%s%i_%s" % (g[1].capitalize(), g2, g[3])
@@ -957,7 +957,7 @@ class GAMESS(logfileparser.Logfile):
             #
             # If it's an unrestricted calculation, however, we now get the beta orbitals:
             #
-            #  ----- BETA SET ----- 
+            #  ----- BETA SET -----
             #
             #          ------------
             #          EIGENVECTORS
@@ -1030,12 +1030,12 @@ class GAMESS(logfileparser.Logfile):
                 line = next(inputfile)
                 while not line.strip():
                     line = next(inputfile)
-                eigenvalues = map(float, line.split())
+                eigenvalues = list(map(float, line.split()))
                 self.nooccnos.extend(eigenvalues)
 
                 # Orbital symemtry labels are normally here for MO coefficients.
                 line = next(inputfile)
-                
+
                 # Now we have nbasis lines with the coefficients.
                 for i in range(self.nbasis):
 
@@ -1060,7 +1060,7 @@ class GAMESS(logfileparser.Logfile):
 
             self.set_attribute('homos', homos)
 
-        
+
         if line.find("SYMMETRIES FOR INITIAL GUESS ORBITALS FOLLOW") >= 0:
             # Not unrestricted, so lop off the second index.
             # In case the search string above was not used (ex. FMO in exam38),
@@ -1085,13 +1085,13 @@ class GAMESS(logfileparser.Logfile):
         if not hasattr(self,"natom") and "NUMBER OF ATOMS" in line.upper():
             natom = int(line.split()[-1])
             self.set_attribute('natom', natom)
-            
+
         # The first is from Julien's Example and the second is from Alexander's
         # I think it happens if you use a polar basis function instead of a cartesian one
         if line.find("NUMBER OF CARTESIAN GAUSSIAN BASIS") == 1 or line.find("TOTAL NUMBER OF BASIS FUNCTIONS") == 1:
             nbasis = int(line.strip().split()[-1])
             self.set_attribute('nbasis', nbasis)
-                
+
         elif line.find("TOTAL NUMBER OF CONTAMINANTS DROPPED") >= 0:
             nmos_dropped = int(line.split()[-1])
             if hasattr(self, "nmo"):
@@ -1103,7 +1103,7 @@ class GAMESS(logfileparser.Logfile):
         elif line.find("SPHERICAL HARMONICS KEPT IN THE VARIATION SPACE") >= 0:
             nmo = int(line.strip().split()[-1])
             self.set_attribute('nmo', nmo)
-            
+
         # Note that this line is not always present, so by default
         # NBsUse is set equal to NBasis (see below).
         elif line.find("TOTAL NUMBER OF MOS IN VARIATION SPACE") == 1:
@@ -1250,9 +1250,11 @@ class GAMESS(logfileparser.Logfile):
                     self.logger.warning('This could be from post-HF properties or geometry optimization')
                     self.moments = [reference, dipole]
 
-        
+
 if __name__ == "__main__":
-    import doctest, gamessparser, sys
+    import doctest
+    from . import gamessparser
+    import sys
     if len(sys.argv) == 1:
         doctest.testmod(gamessparser, verbose=False)
 

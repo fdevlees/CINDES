@@ -11,7 +11,7 @@ use, like list item swap, random utilities and etc.
 from random import random as rand_random
 from math import sqrt as math_sqrt
 import logging
-import Consts
+from . import Consts
 
 def randomFlipCoin(p):
    """ Returns True with the *p* probability. If the *p* is 1.0,
@@ -82,7 +82,7 @@ def raiseException(message, expt=None):
    if expt is None:
       raise Exception(message)
    else:
-      raise expt, message
+      raise expt(message)
 
 
 def cmp_individual_raw(a, b):
@@ -263,7 +263,7 @@ class Graph:
       
       :rtype: the list of nodes
       """
-      return self.adjacent.keys()
+      return list(self.adjacent.keys())
 
    def reset(self):
       """ Deletes all nodes of the graph """
@@ -274,11 +274,11 @@ class Graph:
       
       :param node: the node
       """
-      return self.adjacent[node].keys()
+      return list(self.adjacent[node].keys())
 
    def __getitem__(self, node):
       """ Returns the adjacent nodes of the node """
-      return self.adjacent[node].keys()
+      return list(self.adjacent[node].keys())
 
    def __repr__(self):
       ret =  "- Graph\n"
@@ -307,7 +307,7 @@ def G1DListGetEdges(individual):
    """
    edg = {}
    ind_list = individual.getInternalList()
-   for i in xrange(len(ind_list)):
+   for i in range(len(ind_list)):
       a, b = ind_list[i], ind_list[i-1]
 
       if a not in edg: edg[a] = []
@@ -325,7 +325,7 @@ def G1DListMergeEdges(eda, edb):
    :rtype: the merged dictionary
    """
    edges = {}
-   for value, near in eda.items():
+   for value, near in list(eda.items()):
       for adj in near:
          if (value in edb) and (adj in edb[value]):
             edges.setdefault(value, []).append(adj)

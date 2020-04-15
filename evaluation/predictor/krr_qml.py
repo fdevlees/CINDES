@@ -6,7 +6,7 @@ import numpy as np
 from qml.kernels import gaussian_kernel
 from qml.math import cho_solve
 
-from experiment_interface import Experiment
+from .experiment_interface import Experiment
 
 # krr with rbf kernel. C controls simplisity or decision surface. High C will
 # try to fit all data and select more support vector. Low C will give a more

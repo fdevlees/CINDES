@@ -13,7 +13,7 @@
 """Tools for identifying and working with files and streams for any supported program"""
 
 
-from __future__ import print_function
+
 
 import os
 import sys
@@ -36,7 +36,7 @@ from .qchemparser import QChem
 
 try:
     from ..bridge import cclib2openbabel
-except ImportError,ValueError:
+except ImportError as ValueError:
     print("Could not import openbabel, fallback mechanism might not work.")
 
 

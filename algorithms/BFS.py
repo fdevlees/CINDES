@@ -10,7 +10,7 @@ from CINDES.utils.writings import print_title
 from CINDES.evaluation import construction as zcon
 from CINDES.evaluation import calculator
 from CINDES.utils.table import set_table, get_property_table
-from loggings import loggings
+from .loggings import loggings
 
 def BFS(run):
     """ 1. This is the standard BFS procedure """
@@ -103,16 +103,16 @@ class Algorithm(object):
                 assert param['bcoptimum'] == 'max'
                 satisfactory = [mol for mol in mols if mol.boundaries[0] > float(param['bcval'])]
 
-            print "satisfactory:\n", pprint.pformat(satisfactory, width=100)
-            print "the BC condition is bc<:", param['bcval']
+            print("satisfactory:\n", pprint.pformat(satisfactory, width=100))
+            print("the BC condition is bc<:", param['bcval'])
 
             if satisfactory == []:  # so if there is at least one fullfilling BC
                 self.bcok = 0
-                print "BC not fullfilled:"
+                print("BC not fullfilled:")
                 optsite = min(mols, key=lambda mol: abs(mol.boundaries[0] - float(param['bcval'])))
             else:
                 self.bcok = 1
-                print "BC fullfilled; satisfactory is not empty:", pprint.pformat(satisfactory, width=100)
+                print("BC fullfilled; satisfactory is not empty:", pprint.pformat(satisfactory, width=100))
                 if param['optimum'] == 'minimum':
                     optsite = min(satisfactory, key=lambda x: x[2])
                 else:
@@ -227,14 +227,14 @@ class BestFirstSearch(Algorithm):
             try:
                 sequence = param['sequences'][self.count - 1]  # accounting for the fact count starts counting at 1
             except IndexError:
-                sequence = random.sample(range(nsites), nsites)
+                sequence = random.sample(list(range(nsites)), nsites)
             finally:
                 logging.warning("SEQUENCE: " + str(sequence))
                 return sequence
         if param['norandom'] == 1:
-            sequence = range(nsites)
+            sequence = list(range(nsites))
         else:
-            sequence = random.sample(range(nsites), nsites)
+            sequence = random.sample(list(range(nsites)), nsites)
         # output sequence
         logging.info("SEQUENCE: " + str(sequence))
         return sequence
@@ -249,7 +249,7 @@ class BestFirstSearch(Algorithm):
                 if self.run.montecarlo == 0:
                     converged = 1
                 else:
-                    from montecarlo import montecarloprocedure
+                    from .montecarlo import montecarloprocedure
                     property_table = get_property_table(self.table, self.run)
                     if self.run.ml == 0:
                         optsite = montecarloprocedure(self.run, self.array, self.optimum, property_table)
@@ -270,7 +270,7 @@ class SteepestDescent(BestFirstSearch):
         super(SteepestDescent, self).__init__(run)
 
         # defines which sites will be changed. only relevant for reduced steepest algorithm
-        self.restingsites = range(self.run.nsites)
+        self.restingsites = list(range(self.run.nsites))
         return
 
     def runtest(self, optsite):
@@ -282,26 +282,26 @@ class SteepestDescent(BestFirstSearch):
 
     def runCycle(self, startconf):
         # define new starting geometry
-        print "startconf:", startconf
+        print("startconf:", startconf)
         if not startconf:
             startconf = self.get_startconf()
-        print "start configuration: ", startconf
+        print("start configuration: ", startconf)
 
         optsite = self.optimize(startconf)
 
         if self.run.procedure == 'rsd':
             maxconf = zcon.indtocon(optsite.index)
-            print "maxconf:", maxconf, 'while startconf:', startconf
+            print("maxconf:", maxconf, 'while startconf:', startconf)
             try:
                 changedsite = [siteM == siteS for siteM, siteS in zip(maxconf, startconf)].index(False)
             except ValueError:
-                print "no site changed"
+                print("no site changed")
             else:
                 self.restingsites.remove(changedsite)
             if self.restingsites == []:
-                print "all sites changed once"
+                print("all sites changed once")
             else:
-                print "changed site:", changedsite, "sites still to be optimized:", self.restingsites
+                print("changed site:", changedsite, "sites still to be optimized:", self.restingsites)
 
         startconf = optsite
         return optsite, startconf

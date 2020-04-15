@@ -18,7 +18,7 @@ def randomconf(subarray, maxconf=tuple(), nrandsites=0):
     arlen = len(subarray)  # is length of subarray
     if debug:
         sprint(10, subarray)
-        print "number of changed sites:", nrandsites
+        print("number of changed sites:", nrandsites)
     while True:
         if nrandsites == 0:  # then choose a whole new configuration
             conf = []
@@ -27,7 +27,7 @@ def randomconf(subarray, maxconf=tuple(), nrandsites=0):
         else:  # only change nrandsites
             conf = maxconf[:]  # start from same conf
             # this gives an error because range(arlen) seems to an integer.
-            sitenumbers = range(arlen)
+            sitenumbers = list(range(arlen))
             rands = random.sample(sitenumbers, nrandsites)  # choose nrandsites
             for i in rands:
                 newgroup = random.choice(subarray[i])
@@ -92,13 +92,13 @@ def montecarloprocedure(run, subarray, maxi, Dtable, **kwargs):
     # OUTPUT: maxsite
     fileparameters = run.__dict__
 
-    print "Monte Carlo switched on!"
+    print("Monte Carlo switched on!")
 
     # 1. set Metropolis criterium parameters
     T = fileparameters['montecarlo']
     kb = 8.6e-5  # boltzmann constant
     beta = 1.0 / (kb * T)
-    print "intial temperature is: ", T
+    print("intial temperature is: ", T)
 
     # 2. set additional initial parameters
     cmaximum = zcon.indtocon(maxi.index)  # maximum is Molecule instance. get conf without dihedral angles
@@ -108,7 +108,7 @@ def montecarloprocedure(run, subarray, maxi, Dtable, **kwargs):
     #Tcountmax = int(10 ** (float(1 + fileparameters['nrandsites'])))
     Tcount = 0
     Tcountmax = 1000
-    print "Number of tested configurations per temperature:", Tcountmax
+    print("Number of tested configurations per temperature:", Tcountmax)
 
     # 3. FOR ML
     if fileparameters['ml'] > 0 or fileparameters['predictions']:
@@ -135,32 +135,32 @@ def montecarloprocedure(run, subarray, maxi, Dtable, **kwargs):
                     try:
                         deltaetje += Dtable[indje] - maxi.Pvalue
                     except KeyError as e:
-                        print "indje:", indje
-                        print "error:", e
-                        print "maybe an ignored structure is encountered"
+                        print("indje:", indje)
+                        print("error:", e)
+                        print("maybe an ignored structure is encountered")
                         TAKEOTHER = True
 
             if TAKEOTHER:
-                print "check other random structure"
+                print("check other random structure")
                 continue
                 #print "deltaetje:", deltaetje
             erandom = float(maxi.Pvalue + deltaetje)
 
             if debug:
-                print "random conf:", rconf
-                print "random ind:", rind
-                print "indje    :", indje
-                print "Dtable[indje]", Dtable[indje]
-                print "deltaetje:", deltaetje
-                print "erandom:", erandom
+                print("random conf:", rconf)
+                print("random ind:", rind)
+                print("indje    :", indje)
+                print("Dtable[indje]", Dtable[indje])
+                print("deltaetje:", deltaetje)
+                print("erandom:", erandom)
 
         else:
             # 4.2b predict property via MACHINE LEARNING
             erandom = ML_pred(ml_instance, rconf, **kwargs)
             if debug:
-                print "ml_instance:", ml_instance
-                print "random index:", rind
-                print "erandom_ML:", erandom
+                print("ml_instance:", ml_instance)
+                print("random index:", rind)
+                print("erandom_ML:", erandom)
 
         # 4.3 determine acceptance based on Delta-P
         # calculate the gradient energy. > resulttry
@@ -170,15 +170,15 @@ def montecarloprocedure(run, subarray, maxi, Dtable, **kwargs):
         # 4.4
         Rcount += 1
         if rind == maxi.index:
-            print "rconf similar to maxconf. not accepted"
+            print("rconf similar to maxconf. not accepted")
             acceptance = 0
         if acceptance == 1:
-            print "configuration accepted"
-            print Rcount, " configurations tested"
-            print "Random Conf:", rind
-            print "property_random:", erandom
-            print "chance of acceptance:", p
-            print "final temperature while acceptance:", T
+            print("configuration accepted")
+            print(Rcount, " configurations tested")
+            print("Random Conf:", rind)
+            print("property_random:", erandom)
+            print("chance of acceptance:", p)
+            print("final temperature while acceptance:", T)
             break
         else:
             #print "configuration not accepted"

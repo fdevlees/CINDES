@@ -7,7 +7,7 @@ import numpy as np
 random = np.random.random
 #import pickle
 import json
-from itertools import izip
+
 import pprint
 
 # needed by evolve
@@ -31,13 +31,13 @@ from CINDES.algorithms.GA import Fitness_Function
 from CINDES.evaluation.predictions import predictor
 from CINDES.evaluation.calculator import evaluate_mols
 from CINDES.evaluation.construction import indtocon, contoind
-import procedures
+from . import procedures
 
-from deap import tools
-from deap import base
-from deap import creator
-from deap import algorithms
-from DEAP_utils import *
+from .deap import tools
+from .deap import base
+from .deap import creator
+from .deap import algorithms
+from .DEAP_utils import *
 
 
 def run_GA(array, options, level=None, function=None):
@@ -51,10 +51,10 @@ def run_GA(array, options, level=None, function=None):
     import numpy as np
     np.random.seed(options.seed)
 
-    from deap import base
-    from deap import creator
-    from deap import tools
-    from deap import algorithms
+    from .deap import base
+    from .deap import creator
+    from .deap import tools
+    from .deap import algorithms
 
 
     minimize = options.optimum == 'minimize'
@@ -78,7 +78,7 @@ def run_GA(array, options, level=None, function=None):
     groups = options.array[0]
     groups_joined = [ "".join(item) for item in groups ]
     get_group = lambda : np.random.choice(groups_joined)
-    print "WARNING: assuming all sites have the same group!"
+    print("WARNING: assuming all sites have the same group!")
     toolbox.register("get_group", get_group)
     toolbox.register("individual", tools.initRepeat, creator.Individual,
             toolbox.get_group, n=options.nsites)
@@ -87,11 +87,11 @@ def run_GA(array, options, level=None, function=None):
     toolbox.register("population", tools.initRepeat, list, toolbox.individual, n=options.genalg['npopulation'])
 
     def evaluate_multi(population, gen=None):
-        print "population:", population
-        P = [ map(list,p) for p in population[:] ]
+        print("population:", population)
+        P = [ list(map(list,p)) for p in population[:] ]
         mols = function.evaluate_multi(P, gen=gen)
 
-        print "props:", [ mol.props for mol in mols ]
+        print("props:", [ mol.props for mol in mols ])
 
         vals = [ mol.Pvalue for mol in mols ]
         return vals
@@ -115,10 +115,10 @@ def run_GA(array, options, level=None, function=None):
     population = toolbox.population()
     if options.genalg['restart']:
         startgen = restart_population(population)
-        print "start generation at:", startgen
-        print "with population:\n",
+        print("start generation at:", startgen)
+        print("with population:\n", end=' ')
         for i in population:
-            print i
+            print(i)
     else:
         startgen = 1
 
@@ -130,7 +130,7 @@ def run_GA(array, options, level=None, function=None):
         try:
             ind.fitness.values = [fit]
         except TypeError as e:
-            print "fit:", fit
+            print("fit:", fit)
 
     for gen in range(startgen, options.genalg['ngenerations']):
         print_title("Generation No.: " + str(gen), outline='l', signator="-")
@@ -146,18 +146,18 @@ def run_GA(array, options, level=None, function=None):
 
         # 2. evaluate fitness
         fits = evaluate_multi(offspring, gen=gen)
-        print "fits:", fits
+        print("fits:", fits)
         for fit, ind in zip(fits, offspring):
             ind.fitness.values = [fit]
 
         # 3. loggings
         halloffame.update(offspring)
-        print "hall of fame:", halloffame
+        print("hall of fame:", halloffame)
 
         population[:] = offspring
 
         record = stats.compile(population)
-        print "record:", record
+        print("record:", record)
         logbook.record(gen=gen, **record)
         best_ind = tools.selBest(population, 1)[0]
         history.append({
@@ -171,13 +171,13 @@ def run_GA(array, options, level=None, function=None):
         population = toolbox.select(offspring + halloffame[:],
             k=options.genalg['npopulation'])
 
-    print "hall of fame:", halloffame
-    print "population:", population
-    print "logbook:", logbook
+    print("hall of fame:", halloffame)
+    print("population:", population)
+    print("logbook:", logbook)
     best_ind = tools.selBest(population, 1)[0]
     best_index = contoind(best_ind)
-    print "Best individual is %s, %s" % (best_index, best_ind.fitness.values[0])
-    print "ncalcs:", function.ncalcs
+    print("Best individual is %s, %s" % (best_index, best_ind.fitness.values[0]))
+    print("ncalcs:", function.ncalcs)
 
     result = {'p':best_ind.fitness.values[0], 'index':best_index, 'history':history, 'ncalcs':function.ncalcs, 'gen':options.genalg['ngenerations']}
 
@@ -193,10 +193,10 @@ def run_test_GA(array, options, level=None, function=None):
     import numpy as np
     #np.random.seed(options.seed)
 
-    from deap import base
-    from deap import creator
-    from deap import tools
-    from deap import algorithms
+    from .deap import base
+    from .deap import creator
+    from .deap import tools
+    from .deap import algorithms
 
 
     minimize = options.optimum == 'minimize'
@@ -220,7 +220,7 @@ def run_test_GA(array, options, level=None, function=None):
     groups = options.array[0]
     groups_joined = [ "".join(item) for item in groups ]
     get_group = lambda : np.random.choice(groups_joined)
-    print "WARNING: assuming all sites have the same group!"
+    print("WARNING: assuming all sites have the same group!")
     toolbox.register("get_group", get_group)
     toolbox.register("individual", tools.initRepeat, creator.Individual,
             toolbox.get_group, n=options.nsites)
@@ -257,14 +257,14 @@ def run_test_GA(array, options, level=None, function=None):
             verbose=False,
             nelitism=options.genalg['nelitism'])
 
-    print "hall of fame:", halloffame
+    print("hall of fame:", halloffame)
     if verbose:
-        print "population:", population
-        print "logbook:", logbook
+        print("population:", population)
+        print("logbook:", logbook)
     best_ind = tools.selBest(population, 1)[0]
     best_index = contoind(best_ind)
-    print "Best individual is %s, %s" % (best_index, best_ind.fitness.values[0])
-    print "ncalcs:", function.ncalcs
+    print("Best individual is %s, %s" % (best_index, best_ind.fitness.values[0]))
+    print("ncalcs:", function.ncalcs)
 
     result = {'p':best_ind.fitness.values[0], 'index':best_index, 'history':history, 'ncalcs':history[-1]['ncalcs'], 'gen':options.genalg['ngenerations']}
 

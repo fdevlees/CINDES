@@ -9,7 +9,7 @@
    character has to have a length of 1
 
 '''
-from __future__ import print_function
+
 import numpy as np
 import logging
 #logging.basicConfig(format='%(levelname)s:%(message)s')
@@ -206,7 +206,7 @@ def dump(obj, nested_level=0, ret=[], n=10):
     spacing = '   '
     if type(obj) == dict:
         ret.append( '%s{' % ((nested_level) * spacing) )
-        for k, v in obj.items():
+        for k, v in list(obj.items()):
             if hasattr(v, '__iter__'):
                 ret.append('%s%s:' % ((nested_level + 1) * spacing, k) )
                 dump(v, nested_level + 1, ret)

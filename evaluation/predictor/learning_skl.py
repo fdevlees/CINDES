@@ -66,24 +66,24 @@ class MachineLearning(object):
                     #print line
                     y.append( float(line[1]) )   # 0: gap, 1: homo 2: lumo 3: Etotal
                 xyz = []
-                for i in xrange(natoms): #for each atom
+                for i in range(natoms): #for each atom
                     line = fid.readline().split()
                     #print 'line:', line
                     assert not line=='\n'
                     xyztje = np.zeros([3])
                     #print "xyztje", xyztje
-                    for j in xrange(3): #for x,y,z
+                    for j in range(3): #for x,y,z
                         xyztje[j] = line[j+1]
                     xyz.append([line[0],xyztje,converter.masses[line[0]]])
                 xyzs.append(xyz)
                 fid.readline() #empty line
         if args.cutoff and data:
             valcutoffmin, valcutoffplus = args.cutoff
-            print "cutoff applied of ", str(valcutoffmin), "and", str(valcutoffplus), " eV"
+            print("cutoff applied of ", str(valcutoffmin), "and", str(valcutoffplus), " eV")
             nbefore = len(y)
-            xyzs, y =  zip ( *[ item for item in zip(xyzs,y) if not ( item[1]<valcutoffmin  or item[1]>valcutoffplus )] )
+            xyzs, y =  list(zip( *[ item for item in zip(xyzs,y) if not ( item[1]<valcutoffmin  or item[1]>valcutoffplus )] ))
             nafter = len(y)
-            print str( nbefore - nafter ) ,"elements were removed from list"
+            print(str( nbefore - nafter ) ,"elements were removed from list")
             #data = [ [ item[0], float(item[1])] for item in datar if float(item[1])<cutoff ] 
         if data:  #total set. with data
             self.xyzs = xyzs
@@ -100,7 +100,7 @@ class MachineLearning(object):
     def setXY(self,table, core,active,passive):
         ''' sets self.coulombs which is self.X and self.y '''
         tableindex = 2
-        print "sigma: ", str(self.sigma), ' ', 'labda: ', str(self.labda)
+        print("sigma: ", str(self.sigma), ' ', 'labda: ', str(self.labda))
 
         #### MAKE Y
         # get input from inputfile table
@@ -111,7 +111,7 @@ class MachineLearning(object):
         mats =  tuple( contozma(zcon.indtocon(item[0]),core,active,passive) for item in table )
         ## X.2: convert ZMATRICES to XYZ coordinates
         try:
-            if debug: print "self.converter:", self.converter
+            if debug: print("self.converter:", self.converter)
             self.xyzs = [ zmatoxyz(self.converter,item) for item in mats ]
             if False:
                 from CINDES.utils.molecule import Molecule
@@ -122,12 +122,12 @@ class MachineLearning(object):
                     mol.set_OBMol()
                     self.xyzs[i] = mol.optimize()
                     #print self.xyzs[i]
-                    print "!",
+                    print("!", end=' ')
 
         except KeyError:
-            print "Error: with:", item
+            print("Error: with:", item)
             i = mats.index(item)
-            print "index:", table[i]
+            print("index:", table[i])
             raise
         ## X.3: convert XYZs to COULOMB MATRICES
         # calculate all coulomb matrices
@@ -150,7 +150,7 @@ class MachineLearning(object):
         #print "xyz:", xyz
         l = len(xyz)
         C = np.zeros([l,l])
-        for i in xrange(l):
+        for i in range(l):
             for j in range(l): #changed this from i+1 to j
                 if i==j:
                     C[i][i]= 0.5*xyz[i][2]**(2.4)
@@ -162,7 +162,7 @@ class MachineLearning(object):
                                     xyz[i][1] - xyz[j][1] ) ) )
                     C[i][j] = t/n
                     # let not make it symmetric. because we don't use these elements                  
-        print "&",
+        print("&", end=' ')
         if self.type=='norm1': #return a sorted Coulomb matrix based on norm
             return symsort(C)
         elif self.type=='norm2':
@@ -201,21 +201,21 @@ class MachineLearning(object):
                              ( 'F' , 30 ),
                              ( 'S' , 10 ),
                              ( 'Cl', 10 ) ) )
-        types = typef.keys()
+        types = list(typef.keys())
         # make a list of typef with max no of combination of atom1 with atom2 
         def trianglen(typef,key1,key2):
             if key1==key2: return int( .5 * typef[key1] * ( typef[key1] - 1 ) )
             else:          return typef[key1]*typef[key2]
-        ncombis = OrderedDict( ( (''.join(sorted((key1,key2),key = lambda x: typef.keys().index(x)) ), trianglen(typef,key1, key2) ) for key1 in
+        ncombis = OrderedDict( ( (''.join(sorted((key1,key2),key = lambda x: list(typef.keys()).index(x)) ), trianglen(typef,key1, key2) ) for key1 in
             types for key2 in types ) )
         ntypes= len(types)
         monos = OrderedDict(( (key,[]) for key in types ))
         # the next line makes dicts of every possible atom combination with combined keys. combined in order as in typef!
         duos  = OrderedDict( ( (''.join(sorted((key1,key2),key = lambda x: types.index(x)) ), [] ) for key1 in types for key2 in types ) )
         if d:
-            print "monos, duos:", monos, duos
-            print "typef, ncombis", typef, ncombis
-        for i in xrange(l): # for every atom
+            print("monos, duos:", monos, duos)
+            print("typef, ncombis", typef, ncombis)
+        for i in range(l): # for every atom
             for j in range(i,l): #so for every combination with that atom not yet visited
                 if i==j:
                     nuclear = 0.5*xyz[i][2]**(2.4)
@@ -232,22 +232,22 @@ class MachineLearning(object):
                     duos[duo_key].append(force)
         # now sorted every item in the dictionaries and pad with zeros
         if d:
-            print "monos, duos:", monos, duos
+            print("monos, duos:", monos, duos)
         for dictio, ntypes in ( (monos, typef  ),
                                 (duos , ncombis)):
-            for key,value in dictio.iteritems():
+            for key,value in dictio.items():
                 N = ntypes[key]
                 dictio[key] = sorted(dictio[key])[::-1] + [0.0] * ( N - len(value) )
         if d:
-            print "monos, duos:", monos, duos
+            print("monos, duos:", monos, duos)
         # merge everything together orderly
-        monos_flat = [ x for v in monos.itervalues() for x in v ]
-        duos_flat  = [ x for v in duos.itervalues()  for x in v ]
+        monos_flat = [ x for v in monos.values() for x in v ]
+        duos_flat  = [ x for v in duos.values()  for x in v ]
         Bag = monos_flat + duos_flat
-        print "B",
+        print("B", end=' ')
         if d:
-            print "Bag:", Bag
-            print "len(Bag):", len(Bag)
+            print("Bag:", Bag)
+            print("len(Bag):", len(Bag))
             raise SystemExit('stop')
         return Bag
 
@@ -271,7 +271,7 @@ class MachineLearning(object):
                     K[j][i] = K[i][j]
                 else:
                     K[i][j] = 1.0
-            print "#",
+            print("#", end=' ')
         self.kernel = K
         return
 
@@ -292,8 +292,8 @@ class MachineLearning(object):
         elif alg == 3:
             L = np.linalg.cholesky(Ka)
         elif alg == 4:
-            print "Ka shape:", np.shape(Ka)
-            print "b  shape:", np.shape(ny)
+            print("Ka shape:", np.shape(Ka))
+            print("b  shape:", np.shape(ny))
             alpha = np.linalg.solve(Ka,ny) #gives error: matrix not positive-definite # that is not all eigvals are positive
         elif alg == 5:
             alpha = np.linalg.lstsq(Ka,ny)[0]
@@ -307,7 +307,7 @@ class MachineLearning(object):
             from scipy import linalg
             lu = linalg.lu_factor(Ka)
             alpha = linalg.lu_solve(lu, ny)
-        print "alphashape:", alpha.shape
+        print("alphashape:", alpha.shape)
         self.alpha = alpha
         return alpha
 
@@ -316,11 +316,11 @@ class MachineLearning(object):
         for coulombje in self.coulombs:
         #for j in bar(  xrange( len(self.coulombs_t) )  ):
             ans = 0
-            for i in xrange(len(self.coulombs)):
+            for i in range(len(self.coulombs)):
                 #ans += self.alpha[i] * np.exp( self.distance( self.coulombs_t[j], self.coulombs[i] ) / ( 2 * self.sigma **2) )
                 ans += self.alpha[i] * np.exp( - self.distance( coulombje, self.coulombs[i] ) / ( 2 * self.sigma **2) )
             outtest.append(ans)
-            print "$",
+            print("$", end=' ')
         return outtest
 
     def testnew_no_skl(self,kernel_new, alpha=None):
@@ -328,11 +328,11 @@ class MachineLearning(object):
             alpha = self.alpha
         # #
         if debug:
-            print "shape   kernel_new:", kernel_new.shape
-            print "(self?)alpha.shape:", alpha.shape
+            print("shape   kernel_new:", kernel_new.shape)
+            print("(self?)alpha.shape:", alpha.shape)
         newY = np.dot( kernel_new , alpha )
         if debug:
-            print "newY.shape:", newY.shape
+            print("newY.shape:", newY.shape)
         return newY
 
     def predict2(self, indices,**kwargs):
@@ -355,7 +355,7 @@ class MachineLearning(object):
             sigma = get_sigma( self.coulombs )
             #gamma = 1. / ( 2 * sigma**2 )
             gamma = 1. / ( sigma )
-            print "sigma:", sigma
+            print("sigma:", sigma)
             clf = KernelRidge( alpha = self.labda, kernel='rbf' , gamma = gamma)
         elif True:      # USE own KERNEL as callable. NOT WORKING!
             if True:
@@ -363,7 +363,7 @@ class MachineLearning(object):
                 # 1. get all distances. 
                 sigma = get_sigma( self.coulombs )
                 if self.kerneltype == 'gaussian': sigma = np.sqrt(sigma)
-                print "sigma used:", sigma
+                print("sigma used:", sigma)
             else:
                 sigma = self.sigma
             if self.kerneltype == 'gaussian':
@@ -371,9 +371,9 @@ class MachineLearning(object):
             elif self.kerneltype == 'laplacian':
                 factor = 1. / sigma
             clf = KernelRidge( alpha = self.labda, kernel=my_kernel3 , kernel_params = { 'factor': factor , 'kerneltype': self.kerneltype } )
-        print "clf:", clf
+        print("clf:", clf)
         clf_out = clf.fit( self.coulombs, self.y )
-        print "clf_out:", clf_out
+        print("clf_out:", clf_out)
         self.clf = clf
         return clf
 
@@ -392,22 +392,22 @@ class MachineLearning(object):
                 # split
                 X_train, X_test, y_train, y_test = X[train], X[test], y[train], y[test]
                 if debug:
-                    print "X_train.shape:", X_train.shape
-                    print "X_test.shape:", X_test.shape
-                    print "Y_train.shape:", y_train.shape
-                    print "Y_test.shape:", y_test.shape
+                    print("X_train.shape:", X_train.shape)
+                    print("X_test.shape:", X_test.shape)
+                    print("Y_train.shape:", y_train.shape)
+                    print("Y_test.shape:", y_test.shape)
                 # make kernel
                 clf = KernelRidge( alpha = labda, kernel= 'precomputed' )
                 kernel = my_kernel( X_train, X_train , sigma=sigma )
                 if debug:
-                    print "kernel.shape:", kernel.shape
+                    print("kernel.shape:", kernel.shape)
                 # train
                 fit_out = clf.fit( kernel, y_train)
                 # test new
                 test_kernel = my_kernel( X_test, X_train, sigma=sigma)
                 score = clf.score( test_kernel, y_test)
                 scores.append(score)
-            print "average score", np.average(scores)
+            print("average score", np.average(scores))
             return np.average(scores)
         # Set SKLEARN 
         from sklearn.kernel_ridge import KernelRidge
@@ -419,18 +419,18 @@ class MachineLearning(object):
                 sigma = get_sigma( self.coulombs )
                 if self.kerneltype=='gaussian': sigma = np.sqrt(sigma)
                 self.sigma = sigma
-            print "use sigma:", sigma
+            print("use sigma:", sigma)
             kernel = my_kernel2( self.coulombs, self.coulombs, sigma=self.sigma , kerneltype = self.kerneltype)
             if debug:
-                print "first 2 of kernel:"
+                print("first 2 of kernel:")
                 sprint(2, kernel)
             # calculate alpha coefficients
             fit_out = clf.fit( kernel , self.y )
-            print "fit_out:", fit_out
+            print("fit_out:", fit_out)
             # evaluate 
-            print "train_score:", clf.score( kernel, self.y )
-            print "params:", clf.get_params()
-            print "coef0", clf.coef0
+            print("train_score:", clf.score( kernel, self.y ))
+            print("params:", clf.get_params())
+            print("coef0", clf.coef0)
         else:
             # cross validation
             X = np.asarray(self.coulombs)
@@ -441,9 +441,9 @@ class MachineLearning(object):
             for i in range(len(sigmas)):
                 for j in range(len(labdas)):
                     sup_scores[i,j] = validate_score(X,y,sigmas[i],labdas[j])
-                    print "labda %s sigma: %s score: %s" %(labdas[j], sigmas[i], sup_scores[i,j] )
-            print "sub_scores:"
-            print sup_scores
+                    print("labda %s sigma: %s score: %s" %(labdas[j], sigmas[i], sup_scores[i,j] ))
+            print("sub_scores:")
+            print(sup_scores)
             import matplotlib.pyplot as plt
             plt.matshow(sup_scores)
             plt.show()
@@ -454,7 +454,7 @@ class MachineLearning(object):
         pred_kernel = my_kernel2( newX, self.coulombs, sigma=self.sigma, kerneltype = self.kerneltype)
         #pred_kernel = my_kernel2( self.coulombs, newX , sigma=self.sigma)
         test_out = self.clf.predict( pred_kernel )
-        print "test_out:", test_out
+        print("test_out:", test_out)
         #raise SystemExit('stop')
         return test_out
 
@@ -471,7 +471,7 @@ class MachineLearning(object):
 
         # #
         if debug:
-            print "first 2 of kernel:"
+            print("first 2 of kernel:")
             sprint(2, kernel)
 
         # 3. learn: make alphas. sets at self.alpha
@@ -512,21 +512,21 @@ class MachineLearning(object):
             if False:
                 y_test_pred = CV_calcs()
                 if debug:
-                    print "test y:"
+                    print("test y:")
                     sprint(10, y_test)
-                    print "test y pred:"
+                    print("test y pred:")
                     sprint(10, y_test_pred)
             else:
                 from sklearn.kernel_ridge import KernelRidge
                 gamma = 1. / (2* sigma**2 )
-                print "sigma:", sigma
+                print("sigma:", sigma)
                 clf = KernelRidge( alpha = labda, kernel='rbf' , gamma = gamma)
                 clf_out = clf.fit( X_train, y_train )
-                print "clf_out:", clf_out
+                print("clf_out:", clf_out)
                 y_test_pred = clf.predict( X_test )
             score = RMSE( y_test_pred, y_test )
             scores.append(score)
-            print "sigma, labda, score:", sigma, labda, score
+            print("sigma, labda, score:", sigma, labda, score)
         avg_score = np.average(scores)
         std_score = np.std(scores)
         return avg_score, std_score
@@ -541,9 +541,9 @@ class MachineLearning(object):
                             cv    = 5,
                             param_grid = param_grid )
         krr_out = krr.fit(self.coulombs, self.y)
-        print "krr_out:", krr_out
-        print "krr:", krr
-        print "best parameters:", krr.best_params_
+        print("krr_out:", krr_out)
+        print("krr:", krr)
+        print("best parameters:", krr.best_params_)
         #print "cv_results:", krr.cv_results_
 
         newX = self.predict2( indices, **kwargs)
@@ -557,13 +557,13 @@ class MachineLearning(object):
         sigma = self.sigma
         from sklearn.model_selection import train_test_split
         X_train, X_test, y_train, y_test = train_test_split(self.coulombs,self.y, train_size = fraction)
-        print "using a training set of", len(X_train), "molecules"
-        print "using a test set of", len(X_test), "molecules"
+        print("using a training set of", len(X_train), "molecules")
+        print("using a test set of", len(X_test), "molecules")
         if skl:
             from sklearn.kernel_ridge import KernelRidge
             sigma = get_sigma( self.coulombs )
             gamma = 1. / ( sigma )
-            print "sigma:", sigma
+            print("sigma:", sigma)
             if self.kerneltype == 'gaussian':
                 kernel = 'rbf'
             elif self.kerneltype == 'laplacian':
@@ -573,10 +573,10 @@ class MachineLearning(object):
             else: kernel = self.kerneltype
             clf = KernelRidge( alpha = self.labda, kernel=kernel , gamma = gamma)
             #clf = KernelRidge( alpha = self.labda, kernel=my_kernel3 , kernel_params = { 'factor': factor , 'kerneltype': self.kerneltype } )
-            print "clf:", clf
+            print("clf:", clf)
             clf_out = clf.fit( X_train, y_train )
             y_train_pred = clf.predict( X_train )
-            print "clf_out:", clf_out
+            print("clf_out:", clf_out)
             y_test_pred = clf.predict( X_test )
         else:
             kernel_train= my_kernel2( X_train, X_train, sigma=sigma, kerneltype = self.kerneltype )
@@ -585,7 +585,7 @@ class MachineLearning(object):
             kernel_test = my_kernel2( X_test , X_train, sigma=sigma, kerneltype = self.kerneltype )
             y_test_pred = self.testnew_no_skl( kernel_test , alpha = alpha )
         score = RMSE( y_test_pred, y_test )
-        print "pearsonr:", pearsonr( y_test_pred, y_test)
+        print("pearsonr:", pearsonr( y_test_pred, y_test))
         if True:
             plot_error( y_test_pred, y_test, 'bo', alpha= 0.5  )
             plot_error( y_train_pred, y_train, 'ro')
@@ -605,7 +605,7 @@ def KDE(data1,data2):
             grid = GridSearchCV( KernelDensity(),
                                  { 'bandwidth': np.logspace(-3, 1,20) } , cv=8)
             grid.fit(scores[:,np.newaxis])
-            print "gridsearch cv for best bandwidth for KDE:", grid.best_params_
+            print("gridsearch cv for best bandwidth for KDE:", grid.best_params_)
             xlim = grid.best_params_['bandwidth']* 20
             kde = grid.best_estimator_
         else:
@@ -625,8 +625,8 @@ def KDE(data1,data2):
         n, bins, patches = plt.hist(scores, 50, normed=1, facecolor='green', alpha=0.75)
         mu = np.mean(scores)
         std = np.std(scores)
-        print "mu:", mu
-        print "std:", std
+        print("mu:", mu)
+        print("std:", std)
         y = mlab.normpdf( bins,mu,std)
         l = ax.plot(bins, y, 'r--', linewidth=1)
         f_y = mlab.normpdf( bins,f_mu,f_std)
@@ -659,12 +659,12 @@ def my_kernel(X1, X2, sigma=1e2):
     l1 = len(X1)
     l2 = len(X2)
     K = np.zeros([l1,l2])
-    print "Kshape:", K.shape
+    print("Kshape:", K.shape)
     #for i in bar(range(l)):
     for i in range(l1):
         for j in range(l2): #for i in range(0) gives []
             K[i][j] = np.exp( - distance(X1[i], X2[j]) / ( 2 * sigma**2) )
-        print "#",
+        print("#", end=' ')
     return K
 
 def get_sigma( Cs ):
@@ -679,7 +679,7 @@ def get_sigma( Cs ):
             d = distance( Cs[i], Cs[j] )
             if d > maxd:
                 maxd = d
-    print "maxd:", maxd
+    print("maxd:", maxd)
     return maxd / np.log(2)
 
 def distance(C1, C2, kerneltype='gaussian'):
@@ -701,7 +701,7 @@ def my_kernel2(X1, X2, sigma=1e2, kerneltype='gaussian'):
     l1 = len(X1) # n coulomb matrices in X1
     l2 = len(X2) # n coulomb matrices in X2
     K = np.zeros([l1,l2])
-    print "Kshape:", K.shape
+    print("Kshape:", K.shape)
     # calculate denominator:
     if kerneltype == 'gaussian':
         factor = 1. / ( 2. * (sigma**2) )
@@ -713,7 +713,7 @@ def my_kernel2(X1, X2, sigma=1e2, kerneltype='gaussian'):
             K[i][j] = np.exp( - d * factor )
         #if debug:  print "#", d, K[i][j], factor
         #else:      print '#',
-        print "#",
+        print("#", end=' ')
     return K
 
 n_k3=0.0
@@ -725,7 +725,7 @@ def my_kernel3(C1,C2, factor, kerneltype='gaussian'):
         global n_k3
         n_k3+=1.0
         if n_k3/10. == int(n_k3/10):
-            print "#",
+            print("#", end=' ')
             #print kij,
             #print "c1:", C1.shape
             #print "C1:", sprint(100,C1)
@@ -738,7 +738,7 @@ def MAE(data1,data2):
     assert len(data1)==len(data2)
     npoints = len(data1)
     mae = 0
-    for i in xrange(npoints):
+    for i in range(npoints):
         mae += abs( data1[i] - data2[i] )
     return mae / float(npoints)
 
@@ -746,7 +746,7 @@ def RMSE(data1,data2):
     assert len(data1)==len(data2)
     npoints = len(data1)
     rmse = 0
-    for i in xrange(npoints):
+    for i in range(npoints):
         rmse += ( data1[i] - data2[i] )**2
     return np.sqrt( rmse / float(npoints) )
 
@@ -828,7 +828,7 @@ def generate_xyz(indices,converter,outputfile='table.xyz',y=0,*args,**kwargs):
     with open(outputfile,'w') as fid:
 
         for i in range(len(confs)):
-            print i, "indices[i]", indices[i]
+            print(i, "indices[i]", indices[i])
             logging.debug("i=" + str(i))
             mat = contozma(confs[i],**kwargs)
             xyz = zmatoxyz(converter,mat)
@@ -908,14 +908,14 @@ def machinelearning2(indices=None, table=None, sigma=1e5, labda= 1e-5, printleve
             sigmas = np.logspace(0,15,15)
             labdas = np.logspace(-10,0,10)
             totalscores = search_grid( my_ML, sigmas=sigmas, labdas=labdas)
-            print "totalscores:", totalscores
+            print("totalscores:", totalscores)
             raise SystemExit('stop')
         my_ML.learn()
         new_y = my_ML.predict(indices,**kwargs)
     else:    # kernel as implemented or as callable
         my_ML.learn() # learns on training set self.X , self.y gets alpha coefficients
         new_y = my_ML.predict(indices,**kwargs)
-    print "new_y:", new_y
+    print("new_y:", new_y)
     return new_y
 
 @log_io()
@@ -933,13 +933,13 @@ def normal_machinelearning(indices=None, table=None, sigma=1e6, labda= 1e-6, pri
 
     if False:
         score, std = my_ML.CV(sigma=sigma, labda = labda)
-        print "score:", score
+        print("score:", score)
     elif False:
         ''' Grid Search '''
         sigmas = np.logspace(  8,20, 7)
         labdas = np.logspace(-12, 0, 7)
         totalscores = search_grid( my_ML, sigmas=sigmas, labdas = labdas )
-        print "totalscores:", totalscores
+        print("totalscores:", totalscores)
         raise SystemExit('stop')
 
     # learns self.alpha is now constructed
@@ -949,7 +949,7 @@ def normal_machinelearning(indices=None, table=None, sigma=1e6, labda= 1e-6, pri
     newy = my_ML.predict_no_skl(indices,**kwargs)
 
     # #
-    print "newy:", newy
+    print("newy:", newy)
 
     #
     return newy
@@ -964,10 +964,10 @@ def ANN(indices=None, table=None, sigma=1e4, labda= 1., printlevel=1,fraction=0.
     converter = Converter()
     kwargs['converter'] = converter
     my_ML = MachineLearning(type=descriptor,table=table,kerneltype= kernel, **kwargs)
-    print "X shape:", my_ML.coulombs.shape
-    print "Y shape:", my_ML.y.shape
-    print "X[0] shape:", my_ML.coulombs[0].shape
-    import neural
+    print("X shape:", my_ML.coulombs.shape)
+    print("Y shape:", my_ML.y.shape)
+    print("X[0] shape:", my_ML.coulombs[0].shape)
+    from . import neural
     new_y = neural.main(X=my_ML.coulombs, y = my_ML.y , fraction = fraction)
     #raise SystemExit('stop')
     return new_y
@@ -990,10 +990,10 @@ def Amachinelearning2(indices=None, table=None, sigma=1e4, labda= 1., printlevel
 
 
     if args.neural and args.fraction:
-        print "X shape:", my_ML.coulombs.shape
-        print "Y shape:", my_ML.y.shape
-        print "X[0] shape:", my_ML.coulombs[0].shape
-        import neural
+        print("X shape:", my_ML.coulombs.shape)
+        print("Y shape:", my_ML.y.shape)
+        print("X[0] shape:", my_ML.coulombs[0].shape)
+        from . import neural
         new_y = neural.main(X=my_ML.coulombs, y = my_ML.y , fraction = 0.5)
         raise SystemExit('stop')
 
@@ -1005,11 +1005,11 @@ def Amachinelearning2(indices=None, table=None, sigma=1e4, labda= 1., printlevel
     else:
         if crossval:
             score,std = my_ML.CV( sigma=sigma, labda=labda, skl=False)
-            print "score,std:", score, std
+            print("score,std:", score, std)
         else:
             fraction = fraction
             score = my_ML.fraction_learn(fraction=fraction, skl=True)
-            print "score:", score
+            print("score:", score)
     return
 
 

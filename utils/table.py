@@ -3,7 +3,7 @@ import sys
 import pickle
 import json
 from pprint import pprint
-from utils import pythonify
+from .utils import pythonify
 
 def get_property_table(table, myrun):
     '''set a dict with {'index1':prop1, etc. } to use for montecarlo and prediction making '''
@@ -18,11 +18,11 @@ def get_property_table(table, myrun):
             elif key == 'gap':
                 p = value['lumo'] - value['homo']
             else:
-                print "molecule is missing in database:", key
+                print("molecule is missing in database:", key)
                 p = None
         return p
 
-    for key,value in table.iteritems():
+    for key,value in table.items():
         if myrun.property=='func':
             if myrun.nosub==1:
                 db[key] = value[ myrun.func_args[0] ]
@@ -31,7 +31,7 @@ def get_property_table(table, myrun):
                 try:
                     Pvalue = myrun.function(**kwargs)
                 except TypeError:
-                    print "type error with:", key, value, kwargs
+                    print("type error with:", key, value, kwargs)
                     Pvalue = None
                 db[key]=Pvalue
         else:
@@ -49,11 +49,11 @@ def set_table(myrun, array=[]):
     #------- enclosed function 1
     def try_oldstyle(tablename):
         import pickle
-        print tablename
+        print(tablename)
         with open(tablename,'rb') as f:
             pickle_db = pickle.load(f)
-        print "pickled table is loaded"
-        print "pickle_db:", pickle_db
+        print("pickled table is loaded")
+        print("pickle_db:", pickle_db)
         json_db = dict()
         #tableprops=['mw','solv', 'e0_solv', 'e1_solv', 'lumo', 'solv']
         tableprops=['omega']
@@ -65,7 +65,7 @@ def set_table(myrun, array=[]):
             key=item[0]
             value={prop:prop_value for prop,prop_value in zip(tableprops,item[1:])}
             json_db[key]=value
-        print "an old_style formatted tablefile was loaded with props:", tableprops
+        print("an old_style formatted tablefile was loaded with props:", tableprops)
         # touch new json file
         with open('{}.json'.format(tablename),'w') as f2:
             json.dump(json_db, f2, indent=-1)
@@ -82,10 +82,10 @@ def set_table(myrun, array=[]):
                     dgroup=''.join(group)
                     group=''.join(group[:-1])
                     groupsdihedrals[group]=dgroup
-        print "specificdihedrals:", specific_dihedrals
+        print("specificdihedrals:", specific_dihedrals)
         ###
         # 2. convert each index in table to the correct dihedral 
-        print table.keys()[:20]
+        print(list(table.keys())[:20])
         new_table={}
         for key in table:
             conf = key.split('_')
@@ -100,7 +100,7 @@ def set_table(myrun, array=[]):
                 new_conf.append(dgroup)
             new_key='_'.join(new_conf)
             new_table[new_key]=table[key]
-        print new_table.keys()[:20]
+        print(list(new_table.keys())[:20])
 
         # 3. JSON doesn't accept integer keys. So I will try to 
         # make JSON key strings an integer again.
@@ -144,14 +144,14 @@ def set_table(myrun, array=[]):
             with open(tablename,'rb') as f:
                 db = json.load(f)
         except (IOError,ValueError):
-            print "no json table"
-            print "try to load as pickle {}".format(tablename[:-5])
+            print("no json table")
+            print("try to load as pickle {}".format(tablename[:-5]))
             try:
                 db = try_oldstyle(tablename[:-5])
             except IOError:
-                print "also no correct pickled table"
+                print("also no correct pickled table")
                 raise
-        print "loaded json database with {} molecules".format(len(db))
+        print("loaded json database with {} molecules".format(len(db)))
         # myrun.props has to be a subset of value.viewkeys(): set operations <= means "is subset of"
         required_props = set()
         for prop in myrun.props:
@@ -163,10 +163,10 @@ def set_table(myrun, array=[]):
                 required_props.add('lumo')
             else:
                 required_props.add(prop)
-        print "required properties:", required_props
+        print("required properties:", required_props)
 
-        table = { key:value for key,value in db.iteritems() if required_props <= value.viewkeys() }
-        print "made a table with {} molecules that have the required properties".format(len(table))
+        table = { key:value for key,value in db.items() if required_props <= value.keys() }
+        print("made a table with {} molecules that have the required properties".format(len(table)))
 
         # should the function value be included in the table? otherwise here is the place ;)
         if myrun.adjust_dihedrals:
@@ -208,29 +208,29 @@ class Tablebin(object):
         return
 
     def write(self, filename='tablebin_new'):
-        data_out = [ line for line in map(list,zip(self.indices, self.Y)) ]
+        data_out = [ line for line in map(list,list(zip(self.indices, self.Y))) ]
         #print "data_out:", data_out
         with open(filename,'wb') as fout:
             pickle.dump(data_out,fout)
-        print "new file written with name {} with {} lines".format(filename,str(len(data_out)))
+        print("new file written with name {} with {} lines".format(filename,str(len(data_out))))
         return
 
     def print_table(self):
-        for item in self.confs: print item
+        for item in self.confs: print(item)
         for i, (confje, y) in enumerate(zip(self.confs, self.Y)):
             conf = ' '.join( [ '{:9s}'.format(group) for group in confje ] )
             data = '{:15.8f}'.format(y)
-            print '{:4} {} {}'.format(i,conf,data)
+            print('{:4} {} {}'.format(i,conf,data))
         return
 
     def print_table_2(self, column=[1]):
         if column:
             maxlen = max( [ len(item[0]) for item in sortev[::-1] ] )
             for item in sortev[::-1]:
-                print  '{ind:{width}}{data}'.format(width= maxlen,ind = item[0], data = ' '.join( [ '{:15.8}'.format(item[int(i)]) for i in args.column ] ) )
+                print('{ind:{width}}{data}'.format(width= maxlen,ind = item[0], data = ' '.join( [ '{:15.8}'.format(item[int(i)]) for i in args.column ] ) ))
         else:
             for item in sortev[::-1]:
-                print '{} {:.6}'.format(item[0],item[1])
+                print('{} {:.6}'.format(item[0],item[1]))
 
     def get_seq(self):
         '''seq is sequence of all types of functional groups and dopants present'''
@@ -261,7 +261,7 @@ class Tablebin(object):
                 if not group in gps[i]:
                     gps[i].add(group)
         #print "gps:", gps
-        ngps = map(len,gps)
+        ngps = list(map(len,gps))
         return ngps
 
     def diversity_filter(self, n=10, divindex=1):
@@ -275,10 +275,10 @@ class Tablebin(object):
             # to order simultaneously
             l = sorted(zip(divalues, self.confs, self.indices, self.Y))
             # get the firt n elements of all the lists
-            divalues, self.confs, self.indices, self.Y = zip(*l[:n])
+            divalues, self.confs, self.indices, self.Y = list(zip(*l[:n]))
             if args.verbose>=1:
-                print "5 most diverse samples"
-                for i in xrange(5):print divalues[i], self.indices[i], self.Y[i]
+                print("5 most diverse samples")
+                for i in range(5):print(divalues[i], self.indices[i], self.Y[i])
         return
 
 
@@ -292,7 +292,7 @@ def read_file(filename):
         try:
             data.append(pickle.load(f))
         except EOFError:
-            print "empty tablebin?"
+            print("empty tablebin?")
             raise
     return data[-1]
 
@@ -301,7 +301,7 @@ def main(args):
 
     if args.formatted:
         table.print_table()
-    print "jos"
+    print("jos")
     if args.diversify:
         table.diversity_filter(divindex=args.diversify, n=args.nmax)
 
@@ -330,9 +330,9 @@ def get_homo(filename,identify='ada_'):
     Ehomo=datatje.mymos[1]['alpha'][0][HOMO] #1 is after first optimization
     Elumo=datatje.mymos[1]['alpha'][0][HOMO+1]
     if 0:
-        print "filename, Ehomo:", filename, Ehomo
+        print("filename, Ehomo:", filename, Ehomo)
     elif 1:
-        print "filename, Ehomo, Elumo, Egap:", filename, Ehomo, Elumo, Elumo-Ehomo
+        print("filename, Ehomo, Elumo, Egap:", filename, Ehomo, Elumo, Elumo-Ehomo)
     else:
         sys.stdout.write('#')
     return Ehomo
@@ -360,11 +360,11 @@ if False:
         propy = [ -1*get_homo(item[0],identify=args.identify) for item in sortev ]
         plt.plot(propx,propy,'.r')
         slope, intersept, r_value, p_value, std_err = stats.linregress(propx,propy)
-        print "slope:", slope
-        print "intersept:", intersept
-        print "p_value:", p_value
-        print "std_err:", std_err
-        print "R=",r_value**2
+        print("slope:", slope)
+        print("intersept:", intersept)
+        print("p_value:", p_value)
+        print("std_err:", std_err)
+        print("R=",r_value**2)
         x = sorted(propx)
         y = [ slope*xje+intersept for xje in x ]
         plt.plot(x, y, '-')

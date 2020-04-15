@@ -4,7 +4,7 @@ masses = { 'X': 0, 'Ac': 227.028, 'Al': 26.981539, 'Am': 243, 'Sb': 121.757, 'Ar
 
 def get_smiles(indices):
     from molecule import indtosmi
-    smiles = map(indtosmi, indices)
+    smiles = list(map(indtosmi, indices))
     return smiles
 
 def GetCoords(indices, descriptor='autocorr'):
@@ -23,7 +23,7 @@ def GetCoords(indices, descriptor='autocorr'):
     return X
 
 def GetXYZs(indices):
-    import cPickle as pickle
+    import pickle as pickle
     from PropOptACSESS.QCindes import xyzfromoemol
     import numpy as np
     from openeye.oechem import OEMol, OESmilesToMol
@@ -41,8 +41,8 @@ def GetXYZs(indices):
         mol = OEMol()
         OESmilesToMol(mol, smile)
         xyz = xyzfromoemol(mol)
-        xyz = map(lambda x:x.split(), xyz.strip().split('\n'))
-        xyz = [ [ item[0], np.array(map(float,item[1:])), masses[item[0]] ] for item in xyz ] 
+        xyz = [x.split() for x in xyz.strip().split('\n')]
+        xyz = [ [ item[0], np.array(list(map(float,item[1:]))), masses[item[0]] ] for item in xyz ] 
         XYZs.append(xyz)
         Dxyz[smile]=xyz
     with open('XYZs','wb') as f:

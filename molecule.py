@@ -23,7 +23,7 @@ replacements = {
 
 # helper function
 def indtosmi(index):
-    inverserepl = { v:k for k,v in replacements.iteritems()}
+    inverserepl = { v:k for k,v in replacements.items()}
     smiles = "".join([inverserepl.get(c, c) for c in index])
     return smiles
 
@@ -33,12 +33,12 @@ try:
     pass
     import pybel
 except:
-    print "pybel not installed"
+    print("pybel not installed")
 
 def contoind(conf):
     ''' to convert a configuration to an index-string '''
     #return '_'.join([''.join(str(item)) for item in conf])
-    return '_'.join([ ''.join(filter(lambda x:str(x).isalpha(), item)) for item in conf ])
+    return '_'.join([ ''.join([x for x in item if str(x).isalpha()]) for item in conf ])
 
 def contoindD(conf):
     ''' to convert a configuration to an index-string '''
@@ -202,7 +202,7 @@ class Molecule(BaseMolecule):
             self.conf = indtocon(conf)
             self.index= conf
         else:
-            print "wrong type:", type(conf)
+            print("wrong type:", type(conf))
             raise TypeError
         self.mat = None
         return
@@ -245,7 +245,7 @@ class Molecule(BaseMolecule):
         rest = sorted( active+passive , key=lambda x:x[1][1] )
         zmat.extend( [ item for sublist in rest for item in sublist ] )
         self.zmat = zmat
-        print "SMILES of framework:", self.get_format()
+        print("SMILES of framework:", self.get_format())
         return
 
     def set_xyz(self,xyz):
@@ -282,8 +282,8 @@ class Molecule(BaseMolecule):
         for item in new_format_xyz:
             OBxyz.append(item)
         if debug:
-            print "OBxyz:",
-            for item in OBxyz: print item
+            print("OBxyz:", end=' ')
+            for item in OBxyz: print(item)
         OBxyz_str = '\n'.join([' '.join(item) for item in OBxyz])
         self.OBMol = pybel.readstring('xyz',OBxyz_str)
         return
@@ -294,9 +294,9 @@ class Molecule(BaseMolecule):
                 if not hasattr(self,'zmat'):
                     raise SystemExit('molecule object has no data')
                 self.zmatoxyz()
-            if debug: print "self.xyz",self.xyz
+            if debug: print("self.xyz",self.xyz)
             self.set_OBMol()
-        if debug: print "self.OBxyz:", self.OBMol
+        if debug: print("self.OBxyz:", self.OBMol)
         try:
             self.OBMol.OBMol.Kekulize()
         except Exception as e:
@@ -324,7 +324,7 @@ class Molecule(BaseMolecule):
             splitted = line.split()
             xyztje = np.zeros([3])
             #print "xyztje", xyztje
-            for j in xrange(3): #for x,y,z
+            for j in range(3): #for x,y,z
                 xyztje[j] = splitted[j+1]
             xyzs.append([splitted[0],xyztje,self.converter.masses[splitted[0]]])
         return xyzs
@@ -332,7 +332,7 @@ class Molecule(BaseMolecule):
 try:
     from qml import compound
 except ImportError:
-    print "QML not imported!"
+    print("QML not imported!")
 else:
   class my_Compound(compound.Compound):
     '''an inherited class of Compound which is different only in the fact that it reads from list input instead of filename input'''
@@ -389,7 +389,7 @@ if __name__=="__main__":
         with open(sys.argv[1]) as f:
             indices = f.readlines()
             for index in indices:
-                print indtosmi(index).strip().strip(' ')
+                print(indtosmi(index).strip().strip(' '))
     except IOError:
-        print indtosmi(sys.argv[1])
-        print "".join([replacements.get(c, c) for c in sys.argv[1]])
+        print(indtosmi(sys.argv[1]))
+        print("".join([replacements.get(c, c) for c in sys.argv[1]]))

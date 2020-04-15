@@ -27,7 +27,7 @@ def main(smi=None, restart=False):
     if opt == "simple":
         mol = MoleculeDescription(p_file)
         mol.smiles=smi
-        print "mol:", mol
+        print("mol:", mol)
         # Assign the permanent attributes to the molecule.
         mol.get_parameters()
         mol.create_template_sdf()

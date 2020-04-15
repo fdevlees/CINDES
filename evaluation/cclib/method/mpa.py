@@ -21,12 +21,12 @@ from .population import Population
 
 class MPA(Population):
     """Mulliken population analysis."""
-    
+
     def __init__(self, *args):
 
         # Call the __init__ method of the superclass.
         super(MPA, self).__init__(logname="MPA", *args)
-        
+
     def __str__(self):
         """Return a string representation of the object."""
         return "MPA of" % (self.data)
@@ -34,10 +34,10 @@ class MPA(Population):
     def __repr__(self):
         """Return a representation of the object."""
         return 'MPA("%s")' % (self.data)
-    
+
     def calculate(self, indices=None, fupdate=0.05):
         """Perform a Mulliken population analysis."""
-    
+
         # Do we have the needed attributes in the data object?
         if not hasattr(self.data, "mocoeffs"):
             self.logger.error("Missing mocoeffs")
@@ -112,14 +112,14 @@ class MPA(Population):
         self.logger.info("Creating fragcharges: array[1]")
         size = len(self.fragresults[0][0])
         self.fragcharges = numpy.zeros([size], "d")
-        
+
         for spin in range(len(self.fragresults)):
 
             for i in range(self.data.homos[spin] + 1):
 
                 temp = numpy.reshape(self.fragresults[spin][i], (size,))
                 self.fragcharges = numpy.add(self.fragcharges, temp)
-        
+
         if not unrestricted:
             self.fragcharges = numpy.multiply(self.fragcharges, 2)
 
@@ -127,5 +127,6 @@ class MPA(Population):
 
 
 if __name__ == "__main__":
-    import doctest, mpa
+    import doctest
+    from . import mpa
     doctest.testmod(mpa, verbose=False)

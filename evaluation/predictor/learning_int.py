@@ -52,24 +52,24 @@ class MachineLearning(object):
                     #print line
                     y.append( float(line[0]) )   # 0: gap, 1: homo 2: lumo 3: Etotal
                 xyz = []
-                for i in xrange(natoms): #for each atom
+                for i in range(natoms): #for each atom
                     line = fid.readline().split()
                     #print 'line:', line
                     assert not line=='\n'
                     xyztje = np.zeros([3])
                     #print "xyztje", xyztje
-                    for j in xrange(3): #for x,y,z
+                    for j in range(3): #for x,y,z
                         xyztje[j] = line[j+1]
                     xyz.append([line[0],xyztje,converter.masses[line[0]]])
                 xyzs.append(xyz)
                 fid.readline() #empty line
         if args.cutoff and data:
             valcutoffmin, valcutoffplus = args.cutoff
-            print "cutoff applied of ", str(valcutoffmin), "and", str(valcutoffplus), " eV"
+            print("cutoff applied of ", str(valcutoffmin), "and", str(valcutoffplus), " eV")
             nbefore = len(y)
-            xyzs, y =  zip ( *[ item for item in zip(xyzs,y) if not ( item[1]<valcutoffmin  or item[1]>valcutoffplus )] )
+            xyzs, y =  list(zip( *[ item for item in zip(xyzs,y) if not ( item[1]<valcutoffmin  or item[1]>valcutoffplus )] ))
             nafter = len(y)
-            print str( nbefore - nafter ) ,"elements were removed from list"
+            print(str( nbefore - nafter ) ,"elements were removed from list")
             #data = [ [ item[0], float(item[1])] for item in datar if float(item[1])<cutoff ] 
         if data:  #total set. with data
             self.xyzs = xyzs
@@ -110,7 +110,7 @@ class MachineLearning(object):
                          C[i][j] = t/n
                          C[j][i] = C[i][j]
         elif alg == 2:
-            for i in xrange(l):
+            for i in range(l):
                 for j in range(i+1):
                     if i==j:
                         C[i][i]= 0.5*xyz[i][2]**(2.4)
@@ -122,7 +122,7 @@ class MachineLearning(object):
                                         xyz[i][1] - xyz[j][1] ) ) ) 
                         C[i][j] = t/n
                         # let not make it symmetric. because we don't use these elements                  
-        print "&",
+        print("&", end=' ')
         if self.type=='norm1': #return a sorted Coulomb matrix based on norm
             return symsort(C)
         elif self.type=='norm2':
@@ -155,7 +155,7 @@ class MachineLearning(object):
                     K[j][i] = K[i][j]
                 else:
                     K[i][j] = 1.0
-            print "#",
+            print("#", end=' ')
         self.kernel = K
         return
 
@@ -190,7 +190,7 @@ class MachineLearning(object):
             if alg == 1:
                 #distance between two coulomb vectors. 
                 d = 0
-                for i in xrange( max((l1,l2)) ):
+                for i in range( max((l1,l2)) ):
                     try:
                         d += ( C1[i] - C2[i] )**2
                     except IndexError:
@@ -225,7 +225,7 @@ class MachineLearning(object):
         #U = cholesky(Ka)
         #alpha = bf(U,y)
         if hasattr(self,'training_y'):
-            print "has a training set. so use self.training_y instead of self.y"
+            print("has a training set. so use self.training_y instead of self.y")
             ny = np.array(self.training_y)
         else:
             ny = np.array(self.y)
@@ -239,8 +239,8 @@ class MachineLearning(object):
         elif alg == 3:
             L = np.linalg.cholesky(Ka)
         elif alg == 4:
-            print "Ka shape:", np.shape(Ka)
-            print "b  shape:", np.shape(ny)
+            print("Ka shape:", np.shape(Ka))
+            print("b  shape:", np.shape(ny))
             alpha = np.linalg.solve(Ka,ny) #gives error: matrix not positive-definite # that is not all eigvals are positive
         elif alg == 5:
             alpha = np.linalg.lstsq(Ka,ny)[0]
@@ -254,7 +254,7 @@ class MachineLearning(object):
             from scipy import linalg
             lu = linalg.lu_factor(Ka)
             alpha = linalg.lu_solve(lu, ny)
-        print "alphashape:", alpha.shape
+        print("alphashape:", alpha.shape)
         self.alpha = alpha
         return
 
@@ -264,7 +264,7 @@ class MachineLearning(object):
         for coulombje in coulombs:
         #for j in bar(  xrange( len(self.coulombs_t) )  ):
             ans = 0
-            for i in xrange(len(self.kernel)):
+            for i in range(len(self.kernel)):
                 #ans += self.alpha[i] * np.exp( self.distance( self.coulombs_t[j], self.coulombs[i] ) / ( 2 * self.sigma **2) )
                 ans += self.alpha[i] * np.exp( self.distance( coulombje, self.coulombs[i] ) / ( 2 * self.sigma **2) )
             outtest.append(ans)
@@ -313,7 +313,7 @@ class MachineLearning(object):
         return 
 
     def ML0(self,fraction,sigma,labda):
-        print "sigma: ", str(sigma), ' ', 'labda: ', str(labda)
+        print("sigma: ", str(sigma), ' ', 'labda: ', str(labda))
         percentage = fraction
         size = len(self.xyzs)
 
@@ -330,8 +330,8 @@ class MachineLearning(object):
             self.test_xyzs = self.xyzs[n:]
             self.test_y = self.y[n:]
         #print "i will use ", len(self.test_xyzs), " test molecules"
-        print "using a training set of", len(self.training_xyzs), "molecules"
-        print "using a test set of", len(self.test_xyzs), "molecules"
+        print("using a training set of", len(self.training_xyzs), "molecules")
+        print("using a test set of", len(self.test_xyzs), "molecules")
 
         # get coulombs of training set
         self.coulombs = tuple( self.coulomb(item) for item in self.training_xyzs)
@@ -339,24 +339,24 @@ class MachineLearning(object):
         if args.timer:
             with Timer() as t:
                 self.get_kernel(sigma=sigma)
-            print "=> elapsed make kernel data: %s s" % t.secs
+            print("=> elapsed make kernel data: %s s" % t.secs)
         else:
             self.get_kernel(sigma=sigma)
-        print "kernel is made. first few entries of self.kernel[0] look like:",
+        print("kernel is made. first few entries of self.kernel[0] look like:", end=' ')
         sprint(20,self.kernel[0])        
         # solve Ka = y here. get alpha. 
         self.solver(labda=labda)
-        print "solver done: first elements of alpha:"
+        print("solver done: first elements of alpha:")
         sprint(5,self.alpha)
 
         # To test the training set:
         if args.anatrain:
-            print "TRAINING SET RESULTS:"
+            print("TRAINING SET RESULTS:")
             trainingresults = self.testnew(self.coulombs)
             mae = MAE(self.training_y, trainingresults)
             rmse = RMSE(self.training_y, trainingresults)
-            print "mean absolute Error is:", mae
-            print "RMS Error is:", rmse
+            print("mean absolute Error is:", mae)
+            print("RMS Error is:", rmse)
 
         #now predictions 
         self.coulombs_t = tuple( self.coulomb(item) for item in self.test_xyzs)
@@ -366,20 +366,20 @@ class MachineLearning(object):
         if args.timer:
             with Timer() as t:
                 self.y_t = self.testnew(self.coulombs_t) 
-            print "=> elapsed test new data: %s s" % t.secs
+            print("=> elapsed test new data: %s s" % t.secs)
         else:
             self.y_t = self.testnew(self.coulombs_t) 
  
         #now there is a self.y_t = predict en self.test_y is real value
-        print "test done:"
+        print("test done:")
         #sprint(5,self.y_t)
-        print "TESTING RESULTS:"
+        print("TESTING RESULTS:")
         mae = MAE(self.y_t,self.test_y)
         rmse = RMSE(self.y_t,self.test_y)
         #print(self.y_t)
         scores = np.array([ i - j for i,j in zip(self.y_t,self.test_y) ])
         X_plot = np.linspace(-5, 10, 1000)
-        print "\nscores:"
+        print("\nscores:")
         sprint(10, scores)
 
         if True:
@@ -389,7 +389,7 @@ class MachineLearning(object):
             fig, ax = plt.subplots()
             kde = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(scores[:,np.newaxis])
             log_dens = kde.score_samples(X_plot)
-            print "logdens:"
+            print("logdens:")
             sprint(10,log_dens)
             ax.plot(X_plot, np.exp(log_dens), 'c-')
             #plt.show()
@@ -401,8 +401,8 @@ class MachineLearning(object):
             n, bins, patches = plt.hist(scores, 50, normed=1, facecolor='green', alpha=0.75)
             mu = np.mean(scores)
             std = np.std(scores)
-            print "mu:", mu
-            print "std:", std
+            print("mu:", mu)
+            print("std:", std)
             y = mlab.normpdf( bins,mu,std)
             l = ax.plot(bins, y, 'r--', linewidth=1)           
             f_y = mlab.normpdf( bins,f_mu,f_std)
@@ -416,9 +416,9 @@ class MachineLearning(object):
                 #pickle.dump(
 
 
-        print "mean absolute Error is:", mae
-        print "RMS Error is:", rmse
-        print "compare a few"
+        print("mean absolute Error is:", mae)
+        print("RMS Error is:", rmse)
+        print("compare a few")
         sprint(10, self.y_t, self.test_y)
 
         if args.plot:
@@ -438,7 +438,7 @@ def MAE(data1,data2):
     assert len(data1)==len(data2)
     npoints = len(data1)
     mae = 0
-    for i in xrange(npoints):
+    for i in range(npoints):
         mae += abs( data1[i] - data2[i] )
     return mae / float(npoints)
 
@@ -446,7 +446,7 @@ def RMSE(data1,data2):
     assert len(data1)==len(data2)
     npoints = len(data1)
     rmse = 0
-    for i in xrange(npoints):
+    for i in range(npoints):
         rmse += ( data1[i] - data2[i] )**2
     return np.sqrt( rmse / float(npoints) )
 
@@ -476,7 +476,7 @@ def get_kernel_int(X, sigma=1):
                 K[j][i] = K[i][j]
             else:
                 K[i][j] = 1.0
-        print "#",
+        print("#", end=' ')
     return K
 
 def kernel_callable(x1,x2, sigma=1):
@@ -494,14 +494,14 @@ def solver_int(K,Y,labda=1):
         from scipy import linalg
         lu = linalg.lu_factor(Ka)
         alpha = linalg.lu_solve(lu, Y)
-    print "alphashape:", alpha.shape
+    print("alphashape:", alpha.shape)
     return alpha
 
 def testnew_int(alpha,X,newX,sigma):
     outtest = []
     for new in newX:
         ans = 0
-        for i in xrange(len(X)):
+        for i in range(len(X)):
             ans += alpha[i] * np.exp( - distance_int( X[i], new ) / sigma )
         outtest.append(ans)
         #print "$",
@@ -519,22 +519,22 @@ def new_procedure(sigma=1, labda=1):
     table = get_table()[:15]
     param, array = INDES.read_input('INPUTBC')
     X = [ indtoint(item[0],array) for item in table ]
-    print "X:",
+    print("X:", end=' ')
     sprint(10,X)
     Y = np.asarray([ item[2] for item in table ])
-    print "Y:",
+    print("Y:", end=' ')
     sprint(10,Y)
     K = get_kernel_int(X,sigma = sigma )
-    print "K[1]:", K[1]
+    print("K[1]:", K[1])
     #sprint(10,K[1])
     alpha = solver_int(K,Y, labda = labda)
-    print "alpha:", alpha
+    print("alpha:", alpha)
     newX = X[:]
     newY  = testnew_int(alpha, X, newX, sigma=sigma)
-    print "newY:",
+    print("newY:", end=' ')
     sprint(10,newY)
     R = RMSE(newY,Y)
-    print "R=", R
+    print("R=", R)
     plot(newY,Y,'or')
     return
 
@@ -542,31 +542,31 @@ def new_procedure(sigma=1, labda=1):
 @log_io()
 def learn_int_procedure(table, indices, array, sigma=1e2, labda=1e-4, **kwargs):
     X = [ indtoint(item[0],array) for item in table ]
-    print "X:",
+    print("X:", end=' ')
     sprint(10,X)
     Y = np.asarray([ item[2] for item in table ])
-    print "Y:",
+    print("Y:", end=' ')
     sprint(10,Y)
     K = get_kernel_int(X,sigma = sigma )
-    print "K[1]:", K[1]
+    print("K[1]:", K[1])
     #sprint(10,K[1])
     alpha = solver_int(K,Y, labda = labda)
-    print "alpha:", alpha
+    print("alpha:", alpha)
     if debug:
-        print "indices:", indices
+        print("indices:", indices)
     newX = [ indtoint(item, array) for item in indices ]
     newY  = testnew_int(alpha, X, newX, sigma=sigma)
-    print "newY", newY
+    print("newY", newY)
     #raise SystemExit('stop')
     return newY
 
 @log_io()
 def learn_int_skl_procedure(table, indices, array, sigma=1e4, labda=1e-4, **kwargs):
     X = [ indtoint(item[0],array) for item in table ]
-    print "X:",
+    print("X:", end=' ')
     sprint(10,X)
     Y = np.asarray([ item[2] for item in table ])
-    print "Y:",
+    print("Y:", end=' ')
     sprint(10,Y)
 
     newX = [ indtoint(item, array) for item in indices ]
@@ -579,13 +579,13 @@ def learn_int_skl_procedure(table, indices, array, sigma=1e4, labda=1e-4, **kwar
         gamma = 1. / ( 2 * sigma**2 )
         clf = KernelRidge(alpha = labda, kernel='rbf', gamma= gamma)
         clf_out = clf.fit(X,Y)
-        print "clf_out:", clf_out
+        print("clf_out:", clf_out)
         newY = clf.predict(newX)
     else:
         clf = KernelRidge(alpha = labda, kernel = kernel_callable, kernel_params = { 'sigma':sigma } )
         clf_out = clf.fit(X,Y)
         score   = clf.score(X,Y)
-        print "KRR score:", score
+        print("KRR score:", score)
         newY = clf.predict(newX)
     if False:
         from sklearn.svm import SVR
@@ -605,12 +605,12 @@ def learn_int_skl_procedure(table, indices, array, sigma=1e4, labda=1e-4, **kwar
                                            'gamma': np.logspace(-20,20,5) ,
                                            'epsilon': [ 1, 0.1] } )
         svr_out = svr.fit(X_scaled,Y)
-        print "best SVR params:", svr.best_params_
+        print("best SVR params:", svr.best_params_)
         svrY = svr.predict(newX_scaled)
-        print "scores SVM:", svr.score(X_scaled,Y)
-        print "svrY", svrY
+        print("scores SVM:", svr.score(X_scaled,Y))
+        print("svrY", svrY)
         raise SystemExit('stop')
-    print "newY", newY
+    print("newY", newY)
     return newY
 
 def skl_example(X,Y,newX):
@@ -639,7 +639,7 @@ def skl_example(X,Y,newX):
     #print "sv_ratio:", svr_ratio
     #krr_ratio = krr.best_estimator_
     #print "krr_ratio:", krr_ratio
-    print "krr:", krr
+    print("krr:", krr)
     #print "svr:", svr
 
     #svY = svr.predict(newX)
@@ -651,10 +651,10 @@ def skl_example(X,Y,newX):
 
 def learn_int_skl_procedure(table, indices, array, sigma=1e4, labda=1e-4, **kwargs):
     X = [ indtoint(item[0],array) for item in table ]
-    print "X:",
+    print("X:", end=' ')
     sprint(10,X)
     Y = np.asarray([ item[2] for item in table ])
-    print "Y:",
+    print("Y:", end=' ')
     sprint(10,Y)
 
     newX = [ indtoint(item, array) for item in indices ]
@@ -664,13 +664,13 @@ def learn_int_skl_procedure(table, indices, array, sigma=1e4, labda=1e-4, **kwar
         gamma = 1. / ( 2 * sigma**2 )
         clf = KernelRidge(alpha = labda, kernel='rbf', gamma= gamma)
         clf_out = clf.fit(X,Y)
-        print "clf_out:", clf_out
+        print("clf_out:", clf_out)
         newY = clf.predict(newX)
     else:
         clf = KernelRidge(alpha = labda, kernel = kernel_callable, kernel_params = { 'sigma':sigma } )
         clf_out = clf.fit(X,Y)
         score   = clf.score(X,Y)
-        print "KRR score:", score
+        print("KRR score:", score)
         newY = clf.predict(newX)
     if False:
         from sklearn.svm import SVR
@@ -690,12 +690,12 @@ def learn_int_skl_procedure(table, indices, array, sigma=1e4, labda=1e-4, **kwar
                                            'gamma': np.logspace(-20,20,5) ,
                                            'epsilon': [ 1, 0.1] } )
         svr_out = svr.fit(X_scaled,Y)
-        print "best SVR params:", svr.best_params_
+        print("best SVR params:", svr.best_params_)
         svrY = svr.predict(newX_scaled)
-        print "scores SVM:", svr.score(X_scaled,Y)
-        print "svrY", svrY
+        print("scores SVM:", svr.score(X_scaled,Y))
+        print("svrY", svrY)
         raise SystemExit('stop')
-    print "newY", newY
+    print("newY", newY)
     return newY
 
 ######################################################################################

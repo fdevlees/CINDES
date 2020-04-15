@@ -61,7 +61,7 @@ def slice_it(li, splits):
         splits = (12,15)
     else:
         nkinds = len(splits)
-    for i in xrange(nkinds):
+    for i in range(nkinds):
         stop = start+splits[i]
         lis.append(li[start:stop])
         start = stop
@@ -75,10 +75,10 @@ def sprint_old(n,*args,**kwargs):
     for i in range(n):
         for item in args:
             try:
-                print item[i],
+                print(item[i], end=' ')
             except IndexError:
                 break
-        print
+        print()
     return
 
 def print_coef(coef,seq):
@@ -87,22 +87,22 @@ def print_coef(coef,seq):
         means = []
         stds = []
         for i in range(len(seq)): #max fiveteen functional groups
-            print '{:7}'.format(seq[i]),
+            print('{:7}'.format(seq[i]), end=' ')
             all = []
             if args.equalsites: n=2
             else: n=10
             for j in range(n): #max 10 sites
                 try:
-                    print '{:10.5f}'.format(coef[j][i]),
+                    print('{:10.5f}'.format(coef[j][i]), end=' ')
                     all.append(coef[j][i])
                 except IndexError:
-                    print " "*10,
-            print '{:10.3f}'.format(np.mean(all)),
-            print '{:10.5f}'.format(np.std(all)),
+                    print(" "*10, end=' ')
+            print('{:10.3f}'.format(np.mean(all)), end=' ')
+            print('{:10.5f}'.format(np.std(all)), end=' ')
             means.append(np.mean(all))
             stds.append(np.std(all))
-            print
-        print "all:",all
+            print()
+        print("all:",all)
     return means,stds
 
 def get_color(index,colors=['r', 'g', 'b', 'y']):
@@ -126,14 +126,14 @@ def multibar_plot(X,seq,std=0,fig=0,ax=0):
     labels = tuple( 'site '+str(i+1) for i in range(len(X[0])) )
     N = len(X)
     #ax.set_prop_cycle('color',cycle(['b','r','g','c','k','y','m']))
-    print "I'M HERE!"
+    print("I'M HERE!")
     #ax.set_prop_cycle(cycler('color',['b','r','g','c','k','y','m']))
     rects = len(seq) * [None]
     for i in range(len(seq)):
         try:
             nsit = len(X[i])
             inds = i + offset + (width/nsit) * np.arange(nsit)
-            print "inds:", inds
+            print("inds:", inds)
             rects[i] = ax.bar(inds, X[i], width/nsit,color=colors,label=labels)
             #df = DataFrame(inds,X[i],width/nsit,columns=labels)
             #df.plot(type='bar')
@@ -218,7 +218,7 @@ def TDPlot(data,hits,labels,args):
     '''
     import matplotlib.ticker as ticker
     data[data == 0.00000] = np.nan
-    print "matrix:", data
+    print("matrix:", data)
     #pprint(map(list,list(data)))
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -239,7 +239,7 @@ def TDPlot(data,hits,labels,args):
         if ttert:
             labels_columns_nottert = labels[:data.shape[1]]
             labels_columns = np.concatenate( (labels_columns_nottert, labels_columns_nottert ) )
-            print "labels_columns:", labels_columns
+            print("labels_columns:", labels_columns)
             data_pd = pd.DataFrame(data=data,index=labels[:data.shape[0]],columns=labels_columns)
         else: data_pd = pd.DataFrame(data=data,index=labels[:data.shape[0]],columns=labels[:data.shape[1]])
         cax2=sns.heatmap(hits,annot=True,alpha=0.0,fmt="d",cbar=False,annot_kws={"color":'k'})
@@ -255,7 +255,7 @@ def TDPlot(data,hits,labels,args):
         plt.yticks(rotation=45)
         plt.xlabel('secondary positions')
         plt.ylabel('tertiary positions')
-    print "seq:", labels
+    print("seq:", labels)
     if False and not args.fraction:
         for (i, j), z in np.ndenumerate(hits):
             if not z==0:
@@ -277,7 +277,7 @@ def plots_lin(slist):
         if ttert:columns=['tert. apical','tert. medial','secondary']
         else:   columns=['tertiary'    ,'secondary']
         data_pd = pd.DataFrame(data=data,index=flabels[:data.shape[0]],columns=columns).transpose()
-        print "data_pd:", data_pd
+        print("data_pd:", data_pd)
         im = sns.heatmap(data_pd,annot=True,square=True,cbar=i==0,
                  ax=ax,
                  cmap=cmap,
@@ -304,7 +304,7 @@ def plots_lin(slist):
         npdata[npdata == 0.00000] = np.nan
         if ttert:#for diamantane.
             npdata = npdata[:,[0,2,4]]
-        print "npdata:", npdata
+        print("npdata:", npdata)
         im = plot1(npdata,i,vmin=vmin,vmax=vmax)
     fig.tight_layout( rect=[ 0, 0, .8,1])
     plt.show()
