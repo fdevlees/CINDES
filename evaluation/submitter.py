@@ -91,7 +91,7 @@ def jobstatus(jobid):
 
 def qsta():
     try:
-        p1 = subprocess.check_output(['qsta'])
+        p1 = subprocess.check_output(['qsta']).decode('utf_8')
     except subprocess.CalledProcessError as e:
         print("subprocess.CalledProcessError")
         print(repr(e))
@@ -262,23 +262,23 @@ def test_ready1(indices, myrun):
     return
 
 
-def test_ready2(mols_tocal, myrun, jobids=None):
+def test_ready2(mols_tocal, run, jobids=None):
     """
     this function tests if the jobs are still queing or running based on the output of the 'qsta' command
     function needs:
     mols:
-    -jobs
+    -jobs (.filename)
     myrun:
     -timelimit
     -timestep
     -extrawaittime
+    -worker
     """
     completedjobs = []
     files = []
-    fileparameters = myrun.__dict__
 
     # 1. get the list of entries that are in the queue
-    if myrun.worker:
+    if run.worker:
         #files = ['my-gaussian-worker-job']
         #files = ['CINDES_ATOOLS']
         files = jobids
@@ -292,7 +292,7 @@ def test_ready2(mols_tocal, myrun, jobids=None):
     tijdje = 0
     while True:
         count = 0
-        if tijdje > fileparameters['timelimit']:
+        if tijdje > run.timelimit:
             print("time is up")
             break
         filescopy = files[:]
@@ -300,11 +300,12 @@ def test_ready2(mols_tocal, myrun, jobids=None):
         qsta_raw = qsta()
         if qsta_raw == False:
             print("qsta not working!")
-            time.sleep(fileparameters['timestep'])
+            time.sleep(run.timestep)
             continue
         qsta_out = [item.split() for item in qsta_raw.split('\n')]
         states = []
         jobs = []
+        # depending if time is printed or not the number of items is different
         for item in qsta_out:
             if len(item) == 4:
                 states.append(item[1])
@@ -325,7 +326,7 @@ def test_ready2(mols_tocal, myrun, jobids=None):
                         print("ERROR jobs on hold or Error")
                         count += 1
                     else:
-                        assert state == 'C'
+                        assert state in ['C', 'F']
                         if job not in completedjobs:
                             print('JOB completed:', job)
                             completedjobs.append(job)
@@ -335,10 +336,10 @@ def test_ready2(mols_tocal, myrun, jobids=None):
         print("njobs -running: {:d} -ready: {:d} | waittime={} hrs".format(count, njobs - count, t))
         if count == 0:  # so no jobs anymore in queue
             break
-        time.sleep(fileparameters['timestep'])
-        tijdje += fileparameters['timestep']
+        time.sleep(run.timestep)
+        tijdje += run.timestep
     logging.info("All jobs are READY")
-    time.sleep(fileparameters['extrawaittime'])  # just wait for the files to write back before opening them
+    time.sleep(run.extrawaittime)  # just wait for the files to write back before opening them
     return
 
 
@@ -378,8 +379,5 @@ def test_ready3(indices, myrun):
     return
 
 if __name__ == "__main__":
-    import sys
-    file = sys.argv[1]
-    jobid = str(submit(index))
-    print("jobid: ", jobid)
-    print("output of 'qstat | grep 020':\n", jobstatus(jobid))
+    qsta_out = [item.split() for item in qsta().split('\n')]
+    print(qsta_out)

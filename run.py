@@ -11,7 +11,7 @@ debug = 1
 
 # import python libraries
 import time  # for getting time/date and time delays
-start = time.clock()
+start = time.process_time()
 import shutil  # module to copy files
 import os  # for getting window width and testing existence of files
 import inspect # to see if function is a class
