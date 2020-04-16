@@ -59,7 +59,7 @@ def printname(name,signator='*',space='\n'*1):
     maxl=100
     l = len(name)
     rest = (l + 8)
-    sides = (maxl-rest)/2
+    sides = int((maxl-rest)/2)
     side = sides*' '
     message.append(space + side + rest*signator)
     message.append(side + 2*signator + '  ' + str(name) + '  ' + 2*signator)
@@ -101,14 +101,14 @@ def print_title(message, outline='c',signator='=',newlines=False):
     elif outline=='c':
         rest = ( l + 8 )
         sides = (maxl - rest)/2
-        side = sides*' '
+        side = int(sides)*' '
         if rest/2 == float(rest)/2:
             out.append(side + rest*signator)
         else:
             out.append(side + (rest+1)*signator)
         for line in lines:
             m = len(line)
-            nspace = 2 + (l - m)/2
+            nspace = int(2 + (l - m)/2)
             if m/2 == float(m)/2:
                out.append(side + 2*signator + nspace*' ' + str(line) + nspace*' ' + 2*signator)
             else:
