@@ -464,6 +464,8 @@ def readfile(subinp):
                 defaults[int(line[0])] = line[1]
             paras['defaultgroups']=defaults
             continue
+        elif 'extra_props' in line:
+            paras['extra_props'] = line.split()[1:]
         elif 'END' in line:
             break
 
@@ -503,8 +505,6 @@ def readfile(subinp):
             paras['debug'] = True
         elif 'difmodel' in line:
             paras['difmodel'] = 1
-        elif 'extra_props' in line:
-            paras['extra_props'] = line.split()[1:]
         elif 'extrajobs' in line:
             paras['extrajobs'], _ = get_jobs(subinp, line)
         elif 'extrawaittime' in line:

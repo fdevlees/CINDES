@@ -15,7 +15,7 @@ debug = 1
 
 # import python libraries
 import time  # for getting time/date and time delays
-start = time.clock()
+start = time.process_time()
 import pprint  # pretty printer for printing lists
 import os  # for getting window width and testing existence of files
 import random  # for obtaining random geometry
@@ -35,7 +35,7 @@ from CINDES.utils.table import set_table, get_property_table
 
 once = 0
 
-print("time for imports:", time.clock() - start)
+print("time for imports:", time.process_time() - start)
 
 
 def genconf(myrun):

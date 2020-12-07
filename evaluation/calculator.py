@@ -200,7 +200,7 @@ def geom_maker(mols_tocal, myrun):
     if myrun.optga:
         print("Output of Dihedral GA Optimizer is redirected to optga.out. optimizing... |", end=' ')
     print()
-    e = None
+    ob_error = False
     for molecule in mols_tocal:
 
         # set zmatrices:
@@ -231,7 +231,7 @@ def geom_maker(mols_tocal, myrun):
             smiles = molecule.get_format()
             print("smiles:", smiles, end=' ')
         except (IndexError, NameError, KeyError) as e:
-            pass  # only the last error is printed after the whole molecule loop
+            ob_error = e # only the last error is printed after the whole molecule loop
 
         if myrun.optga:
             from CINDES.utils.ga_dihedrals import reduce_conflicts
@@ -262,8 +262,8 @@ def geom_maker(mols_tocal, myrun):
         else:
             # no special action. the first assigned geometry is used as a start
             pass
-    if e:
-        print("OpenBabel Smiles error:", e)
+    if ob_error:
+        print("OpenBabel Smiles error:", ob_error)
     return
 
 # 1. file making
