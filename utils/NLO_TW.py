@@ -270,7 +270,7 @@ def get_alpha_data(f):
 
 def get_beta_data(f):
     def not_zero(value):
-        if value<0.001:
+        if value<10:
             value=0.001
         return value
 
