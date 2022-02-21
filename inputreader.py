@@ -466,6 +466,7 @@ def readfile(subinp):
             continue
         elif 'extra_props' in line:
             paras['extra_props'] = line.split()[1:]
+            continue
         elif 'END' in line:
             break
 
