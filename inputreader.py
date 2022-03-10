@@ -142,7 +142,7 @@ def get_prop_function(subinp, line):
             elif split==']':inkey=False
             if inkey:
                 continue
-            if isword.match(split) and (not split in ['if', 'else', 'abs(', 'and', 'or', 'not', 'elif', 'bool', 'float', 'int']):
+            if isword.match(split) and (not split in ['if', 'else', 'abs(', 'and', 'or', 'not', 'elif', 'bool', 'float', 'int','min']):#@@@david:added min @@
                 props.add(split)
     arguments = ",".join(props)
     funcstr = "lambda {}:{}".format(arguments, line)

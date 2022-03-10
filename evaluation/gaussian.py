@@ -2,7 +2,7 @@
 ''' this module contains all functions related to the Gaussian09 program '''
 import re
 from .job import BaseJob
-
+import os
 
 class GaussianJob(BaseJob):
     extension = '.log'
@@ -46,9 +46,13 @@ class GaussianJob(BaseJob):
 
     # ----- might as well be a static method
     def termination(self, logpath, raise_errors=True):
+        #print('in termination')
         try:
+            #print ('with open(logpath, "r") as fid: ', logpath, os.getcwd())
             with open(logpath, 'r') as fid:
+                #print("opened logfile")
                 text = ''.join(fid.readlines()[-3:])
+                #print("text: ",text)
                 if (re.search('Normal termination', text)
                   and not (re.search('Initial command', text)
                   and not re.search('Link1', text))):

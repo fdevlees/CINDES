@@ -147,8 +147,9 @@ def submit_normal(mols_tocal, myrun):
                 else:
                     name1 = job.filepath[:-4] + '.o[0-9][0-9][0-9][0-9]*'
                     name2 = job.filepath + '.o[0-9][0-9][0-9][0-9]*'
-                    if glob.glob(name1) or glob.glob(name2):
-                        print("already calculated:", name2)
+                    nameG16log= job.filepath[:-4] + '.log' #@@@david: added so it works with .log Gaussian output files (so no o files needed)
+                    if glob.glob(name1) or glob.glob(name2) or glob.glob(nameG16log):
+                        print("already calculated:", job.filepath[:-4])#@@
                         continue
 
             # 2. submit part

@@ -204,9 +204,9 @@ def log_screen(mols):
     # decide how many props per line and how many table need to be printed
     propsets=[]
     maxnpropsperline = 6
-    nextralines = len(props) / maxnpropsperline
+    nextralines = len(props) // maxnpropsperline#@@@david:I changed to floor div because normal div gives float in python3@@
     if nextralines:
-        npropsperline = len(props) / (nextralines+1)
+        npropsperline = len(props) // (nextralines+1)#@@@david:I changed to floor div because normal div gives float in python3@@
         for i in range(nextralines+1):
             propsets.append(props[i*npropsperline:(i+1)*npropsperline])
         # correction
