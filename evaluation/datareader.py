@@ -432,6 +432,9 @@ def read_file(Job):
                 datadict[inf] = 0.5 * ( shieldings[1]['matrix'][2,2] + shieldings[2]['matrix'][2,2] )
             elif inf.startswith('chi_0'):
                 datadict[inf] = job_data.chi_0
+            elif inf.startswith('wbo'):#@@@david: added for the extraction of Wiberg Bond Order
+                datadict[inf] = job_data.wbo#@@
+
             else:
                 # try to see if there is an attribute from job_data matching inf. 
                 # NB: the else statement of a for loop is executed when the for loop finishes without break statement!

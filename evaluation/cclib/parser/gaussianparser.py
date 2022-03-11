@@ -1454,6 +1454,15 @@ class Gaussian(logfileparser.Logfile):
                 #raise e
                 print("NO NLO BETA", end=' ')
 
+        if ' Wiberg bond index matrix in the NAO basis:' in line:#@@@david: addtion to extract Wiberg Bond Order from Gaussian16 logfiles
+            from CINDES.utils import WBO_DS
+            try:
+                wbo_data = WBO_DS.get_wbo_data(inputfile)
+                self.set_attribute('wbo', wbo_data)
+            except (IndexError, ValueError) as e:
+                #raise e
+                print("Error: Wiberg bond index keyword in Gaussian logfile, but extraction failed!", end=' ')#@@
+
         if 'Magnetic susceptibility (cgs-ppm):' in line:
             line = next(inputfile)
             splitted = line.split()

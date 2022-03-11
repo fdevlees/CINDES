@@ -151,6 +151,7 @@ class ccData(object):
         "vibirs":            numpy.ndarray,
         "vibramans":         numpy.ndarray,
         "vibsyms":           list,
+        "wbo":               dict,              #@@@david:added option to use Wiberg Bond Order as property@@
     }
 
     # The name of all attributes can be generated from the dictionary above.

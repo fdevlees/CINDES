@@ -265,6 +265,10 @@ def write_extra_lines(fid, job, name, calc=None):
         fid.write('{}.wfx\n\n'.format(name))
     if any(item in job['hotline'] for item in ['out=wfn', 'output=wfn']):
         fid.write('{}.fwn\n\n'.format(name))
+    try:#@@@david: writes line under in Gaussian16 input files coordinates needed for some property extractions (like Wiberg Bond Index)(!!!@me: probably more neat with an if than try!!!)
+        fid.write(' {}\n\n'.format(calc['undercoordsG16']))
+    except:
+        None#@@
     return
 
 

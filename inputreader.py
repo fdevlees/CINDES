@@ -142,7 +142,7 @@ def get_prop_function(subinp, line):
             elif split==']':inkey=False
             if inkey:
                 continue
-            if isword.match(split) and (not split in ['if', 'else', 'abs(', 'and', 'or', 'not', 'elif', 'bool', 'float', 'int','min']):#@@@david:added min @@
+            if isword.match(split) and (not split in ['if', 'else', 'abs(', 'and', 'or', 'not', 'elif', 'bool', 'float', 'int','min']):#@@@david:added min, so it will be recognized as a python function and not as a non-existant property @@
                 props.add(split)
     arguments = ",".join(props)
     funcstr = "lambda {}:{}".format(arguments, line)
@@ -190,7 +190,7 @@ def get_jobs(subinp, line, index=1):
         else:
             key, value = splitted
         assert key in ['identify', 'identifier', 'nosub', 'program', 'nprocs', 'mem',
-                'geom', 'script', 'positions', 'fafoom', 'rdfreq', 'solvent_info']
+                'geom', 'script', 'positions', 'fafoom', 'rdfreq', 'solvent_info','undercoordsG16']
         if key in ['nosub', 'nprocs', 'fafoom', 'mem']:
             value = int(value)
         elif key in ['positions']:
