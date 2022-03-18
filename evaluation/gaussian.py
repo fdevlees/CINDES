@@ -214,8 +214,12 @@ def filewriter(mol, calc, pos=None):
 
     fid = open(filepath, 'w')
 
-    mem = calc.get('mem', 1800)
-    memoryline = "%mem={:d}MB\n".format(mem)
+    try:#@@@david: more logical memory assignment in Gaussian
+        DefMem=int(int(str(paras['nprocs']))*2000)#default memory is 2GB per requested core
+    except:
+        DefMem=1800#no nprocs key -> 1800MB default memory
+    mem = calc.get('mem', DefMem)#gets specified memory or gives default 1800 is key doesn't exist
+    memoryline = "%mem={:d}MB\n".format(mem)#@@
 
     # JOB 1
     job1 = jobs[0]

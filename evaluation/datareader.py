@@ -245,8 +245,9 @@ def zzztester(mols):
 def wait_hasimagfreq(job):
     once = False
     while True:
-        datadict = read_file(job)
-        if datadict['hasimagfreq']:
+        datadict = read_file(job)#@@@david
+        #print('ddebug: datadict[hasimagfreq]=',datadict['hasimagfreq'],'type=',type(datadict['hasimagfreq']))
+        if datadict.get('hasimagfreq',False):#used to fail when key didn't exist, should now not go into id when no hasimagfreq key@@
             print("still imaginary frequency for job:", job, end=' ')
             if not once:
                 try:
@@ -257,6 +258,7 @@ def wait_hasimagfreq(job):
                 once = True
             time.sleep(300)
         else:
+            print("no imaginary frequency or no hasimagfreq keyword for job:", job, end=' ')
             break
     return
 

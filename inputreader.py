@@ -190,7 +190,7 @@ def get_jobs(subinp, line, index=1):
         else:
             key, value = splitted
         assert key in ['identify', 'identifier', 'nosub', 'program', 'nprocs', 'mem',
-                'geom', 'script', 'positions', 'fafoom', 'rdfreq', 'solvent_info','undercoordsG16']
+                'geom', 'script', 'positions', 'fafoom', 'rdfreq', 'solvent_info','walltimelimit','undercoordsG16']
         if key in ['nosub', 'nprocs', 'fafoom', 'mem']:
             value = int(value)
         elif key in ['positions']:

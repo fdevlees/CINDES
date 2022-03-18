@@ -19,8 +19,21 @@ def submit(job, script='ID_gauss'):
     #print('filename:'),
     #print(job.filename)
     command = './' + script
-    try:
-        jobid = subprocess.check_output([command, job.filename], cwd=job.path)
+    try:#@@@david: changes so you can have variable walltime per job
+        #jobid = subprocess.check_output([command, job.filename], cwd=job.path)
+        try:
+            walltime=(vars(job))["calc"]["walltimelimit"]
+            if walltime[-1]=='m' or walltime[-1]=='M':
+                walltime='00:'+walltime[:-1]
+            elif walltime[-1]=='h' or walltime[-1]=='H':
+                walltime=walltime[:-1]+':00'
+        except:
+            print("No walltime keyword found for job: default time of 24h assumed")
+            walltime='24:00'
+        print('processed walltime: ',walltime)
+        print('ddebug: jobid=|command:'+str(command)+"|job.filename:"+str(job.filename)+"|walltime="+walltime+"|cwd=:"+job.path)#@@@david
+        jobid = subprocess.check_output([command, job.filename,walltime], cwd=job.path)#@@
+
         if not jobid:
             raise RuntimeError('no jobid')
     except subprocess.CalledProcessError as e:
