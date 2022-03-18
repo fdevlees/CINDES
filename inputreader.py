@@ -657,7 +657,7 @@ def readfile(subinp):
             sequences = []
             for _ in range(nsequences):
                 # that is: read line and replace the chars in '[,]' by None.
-                line = subinp.readline().translate(None, '[,]')
+                line = subinp.readline().replace(',', ' ')#@@@david: .translate(None,'[,]') doesn't work in py3 -> replaced by .repalace @@
                 sequence = [int(item) for item in line.split()]
                 sequences.append(sequence)
             paras['sequence'] = sequences[0]
