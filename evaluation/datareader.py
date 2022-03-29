@@ -4,6 +4,7 @@ import re
 import numpy
 import time
 import logging
+import os#@@@david@@
 from pprint import pprint
 
 from CINDES.utils.writings import log_io, print_title, sprint
@@ -245,10 +246,19 @@ def zzztester(mols):
 def wait_hasimagfreq(job):
     once = False
     while True:
-        datadict = read_file(job)#@@@david
+        datadict = read_file(job)#@@@david: bugfix, can now have calculations without the hasimagfreq keyword in same CINDES run as those with
         #print('ddebug: datadict[hasimagfreq]=',datadict['hasimagfreq'],'type=',type(datadict['hasimagfreq']))
         if datadict.get('hasimagfreq',False):#used to fail when key didn't exist, should now not go into id when no hasimagfreq key@@
             print("still imaginary frequency for job:", job, end=' ')
+            #print("!WIP!: will check for AutoMD keyword and when present attempt a manual displacement along imag freq")
+            if datadict.get('AutoMD',False):
+                import CINDES.scripts.AutoMD_G16
+                print("\nAutoMD keyword detected for calculation with imaginary frequency")
+                #print('pwd: ',os.getcwd())
+                print("Will use following command: MakeG16MDGjf("+str(job).split()[-1]+","+datadict['CalcLine']+","+datadict['Mem']+","+datadict['Cores']+")")
+                CINDES.scripts.AutoMD_G16.MakeG16MDGjf(str(job).split()[-1],datadict['CalcLine'],datadict['Mem'],datadict['Cores'] )
+                #print("printing datadict next:")
+                #print(datadict)
             if not once:
                 try:
                     vibfreqs = datadict['vibfreqs']
@@ -258,7 +268,15 @@ def wait_hasimagfreq(job):
                 once = True
             time.sleep(300)
         else:
-            print("no imaginary frequency or no hasimagfreq keyword for job:", job, end=' ')
+            try:
+                if datadict['hasimagfreq']==False:
+                    print ("no imaginary frequency for job: ", job)
+                else:
+                    print("ERROR: unexpected value for hasimagfreq keyword job: ", job)
+                    print("value hasimagfreq keyword: ", datadict['hasimagfreq'])
+            except KeyError:
+                print ("no hasimagfreq keyword for job: ", job)
+            #print("no imaginary frequency or no hasimagfreq keyword for job:", job, end=' ')
             break
     return
 
@@ -321,6 +339,12 @@ def read_file(Job):
     jobs = Job.calc['jobs']
     filename = Job.logpath
 
+
+    AutoMD=Job.calc.get('AutoMD',False)#@@@david: WIP added key to automatically MD when imagfreq, currently not used@@
+    Cores=str(Job.calc.get('nprocs',4))
+    Mem=str(int(Cores)*2)+'GB'#so far not getting specified mem just cores*2
+    #CalcLine=Job.calc.jobs["hotline"]#@@
+
     # 2. split logfile in different jobs
     if program == 'gaussian':
         from CINDES.evaluation.cclib.parser.gaussianparser import Gaussian as Log
@@ -356,8 +380,14 @@ def read_file(Job):
     from io import StringIO
     jobfiles = list(map(StringIO, jobslines))
     datadict = dict()
-    for jobfile, job in zip(jobfiles, jobs):
 
+    datadict['AutoMD']=AutoMD#@@@david
+    datadict['Cores']=Cores
+    datadict['Mem']=Mem
+    #datadict['CalcLine']=CalcLine#@@
+
+    for jobfile, job in zip(jobfiles, jobs):
+        datadict['CalcLine']=job["hotline"]
         try:
             job_data = Log(jobfile).parse()
         except Exception as e:
@@ -446,7 +476,7 @@ def read_file(Job):
                         datadict[inf] = getattr(job_data, attribute)
                         break
                 else:
-                    print("value not recognized:", inf)
+                    print("value not recognized:", inf)            
     print()
 
     return datadict
