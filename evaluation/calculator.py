@@ -333,7 +333,8 @@ def jobmaker(mols, run, calc):  # ----- dict with info for filewriter has to pas
                 for i, conformer in enumerate(conformers, 1):  # enumerate starts at 1!
                     setattr(molecule, 'xyz{}'.format(i), conformer.GetProp('xyz'))
                     program.filewriter(molecule, calc, i)
-        elif 'geom' in calc and calc['geom'][-1]=='s':
+        elif 'geom' in calc and calc['geom'][-1]=='s':#@@@david:WTF this is so confusing, e.g. if you're calling a file ZMAT_cis@@
+            print('Assuming multiple geometries, because geom attribute ends in "s"! If this is unwanted, please rename input geometry files.')
             # it is assumed that there are multiple geometries when the geometries attribute ends with an s!
             # 1. make a folder with the indexname in /data/indices[i]
             if not os.path.exists(calc['path'] + '/' + molecule.index):  # path is $WORKDIR/data

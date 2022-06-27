@@ -55,9 +55,9 @@ def MakeG16MDGjf(JobName,CalculationDetailsLine,Memory_given,Cores_given,DebugPr
             summed=np.add(data.vibdisps[i], data.atomcoords[-1])#add manual displacement to imag freq
     except:
         HasFreqs=False
-        outp = open("LogList.txt",'a')#Starts Writing Outputfile
-        outp.write(Imput+"\n")
-        outp.close
+        #outp = open("LogList.txt",'a')#Starts Writing Outputfile
+        #outp.write(Imput+"\n")
+        #outp.close
         if DebugPrint:
             print('Skipping '+Imput+' because it does not contain frequencies')
 
