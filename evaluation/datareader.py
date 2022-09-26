@@ -398,6 +398,7 @@ def read_file(Job):
             if inf == '_':
                 continue
             elif inf[0] == 'e':  # so it concerns an energy!:
+                print("datareader I am here")
                 datadict[inf] = job_data.scfenergies[-1] / 27.21138505  # this value is used in cclib
             elif inf[0] == 'g' and not inf.startswith('gap'):
                 # note that scfenergies are given in eV by cclib but free energy in hartree
@@ -466,6 +467,9 @@ def read_file(Job):
                 datadict[inf] = job_data.chi_0
             elif inf.startswith('wbo'):#@@@david: added for the extraction of Wiberg Bond Order
                 datadict[inf] = job_data.wbo#@@
+            elif inf.startswith('tdenergy'):
+                print(job_data.etenergies)
+                datadict[inf] = (job_data.etenergies)*1.23981*(10**(-4))
 
             else:
                 # try to see if there is an attribute from job_data matching inf. 

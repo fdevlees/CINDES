@@ -432,16 +432,27 @@ def substituter2(group, geom0, count):
             if dihedral:
                 zma[1][6] = dihedral
             geom = geomfiller(zma, geom, count)
+        elif group == ['C', 'O', 'C', 'H', 'H', 'D']:
+            #print "sulfonyl oid group"
+            zma = [['O', 1, '1.457'],
+                   ['C', 2, '1.457', 1, '140.5', 0, '0.0'],
+                   ['H', 3, '1.095', 2, '109.5', 1, '60.0'],
+                   ['H', 3, '1.095', 2, '109.5', 1, '180.0'],
+                   ['H', 3, '1.095', 2, '109.5', 1, '300.0']]
+            if dihedral:
+                zma[1][6] = dihedral
+            geom = geomfiller(zma, geom, count)
         count += 5
 
     elif len(group) == 5:
+        print(geom)
         # it is CCHHH or CCFFF or CCOOH
         geom[0][0] = group[1]  # until now this stays just C
         geom[1][0] = group[2]
         geom[2][0] = group[3]
         geom[3][0] = group[4]
         if group in [['C', 'C', 'F', 'F', 'F'], ['C', 'C', 'H', 'H', 'H'],
-                     ['N', 'C', 'H', 'H', 'H'], ['C', 'N', 'H', 'H', 'H']]:
+                     ['N', 'C', 'H', 'H', 'H'], ['C', 'N', 'H', 'H', 'H'],['C', 'Si', 'H', 'H', 'H']]:
             geom[1][1] = str(count + 1)
             geom[2][1] = str(count + 1)  # if also attached to that one
             geom[3][1] = str(count + 1)
@@ -484,10 +495,16 @@ def substituter2(group, geom0, count):
         geom[0][0] = group[1]
         geom[1][0] = group[2]
         geom[2][0] = group[3]
-
+        print(geom)
         geom[1][1] = str(count + 1)
         geom[2][1] = str(count + 1)  # if also attached to that one
-
+        if group in [['C', 'B', 'F', 'F'],["C","B","H","H"]]:
+            print(geom[1][1])
+            geom[1][1] = str(count + 1) 
+            print(geom[1][1])
+            print(geom[2][1]) 
+            geom[2][1] = str(count + 1)  # if also attached to that one
+            count += 3
         if group == ['C', 'C', 'C', 'H']:
             # zma = [['C',1, '1.4554490', 0, '111.0852500', -1, '121.9277283'],
             #       ['C',1, '2.6636450', 0, '111.0852500', -1, '121.9277283'],
@@ -590,6 +607,20 @@ def substituter2(group, geom0, count):
                    ['F', 5, '1.086', 4, '119.9', 3, '180.1'],
                    ['F', 6, '1.086', 5, '120.1', 4, '180.1'],
                    ['F', 7, '1.087', 6, '119.7', 5, '180.1']]
+            if dihedral:
+                zma[1][6] = dihedral
+            geom = geomfiller(zma, geom, count)
+            count += len(zma)
+        elif group == ['C', 'N', 'Me', 'Me']:
+            zma = [['N', 1, '1.4548457'],
+                   ['C', 2, '1.4548423', 1, '111.5487270', 0, '60.1'],
+                   ['H', 3, '1.0957661', 2, '109.7442278', 1, '57.9550583'],
+                   ['H', 3, '1.0957684', 2, '109.7451063', 1, '176.5572803'],
+                   ['H', 3, '1.1093455', 2, '113.2977213', 1, '-62.7435292'],
+                   ['C', 2, '1.4548456', 1, '111.5461816', 3, '-125.4826942'],
+                   ['H', 7, '1.0957699', 2, '109.7460852', 1, '-176.5642770'],
+                   ['H', 7, '1.0957687', 2, '109.7446611', 1, '-57.9622449'],
+                   ['H', 7, '1.1093432', 2, '113.2955386', 1, '62.7360071']]
             if dihedral:
                 zma[1][6] = dihedral
             geom = geomfiller(zma, geom, count)

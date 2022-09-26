@@ -11,6 +11,7 @@ class GaussianJob(BaseJob):
     assign_geom = True
 
     def __init__(self, filepath, calc=dict(), worker=False):
+        print("Debugging2:",filepath) 
         super(GaussianJob, self).__init__(filepath, calc=calc, worker=worker)
 
         # for gaussian geometries are automatically asigned to attributes unless this variable is set to False
@@ -27,14 +28,18 @@ class GaussianJob(BaseJob):
         pass
 
     def getlog(self):
+        #print("Debugging3:",self.name)
         return self.name + '.log'
 
     def parse(self, path=None):
+        print("Debugging:",self)
         if path is None:
             path = self.logpath
         from CINDES.evaluation.cclib.parser.gaussianparser import Gaussian
         try:
+            #print("Debugging:"+self.logpath)
             mymol = Gaussian(self.logpath).parse()
+            #print(mymol)
         except Exception as e:
             print("cclib read error with:", path)
             errorfile = 'error_{}.log'.format(self.name)

@@ -21,14 +21,22 @@ class BaseJob(object):
         -logpath  = full path to outputfile
         '''
         path, filename = filepath.rsplit('/', 1)
-
+        
         self.filepath = filepath
         self.path = path
         self.filename = filename
         self.worker = worker
 
         if '.' in filename:
-            self.name = filename.split('.')[0]
+            '''New addtion to the code. If substituents got dihedral angles assigned then filename contains '.' and got messed up.
+	    Now, automatically deletes .com (del function) from filename and appends immediately to empty string with all dihedral angles. Filename can from now on              obtain decimals. Previously was: self.name = filename.split('.')[0]  
+            '''
+            name_backup = filename.split('.')
+            del name_backup[-1]
+            new_name_list = ["." + x if x[0].isdigit() == True else x for x in name_backup]
+            new_name_string =''.join(new_name_list)
+            #print(new_name_string)
+            self.name = new_name_string
         else:
             self.name = self.filename
 

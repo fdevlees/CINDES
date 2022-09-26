@@ -219,6 +219,7 @@ class Logfile(object):
         # Initiate the FileInput object for the input files.
         # Remember that self.filename can be a list of files.
         if not self.isstream:
+            print(self.filename)
             inputfile = openlogfile(self.filename)
         else:
             inputfile = self.stream

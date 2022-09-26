@@ -188,7 +188,7 @@ class SmiMolecule(BaseMolecule):
         return
 
 class Molecule(BaseMolecule):
-    def __init__(self, conf, dihedral=False):
+    def __init__(self, conf, dihedral=True):
         super(Molecule, self).__init__()
 
         # Molecule instances can be initiated with both their index or conf but conf is preferred

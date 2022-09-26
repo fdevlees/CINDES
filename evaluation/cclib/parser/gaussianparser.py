@@ -944,6 +944,7 @@ class Gaussian(logfileparser.Logfile):
             # Excited State   1:      Singlet-?Sym    2.5938 eV  478.01 nm  f=0.0000  <S**2>=0.000
             p = re.compile(":(?P<sym>.*?)(?P<energy>-?\d*\.\d*) eV")
             groups = p.search(line).groups()
+            print("I am in the parser",self.etenergies)
             self.etenergies.append(utils.convertor(self.float(groups[1]), "eV", "cm-1"))
             self.etoscs.append(self.float(line.split("f=")[-1].split()[0]))
             self.etsyms.append(groups[0].strip())
