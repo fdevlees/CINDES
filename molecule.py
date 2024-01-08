@@ -119,6 +119,7 @@ class BaseMolecule(object):
         self.opt = False
         # for jsonification:
         self.props = {}
+        print(self.props)
         return
 
     def __str__(self):

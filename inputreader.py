@@ -593,6 +593,7 @@ def readfile(subinp):
                 functionscript = __import__(functionfile)
                 paras['function'] = functionscript.function
                 assert callable(paras['function'])
+                #print(functionscript.function)
                 paras['func_args'] = functionscript.arguments
             elif 'func' in prop:
                 paras['property'] = 'func'

@@ -17,6 +17,7 @@ import os  # for getting window width and testing existence of files
 import inspect # to see if function is a class
 import logging  # instead of the large amount of print statements not using it at the moment
 import numpy as np
+print(np.__file__)
 from copy import deepcopy  # for keeping matrices while changing others
 from inspect import stack
 from math import ceil
