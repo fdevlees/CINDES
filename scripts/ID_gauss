@@ -17,22 +17,23 @@ memory_s_inw=$(( $mem_inw + 67108864 ))
 memory_s=$(( $memory_s_inw / 131072 +1 ))
 echo Submitting $1 on $NP processors, requested memory is $memory_s Mb. 
 
-qsub << END_END
+sbatch << END_END
 #!/bin/bash -l
-#PBS -j oe
-#PBS -N $1
-#PBS -l walltime=${2:-100}:00:00
-#PBS -l mem=${memory_s}Mb
-#PBS -l nodes=1:ppn=$NP:intel
-module load Gaussian/G09.D01
-cd \$WORKDIR/
-export GAUSS_SCRDIR=\$TMPDIR/\$PBS_JOBID
+#SBATCH --job-name=$i
+#SBATCH --time=20:00:00
+##SBATCH --time=${2:-120}:00:00
+#SBATCH --mem=${memory_s}
+#SBATCH --cpus-per-task=$NP
+
+#module load Gaussian/G16.A.03-intel-2017b
+module load Gaussian/G16.B.01
+mkdir \$WORKDIR/\$SLURM_JOB_ID
+cd \$WORKDIR/\$SLURM_JOB_ID
+#export GAUSS_SCRDIR=\$TMPDIR/\$SLURM_JOB_ID
+export GAUSS_SCRDIR=\$VSC_SCRATCH_VO/\$SLURM_JOB_ID
 if [ ! -d \$GAUSS_SCRDIR ] ; then mkdir \$GAUSS_SCRDIR; fi
 ( for i in {1..60}; do sleep 24h; touch \$GAUSS_SCRDIR/*; done )&
-cd \$GAUSS_SCRDIR
-time g09 <\$PBS_O_WORKDIR/$1>\$PBS_O_WORKDIR/${1%.*}.log
-cp ${1%.*}.chk \$PBS_O_WORKDIR
-cd ..
+time g16 <\$SLURM_SUBMIT_DIR/$i>\$SLURM_SUBMIT_DIR/${i%.*}.log
 rmdir \$GAUSS_SCRDIR
 kill \$!
 END_END
@@ -42,7 +43,8 @@ unset NP
 unset MEMS
 unset MEM
 else
-echo File $1 does not exist!
+echo File $i does not exist!
 fi
+done
 
 
