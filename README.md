@@ -26,7 +26,7 @@ Jos L. Teunissen, Frank De Proft, Freija De Vleeschouwer, Acceleration of Invers
 
 Eline Desmedt, Tatiana M. Woller, Jos Teunissen, Freija De Vleeschouwer, Mercedes Alonso, Fine-tuning of Nonlinear Optical Contrasts of Hexaphyrin-based Molecular Switches using Inverse Design. _Front. Chem_. **2021**, _9_, 786036. 
 
-Eline Desmedt, David Smets, Tatiana Woller, Mercedes Alonso, Freija De Vleeschouwer,	Designing hexaphyrins for high-potential NLO switches: The synergy of core-modifications and meso-substitutions. _Phys. Chem. Chem. Phys_. **2023**, _25_, 17128.
+Eline Desmedt, David Smets, Tatiana Woller, Mercedes Alonso, Freija De Vleeschouwer, Designing hexaphyrins for high-potential NLO switches: The synergy of core-modifications and meso-substitutions. _Phys. Chem. Chem. Phys_. **2023**, _25_, 17128.
 
 Eline Desmedt, Léa S. Gimenez, Freija De Vleeschouwer, Mercedes Alonso,	Application of Inverse Design Approaches to the Discovery of Nonlinear Optical Switches. _Molecules_ **2023**, _28_, 7371.
 
