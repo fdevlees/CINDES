@@ -1,24 +1,20 @@
 #! /bin/env python
 
 #from distutils.core import setup
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='CINDES',
       version='1.0',
       description='Combinatiorial INverse DESigner',
-      author='Jos Teunissen',
-      author_email='jteuniss@vub.ac.be',
-      scripts=['scripts/cyreader.py', 'scripts/ID_gauss'],  # makes that automatically the right !# path is used.
-      #data_files=[ ("", ['requirements.txt'])],
-      #py_modules=['foo'],
-
-      # this works only in setuptools not in distutils
+      authors='Jos Teunissen, Eline Desmedt, David Smets',
+      author_email='fdevlees@vub.be',
+      scripts=['scripts/cyreader.py', 'scripts/ID_gauss'],  # makes that automatically the right !# path is used 
+      packages=find_packages(where='CINDES'),
+      package_dir={'': 'CINDES'},
       install_requires=[
           "numpy",
           "scipy",
-          "sklearn"
+          "scikit-learn"
           ]
      )
 
-
-# probably want to run as: python setup.py build --build-base=/u/jteuniss/CINDES_setup/test_setup
