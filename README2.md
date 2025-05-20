@@ -1,144 +1,89 @@
-# README template
+# Combinatorial INverse DESigner (CINDES)
 
-Template for a feature rich and easy to read README
+This package allows for combinatorial optimizations, in which molecular properties are optimized by introducing substituents / core-modifications on/into the molecular framework.
+The CINDES package containing two modules:
 
-## Intro
+evaluation: HPC automation of job submission/processing
+algorithms: Several algorithms to perform combinatorial optimizations. The most important ones are the Best-First-Search algorithm and several Genetic Algorithm implementations (as well as NSGA-II), and Bayesian optimization
 
-So you just decided to add a README to your project. You want to create an easy
-to read and easy to navigate file.
+A manual is available, please email to freija.de.vleeschouwer@vub.be
 
-The question is: What should you do next?
+## Information
 
-Should you create one from scratch? Find a silver bullet solution? Or is it
-better to customize an already existing file?
+Algemene Chemie (ALGC) – General Chemistry, Vrije Universiteit Brussel (VUB)
+Main developer: Jos L. Teunissen
+Co-developers: Eline Desmedt, David Smets
 
-I'm going to show you how to create a README that fits your project, is easy
-to read and contains everyting you will ever need.
+Email correspondence: freija.de.vleeschouwer@vub.be
 
-## Feature overview
+## Related publications
 
-*   [x] **Easy to read** like an article
-*   [x] **Feature overview and Contents** for fast orientation
-*   [ ] **Visuals** to keep users engaged
+*   Jos L. Teunissen, Frank De Proft, Freija De Vleeschouwer, Tuning the HOMO-LUMO Gap of Small Diamondoids Using Inverse Molecular Design. _J. Chem. Theory Comput_. **2017**, _13_, 1351.
+*   Jos L. Teunissen, Frank De Proft, Freija De Vleeschouwer, Acceleration of Inverse Molecular Design by Using Predictive Techniques. _J. Chem. Inf. Model_. **2019**, _59_, 2587.
+*   Eline Desmedt, Tatiana M. Woller, Jos Teunissen, Freija De Vleeschouwer, Mercedes Alonso, Fine-tuning of Nonlinear Optical Contrasts of Hexaphyrin-based Molecular Switches using Inverse Design. _Front. Chem_. **2021**, _9_, 786036.
+*   Eline Desmedt, David Smets, Tatiana Woller, Mercedes Alonso, Freija De Vleeschouwer, Designing hexaphyrins for high-potential NLO switches: The synergy of core-modifications and meso-substitutions. _Phys. Chem. Chem. Phys_. **2023**, _25_, 17128.
+*   Eline Desmedt, Léa S. Gimenez, Freija De Vleeschouwer, Mercedes Alonso,	Application of Inverse Design Approaches to the Discovery of Nonlinear Optical Switches. _Molecules_ **2023**, _28_, 7371.
+*   Irene Casademont-Reig, Roger Monreal-Corona, Eline Desmedt, Freija De Vleeschouwer, and Mercedes Alonso. Pursuit of Singlet Fission Fulvenes Candidates using Inverse Design. Submitted to Digital Discovery.
 
 ## Contents
 
-*   [What is this?](#what-is-this)
-*   [When should I use this?](#when-should-i-use-this)
 *   [Getting started](#getting-started)
-    *   [Requirements](#requirements)
     *   [Install](#install)
+    *   [Requirements](#requirements)
     *   [Usage](#usage)
-*   [Here is where it's your turn](#here-is-where-its-your-turn)
-*   [Don't forget anything](#dont-forget-anything)
+*   [Examples](#examples)
     * [Used Technologies](#used-technologies)
     * [Testing](#testing)
     * [Logging](#logging)
-*   [Contribute](#contribute)
-*   [License](#license)
-*   [Sources](#sources)
-*   [Conclusion](#conclusion)
 
-## What is this?
 
-This project is an exhaustive README template that you can customize to your needs.
-You can either add sections you like or remove sections you don't like. But you have
-every time an example in front of you, from which you can derive from.
-
-## Why should I use this?
-
-There are many README templates out there so why this one? The two main reasons for this are
-that they contain often too little content or they are not easy to read or navigate through.
-
-## Getting Started
-
-So how do you get this template to work for your project? It is easier than you think.
-
-### Requirements
-
-* Have a project ready where you can add a README
-* Basic knowledge of [Markdown][about-markdown] (here is a [Cheatsheet][markdown-cheatsheet])
+## Getting started
 
 ### Install
 
 Use git to clone this repository into your computer.
 
 ```
-git clone https://gitlab.com/kopino4-templates/readme-template
+mkdir Project && cd Project
+git clone https://gitlab.com/fdevlees/cindes.git
+```
+
+### Requirements
+
+Load python module, here _matplotlib/3.9.2-gfbf-2024a_.
+
+```
+module load matplotlib/3.9.2-gfbf-2024a
+```
+
+Additional packages are required via setup.py.
+
+```
+pip install .
+
 ```
 
 ### Usage
 
-Use the well known command to copy the template
+Before running the script:
 
-```bash
-# Copy the content
-CTRL + C
+*   Make sure that **INPUT** and **ZMAT** are in the _Project_ directory.
 
-# Pase into your project
-CTRL + V
+Run the python code.
+
+*   Via command line:
+
+```
+python -m CINDES -i INPUT > cindes_output.log
 ```
 
-## Here is where it's your turn
+*   Via submission script, here using slurm workload manager. Make sure to adjust the path in the _cindes_submit_ script.
 
-Here starts the main content of your README. This is why you did it for in the first place.
-To describe to future users of this project (including yourself) everything they need to know
-to be able to use it and understand it.
+```
+sbatch cindes_submit
+```
 
-Use visuals to help the reader understand better. An image, diagram, chart or code example says
-more than thousand words
+## Examples
 
-![Diagram](doc/diagram.jpg)
 
-## Don't forget anything
-
-Think hard about anything that is clear to you but might not be clear for others. Why are you
-using this aproach or why did you pick this solution instead?
-
-### Used technologies
-
-For sure mention all the technologies you used. If the technologies age in time you don't forget
-they are used and need to be replaced.
-
-### Testing
-
-No tests no sucess. You SHOULD have tests for every project, but do new users know how to run them?
-
-### Logging
-
-Logging is essential. How do you know something went wrong if the computer doesn't tell you? Logs
-are the first place to search for bugs. Explain to everybody how you can customize it or used it
-in the right way.
-
-## Contribute
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-Please make sure to update tests as appropriate.
-
-## License
-[MIT](https://choosealicense.com/licenses/mit/)
-
-## Sources
-
-[react-markdown][react-markdown] - Project which served as an inspiration for this README
-
-[Blog post templates][blog-post-templates] - Used to structure this template as an easy to read blog post
-
-[About markdown][about-markdown] - Why should you use markdown?
-
-[Markdown Cheat Sheet][markdown-cheatsheet] - Get a fast overview of the syntax
-
-[//]: # "Source definitions"
-[react-markdown]: https://github.com/remarkjs/react-markdown "React-markdown project"
-[blog-post-templates]: https://backlinko.com/hub/content/blog-post-templates "Backlinko blog post templates"
-[about-markdown]: https://www.markdownguide.org/getting-started/ "Introduction to markdown"
-[markdown-cheatsheet]: https://www.markdownguide.org/cheat-sheet/ "Markdown Cheat Sheet"
-
-## Conclusion
-
-To summarize..
-
-We have an exhaustive README template with many features. The README is easy to read and navigate like an article.
-In our future projects we can use this template to get a great head start in creating a custom README.
 
