@@ -46,7 +46,8 @@ Email correspondence: freija.de.vleeschouwer@vub.be
 Use git to clone this repository into your computer.
 
 ```
-mkdir Project && cd Project
+mkdir Project
+cd Project
 git clone https://gitlab.com/fdevlees/cindes.git
 ```
 
