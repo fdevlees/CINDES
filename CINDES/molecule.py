@@ -10,7 +10,7 @@ The two child classes are:
 import numpy as np
 import re
 from CINDES.utils.converter import Converter
-from collections import MutableSequence
+from collections.abc import MutableSequence
 
 replacements = {
         '=':'a',
