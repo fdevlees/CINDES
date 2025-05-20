@@ -72,7 +72,7 @@ Before running the script:
 
 *   Make sure that **INPUT** and **ZMAT** are in the _Project_ directory.
 
-Run the python code.
+Run the module.
 
 *   Via command line:
 
