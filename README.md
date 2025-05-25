@@ -33,6 +33,8 @@ Email correspondence: freija.de.vleeschouwer@vub.be
     *   [Install](#install)
     *   [Requirements](#requirements)
     *   [Usage](#usage)
+    *   [Output data](#output)
+    *   [Failed CINDES run](#failed)
 *   [Examples](#examples)
 
 ## Getting started
@@ -96,8 +98,11 @@ The file **cyclesinfo** is made available with all molecular data from the inver
 
 Output file **cindes_output.log**, finally, contains detailed information and data about the integral inverse design process (iteration and steps within) and ends with a listing of the optimum. 
 
+### Failed CINDES run
+
+Gaussian software log files are checked for error terminations or imaginary frequencies (in case of opt+freq), and the user is warned. In these cases, failed calculations need to be restarted manually, after which a restart of the CINDES program can be set up. The restart requires the initial structure and the site sequences. Do not remove any calculations from the **CALC** directory.
+
 ## Examples
 
-Examples are given in the **Examples** directory. Gaussian software log files are checked for error terminations or imaginary frequencies and the user is warned. In these cases, failed calculations need to be restarted manually, after which a restart of the CINDES program can be set up.
-
+Examples are given in the **Examples** directory.
 
