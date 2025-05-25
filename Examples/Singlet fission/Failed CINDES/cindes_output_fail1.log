@@ -1,0 +1,582 @@
+/apps/brussel/RL8/zen4/software/SciPy-bundle/2024.05-gfbf-2024a/lib/python3.12/site-packages/numpy/__init__.py
+Thu May 22 17:10:29 2025
+
+                            ===========================================
+                            ==              C I N D E S              ==
+                            ==  An Inverse Molecular Design Program  ==
+                            ==      written by Jos L. Teunissen      ==
+                            ===========================================
+
+name of input-file:INPUT_FINAL
+
+                                     **************************
+                                     **  BEFORE: read_input  **
+                                     **************************
+
+funcstr: lambda tdenergy_S,tdenergy_T: tdenergy_S[0] - 2 * tdenergy_T[0] 
+
+SYMMETRY ACTIVATED!
+underscore appended to identify
+    nch3 keyword is deprecated!
+ARRAY:
+site 0:  |  CNOO  |  CCN  |  CCFFF  |  CCl  |  CF  |  CBFF  |  CBHH  |  CH  |  CCHHH  |  CSH  |  COCHHH  |  COH  |  CNHH  |  CSiHHH  |  CNMeMe  | 
+site 1:  |  CNOO  |  CCN  |  CCFFF  |  CCl  |  CF  |  CBFF  |  CBHH  |  CH  |  CSiHHH  |  CCHHH  |  CSH  |  COCHHH  |  COH  |  CNHH  |  CNMeMe  | 
+site 2:  |  CNOO  |  CCN  |  CCFFF  |  CCl  |  CF  |  CBFF  |  CBHH  |  CH  |  CSiHHH  |  CCHHH  |  CSH  |  COCHHH  |  COH  |  CNHH  |  CNMeMe  | 
+corresp: {7: 1, 11: 4, 15: 6, 19: 5, 23: 3, 27: 1}
+----- END FORMATTING & SPLITTING -----
+pyyaml not installed
+
+                                     **************************
+                                     **   AFTER: read_input  **
+                                     **************************
+
+BaseRun object with the following attributes:
+TZmat               =
+{'active': [[['C', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'],
+             ['H', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'],
+             ['H', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0'],
+             ['H', '7', '1.07000000', '1', '109.47120255', '2', '-179.99540192', '0']],
+            [['C', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'],
+             ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'],
+             ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0'],
+             ['H', '11', '1.07000000', '4', '109.47123134', '2', '-179.97658982', '0']],
+            [['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'],
+             ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'],
+             ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'],
+             ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']],
+            [['C', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'],
+             ['H', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'],
+             ['H', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0'],
+             ['H', '27', '1.07000000', '1', '109.47123134', '2', '-179.99938660', '0']],
+            [['C', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'],
+             ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'],
+             ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0'],
+             ['H', '23', '1.07000000', '3', '109.47123134', '2', '179.76644602', '0']],
+            [['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'],
+             ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'],
+             ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'],
+             ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]],
+ 'core': [['C'],
+          ['C', '1', '1.33650930'],
+          ['C', '2', '1.47383518', '1', '126.86135988'],
+          ['C', '2', '1.47351672', '1', '127.00354677', '3', '-179.98088737', '0'],
+          ['C', '3', '1.34664774', '2', '107.87001302', '1', '-179.98919089', '0'],
+          ['C', '4', '1.34667519', '2', '107.86166754', '1', '179.96183244', '0']],
+ 'passive': []}
+assign_geom         = True
+calcs               =
+[{'geom': 'ZMAT_fulvene',
+  'identify': 'id_fulvene_',
+  'jobs': [{'charge': '0', 'hotline': '# opt=calcfc freq M062X/6-311+G(d,p)', 'info': {'g_fulvene', 'xyz_fulvene', 'hasimagfreq'}, 'mult': '1'}],
+  'nosub': 0,
+  'nprocs': 16,
+  'path': '/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC',
+  'program': 'gaussian',
+  'walltimelimit': '48h'},
+ [{'geom': '_fulvene',
+   'identify': 'id_fulvene_1_',
+   'jobs': [{'charge': '0', 'hotline': '# M062X/6-311+G(d,p) td=(singlets,nstates=3)', 'info': {'tdenergy_S', 'etenergies_S'}, 'mult': '1'}],
+   'nosub': 0,
+   'nprocs': 16,
+   'path': '/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC',
+   'program': 'gaussian',
+   'walltimelimit': '8h'},
+  {'geom': '_fulvene',
+   'identify': 'id_fulvene_2_',
+   'jobs': [{'charge': '0', 'hotline': '# M062X/6-311+G(d,p) td=(triplets,nstates=3)', 'info': {'tdenergy_T', 'etenergies_T'}, 'mult': '1'}],
+   'nosub': 0,
+   'nprocs': 16,
+   'path': '/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC',
+   'program': 'gaussian',
+   'walltimelimit': '8h'}]]
+corresp             = {7: 1, 11: 4, 15: 6, 19: 5, 23: 3, 27: 1}
+debug               = True
+directory           = /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES
+extension           = .com
+extrawaittime       = 10.0
+func_args           = {'tdenergy_S', 'tdenergy_T'}
+function            =lambda function: tdenergy_S[0] - 2 * tdenergy_T[0]
+hasimagfreq         = True
+identify            = id_fulvene_
+logging             = 20
+maxiter             = 10
+ncore               = 6
+nlinks              = 3
+node                = node612.hydra.os
+nprocs              = 8
+nrandsites          = 2
+nsites              = 3
+optimum             = maximum
+path                = /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+pid                 = 206720
+ppid                = 206621
+procedure           = bfs
+program             = gaussian
+property            = func
+props               = {'tdenergy_S', 'tdenergy_T'}
+readtable           = True
+script              = ID_gauss
+seed                = 37
+sites               = [7, 11, 15, 27, 23, 19]
+starttime           = 1747926630.0201073
+symlinks            = [[1, 4], [2, 5], [3, 6]]
+tablename           = table.json
+test_ready          = 2
+timelimit           = 250000
+timestep            = 300
+try_ready           = 1
+workdir             = /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES
+write               = True
+zmatrixfile         = ZMAT_fulvene
+empty attributes    =
+ adjust_dihedrals     batchsize            bc                   cutoff               defaultgroups       
+ difmodel             extra_props          extrajobs            geom2                ignore              
+ jobs                 ml                   montecarlo           no1sub               norandom            
+ nosub                optga                predictions          prejobs              regression          
+ restart              restrictions         secret_file          sequence             stab                
+ stabjobs             startind             threading            worker              
+loaded json database with 288 molecules
+required properties: {'tdenergy_S', 'tdenergy_T'}
+made a table with 288 molecules that have the required properties
+---------------------------
+  Global Iteration No.: 1  
+---------------------------
+SEQUENCE: [1, 0, 2]
+================================
+  k(site)= 1 l(nsite)= 0 (c=1)  
+================================
+random start molecule: 
+constructed random start configuration
+startconf:'CNMeMe_CSiHHH_CNHH'
+pybel not installed
+QML not imported!
+{}
+{}
+{}
+{}
+{}
+{}
+{}
+{}
+{}
+{}
+{}
+{}
+{}
+{}
+{}
+|      NEW POPULATION CONSTRUCTED:
+|   mols_todo:
+|      Molecule: CNMeMe_CNOO_CNHH
+|      Molecule: CNMeMe_CCN_CNHH
+|      Molecule: CNMeMe_CCFFF_CNHH
+|      Molecule: CNMeMe_CCl_CNHH
+|      Molecule: CNMeMe_CF_CNHH
+|      Molecule: CNMeMe_CBFF_CNHH
+|      Molecule: CNMeMe_CBHH_CNHH
+|      Molecule: CNMeMe_CH_CNHH
+|      Molecule: CNMeMe_CSiHHH_CNHH
+|      Molecule: CNMeMe_CCHHH_CNHH
+|      Molecule: CNMeMe_CSH_CNHH
+|      Molecule: CNMeMe_COCHHH_CNHH
+|      Molecule: CNMeMe_COH_CNHH
+|      Molecule: CNMeMe_CNHH_CNHH
+|      Molecule: CNMeMe_CNMeMe_CNHH
+|   mols_nodo:
+|      -
+
+                                     *************************
+                                     **  BEFORE: predictor  **
+                                     *************************
+
+    no predictions will be made    len(table)=288
+
+                                     *************************
+                                     **   AFTER: predictor  **
+                                     *************************
+
+| n_indices_tocal: 15
+|    n_data_nocal: 0
+
+                                     **************************
+                                     **  BEFORE: geom_maker  **
+                                     **************************
+
+symmetry will be applied | 
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+[['N', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['O', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['O', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+length of zma: 3
+length of nageom: 3
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+[['N', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['O', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['O', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+length of zma: 3
+length of nageom: 3
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+[['C', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0'], ['H', '11', '1.07000000', '4', '109.47123134', '2', '-179.97658982', '0']]
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+[['C', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0'], ['H', '23', '1.07000000', '3', '109.47123134', '2', '179.76644602', '0']]
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+[['B', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['F', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['F', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+16
+16
+16
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+[['B', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['F', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['F', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+31
+31
+31
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+[['B', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+16
+16
+16
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+[['B', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+31
+31
+31
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+[['C', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0'], ['H', '11', '1.07000000', '4', '109.47123134', '2', '-179.97658982', '0']]
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+[['C', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0'], ['H', '23', '1.07000000', '3', '109.47123134', '2', '179.76644602', '0']]
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+[['C', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0'], ['H', '11', '1.07000000', '4', '109.47123134', '2', '-179.97658982', '0']]
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+[['C', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0'], ['H', '23', '1.07000000', '3', '109.47123134', '2', '179.76644602', '0']]
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+length of zma: 5
+length of nageom: 5
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+length of zma: 5
+length of nageom: 5
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+[['N', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+[['N', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+length of zma: 9
+length of nageom: 3
+4
+[['N', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['Me', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['Me', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+length of zma: 9
+length of nageom: 3
+6
+[['N', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0']]
+1
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+length of zma: 9
+length of nageom: 3
+3
+[['N', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['Me', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['Me', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+length of zma: 9
+length of nageom: 3
+5
+[['N', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0']]
+OpenBabel Smiles error: name 'pybel' is not defined
+
+                                     **************************
+                                     **   AFTER: geom_maker  **
+                                     **************************
+
+
+                                      ************************
+                                      **  BEFORE: jobmaker  **
+                                      ************************
+
+Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CNOO_CNHH.com
+geom ZMAT_fulvene Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CCN_CNHH.com
+geom ZMAT_fulvene Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CCFFF_CNHH.com
+geom ZMAT_fulvene Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CCl_CNHH.com
+geom ZMAT_fulvene Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CF_CNHH.com
+geom ZMAT_fulvene Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CBFF_CNHH.com
+geom ZMAT_fulvene Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CBHH_CNHH.com
+geom ZMAT_fulvene Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CH_CNHH.com
+geom ZMAT_fulvene Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CSiHHH_CNHH.com
+geom ZMAT_fulvene Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CCHHH_CNHH.com
+geom ZMAT_fulvene Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CSH_CNHH.com
+geom ZMAT_fulvene Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_COCHHH_CNHH.com
+geom ZMAT_fulvene Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_COH_CNHH.com
+geom ZMAT_fulvene Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CNHH_CNHH.com
+geom ZMAT_fulvene Debugging2: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CNMeMe_CNHH.com
+geom ZMAT_fulvene 
+                                      ************************
+                                      **   AFTER: jobmaker  **
+                                      ************************
+
+
+                                     **************************
+                                     **  BEFORE: submission  **
+                                     **************************
+
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_CNOO_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_CNOO_CNHH submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_CCN_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_CCN_CNHH submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_CCFFF_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_CCFFF_CNHH submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_CCl_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_CCl_CNHH submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_CF_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_CF_CNHH submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_CBFF_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_CBFF_CNHH submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_CBHH_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_CBHH_CNHH submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_CH_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_CH_CNHH submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_CSiHHH_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_CSiHHH_CNHH submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_CCHHH_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_CCHHH_CNHH submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_CSH_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_CSH_CNHH submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_COCHHH_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_COCHHH_CNHH submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_COH_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_COH_CNHH submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_CNHH_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_CNHH_CNHH submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_CNMeMe_CNMeMe_CNHH.com|walltime=48:00|cwd=:/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC
+Job: id_fulvene_CNMeMe_CNMeMe_CNHH submitted
+----- END all jobs are submitted ----------
+
+                                     **************************
+                                     **   AFTER: submission  **
+                                     **************************
+
+
+                                     =========================
+                                     ==  BEFORE: jobtester  ==
+                                     =========================
+
+len(mols_tocal): 15
+Te controleren bestanden: ['id_fulvene_CNMeMe_CNOO_CNHH.com', 'id_fulvene_CNMeMe_CCN_CNHH.com', 'id_fulvene_CNMeMe_CCFFF_CNHH.com', 'id_fulvene_CNMeMe_CCl_CNHH.com', 'id_fulvene_CNMeMe_CF_CNHH.com', 'id_fulvene_CNMeMe_CBFF_CNHH.com', 'id_fulvene_CNMeMe_CBHH_CNHH.com', 'id_fulvene_CNMeMe_CH_CNHH.com', 'id_fulvene_CNMeMe_CSiHHH_CNHH.com', 'id_fulvene_CNMeMe_CCHHH_CNHH.com', 'id_fulvene_CNMeMe_CSH_CNHH.com', 'id_fulvene_CNMeMe_COCHHH_CNHH.com', 'id_fulvene_CNMeMe_COH_CNHH.com', 'id_fulvene_CNMeMe_CNHH_CNHH.com', 'id_fulvene_CNMeMe_CNMeMe_CNHH.com']
+JOB voltooid: id_fulvene_CNMeMe_CBFF_CNHH.com
+JOB voltooid: id_fulvene_CNMeMe_CH_CNHH.com
+JOB voltooid: id_fulvene_CNMeMe_CCN_CNHH.com
+JOB voltooid: id_fulvene_CNMeMe_CF_CNHH.com
+JOB voltooid: id_fulvene_CNMeMe_CCl_CNHH.com
+JOB voltooid: id_fulvene_CNMeMe_CSH_CNHH.com
+JOB voltooid: id_fulvene_CNMeMe_CNOO_CNHH.com
+JOB voltooid: id_fulvene_CNMeMe_COCHHH_CNHH.com
+JOB voltooid: id_fulvene_CNMeMe_COH_CNHH.com
+JOB voltooid: id_fulvene_CNMeMe_CCFFF_CNHH.com
+JOB voltooid: id_fulvene_CNMeMe_CNHH_CNHH.com
+JOB voltooid: id_fulvene_CNMeMe_CCHHH_CNHH.com
+JOB voltooid: id_fulvene_CNMeMe_CBHH_CNHH.com
+JOB voltooid: id_fulvene_CNMeMe_CNMeMe_CNHH.com
+JOB voltooid: id_fulvene_CNMeMe_CSiHHH_CNHH.com
+✅ Alle jobs zijn klaar.
+
+                                     =========================
+                                     ==   AFTER: jobtester  ==
+                                     =========================
+
+
+                                     **************************
+                                     **  BEFORE: datareader  **
+                                     **************************
+
+=================
+Error termination: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CBFF_CNHH.log
+Debugging: Job: id_fulvene_CNMeMe_CBFF_CNHH
+Could not import openbabel, fallback mechanism might not work.
+/vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CBFF_CNHH.log
+cclib read error with: /vscmnt/brussel_pixiu_data/_data_brussel/101/vsc10196/testing_program/CINDES/CALC/id_fulvene_CNMeMe_CBFF_CNHH.log
+see error_id_fulvene_CNMeMe_CBFF_CNHH.log for more details
