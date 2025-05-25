@@ -1,0 +1,2136 @@
+nohup: ignoring input
+Fri Mar 24 17:19:21 2023
+
+                            ===========================================
+                            ==              C I N D E S              ==
+                            ==  An Inverse Molecular Design Program  ==
+                            ==      written by Jos L. Teunissen      ==
+                            ===========================================
+
+name of input-file:INPUT_FINAL
+
+                                     **************************
+                                     **  BEFORE: read_input  **
+                                     **************************
+
+funcstr: lambda tdenergy_T,tdenergy_S: tdenergy_S[0] - 2 * tdenergy_T[0] 
+
+SYMMETRY ACTIVATED!
+underscore appended to identify
+    nch3 keyword is deprecated!
+ARRAY:
+site 0:  |  CNOO  |  CCN  |  CCFFF  |  CCl  |  CF  |  CBFF  |  CBHH  |  CH  |  CCHHH  |  CSH  |  COCHHH  |  COH  |  CNHH  |  CSiHHH  |  CNMeMe  | 
+site 1:  |  CNOO  |  CCN  |  CCFFF  |  CCl  |  CF  |  CBFF  |  CBHH  |  CH  |  CSiHHH  |  CCHHH  |  CSH  |  COCHHH  |  COH  |  CNHH  |  CNMeMe  | 
+site 2:  |  CNOO  |  CCN  |  CCFFF  |  CCl  |  CF  |  CBFF  |  CBHH  |  CH  |  CSiHHH  |  CCHHH  |  CSH  |  COCHHH  |  COH  |  CNHH  |  CNMeMe  | 
+corresp: {7: 1, 11: 4, 15: 6, 19: 5, 23: 3, 27: 1}
+----- END FORMATTING & SPLITTING -----
+pyyaml not installed
+
+                                     **************************
+                                     **   AFTER: read_input  **
+                                     **************************
+
+BaseRun object with the following attributes:
+TZmat               =
+{'active': [[['C', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'],
+             ['H', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'],
+             ['H', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0'],
+             ['H', '7', '1.07000000', '1', '109.47120255', '2', '-179.99540192', '0']],
+            [['C', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'],
+             ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'],
+             ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0'],
+             ['H', '11', '1.07000000', '4', '109.47123134', '2', '-179.97658982', '0']],
+            [['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'],
+             ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'],
+             ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'],
+             ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']],
+            [['C', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'],
+             ['H', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'],
+             ['H', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0'],
+             ['H', '27', '1.07000000', '1', '109.47123134', '2', '-179.99938660', '0']],
+            [['C', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'],
+             ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'],
+             ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0'],
+             ['H', '23', '1.07000000', '3', '109.47123134', '2', '179.76644602', '0']],
+            [['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'],
+             ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'],
+             ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'],
+             ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]],
+ 'core': [['C'],
+          ['C', '1', '1.33650930'],
+          ['C', '2', '1.47383518', '1', '126.86135988'],
+          ['C', '2', '1.47351672', '1', '127.00354677', '3', '-179.98088737', '0'],
+          ['C', '3', '1.34664774', '2', '107.87001302', '1', '-179.98919089', '0'],
+          ['C', '4', '1.34667519', '2', '107.86166754', '1', '179.96183244', '0']],
+ 'passive': []}
+assign_geom         = True
+calcs               =
+[{'geom': 'ZMAT_fulvene',
+  'identify': 'id_fulvene_test_',
+  'jobs': [{'charge': '0', 'hotline': '# opt freq M062X/6-311+G(d,p)', 'info': {'xyz_fulvene', 'g_fulvene', 'hasimagfreq'}, 'mult': '1'}],
+  'nosub': 0,
+  'nprocs': 4,
+  'path': '/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC',
+  'program': 'gaussian',
+  'walltimelimit': '48h'},
+ [{'geom': '_fulvene',
+   'identify': 'id_fulvene_test_1_',
+   'jobs': [{'charge': '0', 'hotline': '# M062X/6-311+G(d,p) td=(singlets,nstates=3)', 'info': {'tdenergy_S', 'etenergies_S'}, 'mult': '1'}],
+   'nosub': 0,
+   'nprocs': 4,
+   'path': '/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC',
+   'program': 'gaussian',
+   'walltimelimit': '8h'},
+  {'geom': '_fulvene',
+   'identify': 'id_fulvene_test_2_',
+   'jobs': [{'charge': '0', 'hotline': '# M062X/6-311+G(d,p) td=(triplets,nstates=3)', 'info': {'tdenergy_T', 'etenergies_T'}, 'mult': '1'}],
+   'nosub': 0,
+   'nprocs': 4,
+   'path': '/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC',
+   'program': 'gaussian',
+   'walltimelimit': '8h'}]]
+corresp             = {7: 1, 11: 4, 15: 6, 19: 5, 23: 3, 27: 1}
+debug               = True
+directory           = /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd
+extension           = .com
+extrawaittime       = 10.0
+func_args           = {'tdenergy_T', 'tdenergy_S'}
+function            =lambda function: tdenergy_S[0] - 2 * tdenergy_T[0]
+hasimagfreq         = True
+identify            = id_fulvene_test_
+logging             = 20
+maxiter             = 10
+ncore               = 6
+nlinks              = 3
+node                = login2.cerberus.os
+nprocs              = 8
+nrandsites          = 2
+nsites              = 3
+optimum             = maximum
+path                = /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+pid                 = 235208
+ppid                = 220000
+procedure           = bfs
+program             = gaussian
+property            = func
+props               = {'tdenergy_T', 'tdenergy_S'}
+readtable           = True
+script              = ID_gauss
+seed                = 91
+sites               = [7, 11, 15, 27, 23, 19]
+starttime           = 1679674761.51741
+symlinks            = [[1, 4], [2, 5], [3, 6]]
+tablename           = table.json
+test_ready          = 2
+timelimit           = 250000
+timestep            = 300
+try_ready           = 1
+workdir             = /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd
+write               = True
+zmatrixfile         = ZMAT_fulvene
+empty attributes    =
+ adjust_dihedrals     batchsize            bc                   cutoff               defaultgroups       
+ difmodel             extra_props          extrajobs            geom2                ignore              
+ jobs                 ml                   montecarlo           no1sub               norandom            
+ nosub                optga                predictions          prejobs              regression          
+ restart              restrictions         secret_file          sequence             stab                
+ stabjobs             startind             threading            worker              
+loaded json database with 250 molecules
+required properties: {'tdenergy_T', 'tdenergy_S'}
+made a table with 250 molecules that have the required properties
+---------------------------
+  Global Iteration No.: 1  
+---------------------------
+SEQUENCE: [0, 1, 2]
+================================
+  k(site)= 0 l(nsite)= 0 (c=1)  
+================================
+random start molecule: 
+constructed random start configuration
+startconf:'CNHH_CBHH_CCFFF'
+pybel not installed
+QML not imported!
+3 molecules are already in database
+|      NEW POPULATION CONSTRUCTED:
+|   mols_todo:
+|      Molecule: CCN_CBHH_CCFFF
+|      Molecule: CCFFF_CBHH_CCFFF
+|      Molecule: CCl_CBHH_CCFFF
+|      Molecule: CF_CBHH_CCFFF
+|      Molecule: CBFF_CBHH_CCFFF
+|      Molecule: CBHH_CBHH_CCFFF
+|      Molecule: CH_CBHH_CCFFF
+|      Molecule: CCHHH_CBHH_CCFFF
+|      Molecule: CSH_CBHH_CCFFF
+|      Molecule: COCHHH_CBHH_CCFFF
+|      Molecule: CSiHHH_CBHH_CCFFF
+|      Molecule: CNMeMe_CBHH_CCFFF
+|   mols_nodo:
+|      Molecule: CNOO_CBHH_CCFFF
+|      Molecule: COH_CBHH_CCFFF
+|      Molecule: CNHH_CBHH_CCFFF
+
+                                     *************************
+                                     **  BEFORE: predictor  **
+                                     *************************
+
+    no predictions will be made    len(table)=250
+
+                                     *************************
+                                     **   AFTER: predictor  **
+                                     *************************
+
+| n_indices_tocal: 12
+|    n_data_nocal: 3
+
+                                     **************************
+                                     **  BEFORE: geom_maker  **
+                                     **************************
+
+symmetry will be applied | 
+[['B', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+9
+9
+9
+[['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'], ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']]
+[['B', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+18
+18
+18
+[['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]
+[['C', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['H', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['H', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0'], ['H', '7', '1.07000000', '1', '109.47120255', '2', '-179.99540192', '0']]
+[['B', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+11
+11
+11
+[['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'], ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']]
+[['C', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['H', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['H', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0'], ['H', '27', '1.07000000', '1', '109.47123134', '2', '-179.99938660', '0']]
+[['B', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+22
+22
+22
+[['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]
+[['B', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+8
+8
+8
+[['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'], ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']]
+[['B', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+16
+16
+16
+[['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]
+[['B', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+8
+8
+8
+[['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'], ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']]
+[['B', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+16
+16
+16
+[['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]
+[['B', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['F', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['F', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+7
+7
+7
+[['B', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+10
+10
+10
+[['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'], ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']]
+[['B', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['F', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['F', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+17
+17
+17
+[['B', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+20
+20
+20
+[['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]
+[['B', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['H', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['H', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+7
+7
+7
+[['B', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+10
+10
+10
+[['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'], ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']]
+[['B', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['H', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['H', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+17
+17
+17
+[['B', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+20
+20
+20
+[['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]
+[['B', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+8
+8
+8
+[['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'], ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']]
+[['B', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+16
+16
+16
+[['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]
+[['C', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['H', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['H', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0'], ['H', '7', '1.07000000', '1', '109.47120255', '2', '-179.99540192', '0']]
+[['B', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+11
+11
+11
+[['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'], ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']]
+[['C', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['H', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['H', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0'], ['H', '27', '1.07000000', '1', '109.47123134', '2', '-179.99938660', '0']]
+[['B', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+22
+22
+22
+[['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]
+[['B', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+9
+9
+9
+[['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'], ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']]
+[['B', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+18
+18
+18
+[['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]
+[['B', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+12
+12
+12
+[['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'], ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']]
+[['B', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+24
+24
+24
+[['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]
+[['C', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['H', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['H', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0'], ['H', '7', '1.07000000', '1', '109.47120255', '2', '-179.99540192', '0']]
+[['B', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+11
+11
+11
+[['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'], ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']]
+[['C', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['H', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['H', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0'], ['H', '27', '1.07000000', '1', '109.47123134', '2', '-179.99938660', '0']]
+[['B', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+22
+22
+22
+[['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]
+[['N', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'], ['Me', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'], ['Me', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0']]
+[['B', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'], ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0']]
+16
+16
+16
+[['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'], ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'], ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']]
+[['N', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'], ['Me', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0']]
+[['B', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'], ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0']]
+32
+32
+32
+[['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'], ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]
+OpenBabel Smiles error: name 'pybel' is not defined
+
+                                     **************************
+                                     **   AFTER: geom_maker  **
+                                     **************************
+
+
+                                      ************************
+                                      **  BEFORE: jobmaker  **
+                                      ************************
+
+Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_CCN_CBHH_CCFFF.com
+geom ZMAT_fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_CCFFF_CBHH_CCFFF.com
+geom ZMAT_fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_CCl_CBHH_CCFFF.com
+geom ZMAT_fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_CF_CBHH_CCFFF.com
+geom ZMAT_fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_CBFF_CBHH_CCFFF.com
+geom ZMAT_fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_CBHH_CBHH_CCFFF.com
+geom ZMAT_fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_CH_CBHH_CCFFF.com
+geom ZMAT_fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_CCHHH_CBHH_CCFFF.com
+geom ZMAT_fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_CSH_CBHH_CCFFF.com
+geom ZMAT_fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_COCHHH_CBHH_CCFFF.com
+geom ZMAT_fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_CSiHHH_CBHH_CCFFF.com
+geom ZMAT_fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_CNMeMe_CBHH_CCFFF.com
+geom ZMAT_fulvene 
+                                      ************************
+                                      **   AFTER: jobmaker  **
+                                      ************************
+
+
+                                     **************************
+                                     **  BEFORE: submission  **
+                                     **************************
+
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_CCN_CBHH_CCFFF.com|walltime=48:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_CCN_CBHH_CCFFF submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_CCFFF_CBHH_CCFFF.com|walltime=48:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_CCFFF_CBHH_CCFFF submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_CCl_CBHH_CCFFF.com|walltime=48:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_CCl_CBHH_CCFFF submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_CF_CBHH_CCFFF.com|walltime=48:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_CF_CBHH_CCFFF submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_CBFF_CBHH_CCFFF.com|walltime=48:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_CBFF_CBHH_CCFFF submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_CBHH_CBHH_CCFFF.com|walltime=48:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_CBHH_CBHH_CCFFF submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_CH_CBHH_CCFFF.com|walltime=48:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_CH_CBHH_CCFFF submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_CCHHH_CBHH_CCFFF.com|walltime=48:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_CCHHH_CBHH_CCFFF submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_CSH_CBHH_CCFFF.com|walltime=48:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_CSH_CBHH_CCFFF submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_COCHHH_CBHH_CCFFF.com|walltime=48:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_COCHHH_CBHH_CCFFF submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_CSiHHH_CBHH_CCFFF.com|walltime=48:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_CSiHHH_CBHH_CCFFF submitted
+processed walltime:  48:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_CNMeMe_CBHH_CCFFF.com|walltime=48:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_CNMeMe_CBHH_CCFFF submitted
+----- END all jobs are submitted ----------
+
+                                     **************************
+                                     **   AFTER: submission  **
+                                     **************************
+
+
+                                     =========================
+                                     ==  BEFORE: jobtester  ==
+                                     =========================
+
+len(mols_tocal): 12
+files: ['id_fulvene_test_CCN_CBHH_CCFFF.com', 'id_fulvene_test_CCFFF_CBHH_CCFFF.com', 'id_fulvene_test_CCl_CBHH_CCFFF.com', 'id_fulvene_test_CF_CBHH_CCFFF.com', 'id_fulvene_test_CBFF_CBHH_CCFFF.com', 'id_fulvene_test_CBHH_CBHH_CCFFF.com', 'id_fulvene_test_CH_CBHH_CCFFF.com', 'id_fulvene_test_CCHHH_CBHH_CCFFF.com', 'id_fulvene_test_CSH_CBHH_CCFFF.com', 'id_fulvene_test_COCHHH_CBHH_CCFFF.com', 'id_fulvene_test_CSiHHH_CBHH_CCFFF.com', 'id_fulvene_test_CNMeMe_CBHH_CCFFF.com']
+njobs -running: 12 -ready: 0 | waittime=0.00 hrs
+njobs -running: 12 -ready: 0 | waittime=0.08 hrs
+njobs -running: 12 -ready: 0 | waittime=0.17 hrs
+njobs -running: 12 -ready: 0 | waittime=0.25 hrs
+njobs -running: 12 -ready: 0 | waittime=0.33 hrs
+njobs -running: 12 -ready: 0 | waittime=0.42 hrs
+njobs -running: 12 -ready: 0 | waittime=0.50 hrs
+njobs -running: 12 -ready: 0 | waittime=0.58 hrs
+njobs -running: 12 -ready: 0 | waittime=0.67 hrs
+njobs -running: 12 -ready: 0 | waittime=0.75 hrs
+njobs -running: 12 -ready: 0 | waittime=0.83 hrs
+njobs -running: 12 -ready: 0 | waittime=0.92 hrs
+njobs -running: 12 -ready: 0 | waittime=1.00 hrs
+njobs -running: 12 -ready: 0 | waittime=1.08 hrs
+njobs -running: 12 -ready: 0 | waittime=1.17 hrs
+njobs -running: 12 -ready: 0 | waittime=1.25 hrs
+njobs -running: 12 -ready: 0 | waittime=1.33 hrs
+njobs -running: 12 -ready: 0 | waittime=1.42 hrs
+njobs -running: 12 -ready: 0 | waittime=1.50 hrs
+njobs -running: 12 -ready: 0 | waittime=1.58 hrs
+njobs -running: 12 -ready: 0 | waittime=1.67 hrs
+njobs -running: 12 -ready: 0 | waittime=1.75 hrs
+njobs -running: 12 -ready: 0 | waittime=1.83 hrs
+njobs -running: 12 -ready: 0 | waittime=1.92 hrs
+njobs -running: 12 -ready: 0 | waittime=2.00 hrs
+njobs -running: 12 -ready: 0 | waittime=2.08 hrs
+njobs -running: 12 -ready: 0 | waittime=2.17 hrs
+njobs -running: 12 -ready: 0 | waittime=2.25 hrs
+njobs -running: 12 -ready: 0 | waittime=2.33 hrs
+njobs -running: 12 -ready: 0 | waittime=2.42 hrs
+njobs -running: 12 -ready: 0 | waittime=2.50 hrs
+njobs -running: 12 -ready: 0 | waittime=2.58 hrs
+njobs -running: 12 -ready: 0 | waittime=2.67 hrs
+JOB completed: id_fulvene_test_CCl_CBHH_CCFFF.com
+njobs -running: 11 -ready: 1 | waittime=2.75 hrs
+JOB completed: id_fulvene_test_CH_CBHH_CCFFF.com
+njobs -running: 10 -ready: 2 | waittime=2.83 hrs
+njobs -running: 10 -ready: 2 | waittime=2.92 hrs
+njobs -running: 10 -ready: 2 | waittime=3.00 hrs
+njobs -running: 10 -ready: 2 | waittime=3.08 hrs
+JOB completed: id_fulvene_test_CF_CBHH_CCFFF.com
+njobs -running: 9 -ready: 3 | waittime=3.17 hrs
+njobs -running: 9 -ready: 3 | waittime=3.25 hrs
+JOB completed: id_fulvene_test_CCN_CBHH_CCFFF.com
+njobs -running: 8 -ready: 4 | waittime=3.33 hrs
+JOB completed: id_fulvene_test_CCHHH_CBHH_CCFFF.com
+njobs -running: 7 -ready: 5 | waittime=3.42 hrs
+njobs -running: 7 -ready: 5 | waittime=3.50 hrs
+njobs -running: 7 -ready: 5 | waittime=3.58 hrs
+njobs -running: 7 -ready: 5 | waittime=3.67 hrs
+JOB completed: id_fulvene_test_CBHH_CBHH_CCFFF.com
+njobs -running: 6 -ready: 6 | waittime=3.75 hrs
+njobs -running: 6 -ready: 6 | waittime=3.83 hrs
+JOB completed: id_fulvene_test_CSH_CBHH_CCFFF.com
+njobs -running: 5 -ready: 7 | waittime=3.92 hrs
+njobs -running: 5 -ready: 7 | waittime=4.00 hrs
+njobs -running: 5 -ready: 7 | waittime=4.08 hrs
+njobs -running: 5 -ready: 7 | waittime=4.17 hrs
+njobs -running: 5 -ready: 7 | waittime=4.25 hrs
+njobs -running: 5 -ready: 7 | waittime=4.33 hrs
+njobs -running: 5 -ready: 7 | waittime=4.42 hrs
+njobs -running: 5 -ready: 7 | waittime=4.50 hrs
+njobs -running: 5 -ready: 7 | waittime=4.58 hrs
+JOB completed: id_fulvene_test_CCFFF_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_CBFF_CBHH_CCFFF.com
+njobs -running: 3 -ready: 9 | waittime=4.67 hrs
+njobs -running: 3 -ready: 9 | waittime=4.75 hrs
+njobs -running: 3 -ready: 9 | waittime=4.83 hrs
+njobs -running: 3 -ready: 9 | waittime=4.92 hrs
+njobs -running: 3 -ready: 9 | waittime=5.00 hrs
+njobs -running: 3 -ready: 9 | waittime=5.08 hrs
+njobs -running: 3 -ready: 9 | waittime=5.17 hrs
+njobs -running: 3 -ready: 9 | waittime=5.25 hrs
+njobs -running: 3 -ready: 9 | waittime=5.33 hrs
+njobs -running: 3 -ready: 9 | waittime=5.42 hrs
+njobs -running: 3 -ready: 9 | waittime=5.50 hrs
+njobs -running: 3 -ready: 9 | waittime=5.58 hrs
+njobs -running: 3 -ready: 9 | waittime=5.67 hrs
+njobs -running: 3 -ready: 9 | waittime=5.75 hrs
+njobs -running: 3 -ready: 9 | waittime=5.83 hrs
+njobs -running: 3 -ready: 9 | waittime=5.92 hrs
+njobs -running: 3 -ready: 9 | waittime=6.00 hrs
+njobs -running: 3 -ready: 9 | waittime=6.08 hrs
+njobs -running: 3 -ready: 9 | waittime=6.17 hrs
+JOB completed: id_fulvene_test_CSiHHH_CBHH_CCFFF.com
+njobs -running: 2 -ready: 10 | waittime=6.25 hrs
+njobs -running: 2 -ready: 10 | waittime=6.33 hrs
+njobs -running: 2 -ready: 10 | waittime=6.42 hrs
+njobs -running: 2 -ready: 10 | waittime=6.50 hrs
+njobs -running: 2 -ready: 10 | waittime=6.58 hrs
+njobs -running: 2 -ready: 10 | waittime=6.67 hrs
+njobs -running: 2 -ready: 10 | waittime=6.75 hrs
+njobs -running: 2 -ready: 10 | waittime=6.83 hrs
+njobs -running: 2 -ready: 10 | waittime=6.92 hrs
+njobs -running: 2 -ready: 10 | waittime=7.00 hrs
+njobs -running: 2 -ready: 10 | waittime=7.08 hrs
+njobs -running: 2 -ready: 10 | waittime=7.17 hrs
+njobs -running: 2 -ready: 10 | waittime=7.25 hrs
+njobs -running: 2 -ready: 10 | waittime=7.33 hrs
+njobs -running: 2 -ready: 10 | waittime=7.42 hrs
+njobs -running: 2 -ready: 10 | waittime=7.50 hrs
+njobs -running: 2 -ready: 10 | waittime=7.58 hrs
+njobs -running: 2 -ready: 10 | waittime=7.67 hrs
+njobs -running: 2 -ready: 10 | waittime=7.75 hrs
+njobs -running: 2 -ready: 10 | waittime=7.83 hrs
+njobs -running: 2 -ready: 10 | waittime=7.92 hrs
+njobs -running: 2 -ready: 10 | waittime=8.00 hrs
+njobs -running: 2 -ready: 10 | waittime=8.08 hrs
+njobs -running: 2 -ready: 10 | waittime=8.17 hrs
+njobs -running: 2 -ready: 10 | waittime=8.25 hrs
+njobs -running: 2 -ready: 10 | waittime=8.33 hrs
+njobs -running: 2 -ready: 10 | waittime=8.42 hrs
+njobs -running: 2 -ready: 10 | waittime=8.50 hrs
+njobs -running: 2 -ready: 10 | waittime=8.58 hrs
+njobs -running: 2 -ready: 10 | waittime=8.67 hrs
+njobs -running: 2 -ready: 10 | waittime=8.75 hrs
+njobs -running: 2 -ready: 10 | waittime=8.83 hrs
+njobs -running: 2 -ready: 10 | waittime=8.92 hrs
+njobs -running: 2 -ready: 10 | waittime=9.00 hrs
+njobs -running: 2 -ready: 10 | waittime=9.08 hrs
+njobs -running: 2 -ready: 10 | waittime=9.17 hrs
+njobs -running: 2 -ready: 10 | waittime=9.25 hrs
+njobs -running: 2 -ready: 10 | waittime=9.33 hrs
+njobs -running: 2 -ready: 10 | waittime=9.42 hrs
+njobs -running: 2 -ready: 10 | waittime=9.50 hrs
+njobs -running: 2 -ready: 10 | waittime=9.58 hrs
+njobs -running: 2 -ready: 10 | waittime=9.67 hrs
+njobs -running: 2 -ready: 10 | waittime=9.75 hrs
+njobs -running: 2 -ready: 10 | waittime=9.83 hrs
+njobs -running: 2 -ready: 10 | waittime=9.92 hrs
+njobs -running: 2 -ready: 10 | waittime=10.00 hrs
+njobs -running: 2 -ready: 10 | waittime=10.08 hrs
+njobs -running: 2 -ready: 10 | waittime=10.17 hrs
+njobs -running: 2 -ready: 10 | waittime=10.25 hrs
+njobs -running: 2 -ready: 10 | waittime=10.33 hrs
+njobs -running: 2 -ready: 10 | waittime=10.42 hrs
+njobs -running: 2 -ready: 10 | waittime=10.50 hrs
+njobs -running: 2 -ready: 10 | waittime=10.58 hrs
+njobs -running: 2 -ready: 10 | waittime=10.67 hrs
+njobs -running: 2 -ready: 10 | waittime=10.75 hrs
+njobs -running: 2 -ready: 10 | waittime=10.83 hrs
+njobs -running: 2 -ready: 10 | waittime=10.92 hrs
+njobs -running: 2 -ready: 10 | waittime=11.00 hrs
+njobs -running: 2 -ready: 10 | waittime=11.08 hrs
+njobs -running: 2 -ready: 10 | waittime=11.17 hrs
+njobs -running: 2 -ready: 10 | waittime=11.25 hrs
+njobs -running: 2 -ready: 10 | waittime=11.33 hrs
+njobs -running: 2 -ready: 10 | waittime=11.42 hrs
+njobs -running: 2 -ready: 10 | waittime=11.50 hrs
+njobs -running: 2 -ready: 10 | waittime=11.58 hrs
+njobs -running: 2 -ready: 10 | waittime=11.67 hrs
+njobs -running: 2 -ready: 10 | waittime=11.75 hrs
+njobs -running: 2 -ready: 10 | waittime=11.83 hrs
+njobs -running: 2 -ready: 10 | waittime=11.92 hrs
+njobs -running: 2 -ready: 10 | waittime=12.00 hrs
+njobs -running: 2 -ready: 10 | waittime=12.08 hrs
+njobs -running: 2 -ready: 10 | waittime=12.17 hrs
+njobs -running: 2 -ready: 10 | waittime=12.25 hrs
+njobs -running: 2 -ready: 10 | waittime=12.33 hrs
+njobs -running: 2 -ready: 10 | waittime=12.42 hrs
+njobs -running: 2 -ready: 10 | waittime=12.50 hrs
+njobs -running: 2 -ready: 10 | waittime=12.58 hrs
+njobs -running: 2 -ready: 10 | waittime=12.67 hrs
+njobs -running: 2 -ready: 10 | waittime=12.75 hrs
+njobs -running: 2 -ready: 10 | waittime=12.83 hrs
+njobs -running: 2 -ready: 10 | waittime=12.92 hrs
+njobs -running: 2 -ready: 10 | waittime=13.00 hrs
+njobs -running: 2 -ready: 10 | waittime=13.08 hrs
+njobs -running: 2 -ready: 10 | waittime=13.17 hrs
+njobs -running: 2 -ready: 10 | waittime=13.25 hrs
+njobs -running: 2 -ready: 10 | waittime=13.33 hrs
+njobs -running: 2 -ready: 10 | waittime=13.42 hrs
+njobs -running: 2 -ready: 10 | waittime=13.50 hrs
+njobs -running: 2 -ready: 10 | waittime=13.58 hrs
+njobs -running: 2 -ready: 10 | waittime=13.67 hrs
+njobs -running: 2 -ready: 10 | waittime=13.75 hrs
+njobs -running: 2 -ready: 10 | waittime=13.83 hrs
+njobs -running: 2 -ready: 10 | waittime=13.92 hrs
+njobs -running: 2 -ready: 10 | waittime=14.00 hrs
+njobs -running: 2 -ready: 10 | waittime=14.08 hrs
+njobs -running: 2 -ready: 10 | waittime=14.17 hrs
+njobs -running: 2 -ready: 10 | waittime=14.25 hrs
+njobs -running: 2 -ready: 10 | waittime=14.33 hrs
+njobs -running: 2 -ready: 10 | waittime=14.42 hrs
+njobs -running: 2 -ready: 10 | waittime=14.50 hrs
+njobs -running: 2 -ready: 10 | waittime=14.58 hrs
+njobs -running: 2 -ready: 10 | waittime=14.67 hrs
+njobs -running: 2 -ready: 10 | waittime=14.75 hrs
+njobs -running: 2 -ready: 10 | waittime=14.83 hrs
+JOB completed: id_fulvene_test_COCHHH_CBHH_CCFFF.com
+njobs -running: 1 -ready: 11 | waittime=14.92 hrs
+njobs -running: 1 -ready: 11 | waittime=15.00 hrs
+njobs -running: 1 -ready: 11 | waittime=15.08 hrs
+njobs -running: 1 -ready: 11 | waittime=15.17 hrs
+njobs -running: 1 -ready: 11 | waittime=15.25 hrs
+njobs -running: 1 -ready: 11 | waittime=15.33 hrs
+njobs -running: 1 -ready: 11 | waittime=15.42 hrs
+njobs -running: 1 -ready: 11 | waittime=15.50 hrs
+njobs -running: 1 -ready: 11 | waittime=15.58 hrs
+njobs -running: 1 -ready: 11 | waittime=15.67 hrs
+njobs -running: 1 -ready: 11 | waittime=15.75 hrs
+njobs -running: 1 -ready: 11 | waittime=15.83 hrs
+njobs -running: 1 -ready: 11 | waittime=15.92 hrs
+njobs -running: 1 -ready: 11 | waittime=16.00 hrs
+njobs -running: 1 -ready: 11 | waittime=16.08 hrs
+njobs -running: 1 -ready: 11 | waittime=16.17 hrs
+njobs -running: 1 -ready: 11 | waittime=16.25 hrs
+njobs -running: 1 -ready: 11 | waittime=16.33 hrs
+njobs -running: 1 -ready: 11 | waittime=16.42 hrs
+njobs -running: 1 -ready: 11 | waittime=16.50 hrs
+njobs -running: 1 -ready: 11 | waittime=16.58 hrs
+njobs -running: 1 -ready: 11 | waittime=16.67 hrs
+njobs -running: 1 -ready: 11 | waittime=16.75 hrs
+njobs -running: 1 -ready: 11 | waittime=16.83 hrs
+njobs -running: 1 -ready: 11 | waittime=16.92 hrs
+njobs -running: 1 -ready: 11 | waittime=17.00 hrs
+njobs -running: 1 -ready: 11 | waittime=17.08 hrs
+njobs -running: 1 -ready: 11 | waittime=17.17 hrs
+njobs -running: 1 -ready: 11 | waittime=17.25 hrs
+njobs -running: 1 -ready: 11 | waittime=17.33 hrs
+njobs -running: 1 -ready: 11 | waittime=17.42 hrs
+njobs -running: 1 -ready: 11 | waittime=17.50 hrs
+njobs -running: 1 -ready: 11 | waittime=17.58 hrs
+njobs -running: 1 -ready: 11 | waittime=17.67 hrs
+njobs -running: 1 -ready: 11 | waittime=17.75 hrs
+njobs -running: 1 -ready: 11 | waittime=17.83 hrs
+njobs -running: 1 -ready: 11 | waittime=17.92 hrs
+njobs -running: 1 -ready: 11 | waittime=18.00 hrs
+njobs -running: 1 -ready: 11 | waittime=18.08 hrs
+njobs -running: 1 -ready: 11 | waittime=18.17 hrs
+njobs -running: 1 -ready: 11 | waittime=18.25 hrs
+njobs -running: 1 -ready: 11 | waittime=18.33 hrs
+njobs -running: 1 -ready: 11 | waittime=18.42 hrs
+njobs -running: 1 -ready: 11 | waittime=18.50 hrs
+njobs -running: 1 -ready: 11 | waittime=18.58 hrs
+njobs -running: 1 -ready: 11 | waittime=18.67 hrs
+njobs -running: 1 -ready: 11 | waittime=18.75 hrs
+njobs -running: 1 -ready: 11 | waittime=18.83 hrs
+njobs -running: 1 -ready: 11 | waittime=18.92 hrs
+njobs -running: 1 -ready: 11 | waittime=19.00 hrs
+njobs -running: 1 -ready: 11 | waittime=19.08 hrs
+njobs -running: 1 -ready: 11 | waittime=19.17 hrs
+njobs -running: 1 -ready: 11 | waittime=19.25 hrs
+njobs -running: 1 -ready: 11 | waittime=19.33 hrs
+njobs -running: 1 -ready: 11 | waittime=19.42 hrs
+njobs -running: 1 -ready: 11 | waittime=19.50 hrs
+njobs -running: 1 -ready: 11 | waittime=19.58 hrs
+njobs -running: 1 -ready: 11 | waittime=19.67 hrs
+njobs -running: 1 -ready: 11 | waittime=19.75 hrs
+njobs -running: 1 -ready: 11 | waittime=19.83 hrs
+njobs -running: 1 -ready: 11 | waittime=19.92 hrs
+njobs -running: 1 -ready: 11 | waittime=20.00 hrs
+njobs -running: 1 -ready: 11 | waittime=20.08 hrs
+njobs -running: 1 -ready: 11 | waittime=20.17 hrs
+njobs -running: 1 -ready: 11 | waittime=20.25 hrs
+njobs -running: 1 -ready: 11 | waittime=20.33 hrs
+njobs -running: 1 -ready: 11 | waittime=20.42 hrs
+njobs -running: 1 -ready: 11 | waittime=20.50 hrs
+njobs -running: 1 -ready: 11 | waittime=20.58 hrs
+njobs -running: 1 -ready: 11 | waittime=20.67 hrs
+njobs -running: 1 -ready: 11 | waittime=20.75 hrs
+njobs -running: 1 -ready: 11 | waittime=20.83 hrs
+njobs -running: 1 -ready: 11 | waittime=20.92 hrs
+njobs -running: 1 -ready: 11 | waittime=21.00 hrs
+njobs -running: 1 -ready: 11 | waittime=21.08 hrs
+njobs -running: 1 -ready: 11 | waittime=21.17 hrs
+njobs -running: 1 -ready: 11 | waittime=21.25 hrs
+JOB completed: id_fulvene_test_CNMeMe_CBHH_CCFFF.com
+njobs -running: 0 -ready: 12 | waittime=21.33 hrs
+All jobs are READY
+
+                                     =========================
+                                     ==   AFTER: jobtester  ==
+                                     =========================
+
+
+                                     **************************
+                                     **  BEFORE: datareader  **
+                                     **************************
+
+normal waiting time=NT | extra waiting time=XT
+not ready: 
+><><><><><><><><><><><><><><>< Molecule: CCN_CBHH_CCFFF Could not import openbabel, fallback mechanism might not work.
+freq job appended to main job
+njobs: 1 NO NLO ALPHA free energy found: -1141.477205
+
+no imaginary frequency for job:  Job: id_fulvene_test_CCN_CBHH_CCFFF
+freq job appended to main job
+njobs: 1 NO NLO ALPHA free energy found: -1141.477205
+
+molecule has no EAHs!: Molecule: CCN_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CCFFF_CBHH_CCFFF freq job appended to main job
+njobs: 1  nmo:547->548   nmo:548->549   nmo:549->547   nmo:547->548   nmo:548->547   nmo:547->548   nmo:548->547   nmo:547->548  NO NLO ALPHA free energy found: -1631.09153
+
+no imaginary frequency for job:  Job: id_fulvene_test_CCFFF_CBHH_CCFFF
+freq job appended to main job
+njobs: 1  nmo:547->548   nmo:548->549   nmo:549->547   nmo:547->548   nmo:548->547   nmo:547->548   nmo:548->547   nmo:547->548  NO NLO ALPHA free energy found: -1631.09153
+
+molecule has no EAHs!: Molecule: CCFFF_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CCl_CBHH_CCFFF freq job appended to main job
+njobs: 1  nmo:434->433   nmo:433->434   nmo:434->433   nmo:433->434  NO NLO ALPHA free energy found: -1876.231106
+
+no imaginary frequency for job:  Job: id_fulvene_test_CCl_CBHH_CCFFF
+freq job appended to main job
+njobs: 1  nmo:434->433   nmo:433->434   nmo:434->433   nmo:433->434  NO NLO ALPHA free energy found: -1876.231106
+
+molecule has no EAHs!: Molecule: CCl_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CF_CBHH_CCFFF freq job appended to main job
+njobs: 1 NO NLO ALPHA free energy found: -1155.516202
+
+no imaginary frequency for job:  Job: id_fulvene_test_CF_CBHH_CCFFF
+freq job appended to main job
+njobs: 1 NO NLO ALPHA free energy found: -1155.516202
+
+molecule has no EAHs!: Molecule: CF_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CBFF_CBHH_CCFFF freq job appended to main job
+njobs: 1  nmo:504->505   nmo:505->504   nmo:504->505   nmo:505->504   nmo:504->505  NO NLO ALPHA free energy found: -1405.160978
+
+no imaginary frequency for job:  Job: id_fulvene_test_CBFF_CBHH_CCFFF
+freq job appended to main job
+njobs: 1  nmo:504->505   nmo:505->504   nmo:504->505   nmo:505->504   nmo:504->505  NO NLO ALPHA free energy found: -1405.160978
+
+molecule has no EAHs!: Molecule: CBFF_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CBHH_CBHH_CCFFF freq job appended to main job
+njobs: 1  nmo:442->441   nmo:441->442  NO NLO ALPHA free energy found: -1007.860854
+
+no imaginary frequency for job:  Job: id_fulvene_test_CBHH_CBHH_CCFFF
+freq job appended to main job
+njobs: 1  nmo:442->441   nmo:441->442  NO NLO ALPHA free energy found: -1007.860854
+
+molecule has no EAHs!: Molecule: CBHH_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CH_CBHH_CCFFF freq job appended to main job
+njobs: 1 NO NLO ALPHA free energy found: -957.013265
+
+no imaginary frequency for job:  Job: id_fulvene_test_CH_CBHH_CCFFF
+freq job appended to main job
+njobs: 1 NO NLO ALPHA free energy found: -957.013265
+
+molecule has no EAHs!: Molecule: CH_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CCHHH_CBHH_CCFFF freq job appended to main job
+njobs: 1  nmo:453->452  NO NLO ALPHA free energy found: -1035.577239
+
+no imaginary frequency for job:  Job: id_fulvene_test_CCHHH_CBHH_CCFFF
+freq job appended to main job
+njobs: 1  nmo:453->452  NO NLO ALPHA free energy found: -1035.577239
+
+molecule has no EAHs!: Molecule: CCHHH_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CSH_CBHH_CCFFF freq job appended to main job
+njobs: 1  nmo:446->445   nmo:445->446  NO NLO ALPHA free energy found: -1753.397336
+
+no imaginary frequency for job:  Job: id_fulvene_test_CSH_CBHH_CCFFF
+freq job appended to main job
+njobs: 1  nmo:446->445   nmo:445->446  NO NLO ALPHA free energy found: -1753.397336
+
+molecule has no EAHs!: Molecule: CSH_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: COCHHH_CBHH_CCFFF freq job appended to main job
+njobs: 1  nmo:497->496   nmo:496->497   nmo:497->496   nmo:496->497  NO NLO ALPHA free energy found: -1185.997639
+
+no imaginary frequency for job:  Job: id_fulvene_test_COCHHH_CBHH_CCFFF
+freq job appended to main job
+njobs: 1  nmo:497->496   nmo:496->497   nmo:497->496   nmo:496->497  NO NLO ALPHA free energy found: -1185.997639
+
+molecule has no EAHs!: Molecule: COCHHH_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CSiHHH_CBHH_CCFFF freq job appended to main job
+njobs: 1  nmo:468->469   nmo:469->468   nmo:468->469   nmo:469->470  NO NLO ALPHA free energy found: -1538.336238
+
+no imaginary frequency for job:  Job: id_fulvene_test_CSiHHH_CBHH_CCFFF
+freq job appended to main job
+njobs: 1  nmo:468->469   nmo:469->468   nmo:468->469   nmo:469->470  NO NLO ALPHA free energy found: -1538.336238
+
+molecule has no EAHs!: Molecule: CSiHHH_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CNMeMe_CBHH_CCFFF freq job appended to main job
+njobs: 1  nmo:576->577   nmo:577->576  NO NLO ALPHA free energy found: -1224.806619
+
+no imaginary frequency for job:  Job: id_fulvene_test_CNMeMe_CBHH_CCFFF
+freq job appended to main job
+njobs: 1  nmo:576->577   nmo:577->576  NO NLO ALPHA free energy found: -1224.806619
+
+molecule has no EAHs!: Molecule: CNMeMe_CBHH_CCFFF
+
+                                     **************************
+                                     **   AFTER: datareader  **
+                                     **************************
+
+
+                                      ************************
+                                      **  BEFORE: jobmaker  **
+                                      ************************
+
+Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_1_CCN_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_1_CCFFF_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_1_CCl_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_1_CF_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_1_CBFF_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_1_CBHH_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_1_CH_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_1_CCHHH_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_1_CSH_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_1_COCHHH_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_1_CSiHHH_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_1_CNMeMe_CBHH_CCFFF.com
+geom _fulvene 
+                                      ************************
+                                      **   AFTER: jobmaker  **
+                                      ************************
+
+
+                                      ************************
+                                      **  BEFORE: jobmaker  **
+                                      ************************
+
+Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_2_CCN_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_2_CCFFF_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_2_CCl_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_2_CF_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_2_CBFF_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_2_CBHH_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_2_CH_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_2_CCHHH_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_2_CSH_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_2_COCHHH_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_2_CSiHHH_CBHH_CCFFF.com
+geom _fulvene Debugging2: /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC/id_fulvene_test_2_CNMeMe_CBHH_CCFFF.com
+geom _fulvene 
+                                      ************************
+                                      **   AFTER: jobmaker  **
+                                      ************************
+
+
+                                     **************************
+                                     **  BEFORE: submission  **
+                                     **************************
+
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_1_CCN_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_1_CCN_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_2_CCN_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_2_CCN_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_1_CCFFF_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_1_CCFFF_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_2_CCFFF_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_2_CCFFF_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_1_CCl_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_1_CCl_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_2_CCl_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_2_CCl_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_1_CF_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_1_CF_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_2_CF_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_2_CF_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_1_CBFF_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_1_CBFF_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_2_CBFF_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_2_CBFF_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_1_CBHH_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_1_CBHH_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_2_CBHH_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_2_CBHH_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_1_CH_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_1_CH_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_2_CH_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_2_CH_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_1_CCHHH_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_1_CCHHH_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_2_CCHHH_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_2_CCHHH_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_1_CSH_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_1_CSH_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_2_CSH_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_2_CSH_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_1_COCHHH_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_1_COCHHH_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_2_COCHHH_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_2_COCHHH_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_1_CSiHHH_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_1_CSiHHH_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_2_CSiHHH_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_2_CSiHHH_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_1_CNMeMe_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_1_CNMeMe_CBHH_CCFFF submitted
+processed walltime:  8:00
+ddebug: jobid=|command:./ID_gauss|job.filename:id_fulvene_test_2_CNMeMe_CBHH_CCFFF.com|walltime=8:00|cwd=:/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_3rd/CALC
+Job: id_fulvene_test_2_CNMeMe_CBHH_CCFFF submitted
+----- END all jobs are submitted ----------
+
+                                     **************************
+                                     **   AFTER: submission  **
+                                     **************************
+
+
+                                     =========================
+                                     ==  BEFORE: jobtester  ==
+                                     =========================
+
+len(mols_tocal): 12
+files: ['id_fulvene_test_1_CCN_CBHH_CCFFF.com', 'id_fulvene_test_2_CCN_CBHH_CCFFF.com', 'id_fulvene_test_1_CCFFF_CBHH_CCFFF.com', 'id_fulvene_test_2_CCFFF_CBHH_CCFFF.com', 'id_fulvene_test_1_CCl_CBHH_CCFFF.com', 'id_fulvene_test_2_CCl_CBHH_CCFFF.com', 'id_fulvene_test_1_CF_CBHH_CCFFF.com', 'id_fulvene_test_2_CF_CBHH_CCFFF.com', 'id_fulvene_test_1_CBFF_CBHH_CCFFF.com', 'id_fulvene_test_2_CBFF_CBHH_CCFFF.com', 'id_fulvene_test_1_CBHH_CBHH_CCFFF.com', 'id_fulvene_test_2_CBHH_CBHH_CCFFF.com', 'id_fulvene_test_1_CH_CBHH_CCFFF.com', 'id_fulvene_test_2_CH_CBHH_CCFFF.com', 'id_fulvene_test_1_CCHHH_CBHH_CCFFF.com', 'id_fulvene_test_2_CCHHH_CBHH_CCFFF.com', 'id_fulvene_test_1_CSH_CBHH_CCFFF.com', 'id_fulvene_test_2_CSH_CBHH_CCFFF.com', 'id_fulvene_test_1_COCHHH_CBHH_CCFFF.com', 'id_fulvene_test_2_COCHHH_CBHH_CCFFF.com', 'id_fulvene_test_1_CSiHHH_CBHH_CCFFF.com', 'id_fulvene_test_2_CSiHHH_CBHH_CCFFF.com', 'id_fulvene_test_1_CNMeMe_CBHH_CCFFF.com', 'id_fulvene_test_2_CNMeMe_CBHH_CCFFF.com']
+njobs -running: 24 -ready: 0 | waittime=0.00 hrs
+njobs -running: 24 -ready: 0 | waittime=0.08 hrs
+njobs -running: 24 -ready: 0 | waittime=0.17 hrs
+JOB completed: id_fulvene_test_1_CH_CBHH_CCFFF.com
+njobs -running: 23 -ready: 1 | waittime=0.25 hrs
+JOB completed: id_fulvene_test_2_CF_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_1_CBHH_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_2_CH_CBHH_CCFFF.com
+njobs -running: 20 -ready: 4 | waittime=0.33 hrs
+JOB completed: id_fulvene_test_1_CCN_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_1_CCl_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_2_CCl_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_1_CF_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_1_CBFF_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_2_CBHH_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_1_CCHHH_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_2_CCHHH_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_1_CSH_CBHH_CCFFF.com
+njobs -running: 11 -ready: 13 | waittime=0.42 hrs
+JOB completed: id_fulvene_test_2_CCN_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_2_CBFF_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_2_CSH_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_2_COCHHH_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_1_CSiHHH_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_2_CSiHHH_CBHH_CCFFF.com
+njobs -running: 5 -ready: 19 | waittime=0.50 hrs
+JOB completed: id_fulvene_test_1_CCFFF_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_2_CCFFF_CBHH_CCFFF.com
+JOB completed: id_fulvene_test_1_COCHHH_CBHH_CCFFF.com
+njobs -running: 2 -ready: 22 | waittime=0.58 hrs
+njobs -running: 2 -ready: 22 | waittime=0.67 hrs
+njobs -running: 2 -ready: 22 | waittime=0.75 hrs
+njobs -running: 2 -ready: 22 | waittime=0.83 hrs
+njobs -running: 2 -ready: 22 | waittime=0.92 hrs
+njobs -running: 2 -ready: 22 | waittime=1.00 hrs
+JOB completed: id_fulvene_test_1_CNMeMe_CBHH_CCFFF.com
+njobs -running: 1 -ready: 23 | waittime=1.08 hrs
+JOB completed: id_fulvene_test_2_CNMeMe_CBHH_CCFFF.com
+njobs -running: 0 -ready: 24 | waittime=1.17 hrs
+All jobs are READY
+
+                                     =========================
+                                     ==   AFTER: jobtester  ==
+                                     =========================
+
+
+                                     **************************
+                                     **  BEFORE: datareader  **
+                                     **************************
+
+normal waiting time=NT | extra waiting time=XT
+not ready: 
+><><><><><><><><><><><><><><>< Molecule: CCN_CBHH_CCFFF njobs: 1 I am in the parser []
+I am in the parser [20505.839802896]
+I am in the parser [20505.839802896, 36375.6047479]
+[20505.8398029  36375.6047479  38517.81331132]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_1_CCN_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [20505.839802896]
+I am in the parser [20505.839802896, 36375.6047479]
+[20505.8398029  36375.6047479  38517.81331132]
+datareader I am here
+
+njobs: 1 I am in the parser []
+I am in the parser [14260.688859149]
+I am in the parser [14260.688859149, 20410.666380274]
+[14260.68885915 20410.66638027 36320.75904673]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_2_CCN_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [14260.688859149]
+I am in the parser [14260.688859149, 20410.666380274]
+[14260.68885915 20410.66638027 36320.75904673]
+datareader I am here
+
+molecule has no EAHs!: Molecule: CCN_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CCFFF_CBHH_CCFFF njobs: 1 I am in the parser []
+I am in the parser [24097.426675232997]
+I am in the parser [24097.426675232997, 41400.43884057]
+[24097.42667523 41400.43884057 42949.82989868]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_1_CCFFF_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [24097.426675232997]
+I am in the parser [24097.426675232997, 41400.43884057]
+[24097.42667523 41400.43884057 42949.82989868]
+datareader I am here
+
+njobs: 1 I am in the parser []
+I am in the parser [16426.287501013998]
+I am in the parser [16426.287501013998, 25287.094458008]
+[16426.28750101 25287.09445801 37784.65533536]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_2_CCFFF_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [16426.287501013998]
+I am in the parser [16426.287501013998, 25287.094458008]
+[16426.28750101 25287.09445801 37784.65533536]
+datareader I am here
+
+molecule has no EAHs!: Molecule: CCFFF_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CCl_CBHH_CCFFF njobs: 1 I am in the parser []
+I am in the parser [26963.921115899]
+I am in the parser [26963.921115899, 37248.296640078]
+[26963.9211159  37248.29664008 38578.3048935 ]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_1_CCl_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [26963.921115899]
+I am in the parser [26963.921115899, 37248.296640078]
+[26963.9211159  37248.29664008 38578.3048935 ]
+datareader I am here
+
+njobs: 1 I am in the parser []
+I am in the parser [19236.32313165]
+I am in the parser [19236.32313165, 23424.760281447]
+[19236.32313165 23424.76028145 36061.04852059]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_2_CCl_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [19236.32313165]
+I am in the parser [19236.32313165, 23424.760281447]
+[19236.32313165 23424.76028145 36061.04852059]
+datareader I am here
+
+molecule has no EAHs!: Molecule: CCl_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CF_CBHH_CCFFF njobs: 1 I am in the parser []
+I am in the parser [30148.198001590998]
+I am in the parser [30148.198001590998, 39400.18385665]
+[30148.19800159 39400.18385665 40578.55987742]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_1_CF_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [30148.198001590998]
+I am in the parser [30148.198001590998, 39400.18385665]
+[30148.19800159 39400.18385665 40578.55987742]
+datareader I am here
+
+njobs: 1 I am in the parser []
+I am in the parser [19291.168832822]
+I am in the parser [19291.168832822, 24470.054821431]
+[19291.16883282 24470.05482143 37104.72995172]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_2_CF_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [19291.168832822]
+I am in the parser [19291.168832822, 24470.054821431]
+[19291.16883282 24470.05482143 37104.72995172]
+datareader I am here
+
+molecule has no EAHs!: Molecule: CF_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CBFF_CBHH_CCFFF njobs: 1 I am in the parser []
+I am in the parser [21132.532594229]
+I am in the parser [21132.532594229, 35727.134986984]
+[21132.53259423 35727.13498698 39665.54026379]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_1_CBFF_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [21132.532594229]
+I am in the parser [21132.532594229, 35727.134986984]
+[21132.53259423 35727.13498698 39665.54026379]
+datareader I am here
+
+njobs: 1 I am in the parser []
+I am in the parser [14518.786276429]
+I am in the parser [14518.786276429, 22605.300981583]
+[14518.78627643 22605.30098158 34483.42805747]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_2_CBFF_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [14518.786276429]
+I am in the parser [14518.786276429, 22605.300981583]
+[14518.78627643 22605.30098158 34483.42805747]
+datareader I am here
+
+molecule has no EAHs!: Molecule: CBFF_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CBHH_CBHH_CCFFF njobs: 1 I am in the parser []
+I am in the parser [27305.093639366]
+I am in the parser [27305.093639366, 28889.973092351]
+[27305.09363937 28889.97309235 31998.43386172]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_1_CBHH_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [27305.093639366]
+I am in the parser [27305.093639366, 28889.973092351]
+[27305.09363937 28889.97309235 31998.43386172]
+datareader I am here
+
+njobs: 1 I am in the parser []
+I am in the parser [17263.490998316]
+I am in the parser [17263.490998316, 18147.4746525]
+[17263.49099832 18147.4746525  30307.89577853]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_2_CBHH_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [17263.490998316]
+I am in the parser [17263.490998316, 18147.4746525]
+[17263.49099832 18147.4746525  30307.89577853]
+datareader I am here
+
+molecule has no EAHs!: Molecule: CBHH_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CH_CBHH_CCFFF njobs: 1 I am in the parser []
+I am in the parser [29615.065524022]
+I am in the parser [29615.065524022, 36602.246542449]
+[29615.06552402 36602.24654245 37026.4941721 ]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_1_CH_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [29615.065524022]
+I am in the parser [29615.065524022, 36602.246542449]
+[29615.06552402 36602.24654245 37026.4941721 ]
+datareader I am here
+
+njobs: 1 I am in the parser []
+I am in the parser [18217.644887823]
+I am in the parser [18217.644887823, 21315.620449611997]
+[18217.64488782 21315.62044961 34797.17773035]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_2_CH_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [18217.644887823]
+I am in the parser [18217.644887823, 21315.620449611997]
+[18217.64488782 21315.62044961 34797.17773035]
+datareader I am here
+
+molecule has no EAHs!: Molecule: CH_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CCHHH_CBHH_CCFFF njobs: 1 I am in the parser []
+I am in the parser [28981.920297257002]
+I am in the parser [28981.920297257002, 35644.059880796995]
+[28981.92029726 35644.0598808  38890.44145752]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_1_CCHHH_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [28981.920297257002]
+I am in the parser [28981.920297257002, 35644.059880796995]
+[28981.92029726 35644.0598808  38890.44145752]
+datareader I am here
+
+njobs: 1 I am in the parser []
+I am in the parser [20481.643170026]
+I am in the parser [20481.643170026, 24090.167685372002]
+[20481.64317003 24090.16768537 33287.30783926]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_2_CCHHH_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [20481.643170026]
+I am in the parser [20481.643170026, 24090.167685372002]
+[20481.64317003 24090.16768537 33287.30783926]
+datareader I am here
+
+molecule has no EAHs!: Molecule: CCHHH_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CSH_CBHH_CCFFF njobs: 1 I am in the parser []
+I am in the parser [24115.977427100002]
+I am in the parser [24115.977427100002, 34488.267384039995]
+[24115.9774271  34488.26738404 36587.72856273]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_1_CSH_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [24115.977427100002]
+I am in the parser [24115.977427100002, 34488.267384039995]
+[24115.9774271  34488.26738404 36587.72856273]
+datareader I am here
+
+njobs: 1 I am in the parser []
+I am in the parser [17115.891537809]
+I am in the parser [17115.891537809, 23364.268699271997]
+[17115.89153781 23364.26869927 34719.74850516]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_2_CSH_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [17115.891537809]
+I am in the parser [17115.891537809, 23364.268699271997]
+[17115.89153781 23364.26869927 34719.74850516]
+datareader I am here
+
+molecule has no EAHs!: Molecule: CSH_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: COCHHH_CBHH_CCFFF njobs: 1 I am in the parser []
+I am in the parser [30019.95584738]
+I am in the parser [30019.95584738, 34956.06895286]
+[30019.95584738 34956.06895286 41411.73060258]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_1_COCHHH_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [30019.95584738]
+I am in the parser [30019.95584738, 34956.06895286]
+[30019.95584738 34956.06895286 41411.73060258]
+datareader I am here
+
+njobs: 1 I am in the parser []
+I am in the parser [19532.328607093]
+I am in the parser [19532.328607093, 23126.335142717002]
+[19532.32860709 23126.33514272 35798.11177674]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_2_COCHHH_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [19532.328607093]
+I am in the parser [19532.328607093, 23126.335142717002]
+[19532.32860709 23126.33514272 35798.11177674]
+datareader I am here
+
+molecule has no EAHs!: Molecule: COCHHH_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CSiHHH_CBHH_CCFFF njobs: 1 I am in the parser []
+I am in the parser [23764.319696056]
+I am in the parser [23764.319696056, 37528.171026940996]
+[23764.31969606 37528.17102694 39892.98861277]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_1_CSiHHH_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [23764.319696056]
+I am in the parser [23764.319696056, 37528.171026940996]
+[23764.31969606 37528.17102694 39892.98861277]
+datareader I am here
+
+njobs: 1 I am in the parser []
+I am in the parser [16527.106804639]
+I am in the parser [16527.106804639, 25037.869139446997]
+[16527.10680464 25037.86913945 36076.37305474]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_2_CSiHHH_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [16527.106804639]
+I am in the parser [16527.106804639, 25037.869139446997]
+[16527.10680464 25037.86913945 36076.37305474]
+datareader I am here
+
+molecule has no EAHs!: Molecule: CSiHHH_CBHH_CCFFF
+><><><><><><><><><><><><><><>< Molecule: CNMeMe_CBHH_CCFFF njobs: 1 I am in the parser []
+I am in the parser [30349.030054412]
+I am in the parser [30349.030054412, 32333.153949752]
+[30349.03005441 32333.15394975 40378.53437903]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_1_CNMeMe_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [30349.030054412]
+I am in the parser [30349.030054412, 32333.153949752]
+[30349.03005441 32333.15394975 40378.53437903]
+datareader I am here
+
+njobs: 1 I am in the parser []
+I am in the parser [22888.401586162]
+I am in the parser [22888.401586162, 24342.619221648998]
+[22888.40158616 24342.61922165 31512.88809546]
+datareader I am here
+
+no hasimagfreq keyword for job:  Job: id_fulvene_test_2_CNMeMe_CBHH_CCFFF
+njobs: 1 I am in the parser []
+I am in the parser [22888.401586162]
+I am in the parser [22888.401586162, 24342.619221648998]
+[22888.40158616 24342.61922165 31512.88809546]
+datareader I am here
+
+molecule has no EAHs!: Molecule: CNMeMe_CBHH_CCFFF
+
+                                     **************************
+                                     **   AFTER: datareader  **
+                                     **************************
+
+kwargs: {'tdenergy_T': array([1.76805447, 2.53053483, 4.50308403]), 'tdenergy_S': array([2.54233452, 4.50988385, 4.77547701])}
+kwargs: {'tdenergy_T': array([2.03654755, 3.13511926, 4.68457935]), 'tdenergy_S': array([2.98762306, 5.13286781, 5.32496286])}
+kwargs: {'tdenergy_T': array([2.38493858, 2.9042252 , 4.47088486]), 'tdenergy_S': array([3.3430139 , 4.61808107, 4.78297682])}
+kwargs: {'tdenergy_T': array([2.3917384 , 3.03382187, 4.60028152]), 'tdenergy_S': array([3.73780374, 4.88487419, 5.03097043])}
+kwargs: {'tdenergy_T': array([1.80005364, 2.80262782, 4.27528989]), 'tdenergy_S': array([2.62003252, 4.42948592, 4.91777335])}
+kwargs: {'tdenergy_T': array([2.14034488, 2.24994205, 3.75760323]), 'tdenergy_S': array([3.38531281, 3.58180775, 3.96719783])}
+kwargs: {'tdenergy_T': array([2.25864183, 2.64273194, 4.31418889]), 'tdenergy_S': array([3.67170544, 4.53798313, 4.59058177])}
+kwargs: {'tdenergy_T': array([2.5393346 , 2.98672308, 4.12699371]), 'tdenergy_S': array([3.59320746, 4.41918619, 4.82167582])}
+kwargs: {'tdenergy_T': array([2.12204535, 2.8967254 , 4.30458914]), 'tdenergy_S': array([2.989923  , 4.27588988, 4.53618317])}
+kwargs: {'tdenergy_T': array([2.42163763, 2.86722616, 4.4382857 ]), 'tdenergy_S': array([3.72190415, 4.33388838, 5.13426777])}
+kwargs: {'tdenergy_T': array([2.04904723, 3.10422005, 4.47278481]), 'tdenergy_S': array([2.94632412, 4.65278017, 4.94597262])}
+kwargs: {'tdenergy_T': array([2.83772692, 3.01802227, 3.90699938]), 'tdenergy_S': array([3.7627031 , 4.00869676, 5.00617107])}
+kwargs: {'tdenergy_T': [0.8981768683127279, 2.262441732974334, 2.4111379034465035], 'tdenergy_S': [1.5244607389698883, 3.28441541301843, 3.440311398066253]}
+kwargs: {'tdenergy_T': [2.4075379961586765, 2.5777336129331436, 4.259090311197473], 'tdenergy_S': [3.64890602591087, 3.8018020882188375, 5.088468951342848]}
+kwargs: {'tdenergy_T': [2.212943007766719, 2.7239298477887672, 4.303089178048687], 'tdenergy_S': [3.4111121500649935, 4.258590324074164, 5.058369726519633]}
+
+                                      ************************
+                                      **  BEFORE: loggings  **
+                                      ************************
+
+dumped table in table.json with 262 of the 288 molecules
+first molecule: CCN_CBHH_CCFFF
+AutoMD         : False
+Cores          : 4
+Mem            : 8GB
+CalcLine       : # M062X/6-311+G(d,p) td=(triplets,nstates=3)
+xyz_fulvene    : 
+array([[-2.831786e+00,  5.100000e-05,  1.800000e-05],
+       [-1.481484e+00, -1.300000e-05, -1.640000e-04],
+       [-6.307630e-01, -1.213650e+00, -8.742000e-03],
+       [-6.307760e-01,  1.213553e+00,  8.393000e-03],
+       [ 6.299960e-01, -7.422950e-01, -9.360000e-04],
+       [ 6.299990e-01,  7.422010e-01,  7.780000e-04],
+       [-3.549096e+00,  1.238985e+00, -2.286500e-02],
+       [-4.053992e+00,  2.272240e+00, -4.944100e-02],
+       [-1.080979e+00,  2.718553e+00,  9.467500e-02],
+       [-1.122557e+00,  3.381230e+00, -8.867560e-01],
+       [-1.373567e+00,  3.171245e+00,  1.150604e+00],
+       [ 1.828418e+00,  1.632254e+00, -1.445500e-02],
+       [ 2.446780e+00,  1.630616e+00, -1.197107e+00],
+       [ 1.443818e+00,  2.901588e+00,  2.340320e-01],
+       [ 2.725986e+00,  1.288070e+00,  9.103150e-01],
+       [-3.549144e+00, -1.238860e+00,  2.305300e-02],
+       [-4.054059e+00, -2.272112e+00,  4.966600e-02],
+       [-1.081411e+00, -2.718513e+00, -9.502700e-02],
+       [-1.123209e+00, -3.381216e+00,  8.863830e-01],
+       [-1.374037e+00, -3.171142e+00, -1.150966e+00],
+       [ 1.828387e+00, -1.632363e+00,  1.448900e-02],
+       [ 2.446629e+00, -1.630594e+00,  1.197279e+00],
+       [ 1.443923e+00, -2.901624e+00, -2.339390e-01],
+       [ 2.726105e+00, -1.288101e+00, -9.101910e-01]])
+atomnos_fulvene: [6 6 6 6 6 6 6 7 5 1 1 6 9 9 9 6 7 5 1 1 6 9 9 9]
+g_fulvene      : -1141.477205
+hasimagfreq    : False
+tdenergy_S     : [2.54233452 4.50988385 4.77547701]
+etenergies_S   : -1141.55604728
+tdenergy_T     : [1.76805447 2.53053483 4.50308403]
+etenergies_T   : -1141.55604728
++-----------------------------------------------------------------------------------------------------------+
+| index              pred?   function        AutoMD          CalcLine        Cores           Mem            |
+}-----------------------------------------------------------------------------------------------------------{
+| CCN_CBHH_CCFFF     False     -0.99377441           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCFFF_CBHH_CCFFF   False     -1.08547204           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCl_CBHH_CCFFF     False     -1.42686325           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CF_CBHH_CCFFF      False     -1.04567307           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CBFF_CBHH_CCFFF    False     -0.98007476           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CBHH_CBHH_CCFFF    False     -0.89537694           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CH_CBHH_CCFFF      False     -0.84557822           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCHHH_CBHH_CCFFF   False     -1.48546174           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CSH_CBHH_CCFFF     False     -1.25416770           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| COCHHH_CBHH_CCFFF  False     -1.12137112           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CSiHHH_CBHH_CCFFF  False     -1.15177034           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNMeMe_CBHH_CCFFF  False     -1.91275074           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++ CNOO_CBHH_CCFFF    False     -0.27189300           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| COH_CBHH_CCFFF     False     -1.16616997           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNHH_CBHH_CCFFF    False     -1.01477387           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++-----------------------------------------------------------------------------------------------------------+
+    &
++-------------------------------------------------------------------------------------------+
+| index              pred?   etenergies_S    etenergies_T    g_fulvene       hasimagfreq    |
+}-------------------------------------------------------------------------------------------{
+| CCN_CBHH_CCFFF     False  -1141.55604728  -1141.55604728  -1141.47720500           False  |
+| CCFFF_CBHH_CCFFF   False  -1631.18284729  -1631.18284729  -1631.09153000           False  |
+| CCl_CBHH_CCFFF     False  -1876.29634953  -1876.29634953  -1876.23110600           False  |
+| CF_CBHH_CCFFF      False  -1155.58774860  -1155.58774860  -1155.51620200           False  |
+| CBFF_CBHH_CCFFF    False  -1405.24129124  -1405.24129124  -1405.16097800           False  |
+| CBHH_CBHH_CCFFF    False  -1007.96970347  -1007.96970347  -1007.86085400           False  |
+| CH_CBHH_CCFFF      False   -957.10198893   -957.10198893   -957.01326500           False  |
+| CCHHH_CBHH_CCFFF   False  -1035.71785726  -1035.71785726  -1035.57723900           False  |
+| CSH_CBHH_CCFFF     False  -1753.48103629  -1753.48103629  -1753.39733600           False  |
+| COCHHH_CBHH_CCFFF  False  -1186.14616769  -1186.14616769  -1185.99763900           False  |
+| CSiHHH_CBHH_CCFFF  False  -1538.45405841  -1538.45405841  -1538.33623800           False  |
+| CNMeMe_CBHH_CCFFF  False  -1225.03674430  -1225.03674430  -1224.80661900           False  |
++ CNOO_CBHH_CCFFF    False  -1366.05767933  -1366.05767933  -1365.96712200           False  |
+| COH_CBHH_CCFFF     False  -1107.58314633  -1107.58314633  -1107.48449500           False  |
+| CNHH_CBHH_CCFFF    False  -1067.85849441  -1067.85849441  -1067.73425000           False  |
++-------------------------------------------------------------------------------------------+
+TIME:25 March 2023 15:54:17
+
+                                      ************************
+                                      **   AFTER: loggings  **
+                                      ************************
+
+BCOK:1
+--- 81295.6153664589 seconds ---
+optsite:Molecule: CNOO_CBHH_CCFFF
+================================
+  k(site)= 1 l(nsite)= 1 (c=1)  
+================================
+15 molecules are already in database
+|      NEW POPULATION CONSTRUCTED:
+|   mols_todo:
+|      -
+|   mols_nodo:
+|      Molecule: CNOO_CNOO_CCFFF
+|      Molecule: CNOO_CCN_CCFFF
+|      Molecule: CNOO_CCFFF_CCFFF
+|      Molecule: CNOO_CCl_CCFFF
+|      Molecule: CNOO_CF_CCFFF
+|      Molecule: CNOO_CBFF_CCFFF
+|      Molecule: CNOO_CBHH_CCFFF
+|      Molecule: CNOO_CH_CCFFF
+|      Molecule: CNOO_CSiHHH_CCFFF
+|      Molecule: CNOO_CCHHH_CCFFF
+|      Molecule: CNOO_CSH_CCFFF
+|      Molecule: CNOO_COCHHH_CCFFF
+|      Molecule: CNOO_COH_CCFFF
+|      Molecule: CNOO_CNHH_CCFFF
+|      Molecule: CNOO_CNMeMe_CCFFF
+
+                                     *************************
+                                     **  BEFORE: predictor  **
+                                     *************************
+
+    no predictions will be made    len(table)=262
+
+                                     *************************
+                                     **   AFTER: predictor  **
+                                     *************************
+
+| n_indices_tocal: 0
+|    n_data_nocal: 15
+kwargs: {'tdenergy_T': [2.157144444805407, 2.2573418643165795, 2.2872410942904726], 'tdenergy_S': [3.1303193816145214, 3.6860050704604164, 3.91229924247018]}
+kwargs: {'tdenergy_T': [1.9395500487412232, 2.2833411947286604, 2.2944409088661253], 'tdenergy_S': [2.997022814540277, 3.799902137150262, 4.058795469599789]}
+kwargs: {'tdenergy_T': [2.1448447615719997, 2.3102405019626975, 2.342339675279151], 'tdenergy_S': [3.1951177127953994, 3.685505083337107, 3.893499726633753]}
+kwargs: {'tdenergy_T': [1.8314528326817643, 2.3828386322671995, 2.404838065692807], 'tdenergy_S': [2.699530476171276, 3.9064993918397937, 4.212091521606404]}
+kwargs: {'tdenergy_T': [1.8898513286842842, 2.33143995599101, 2.33633982979944], 'tdenergy_S': [2.791528106860177, 3.865100458029788, 3.955098140225452]}
+kwargs: {'tdenergy_T': [2.0516471617871557, 2.442437097365662, 2.4506368861879335], 'tdenergy_S': [2.955123893606962, 3.8153017405481866, 3.9044994433465563]}
+kwargs: {'tdenergy_T': [0.8981768683127279, 2.262441732974334, 2.4111379034465035], 'tdenergy_S': [1.5244607389698883, 3.28441541301843, 3.440311398066253]}
+kwargs: {'tdenergy_T': [2.1512445967503577, 2.400838168706333, 2.41093790859718], 'tdenergy_S': [3.0878204761332353, 3.8349012357819094, 3.9315987454299175]}
+kwargs: {'tdenergy_T': [2.0371475352111883, 2.4158377824056103, 2.422637607282616], 'tdenergy_S': [2.9180248490574154, 3.7626030977513927, 3.8702003266875424]}
+kwargs: {'tdenergy_T': [1.9091508316440213, 2.4197376819674226, 2.4337373214200815], 'tdenergy_S': [2.7593289361190614, 3.8324013001653627, 3.8945996983050333]}
+kwargs: {'tdenergy_T': [1.6637571515238436, 2.3992382099117435, 2.4165377643782433], 'tdenergy_S': [2.3825386399932147, 3.2853153898403877, 3.8230015422471495]}
+kwargs: {'tdenergy_T': [1.6267581043989596, 2.4270374939677373, 2.4462369995028124], 'tdenergy_S': [2.435637272488657, 3.9287988175393855, 3.9726976869659376]}
+kwargs: {'tdenergy_T': [1.3599649754011465, 2.4706363711203037, 2.4712363556682746], 'tdenergy_S': [2.09564602863837, 3.848400888111259, 4.113294066040496]}
+kwargs: {'tdenergy_T': [1.1132713287603648, 2.4786361650932514, 2.9708234892788723], 'tdenergy_S': [1.8242530181061114, 3.5612082844824293, 3.869700339564233]}
+kwargs: {'tdenergy_T': [1.2395680761082803, 2.428337460488341, 2.6221324694830046], 'tdenergy_S': [1.9334502058368506, 3.1557187274786314, 3.5018098142332907]}
+
+                                      ************************
+                                      **  BEFORE: loggings  **
+                                      ************************
+
+dumped table in table.json with 262 of the 288 molecules
+first molecule: CNOO_CNOO_CCFFF
+AutoMD         : False
+Cores          : 4
+Mem            : 8GB
+CalcLine       : # M062X/6-311+G(d,p) td=(triplets,nstates=3)
+hasimagfreq    : False
+xyz_fulvene    : 
+[ [-2.274174, 7.1e-05, -9.8e-05],
+  [-0.943503, -0.000108, 0.000342],
+  [-0.032998, -1.159877, 0.054151],
+  [-0.032968, 1.159632, -0.053482],
+  [1.239318, -0.739934, 0.000136],
+  [1.239345, 0.739708, -6.5e-05],
+  [-3.10907, 1.19668, -0.248815],
+  [-2.79169, 1.869884, -1.196294],
+  [-4.016697, 1.360952, 0.517683],
+  [-0.470542, 2.552914, 0.068949],
+  [-1.243583, 2.775398, 0.973896],
+  [-0.026263, 3.335347, -0.725215],
+  [2.476973, 1.597862, 0.15845],
+  [3.038816, 1.860651, -1.01349],
+  [2.181792, 2.747286, 0.758196],
+  [3.362245, 0.956731, 0.923253],
+  [-3.109593, -1.196239, 0.247595],
+  [-2.794073, -1.869091, 1.195931],
+  [-4.015661, -1.360879, -0.520702],
+  [-0.470635, -2.553102, -0.066677],
+  [-1.246538, -2.776114, -0.969036],
+  [-0.023683, -3.33525, 0.726374],
+  [2.476936, -1.59801, -0.159243],
+  [3.039027, -1.861697, 1.012361],
+  [2.181773, -2.746861, -0.759935],
+  [3.361993, -0.956089, -0.923673]]
+atomnos_fulvene: [6, 6, 6, 6, 6, 6, 7, 8, 8, 7, 8, 8, 6, 9, 9, 9, 7, 8, 8, 7, 8, 8, 6, 9, 9, 9]
+g_fulvene      : -1724.03143
+tdenergy_S     : [3.1303193816145214, 3.6860050704604164, 3.91229924247018]
+etenergies_S   : -1724.0994262400002
+etenergies_T   : -1724.0994262400002
+tdenergy_T     : [2.157144444805407, 2.2573418643165795, 2.2872410942904726]
++-----------------------------------------------------------------------------------------------------------+
+| index              pred?   function        AutoMD          CalcLine        Cores           Mem            |
+}-----------------------------------------------------------------------------------------------------------{
+| CNOO_CNOO_CCFFF    False     -1.18396951           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCN_CCFFF     False     -0.88207728           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCFFF_CCFFF   False     -1.09457181           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCl_CCFFF     False     -0.96337519           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CF_CCFFF      False     -0.98817455           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBFF_CCFFF    False     -1.14817043           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++ CNOO_CBHH_CCFFF    False     -0.27189300           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CH_CCFFF      False     -1.21466872           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CSiHHH_CCFFF  False     -1.15627022           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCHHH_CCFFF   False     -1.05897273           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CSH_CCFFF     False     -0.94497566           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_COCHHH_CCFFF  False     -0.81787894           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_COH_CCFFF     False     -0.62428392           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CNHH_CCFFF    False     -0.40228964           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CNMeMe_CCFFF  False     -0.54568595           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++-----------------------------------------------------------------------------------------------------------+
+    &
++-------------------------------------------------------------------------------------------+
+| index              pred?   etenergies_S    etenergies_T    g_fulvene       hasimagfreq    |
+}-------------------------------------------------------------------------------------------{
+| CNOO_CNOO_CCFFF    False  -1724.09942624  -1724.09942624  -1724.03143000           False  |
+| CNOO_CCN_CCFFF     False  -1499.61980220  -1499.61980220  -1499.55942700           False  |
+| CNOO_CCFFF_CCFFF   False  -1989.23982015  -1989.23982015  -1989.16755200           False  |
+| CNOO_CCl_CCFFF     False  -2234.34956044  -2234.34956044  -2234.30449000           False  |
+| CNOO_CF_CCFFF      False  -1513.62814079  -1513.62814079  -1513.57973500           False  |
+| CNOO_CBFF_CCFFF    False  -1763.32471984  -1763.32471984  -1763.26545200           False  |
++ CNOO_CBHH_CCFFF    False  -1366.05767933  -1366.05767933  -1365.96712200           False  |
+| CNOO_CH_CCFFF      False  -1315.18139593  -1315.18139593  -1315.11374400           False  |
+| CNOO_CSiHHH_CCFFF  False  -1896.52958484  -1896.52958484  -1896.43217500           False  |
+| CNOO_CCHHH_CCFFF   False  -1393.79254312  -1393.79254312  -1393.67016300           False  |
+| CNOO_CSH_CCFFF     False  -2111.53103944  -2111.53103944  -2111.46823900           False  |
+| CNOO_COCHHH_CCFFF  False  -1544.19212107  -1544.19212107  -1544.06633400           False  |
+| CNOO_COH_CCFFF     False  -1465.61626994  -1465.61626994  -1465.54247800           False  |
+| CNOO_CNHH_CCFFF    False  -1425.89425265  -1425.89425265  -1425.79297000           False  |
+| CNOO_CNMeMe_CCFFF  False  -1583.05964646  -1583.05964646  -1582.85217100           False  |
++-------------------------------------------------------------------------------------------+
+TIME:25 March 2023 15:54:17
+
+                                      ************************
+                                      **   AFTER: loggings  **
+                                      ************************
+
+BCOK:1
+--- 81295.68154621124 seconds ---
+optsite:Molecule: CNOO_CBHH_CCFFF
+================================
+  k(site)= 2 l(nsite)= 2 (c=1)  
+================================
+15 molecules are already in database
+|      NEW POPULATION CONSTRUCTED:
+|   mols_todo:
+|      -
+|   mols_nodo:
+|      Molecule: CNOO_CBHH_CNOO
+|      Molecule: CNOO_CBHH_CCN
+|      Molecule: CNOO_CBHH_CCFFF
+|      Molecule: CNOO_CBHH_CCl
+|      Molecule: CNOO_CBHH_CF
+|      Molecule: CNOO_CBHH_CBFF
+|      Molecule: CNOO_CBHH_CBHH
+|      Molecule: CNOO_CBHH_CH
+|      Molecule: CNOO_CBHH_CSiHHH
+|      Molecule: CNOO_CBHH_CCHHH
+|      Molecule: CNOO_CBHH_CSH
+|      Molecule: CNOO_CBHH_COCHHH
+|      Molecule: CNOO_CBHH_COH
+|      Molecule: CNOO_CBHH_CNHH
+|      Molecule: CNOO_CBHH_CNMeMe
+
+                                     *************************
+                                     **  BEFORE: predictor  **
+                                     *************************
+
+    no predictions will be made    len(table)=262
+
+                                     *************************
+                                     **   AFTER: predictor  **
+                                     *************************
+
+| n_indices_tocal: 0
+|    n_data_nocal: 15
+kwargs: {'tdenergy_T': [1.933750198110836, 2.300040764647189, 2.313540416976539], 'tdenergy_S': [2.88092580450787, 3.74840346344941, 3.8960996596749613]}
+kwargs: {'tdenergy_T': [0.6888822584954778, 2.210143079876187, 2.354639358512558], 'tdenergy_S': [1.3526651634008318, 3.109219925010872, 3.3395139940071097]}
+kwargs: {'tdenergy_T': [0.8981768683127279, 2.262441732974334, 2.4111379034465035], 'tdenergy_S': [1.5244607389698883, 3.28441541301843, 3.440311398066253]}
+kwargs: {'tdenergy_T': [0.7004819597562524, 2.2757413904543595, 2.4221376201593072], 'tdenergy_S': [1.2845669172061125, 2.9573238369495227, 3.407512242777167]}
+kwargs: {'tdenergy_T': [0.8433782795980346, 2.4372372312832455, 2.5113353229576765], 'tdenergy_S': [1.4375629769387415, 3.0595212049539326, 3.590307535059027]}
+kwargs: {'tdenergy_T': [0.7034818824961078, 2.245842160480467, 2.405438050240778], 'tdenergy_S': [1.3467653153457826, 3.168618395260009, 3.2939151683613064]}
+kwargs: {'tdenergy_T': [0.5643854647914759, 2.2512420214122066, 2.3714389258557493], 'tdenergy_S': [1.239368081258957, 3.0039226368419443, 3.096620249503478]}
+kwargs: {'tdenergy_T': [0.6353836363013886, 2.3614391833895643, 2.5032355315600663], 'tdenergy_S': [1.2350681919984974, 2.9476240867573233, 3.3619134171313636]}
+kwargs: {'tdenergy_T': [0.6470833349868249, 2.3550393482112066, 2.4781361779699425], 'tdenergy_S': [1.227768379998182, 2.947724084181985, 3.2513162654553587]}
+kwargs: {'tdenergy_T': [0.6414834792057613, 2.4196376845427605, 2.4608366235034427], 'tdenergy_S': [1.215968683888084, 2.832927040670183, 3.4240118178463725]}
+kwargs: {'tdenergy_T': [0.4063895338257543, 1.8878513801910475, 2.4821360749564163], 'tdenergy_S': [1.0534728688125794, 2.6446318900319206, 3.109319922435533]}
+kwargs: {'tdenergy_T': [0.5576856373391319, 2.2326425004251025, 2.4488369325440207], 'tdenergy_S': [1.257067625424104, 2.751829129269423, 3.419611931161251]}
+kwargs: {'tdenergy_T': [0.6365836053973308, 2.3141404015245097, 2.5385346224656993], 'tdenergy_S': [1.2759671386851936, 2.7430293558991803, 3.527409154946724]}
+kwargs: {'tdenergy_T': [1.0061740869475246, 1.9501497757553794, 2.627932320113392], 'tdenergy_S': [1.7091559823203233, 3.0566212796387386, 3.5060097060690882]}
+kwargs: {'tdenergy_T': [0.9619752252469873, 1.824553010380097, 2.4336373239954194], 'tdenergy_S': [1.5932589671372401, 2.799327905983801, 3.4105121655170225]}
+
+                                      ************************
+                                      **  BEFORE: loggings  **
+                                      ************************
+
+dumped table in table.json with 262 of the 288 molecules
+first molecule: CNOO_CBHH_CNOO
+AutoMD         : False
+Cores          : 4
+Mem            : 8GB
+CalcLine       : # M062X/6-311+G(d,p) td=(triplets,nstates=3)
+hasimagfreq    : False
+xyz_fulvene    : 
+[ [-1.91134, -0.01325, 0.000628],
+  [-0.581613, -0.012725, -0.002791],
+  [0.296558, -1.214604, -0.003792],
+  [0.277783, 1.202689, -0.000999],
+  [1.558907, -0.723077, -0.009663],
+  [1.547751, 0.732068, 0.007445],
+  [-2.735811, 1.210413, 0.067301],
+  [-2.463427, 2.102466, -0.690051],
+  [-3.596254, 1.185998, 0.911096],
+  [0.33792, 2.783778, -0.005802],
+  [-0.003505, 3.279945, -1.043107],
+  [-0.115464, 3.32371, 0.96533],
+  [2.486645, 1.770968, 0.04162],
+  [1.913423, 2.920674, 0.059097],
+  [3.67208, 1.645499, 0.056487],
+  [-2.746938, -1.229369, -0.065718],
+  [-2.414522, -2.164897, 0.61128],
+  [-3.676678, -1.156996, -0.829616],
+  [0.383182, -2.79407, 0.003705],
+  [0.050893, -3.293964, 1.042283],
+  [-0.057954, -3.345713, -0.966206],
+  [2.515191, -1.746065, -0.040984],
+  [1.96175, -2.905106, -0.058627],
+  [3.698457, -1.600233, -0.053204]]
+atomnos_fulvene: [6, 6, 6, 6, 6, 6, 7, 8, 8, 5, 1, 1, 7, 8, 8, 7, 8, 8, 5, 1, 1, 7, 8, 8]
+g_fulvene      : -1100.858903
+tdenergy_S     : [2.88092580450787, 3.74840346344941, 3.8960996596749613]
+etenergies_S   : -1100.94663173
+etenergies_T   : -1100.94663173
+tdenergy_T     : [1.933750198110836, 2.300040764647189, 2.313540416976539]
++----------------------------------------------------------------------------------------------------------+
+| index             pred?   function        AutoMD          CalcLine        Cores           Mem            |
+}----------------------------------------------------------------------------------------------------------{
+| CNOO_CBHH_CNOO    False     -0.98657459           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CCN     False     -0.02509935           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CCFFF   False     -0.27189300           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CCl     False     -0.11639700           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CF      False     -0.24919358           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CBFF    False     -0.06019845           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CBHH    False      0.11059715           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CH      False     -0.03569908           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CSiHHH  False     -0.06639829           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CCHHH   False     -0.06699827           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++ CNOO_CBHH_CSH     False      0.24069380           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_COCHHH  False      0.14169635           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_COH     False      0.00279993           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CNHH    False     -0.30319219           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CNMeMe  False     -0.33069148           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++----------------------------------------------------------------------------------------------------------+
+    &
++------------------------------------------------------------------------------------------+
+| index             pred?   etenergies_S    etenergies_T    g_fulvene       hasimagfreq    |
+}------------------------------------------------------------------------------------------{
+| CNOO_CBHH_CNOO    False  -1100.94663173  -1100.94663173  -1100.85890300           False  |
+| CNOO_CBHH_CCN     False   -876.43172435   -876.43172435   -876.34825500           False  |
+| CNOO_CBHH_CCFFF   False  -1366.05767933  -1366.05767933  -1365.96712200           False  |
+| CNOO_CBHH_CCl     False  -1611.16911075  -1611.16911075  -1611.10014700           False  |
+| CNOO_CBHH_CF      False   -890.44525469   -890.44525469   -890.37065800           False  |
+| CNOO_CBHH_CBFF    False  -1140.10934791  -1140.10934791  -1140.02954800           False  |
+| CNOO_CBHH_CBHH    False   -742.81932894   -742.81932894   -742.71154800           False  |
+| CNOO_CBHH_CH      False   -691.96294218   -691.96294218   -691.87102100           False  |
+| CNOO_CBHH_CSiHHH  False  -1273.31432619  -1273.31432619  -1273.19918800           False  |
+| CNOO_CBHH_CCHHH   False   -770.59067281   -770.59067281   -770.44745500           False  |
++ CNOO_CBHH_CSH     False  -1488.35679998  -1488.35679998  -1488.27090600           False  |
+| CNOO_CBHH_COCHHH  False   -921.01289968   -921.01289968   -920.85989000           False  |
+| CNOO_CBHH_COH     False   -842.43815523   -842.43815523   -842.33790900           False  |
+| CNOO_CBHH_CNHH    False   -802.71822034   -802.71822034   -802.59444200           False  |
+| CNOO_CBHH_CNMeMe  False   -959.90269214   -959.90269214   -959.67032400           False  |
++------------------------------------------------------------------------------------------+
+TIME:25 March 2023 15:54:17
+
+                                      ************************
+                                      **   AFTER: loggings  **
+                                      ************************
+
+BCOK:1
+--- 81295.748265028 seconds ---
+optsite:Molecule: CNOO_CBHH_CSH
+---------------------------
+  Global Iteration No.: 2  
+---------------------------
+SEQUENCE: [2, 1, 0]
+================================
+  k(site)= 2 l(nsite)= 0 (c=2)  
+================================
+15 molecules are already in database
+|      NEW POPULATION CONSTRUCTED:
+|   mols_todo:
+|      -
+|   mols_nodo:
+|      Molecule: CNOO_CBHH_CNOO
+|      Molecule: CNOO_CBHH_CCN
+|      Molecule: CNOO_CBHH_CCFFF
+|      Molecule: CNOO_CBHH_CCl
+|      Molecule: CNOO_CBHH_CF
+|      Molecule: CNOO_CBHH_CBFF
+|      Molecule: CNOO_CBHH_CBHH
+|      Molecule: CNOO_CBHH_CH
+|      Molecule: CNOO_CBHH_CSiHHH
+|      Molecule: CNOO_CBHH_CCHHH
+|      Molecule: CNOO_CBHH_CSH
+|      Molecule: CNOO_CBHH_COCHHH
+|      Molecule: CNOO_CBHH_COH
+|      Molecule: CNOO_CBHH_CNHH
+|      Molecule: CNOO_CBHH_CNMeMe
+
+                                     *************************
+                                     **  BEFORE: predictor  **
+                                     *************************
+
+    no predictions will be made    len(table)=262
+
+                                     *************************
+                                     **   AFTER: predictor  **
+                                     *************************
+
+| n_indices_tocal: 0
+|    n_data_nocal: 15
+kwargs: {'tdenergy_T': [1.933750198110836, 2.300040764647189, 2.313540416976539], 'tdenergy_S': [2.88092580450787, 3.74840346344941, 3.8960996596749613]}
+kwargs: {'tdenergy_T': [0.6888822584954778, 2.210143079876187, 2.354639358512558], 'tdenergy_S': [1.3526651634008318, 3.109219925010872, 3.3395139940071097]}
+kwargs: {'tdenergy_T': [0.8981768683127279, 2.262441732974334, 2.4111379034465035], 'tdenergy_S': [1.5244607389698883, 3.28441541301843, 3.440311398066253]}
+kwargs: {'tdenergy_T': [0.7004819597562524, 2.2757413904543595, 2.4221376201593072], 'tdenergy_S': [1.2845669172061125, 2.9573238369495227, 3.407512242777167]}
+kwargs: {'tdenergy_T': [0.8433782795980346, 2.4372372312832455, 2.5113353229576765], 'tdenergy_S': [1.4375629769387415, 3.0595212049539326, 3.590307535059027]}
+kwargs: {'tdenergy_T': [0.7034818824961078, 2.245842160480467, 2.405438050240778], 'tdenergy_S': [1.3467653153457826, 3.168618395260009, 3.2939151683613064]}
+kwargs: {'tdenergy_T': [0.5643854647914759, 2.2512420214122066, 2.3714389258557493], 'tdenergy_S': [1.239368081258957, 3.0039226368419443, 3.096620249503478]}
+kwargs: {'tdenergy_T': [0.6353836363013886, 2.3614391833895643, 2.5032355315600663], 'tdenergy_S': [1.2350681919984974, 2.9476240867573233, 3.3619134171313636]}
+kwargs: {'tdenergy_T': [0.6470833349868249, 2.3550393482112066, 2.4781361779699425], 'tdenergy_S': [1.227768379998182, 2.947724084181985, 3.2513162654553587]}
+kwargs: {'tdenergy_T': [0.6414834792057613, 2.4196376845427605, 2.4608366235034427], 'tdenergy_S': [1.215968683888084, 2.832927040670183, 3.4240118178463725]}
+kwargs: {'tdenergy_T': [0.4063895338257543, 1.8878513801910475, 2.4821360749564163], 'tdenergy_S': [1.0534728688125794, 2.6446318900319206, 3.109319922435533]}
+kwargs: {'tdenergy_T': [0.5576856373391319, 2.2326425004251025, 2.4488369325440207], 'tdenergy_S': [1.257067625424104, 2.751829129269423, 3.419611931161251]}
+kwargs: {'tdenergy_T': [0.6365836053973308, 2.3141404015245097, 2.5385346224656993], 'tdenergy_S': [1.2759671386851936, 2.7430293558991803, 3.527409154946724]}
+kwargs: {'tdenergy_T': [1.0061740869475246, 1.9501497757553794, 2.627932320113392], 'tdenergy_S': [1.7091559823203233, 3.0566212796387386, 3.5060097060690882]}
+kwargs: {'tdenergy_T': [0.9619752252469873, 1.824553010380097, 2.4336373239954194], 'tdenergy_S': [1.5932589671372401, 2.799327905983801, 3.4105121655170225]}
+
+                                      ************************
+                                      **  BEFORE: loggings  **
+                                      ************************
+
+dumped table in table.json with 262 of the 288 molecules
+first molecule: CNOO_CBHH_CNOO
+AutoMD         : False
+Cores          : 4
+Mem            : 8GB
+CalcLine       : # M062X/6-311+G(d,p) td=(triplets,nstates=3)
+hasimagfreq    : False
+xyz_fulvene    : 
+[ [-1.91134, -0.01325, 0.000628],
+  [-0.581613, -0.012725, -0.002791],
+  [0.296558, -1.214604, -0.003792],
+  [0.277783, 1.202689, -0.000999],
+  [1.558907, -0.723077, -0.009663],
+  [1.547751, 0.732068, 0.007445],
+  [-2.735811, 1.210413, 0.067301],
+  [-2.463427, 2.102466, -0.690051],
+  [-3.596254, 1.185998, 0.911096],
+  [0.33792, 2.783778, -0.005802],
+  [-0.003505, 3.279945, -1.043107],
+  [-0.115464, 3.32371, 0.96533],
+  [2.486645, 1.770968, 0.04162],
+  [1.913423, 2.920674, 0.059097],
+  [3.67208, 1.645499, 0.056487],
+  [-2.746938, -1.229369, -0.065718],
+  [-2.414522, -2.164897, 0.61128],
+  [-3.676678, -1.156996, -0.829616],
+  [0.383182, -2.79407, 0.003705],
+  [0.050893, -3.293964, 1.042283],
+  [-0.057954, -3.345713, -0.966206],
+  [2.515191, -1.746065, -0.040984],
+  [1.96175, -2.905106, -0.058627],
+  [3.698457, -1.600233, -0.053204]]
+atomnos_fulvene: [6, 6, 6, 6, 6, 6, 7, 8, 8, 5, 1, 1, 7, 8, 8, 7, 8, 8, 5, 1, 1, 7, 8, 8]
+g_fulvene      : -1100.858903
+tdenergy_S     : [2.88092580450787, 3.74840346344941, 3.8960996596749613]
+etenergies_S   : -1100.94663173
+etenergies_T   : -1100.94663173
+tdenergy_T     : [1.933750198110836, 2.300040764647189, 2.313540416976539]
++----------------------------------------------------------------------------------------------------------+
+| index             pred?   function        AutoMD          CalcLine        Cores           Mem            |
+}----------------------------------------------------------------------------------------------------------{
+| CNOO_CBHH_CNOO    False     -0.98657459           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CCN     False     -0.02509935           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CCFFF   False     -0.27189300           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CCl     False     -0.11639700           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CF      False     -0.24919358           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CBFF    False     -0.06019845           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CBHH    False      0.11059715           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CH      False     -0.03569908           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CSiHHH  False     -0.06639829           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CCHHH   False     -0.06699827           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++ CNOO_CBHH_CSH     False      0.24069380           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_COCHHH  False      0.14169635           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_COH     False      0.00279993           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CNHH    False     -0.30319219           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBHH_CNMeMe  False     -0.33069148           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++----------------------------------------------------------------------------------------------------------+
+    &
++------------------------------------------------------------------------------------------+
+| index             pred?   etenergies_S    etenergies_T    g_fulvene       hasimagfreq    |
+}------------------------------------------------------------------------------------------{
+| CNOO_CBHH_CNOO    False  -1100.94663173  -1100.94663173  -1100.85890300           False  |
+| CNOO_CBHH_CCN     False   -876.43172435   -876.43172435   -876.34825500           False  |
+| CNOO_CBHH_CCFFF   False  -1366.05767933  -1366.05767933  -1365.96712200           False  |
+| CNOO_CBHH_CCl     False  -1611.16911075  -1611.16911075  -1611.10014700           False  |
+| CNOO_CBHH_CF      False   -890.44525469   -890.44525469   -890.37065800           False  |
+| CNOO_CBHH_CBFF    False  -1140.10934791  -1140.10934791  -1140.02954800           False  |
+| CNOO_CBHH_CBHH    False   -742.81932894   -742.81932894   -742.71154800           False  |
+| CNOO_CBHH_CH      False   -691.96294218   -691.96294218   -691.87102100           False  |
+| CNOO_CBHH_CSiHHH  False  -1273.31432619  -1273.31432619  -1273.19918800           False  |
+| CNOO_CBHH_CCHHH   False   -770.59067281   -770.59067281   -770.44745500           False  |
++ CNOO_CBHH_CSH     False  -1488.35679998  -1488.35679998  -1488.27090600           False  |
+| CNOO_CBHH_COCHHH  False   -921.01289968   -921.01289968   -920.85989000           False  |
+| CNOO_CBHH_COH     False   -842.43815523   -842.43815523   -842.33790900           False  |
+| CNOO_CBHH_CNHH    False   -802.71822034   -802.71822034   -802.59444200           False  |
+| CNOO_CBHH_CNMeMe  False   -959.90269214   -959.90269214   -959.67032400           False  |
++------------------------------------------------------------------------------------------+
+TIME:25 March 2023 15:54:17
+
+                                      ************************
+                                      **   AFTER: loggings  **
+                                      ************************
+
+BCOK:1
+--- 81295.80512475967 seconds ---
+optsite:Molecule: CNOO_CBHH_CSH
+================================
+  k(site)= 1 l(nsite)= 1 (c=2)  
+================================
+15 molecules are already in database
+|      NEW POPULATION CONSTRUCTED:
+|   mols_todo:
+|      -
+|   mols_nodo:
+|      Molecule: CNOO_CNOO_CSH
+|      Molecule: CNOO_CCN_CSH
+|      Molecule: CNOO_CCFFF_CSH
+|      Molecule: CNOO_CCl_CSH
+|      Molecule: CNOO_CF_CSH
+|      Molecule: CNOO_CBFF_CSH
+|      Molecule: CNOO_CBHH_CSH
+|      Molecule: CNOO_CH_CSH
+|      Molecule: CNOO_CSiHHH_CSH
+|      Molecule: CNOO_CCHHH_CSH
+|      Molecule: CNOO_CSH_CSH
+|      Molecule: CNOO_COCHHH_CSH
+|      Molecule: CNOO_COH_CSH
+|      Molecule: CNOO_CNHH_CSH
+|      Molecule: CNOO_CNMeMe_CSH
+
+                                     *************************
+                                     **  BEFORE: predictor  **
+                                     *************************
+
+    no predictions will be made    len(table)=262
+
+                                     *************************
+                                     **   AFTER: predictor  **
+                                     *************************
+
+| n_indices_tocal: 0
+|    n_data_nocal: 15
+kwargs: {'tdenergy_T': [1.8724517767931226, 1.9057509192055184, 2.344139628923064], 'tdenergy_S': [2.7182299945830417, 3.430611647874054, 3.8524007850977333]}
+kwargs: {'tdenergy_T': [1.6821566776616237, 2.0317476742794485, 2.3478395336355526], 'tdenergy_S': [2.504235505806685, 3.543108750618634, 4.035296074804255]}
+kwargs: {'tdenergy_T': [1.8783516248481718, 1.9761491061674603, 2.3930383695827087], 'tdenergy_S': [2.6518317046075737, 3.4850102468901003, 3.8441009988507995]}
+kwargs: {'tdenergy_T': [1.5286606308056858, 2.1829437803681637, 2.375138830568238], 'tdenergy_S': [2.2094430979035535, 3.578307844099605, 4.105594264341534]}
+kwargs: {'tdenergy_T': [1.4431628327198052, 2.2420422583433166, 2.3933383618566944], 'tdenergy_S': [2.1534445400929187, 3.6345063967595634, 3.875400192769958]}
+kwargs: {'tdenergy_T': [0.6679827967411515, 1.9063509037534896, 2.9188248284547105], 'tdenergy_S': [1.3749645891004239, 3.2739156834289362, 3.3964125286397016]}
+kwargs: {'tdenergy_T': [0.4063895338257543, 1.8878513801910475, 2.4821360749564163], 'tdenergy_S': [1.0534728688125794, 2.6446318900319206, 3.109319922435533]}
+kwargs: {'tdenergy_T': [1.6877565334426876, 2.2455421682064816, 2.540634568383598], 'tdenergy_S': [2.4030381120488937, 3.665005611281428, 3.88899984252397]}
+kwargs: {'tdenergy_T': [1.721855655252378, 2.1929435228343492, 2.509635366738425], 'tdenergy_S': [2.387538511226307, 3.5137095077680507, 3.784502533752338]}
+kwargs: {'tdenergy_T': [1.5348604711347202, 2.2692415578513394, 2.4819360801070927], 'tdenergy_S': [2.1839437546147824, 3.5545084570300856, 3.782602582683763]}
+kwargs: {'tdenergy_T': [1.6283580631935493, 2.1305451298453546, 2.4217376304606595], 'tdenergy_S': [2.291340988701608, 3.375613064310037, 3.637206327225434]}
+kwargs: {'tdenergy_T': [1.3329656707424473, 2.2658416454128365, 2.461736600325399], 'tdenergy_S': [1.9923486889626796, 3.6096070380187637, 3.8615005507419617]}
+kwargs: {'tdenergy_T': [0.9460756347257535, 2.0977459745562683, 2.5883333399472996], 'tdenergy_S': [1.5416602960117263, 3.382212894337719, 3.4559109963135017]}
+kwargs: {'tdenergy_T': [1.3487652638390195, 2.1469447074898977, 2.5200350989032563], 'tdenergy_S': [1.9664493559752607, 3.381412914940424, 3.747803478901439]}
+kwargs: {'tdenergy_T': [1.134470782788677, 2.0684467291303466, 2.5116353152316613], 'tdenergy_S': [1.6929563995251036, 2.6283323098120395, 3.4474112152172443]}
+
+                                      ************************
+                                      **  BEFORE: loggings  **
+                                      ************************
+
+dumped table in table.json with 262 of the 288 molecules
+first molecule: CNOO_CNOO_CSH
+AutoMD         : False
+Cores          : 4
+Mem            : 8GB
+CalcLine       : # M062X/6-311+G(d,p) td=(triplets,nstates=3)
+hasimagfreq    : False
+xyz_fulvene    : 
+[ [1.734816, -0.000395, 5.8e-05],
+  [0.397477, -0.000465, 0.000127],
+  [-0.505412, -1.157247, -0.065349],
+  [-0.504782, 1.156904, 0.065231],
+  [-1.801738, -0.744404, -0.024616],
+  [-1.801329, 0.744906, 0.024615],
+  [2.559475, 1.167688, 0.353137],
+  [2.189888, 1.804244, 1.311709],
+  [3.520375, 1.373317, -0.337537],
+  [-0.116226, 2.52073, -0.221146],
+  [0.857922, 2.691004, -0.914908],
+  [-0.829147, 3.404195, 0.217615],
+  [-3.298229, 1.594264, -0.063014],
+  [-2.774651, 2.801221, 0.218076],
+  [2.559695, -1.168537, -0.352946],
+  [2.190259, -1.804909, -1.31156],
+  [3.520837, -1.373564, 0.337514],
+  [-0.117724, -2.521161, 0.221206],
+  [0.857244, -2.692172, 0.913607],
+  [-0.832095, -3.40426, -0.216047],
+  [-3.299376, -1.592427, 0.062558],
+  [-2.776657, -2.800294, -0.216067]]
+atomnos_fulvene: [6, 6, 6, 6, 6, 6, 7, 8, 8, 7, 8, 8, 16, 1, 7, 8, 8, 7, 8, 8, 16, 1]
+g_fulvene      : -1846.353671
+tdenergy_S     : [2.7182299945830417, 3.430611647874054, 3.8524007850977333]
+etenergies_S   : -1846.4170680700001
+etenergies_T   : -1846.4170680700001
+tdenergy_T     : [1.8724517767931226, 1.9057509192055184, 2.344139628923064]
++---------------------------------------------------------------------------------------------------------+
+| index            pred?   function        AutoMD          CalcLine        Cores           Mem            |
+}---------------------------------------------------------------------------------------------------------{
+| CNOO_CNOO_CSH    False     -1.02667356           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCN_CSH     False     -0.86007785           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCFFF_CSH   False     -1.10487155           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCl_CSH     False     -0.84787816           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CF_CSH      False     -0.73288113           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBFF_CSH    False      0.03899900           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++ CNOO_CBHH_CSH    False      0.24069380           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CH_CSH      False     -0.97247495           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CSiHHH_CSH  False     -1.05617280           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCHHH_CSH   False     -0.88577719           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CSH_CSH     False     -0.96537514           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_COCHHH_CSH  False     -0.67358265           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_COH_CSH     False     -0.35049097           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CNHH_CSH    False     -0.73108117           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CNMeMe_CSH  False     -0.57598517           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++---------------------------------------------------------------------------------------------------------+
+    &
++-----------------------------------------------------------------------------------------+
+| index            pred?   etenergies_S    etenergies_T    g_fulvene       hasimagfreq    |
+}-----------------------------------------------------------------------------------------{
+| CNOO_CNOO_CSH    False  -1846.41706807  -1846.41706807  -1846.35367100           False  |
+| CNOO_CCN_CSH     False  -1621.93025348  -1621.93025348  -1621.87619300           False  |
+| CNOO_CCFFF_CSH   False  -2111.54364777  -2111.54364777  -2111.47881000           False  |
+| CNOO_CCl_CSH     False  -2356.64832000  -2356.64832000  -2356.60858900           False  |
+| CNOO_CF_CSH      False  -1635.92087932  -1635.92087932  -1635.87765400           False  |
+| CNOO_CBFF_CSH    False  -1885.62250426  -1885.62250426  -1885.56672200           False  |
++ CNOO_CBHH_CSH    False  -1488.35679998  -1488.35679998  -1488.27090600           False  |
+| CNOO_CH_CSH      False  -1437.46765239  -1437.46765239  -1437.40571600           False  |
+| CNOO_CSiHHH_CSH  False  -2018.81809016  -2018.81809016  -2018.72914600           False  |
+| CNOO_CCHHH_CSH   False  -1516.07902248  -1516.07902248  -1515.96381000           False  |
+| CNOO_CSH_CSH     False  -2233.83523575  -2233.83523575  -2233.77687300           False  |
+| CNOO_COCHHH_CSH  False  -1666.47536302  -1666.47536302  -1666.35409000           False  |
+| CNOO_COH_CSH     False  -1587.91160326  -1587.91160326  -1587.84190300           False  |
+| CNOO_CNHH_CSH    False  -1548.17250049  -1548.17250049  -1548.07926000           False  |
+| CNOO_CNMeMe_CSH  False  -1705.34357964  -1705.34357964  -1705.14347100           False  |
++-----------------------------------------------------------------------------------------+
+TIME:25 March 2023 15:54:17
+
+                                      ************************
+                                      **   AFTER: loggings  **
+                                      ************************
+
+BCOK:1
+--- 81295.86233949661 seconds ---
+optsite:Molecule: CNOO_CBHH_CSH
+================================
+  k(site)= 0 l(nsite)= 2 (c=2)  
+================================
+15 molecules are already in database
+|      NEW POPULATION CONSTRUCTED:
+|   mols_todo:
+|      -
+|   mols_nodo:
+|      Molecule: CNOO_CBHH_CSH
+|      Molecule: CCN_CBHH_CSH
+|      Molecule: CCFFF_CBHH_CSH
+|      Molecule: CCl_CBHH_CSH
+|      Molecule: CF_CBHH_CSH
+|      Molecule: CBFF_CBHH_CSH
+|      Molecule: CBHH_CBHH_CSH
+|      Molecule: CH_CBHH_CSH
+|      Molecule: CCHHH_CBHH_CSH
+|      Molecule: CSH_CBHH_CSH
+|      Molecule: COCHHH_CBHH_CSH
+|      Molecule: COH_CBHH_CSH
+|      Molecule: CNHH_CBHH_CSH
+|      Molecule: CSiHHH_CBHH_CSH
+|      Molecule: CNMeMe_CBHH_CSH
+
+                                     *************************
+                                     **  BEFORE: predictor  **
+                                     *************************
+
+    no predictions will be made    len(table)=262
+
+                                     *************************
+                                     **   AFTER: predictor  **
+                                     *************************
+
+| n_indices_tocal: 0
+|    n_data_nocal: 15
+kwargs: {'tdenergy_T': [0.4063895338257543, 1.8878513801910475, 2.4821360749564163], 'tdenergy_S': [1.0534728688125794, 2.6446318900319206, 3.109319922435533]}
+kwargs: {'tdenergy_T': [1.707456026101072, 1.7591546946512477, 3.6741053769256564], 'tdenergy_S': [2.6103327733729067, 3.34711379828141, 4.542982999812462]}
+kwargs: {'tdenergy_T': [1.8134532962426315, 2.216142925355898, 3.9738976560618795], 'tdenergy_S': [2.765428779023434, 3.753103342408517, 4.586381882115705]}
+kwargs: {'tdenergy_T': [1.9099508110413157, 1.937150110549339, 3.803102054739442], 'tdenergy_S': [3.022722152678372, 3.274915657675555, 4.63318067685745]}
+kwargs: {'tdenergy_T': [1.945149904522287, 1.9660493662766132, 4.111494112396584], 'tdenergy_S': [3.235216680084801, 3.328114287595658, 4.869974578456709]}
+kwargs: {'tdenergy_T': [1.7575547358566583, 1.9081508573974024, 3.768002958683132], 'tdenergy_S': [2.7690286863112608, 3.444911279600698, 4.4534853047401075]}
+kwargs: {'tdenergy_T': [1.472962065269036, 1.7769542362410569, 3.8171016941921008], 'tdenergy_S': [2.734629572227585, 3.0887204529551924, 4.086294761381797]}
+kwargs: {'tdenergy_T': [1.9024510041916776, 1.98804879970222, 3.9828974242814463], 'tdenergy_S': [3.1784181428768705, 3.4538110503956028, 4.7608773881506306]}
+kwargs: {'tdenergy_T': [1.803353556351785, 1.9029509913149865, 3.8279014160555795], 'tdenergy_S': [3.0801206744342733, 3.105720015147706, 4.613081194500419]}
+kwargs: {'tdenergy_T': [1.7156558149233436, 2.535234707451858, 3.984397385651374], 'tdenergy_S': [2.4387371926531736, 4.0008969607205795, 4.081194892724042]}
+kwargs: {'tdenergy_T': [1.9785490443593445, 2.1157455109954015, 3.9842973882267114], 'tdenergy_S': [3.166318454492787, 3.338814012034477, 4.593581696691357]}
+kwargs: {'tdenergy_T': [1.4886616609409462, 1.8738517407383883, 3.867500396221672], 'tdenergy_S': [2.5017355701901383, 3.203017509343686, 4.356887792516762]}
+kwargs: {'tdenergy_T': [1.7672544860488575, 2.1095456706663662, 3.6382063014720525], 'tdenergy_S': [2.6011330103040162, 3.346913803432086, 4.151093092562677]}
+kwargs: {'tdenergy_T': [1.8087534172835247, 1.9441499302756682, 3.6293065306771477], 'tdenergy_S': [2.8683261290004767, 3.245616412249633, 3.962797941924414]}
+kwargs: {'tdenergy_T': [2.1082457041457623, 2.280441269413467, 3.7213041613660494], 'tdenergy_S': [2.77872843650346, 3.4732105507800015, 4.178992374043332]}
+
+                                      ************************
+                                      **  BEFORE: loggings  **
+                                      ************************
+
+dumped table in table.json with 262 of the 288 molecules
+first molecule: CNOO_CBHH_CSH
+AutoMD         : False
+Cores          : 4
+Mem            : 8GB
+CalcLine       : # M062X/6-311+G(d,p) td=(triplets,nstates=3)
+hasimagfreq    : False
+xyz_fulvene    : 
+[ [-1.674204, 4.6e-05, 1e-05],
+  [-0.296807, 0.000112, 0.000211],
+  [0.476929, -1.217305, -0.039504],
+  [0.476926, 1.217487, 0.039989],
+  [1.754267, -0.767888, -0.042335],
+  [1.754295, 0.768044, 0.042586],
+  [-2.409702, 1.189873, -0.279889],
+  [-1.792059, 2.295086, -0.303923],
+  [-3.565602, 1.152852, -0.577244],
+  [-0.2975, 2.573423, 0.305329],
+  [0.055238, 3.542177, -0.302627],
+  [-0.510676, 2.766929, 1.476017],
+  [3.222585, 1.658926, 0.202231],
+  [2.632487, 2.86685, 0.151719],
+  [-2.409597, -1.19006, 0.279836],
+  [-1.792034, -2.295292, 0.303223],
+  [-3.565399, -1.153045, 0.577455],
+  [-0.297057, -2.573395, -0.305207],
+  [0.055622, -3.54201, 0.302898],
+  [-0.509634, -2.766758, -1.476049],
+  [3.222708, -1.658868, -0.202325],
+  [2.632472, -2.866738, -0.152543]]
+atomnos_fulvene: [6, 6, 6, 6, 6, 6, 7, 8, 8, 5, 1, 1, 16, 1, 7, 8, 8, 5, 1, 1, 16, 1]
+g_fulvene      : -1488.270906
+tdenergy_S     : [1.0534728688125794, 2.6446318900319206, 3.109319922435533]
+etenergies_S   : -1488.35679998
+etenergies_T   : -1488.35679998
+tdenergy_T     : [0.4063895338257543, 1.8878513801910475, 2.4821360749564163]
++---------------------------------------------------------------------------------------------------------+
+| index            pred?   function        AutoMD          CalcLine        Cores           Mem            |
+}---------------------------------------------------------------------------------------------------------{
++ CNOO_CBHH_CSH    False      0.24069380           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCN_CBHH_CSH     False     -0.80457928           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCFFF_CBHH_CSH   False     -0.86147781           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCl_CBHH_CSH     False     -0.79717947           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CF_CBHH_CSH      False     -0.65508313           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CBFF_CBHH_CSH    False     -0.74608079           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CBHH_CBHH_CSH    False     -0.21129456           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CH_CBHH_CSH      False     -0.62648387           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCHHH_CBHH_CSH   False     -0.52658644           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CSH_CBHH_CSH     False     -0.99257444           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| COCHHH_CBHH_CSH  False     -0.79077963           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| COH_CBHH_CSH     False     -0.47558775           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNHH_CBHH_CSH    False     -0.93337596           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CSiHHH_CBHH_CSH  False     -0.74918071           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNMeMe_CBHH_CSH  False     -1.43776297           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++---------------------------------------------------------------------------------------------------------+
+    &
++-----------------------------------------------------------------------------------------+
+| index            pred?   etenergies_S    etenergies_T    g_fulvene       hasimagfreq    |
+}-----------------------------------------------------------------------------------------{
++ CNOO_CBHH_CSH    False  -1488.35679998  -1488.35679998  -1488.27090600           False  |
+| CCN_CBHH_CSH     False  -1263.85067274  -1263.85067274  -1263.77457700           False  |
+| CCFFF_CBHH_CSH   False  -1753.46957905  -1753.46957905  -1753.38398900           False  |
+| CCl_CBHH_CSH     False  -1998.57544722  -1998.57544722  -1998.51417600           False  |
+| CF_CBHH_CSH      False  -1277.87337037  -1277.87337037  -1277.80813200           False  |
+| CBFF_CBHH_CSH    False  -1527.53255183  -1527.53255183  -1527.45984800           False  |
+| CBHH_CBHH_CSH    False  -1130.25163340  -1130.25163340  -1130.14968700           False  |
+| CH_CBHH_CSH      False  -1079.39289976  -1079.39289976  -1079.30954000           False  |
+| CCHHH_CBHH_CSH   False  -1157.99693788  -1157.99693788  -1157.86003800           False  |
+| CSH_CBHH_CSH     False  -1875.75253755  -1875.75253755  -1875.67278900           False  |
+| COCHHH_CBHH_CSH  False  -1308.41998955  -1308.41998955  -1308.27720500           False  |
+| COH_CBHH_CSH     False  -1229.86233715  -1229.86233715  -1229.77118800           False  |
+| CNHH_CBHH_CSH    False  -1190.12453859  -1190.12453859  -1190.00807300           False  |
+| CSiHHH_CBHH_CSH  False  -1660.73261200  -1660.73261200  -1660.62209900           False  |
+| CNMeMe_CBHH_CSH  False  -1347.30553476  -1347.30553476  -1347.08193800           False  |
++-----------------------------------------------------------------------------------------+
+TIME:25 March 2023 15:54:17
+
+                                      ************************
+                                      **   AFTER: loggings  **
+                                      ************************
+
+BCOK:1
+--- 81295.9200220108 seconds ---
+optsite:Molecule: CNOO_CBHH_CSH
+optimum is the same as in previous iteration: converged to a optimum configuration!
+ALGORITHM DONE
+EOF __main__.py
