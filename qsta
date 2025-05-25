@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+
+import subprocess
+import json
+
+def get_squeue_jobs():
+    try:
+        # Define custom columns (separated by '|')
+        format_str = "%.18i|%.9P|%.100j|%.8u|%.2t|%.10M|%.6D|%R"
+        result = subprocess.check_output(['squeue', '--me', '--states=all', f'--format={format_str}'])
+        lines = result.decode('utf-8').strip().split('\n')
+
+        # First line is header, skip it
+        job_lines = lines[1:]
+
+        jobs = []
+        for line in job_lines:
+            parts = line.split('|')
+            if len(parts) == 8:
+                job = {
+                    "JobID": parts[0].strip(),
+                    "Partition": parts[1].strip(),
+                    "Name": parts[2].strip(),
+                    "User": parts[3].strip(),
+                    "State": parts[4].strip(),
+                    "Time": parts[5].strip(),
+                    "Nodes": parts[6].strip(),
+                    "NodeList": parts[7].strip()
+                }
+                jobs.append(job)
+
+        return json.dumps(jobs, indent=2)
+
+    except subprocess.CalledProcessError as e:
+        print("Error executing squeue:", e)
+        return json.dumps([])
+
+# Example call
+if __name__ == "__main__":
+    print(get_squeue_jobs())
+
+
