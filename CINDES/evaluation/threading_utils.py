@@ -177,42 +177,37 @@ class MyThread(threading.Thread):
 
     def test_ready(self, error=False):
         try:
-            if error:
-                filename = self.job.errorfile
-            else:
-                filename = self.job.filename
-            if not qsta_out[filename] in ['H', 'E', 'R', 'Q']:
+            filename = self.job.errorfile if error else self.job.filename
+            job_state = qsta_out.get(filename)
+
+            # Als de jobstatus niet in actieve of foutstatussen zit, dan is hij klaar
+            if job_state not in ['PD', 'R', 'CG', 'F', 'TO', 'NF', 'SE']:
                 return True
         except KeyError:
-            print("KeyError:", self)
+            print("⚠️ KeyError in test_ready:", self)
             return True
+
+        return False
 
 
 def get_qsta_out():
     """
-    this function tests if the jobs are still queing or running based on the output of the 'qsta' command
+    Haalt de huidige jobstatussen op via de JSON-output van 'qsta'.
+    Retourneert een dictionary: {jobname: status}
     """
     output = {}
-    tijdje = 0
-    while True:
-        count = 0
-        qsta_raw = subm.qsta()
-        if qsta_raw == False:
-            print("qsta not working!")
-            time.sleep(fileparameters['timestep'])
-            continue
-        qsta_out = [item.split() for item in qsta_raw.split('\n')]
-        states = []
-        jobs = []
-        for item in qsta_out:
-            if len(item) == 4:
-                states.append(item[1])
-                jobs.append(item[3])
-            elif len(item) == 5:
-                states.append(item[2])
-                jobs.append(item[4])
-        for job, state in zip(jobs, states):
-            output[job]=state
-        break
+    qsta_raw = subm.qsta()
+
+    if not qsta_raw:
+        print("⚠️ qsta does not work!")
+        return output
+
+    for job in qsta_raw:
+        name = job.get("Name")
+        state = job.get("State")
+        if name and state:
+            output[name] = state
+
     return output
+
 
