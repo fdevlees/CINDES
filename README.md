@@ -6,10 +6,9 @@ The CINDES package containing two modules:
 *   evaluation: HPC automation of job submission/processing
 *   algorithms: Several algorithms to perform combinatorial optimizations. The most important ones are the Best-First-Search algorithm and several Genetic Algorithm implementations (as well as NSGA-II), and Bayesian optimization
 
-A manual is available, please email to freija.de.vleeschouwer@vub.be
-
 ## Information
 
+Prof. Dr. Freija De Vleeschouwer
 Algemene Chemie (ALGC) – General Chemistry, Vrije Universiteit Brussel (VUB)
 
 Main developer: Jos L. Teunissen
