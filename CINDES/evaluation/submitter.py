@@ -8,6 +8,7 @@ import tempfile
 import subprocess
 import logging
 import glob
+import json
 
 from CINDES.utils.writings import log_io
 once = 0
@@ -104,20 +105,17 @@ def jobstatus(jobid):
 
 def qsta():
     try:
-        p1 = subprocess.check_output(['qsta']).decode('utf_8')
+        output = subprocess.check_output(['qsta']).decode('utf-8')
+        jobs = json.loads(output)
+#        print("Jobs ontvangen:", jobs)
+        return jobs
     except subprocess.CalledProcessError as e:
-        print("subprocess.CalledProcessError")
-        print(repr(e))
-        p1 = False
-    except LookupError as e:
-        # This error occurred on VSC in subprocess module calling pickle using 'string_escape'
-        print("LookupError")
-        print(repr(e))
-        p1 = False
-    except OSError as e:
-        print("OS Error:", e)
-        p1 = False
-    return p1
+        print("Error with executing qsta:", e)
+    except json.JSONDecodeError as e:
+        print("Error with parsing JSON:", e)
+    except Exception as e:
+        print("Unexpected error:", e)
+        return []
 
 
 # 2. submission
@@ -243,117 +241,181 @@ def jobtester(mols_tocal, myrun, jobids=None):
 
 
 def test_ready1(indices, myrun):
-    ''' test ready based on the presence of inputfile.o$$ file '''
+    """
+    Controleert of jobs klaar zijn op basis van het bestaan van outputbestanden (*.o******).
+    """
     path = myrun.path
     fileparameters = myrun.__dict__
     tijdje = 0
-    paths = []  # here we are going to make a list of paths of the jobs
+    paths = []
+
+    # ✅ Veilige standaardwaarden
+    try:
+        timestep = float(fileparameters.get('timestep', 30))
+        if timestep <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        print("⚠️ Invalid value for timestep - default value of 30s is being used.")
+        timestep = 300
+
+    try:
+        timelimit = float(fileparameters.get('timelimit', 86400))  # 24 uur
+        if timelimit <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        print("⚠️ Invalid value for timestep — default value of 86400s (=24h) is being used.")
+        timelimit = 86400
+
+    try:
+        extrawait = float(fileparameters.get('extrawaittime', 10))
+        if extrawait < 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        print("⚠️ Invalid value for extrawaittime - default value of 10s is being used.")
+        extrawait = 10
+
+    # ✅ Bouw padlijst op
     for i in range(len(indices)):
-        path1 = path + '/' + fileparameters['identify'] + indices[i] + \
-            myrun.extension + '.o[0-9][0-9][0-9][0-9][0-9][0-9]'
-        paths.append(path1)
-        if fileparameters['stab'] == 1:  # property is global variable
-            for pos in fileparameters['positions']:
-                path2 = path + '/' + indices[i] + '/' + fileparameters['identify'] + indices[i] + \
-                    '_' + str(pos) + myrun.extension + '.o[0-9][0-9][0-9][0-9][0-9][0-9]'
-                paths.append(path2)
-    while True:  # then we remove each item of the paths that exists. If every path exists, all jobs are ready
-        if tijdje > fileparameters['timelimit']:
-            print("time is up")
+        base = f"{path}/{fileparameters['identify']}{indices[i]}{myrun.extension}.o[0-9][0-9][0-9][0-9][0-9][0-9]"
+        paths.append(base)
+
+        if fileparameters.get('stab', 0) == 1:
+            for pos in fileparameters.get('positions', []):
+                sub = f"{path}/{indices[i]}/{fileparameters['identify']}{indices[i]}_{pos}{myrun.extension}.o[0-9][0-9][0-9][0-9][0-9][0-9]"
+                paths.append(sub)
+
+    # ✅ Wacht tot alle outputbestanden bestaan
+    while True:
+        if tijdje > timelimit:
+            print("⏰ Time limit has been reached.")
             break
-        pathscopy = paths[:]
+
+    pathscopy = paths[:]
         for pathje in pathscopy:
             if glob.glob(pathje):
                 paths.remove(pathje)
-                print("ready: ", pathje[:-25])
-        if paths == []:
+                print("✅ Ready:", pathje[:-25])
+
+        if not paths:
             break
-        print("time/h:", tijdje / 3600, "len paths:", len(paths), end=' ')
-        time.sleep(fileparameters['timestep'])
-        tijdje += fileparameters['timestep']
-    logging.info("All jobs are READY")
-    time.sleep(fileparameters['extrawaittime'])  # just wait for the files to write back before opening them
+
+        print(f"⏳ Time (hour): {tijdje / 3600:.2f} | Still to be checked: {len(paths)}")
+        time.sleep(timestep)
+        tijdje += timestep
+
+    logging.info("✅ All jobs are ready.")
+    time.sleep(extrawait)
     return
 
 
-def test_ready2(mols_tocal, run, jobids=None):
+def test_ready2(mols_tocal, run, jobids=None, debug=False):
     """
-    this function tests if the jobs are still queing or running based on the output of the 'qsta' command
-    function needs:
-    mols:
-    -jobs (.filename)
-    myrun:
-    -timelimit
-    -timestep
-    -extrawaittime
-    -worker
+    Controleert of jobs nog in de wachtrij staan of aan het draaien zijn op basis van de JSON-output van 'qsta'.
     """
     completedjobs = []
     files = []
 
-    # 1. get the list of entries that are in the queue
+
+    # ✅ Veilige standaardwaarden
+    try:
+        timestep = float(getattr(run, 'timestep', 300))
+        if timestep <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        print("⚠️ Invalid value for timestep - default value of 30s is being used.")
+        timestep = 300
+
+    try:
+        timelimit = float(getattr(run, 'timelimit', 86400))  # 24 uur
+        if timelimit <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        print("⚠️ Invalid value for timestep — default value of 86400s (=24h) is being used.")
+        timelimit = 86400
+
+    try:
+        extrawait = float(getattr(run, 'extrawaittime', 10))
+        if extrawait < 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        print("⚠️ Invalid value for extrawaittime - default value of 10s is being used.")
+        extrawait = 10
+
+
+    # 1. Bepaal welke jobnamen we moeten controleren
     if run.worker:
-        #files = ['my-gaussian-worker-job']
-        #files = ['CINDES_ATOOLS']
         files = jobids
     else:
         for mol in mols_tocal:
             jobnames = [job.filename for job in mol.jobs]
             files.extend(jobnames)
-    print("files:", files)
 
-    # 2. and wait until all are completed or not anymore in queue
+    print("Files to be checked:", files)
+
+    # 2. Wacht tot alle jobs klaar zijn
     tijdje = 0
+
     while True:
         count = 0
-        if tijdje > run.timelimit:
-            print("time is up")
+        if tijdje > timelimit:
+            print("Time limit had been reached.")
             break
+
         filescopy = files[:]
         njobs = len(filescopy)
-        qsta_raw = qsta()
-        if qsta_raw == False:
-            print("qsta not working!")
-            time.sleep(run.timestep)
+        qsta_data = qsta()
+
+        if not qsta_data:
+            print("qsta does not work!")
+            time.sleep(timestep)
             continue
-        qsta_out = [item.split() for item in qsta_raw.split('\n')]
+
+        # 3. Verwerk de JSON-output
         states = []
         jobs = []
-        # depending if time is printed or not the number of items is different
-        for item in qsta_out:
-            if len(item) == 4:
-                states.append(item[1])
-                jobs.append(item[3])
-            elif len(item) == 5:
-                states.append(item[2])
-                jobs.append(item[4])
+        for job in qsta_data:
+            state = job.get("State")
+            name = job.get("Name")
+            if state and name:
+                states.append(state)
+                jobs.append(name)
+
+ #       print("Statussen:", states)
+ #       print("Jobnamen:", jobs)
+
         if debug:
-            print("states:", states)
-            print("jobs:", jobs)
-            print("files:", files)
+            print("Status:", states)
+            print("Job name:", jobs)
+            print("Files to be checked:", files)
+
         for filetje in filescopy:
             for state, job in zip(states, jobs):
                 if filetje == job:
-                    if state in ['Q', 'R']:  # so if job still in queue and not has state=='C'
-                        count += 1  # so count all the jobs still in queue
-                    elif state in ['H', 'E']:
-                        print("ERROR jobs on hold or Error")
+                    if state in ['PD', 'R', 'CG']:  # Pending or Running or Completing
+                        count += 1
+                    elif state in ['F', 'TO', 'NF', 'SE']:  # Failed or Timeout or Node Fail or Special Exit
+                        print("ERROR: Job failed or timeout:", job)
                         count += 1
                     else:
-                        assert state in ['C', 'F']
                         if job not in completedjobs:
                             print('JOB completed:', job)
                             completedjobs.append(job)
                     if debug:
-                        print("found a job: ", state, job, filetje)
+                        print("Job found:", state, job)
+
         t = "{:.2f}".format(tijdje / 3600.)
-        print("njobs -running: {:d} -ready: {:d} | waittime={} hrs".format(count, njobs - count, t))
-        if count == 0:  # so no jobs anymore in queue
+#        print(f"⏳ Jobs totaal: {njobs} | Nog bezig: {count} | Klaar: {njobs - count} | Wachttijd: {t} uur")
+
+        if count == 0:
+#            print("🟡 Alle jobs lijken klaar  breek uit de lus.")
             break
-        time.sleep(run.timestep)
-        tijdje += run.timestep
-    logging.info("All jobs are READY")
-    time.sleep(run.extrawaittime)  # just wait for the files to write back before opening them
+
+        time.sleep(timestep)
+        tijdje += timestep
+
+#    print("✅ Alle jobs zijn klaar.")
+    logging.info("✅ All jobs are ready.")
+    time.sleep(extrawait)
     return
 
 
@@ -393,5 +455,5 @@ def test_ready3(indices, myrun):
     return
 
 if __name__ == "__main__":
-    qsta_out = [item.split() for item in qsta().split('\n')]
-    print(qsta_out)
+    qsta_out = qsta()
+    print(json.dumps(qsta_out, indent=2))
