@@ -21,7 +21,7 @@ export PYTHONPATH=$PYTHONPATH:/user/brussel/101/vsc10196/testing_program/CINDES/
 export PATH=$VSC_HOME/bin:$PATH
 
 # Ga naar de juiste werkdirectory (optioneel)
-#cd /user/brussel/101/vsc10196/testing_program/CINDES/Irene
+#cd /path/to/folder
 
 # Voer het programma uit
 python -m CINDES -i INPUT_FINAL > cindes_output.log
