@@ -34,10 +34,6 @@ Email correspondence: freija.de.vleeschouwer@vub.be
     *   [Requirements](#requirements)
     *   [Usage](#usage)
 *   [Examples](#examples)
-    * [Used Technologies](#used-technologies)
-    * [Testing](#testing)
-    * [Logging](#logging)
-
 
 ## Getting started
 
