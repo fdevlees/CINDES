@@ -1,6 +1,6 @@
 # Combinatorial INverse DESigner (CINDES)
 
-This package allows for combinatorial optimizations, in which molecular properties are optimized by introducing substituents / core-modifications on/into the molecular framework.
+This package allows for combinatorial optimizations, in which molecular properties are optimized by introducing substituents onto or core-modifications into the molecular framework.
 The CINDES package containing two modules:
 
 *   evaluation: HPC automation of job submission/processing
@@ -14,7 +14,7 @@ Algemene Chemie (ALGC) – General Chemistry, Vrije Universiteit Brussel (VUB)
 
 Main developer: Jos L. Teunissen
 
-Co-developers: Eline Desmedt, David Smets
+Contributors: Eline Desmedt, David Smets
 
 Email correspondence: freija.de.vleeschouwer@vub.be
 
@@ -68,9 +68,13 @@ pip install .
 
 ### Usage
 
-Before running the script:
+Before running the script, make sure the following files are in the _Project_ directory:
 
-*   Make sure that **INPUT** and **ZMAT** are in the _Project_ directory.
+*   **INPUT** (input with keywords required for running CINDES) and **ZMAT** (Z-matrix of your molecule)
+*   **ID_Gauss**, your computational software submission script
+*   ** cindes_submit**, potentially your CINDES submission script, where PYTHONPATH refers to the _Project_ directory.
+
+Also, make the file **qsta** generally available, for example in your bin/ folder, and include the path in **cindes_submit**. The **qsta** file collects relevant data from the slurm scheduler, needed to verify whether calculations are still running, have failed or have completed.
 
 Run the module.
 
@@ -80,13 +84,24 @@ Run the module.
 python -m CINDES -i INPUT > cindes_output.log
 ```
 
-*   Via submission script, here using slurm workload manager. Make sure to adjust the path in the _cindes_submit_ script.
+*   Via submission script, here using slurm workload manager. Make sure to adjust the paths in the _cindes_submit_ script.
 
 ```
 sbatch cindes_submit
 ```
 
+### Output data
+
+All input and output files of the computational chemistry software calculations are collected in the newly created directory **CALC**, whereas errors are summarized in **.err** files in the directory **logs**.
+
+A **table.json** database is created containing the data from structures of previous runs. As such, restarts first check the database before submitting computational software calculations.
+
+The file **cyclesinfo** is made available with all molecular data from the inverse design run.
+
+Output file **cindes_output.log**, finally, contains detailed information and data about the integral inverse design process (iteration and steps within) and ends with a listing of the optimum. 
+
 ## Examples
 
+Examples are given in the **Examples** directory. Gaussian software log files are checked for error terminations or imaginary frequencies and the user is warned. In these cases, failed calculations need to be restarted manually, after which a restart of the CINDES program can be set up.
 
 
