@@ -183,63 +183,46 @@ def normaltermination(mols, run):
 
 def zzztester(mols):
     """
-    this function tests if the jobs are still queing or running based on the output of the 'qsta' command
-    function needs:
-    mols:
-    -jobs
-    myrun:
-    -timestep
+    Controleert of er nog jobs in de wachtrij staan op basis van errorfiles in mols.jobs
+    en de JSON-output van 'qsta'.
     """
     files = []
     for mol in mols:
-        jobnames = [job.errorfile for job in mol.jobs if not job.errorfile is None]
+        jobnames = [job.errorfile for job in mol.jobs if job.errorfile is not None]
         files.extend(jobnames)
-    if files:
-        #print "zzz-files:", files
-        print("n zzz files:", len(files), end=' ')
-    else:  # here return so we don't need the qsta
-        return False
 
-    # get qstat
+    if files:
+        print("🔍 Number zzz files:", len(files), end=' ')
+    else:
+        return False  # Geen jobs om te controleren
+
+    # Probeer qsta op te halen
     while True:
         qsta_raw = qsta()
-        if qsta_raw == False:
-            print("qsta not working! trying again after 1 minute")
+        if not qsta_raw:
+            print("⚠️ qsta does not work! Try again in 1 minute.")
             time.sleep(60)
         else:
             break
 
-    # get list of jobs and list of their states
-    qsta_out = [item.split() for item in qsta_raw.split('\n')]
-    states = []
-    jobs = []
-    for item in qsta_out:
-        if len(item) == 4:
-            states.append(item[1])
-            jobs.append(item[3])
-        elif len(item) == 5:
-            states.append(item[2])
-            jobs.append(item[4])
-
-    # inefficient loop
-    #print "files:", files
-    #print "jobs:", jobs
-    #print "states:", states
+    # Verwerk JSON-output
     count = 0
-    for filetje in files:
-        for state, job in zip(states, jobs):
-            if job in filetje:  # so there is a zzzjob in the queue!
-                # filetje is whole path so job in filetje or filetje.split('/')[-1]==job
-                if state in ['Q', 'R', 'H', 'E']:  # so if job still in queue and not has state=='C'
-                    count += 1  # so count all the jobs still in queue
+    for job in qsta_raw:
+        name = job.get("Name")
+        state = job.get("State")
+        if not name or not state:
+            continue
+        for filetje in files:
+            if name in filetje:
+                if state in ['PD', 'R', 'CG', 'F', 'TO', 'NF', 'SE']:
+                    count += 1
                 else:
-                    assert state == 'C'
+                    assert state == 'CD' or state == 'CA'
 
-    # return answer
     if count > 0:
         return True
     else:
-        print("no zzzs (anymore) in queue", end=' ')
+        print("✅ No zzz jobs waiting.", end=' ')
         return False
 
 
