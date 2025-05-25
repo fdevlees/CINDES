@@ -39,7 +39,7 @@ Email correspondence: freija.de.vleeschouwer@vub.be
 
 ### Install
 
-Use git to clone this repository into your computer.
+Use git to clone this repository into the **Project** directory.
 
 ```
 mkdir Project
