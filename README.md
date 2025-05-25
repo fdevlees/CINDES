@@ -68,7 +68,7 @@ Before running the script, make sure the following files are in the **Project** 
 
 *   **INPUT** (input with keywords required for running CINDES) and **ZMAT** (Z-matrix of your molecule)
 *   **ID_Gauss**, your computational software submission script
-*   ** cindes_submit**, potentially your CINDES submission script, where PYTHONPATH refers to the _Project_ directory.
+*   **cindes_submit**, potentially your CINDES submission script, where PYTHONPATH refers to the _Project_ directory.
 
 Also, make the file **qsta** generally available, for example in your bin/ folder, and include the path in **cindes_submit**. The **qsta** file collects relevant data from the slurm scheduler, needed to verify whether calculations are still running, have failed or have completed.
 
