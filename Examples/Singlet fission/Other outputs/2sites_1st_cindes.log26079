@@ -1,0 +1,706 @@
+nohup: ignoring input
+Fri Mar 17 18:37:11 2023
+
+                            ===========================================
+                            ==              C I N D E S              ==
+                            ==  An Inverse Molecular Design Program  ==
+                            ==      written by Jos L. Teunissen      ==
+                            ===========================================
+
+name of input-file:INPUT_FINAL
+
+                                     **************************
+                                     **  BEFORE: read_input  **
+                                     **************************
+
+funcstr: lambda tdenergy_T,tdenergy_S: tdenergy_S[0] - 2 * tdenergy_T[0] 
+
+SYMMETRY ACTIVATED!
+underscore appended to identify
+    nch3 keyword is deprecated!
+ARRAY:
+site 0:  |  CNOO  |  CCN  |  CCFFF  |  CCl  |  CF  |  CBFF  |  CBHH  |  CH  |  CCHHH  |  CSH  |  COCHHH  |  COH  |  CNHH  |  CSiHHH  |  CNMeMe  | 
+site 1:  |  CNOO  |  CCN  |  CCFFF  |  CCl  |  CF  |  CBFF  |  CBHH  |  CH  |  CSiHHH  |  CCHHH  |  CSH  |  COCHHH  |  COH  |  CNHH  |  CNMeMe  | 
+corresp: {7: 1, 11: 4, 15: 6, 19: 5, 23: 3, 27: 1}
+----- END FORMATTING & SPLITTING -----
+pyyaml not installed
+
+                                     **************************
+                                     **   AFTER: read_input  **
+                                     **************************
+
+BaseRun object with the following attributes:
+TZmat               =
+{'active': [[['C', '1', '1.54000000', '2', '121.24868733', '4', '-0.01049854', '0'],
+             ['H', '7', '1.07000000', '1', '109.47120255', '2', '60.00458328', '0'],
+             ['H', '7', '1.07000000', '1', '109.47123134', '2', '-59.99540932', '0'],
+             ['H', '7', '1.07000000', '1', '109.47120255', '2', '-179.99540192', '0']],
+            [['C', '4', '1.54000000', '2', '124.44443622', '1', '-0.02578060', '0'],
+             ['H', '11', '1.07000000', '4', '109.47120255', '2', '-59.97659721', '0'],
+             ['H', '11', '1.07000000', '4', '109.47120255', '2', '60.02341758', '0'],
+             ['H', '11', '1.07000000', '4', '109.47123134', '2', '-179.97658982', '0']],
+            [['C', '3', '1.54000000', '2', '124.41629128', '1', '0.03318900', '0'],
+             ['H', '23', '1.07000000', '3', '109.47120255', '2', '-60.23356137', '0'],
+             ['H', '23', '1.07000000', '3', '109.47120255', '2', '59.76645342', '0'],
+             ['H', '23', '1.07000000', '3', '109.47123134', '2', '179.76644602', '0']],
+            [['C', '1', '1.54000000', '2', '121.26293358', '4', '179.96729492', '0'],
+             ['H', '27', '1.07000000', '1', '109.47120255', '2', '-59.99939400', '0'],
+             ['H', '27', '1.07000000', '1', '109.47120255', '2', '60.00062080', '0'],
+             ['H', '27', '1.07000000', '1', '109.47123134', '2', '-179.99938660', '0']]],
+ 'core': [['C'],
+          ['C', '1', '1.33650930'],
+          ['C', '2', '1.47383518', '1', '126.86135988'],
+          ['C', '2', '1.47351672', '1', '127.00354677', '3', '-179.98088737', '0'],
+          ['C', '3', '1.34664774', '2', '107.87001302', '1', '-179.98919089', '0'],
+          ['C', '4', '1.34667519', '2', '107.86166754', '1', '179.96183244', '0']],
+ 'passive': [[['C', '6', '1.54000000', '4', '126.40421635', '2', '-179.99309324', '0'],
+              ['H', '15', '1.07000000', '6', '109.47120255', '4', '-60.00776330', '0'],
+              ['H', '15', '1.07000000', '6', '109.47120255', '4', '59.99225149', '0'],
+              ['H', '15', '1.07000000', '6', '109.47123134', '4', '179.99224410', '0']],
+             [['C', '5', '1.54000000', '3', '126.42680237', '2', '-179.99829384', '0'],
+              ['H', '19', '1.07000000', '5', '109.47120255', '3', '-60.00000740', '0'],
+              ['H', '19', '1.07000000', '5', '109.47120255', '3', '60.00000740', '0'],
+              ['H', '19', '1.07000000', '5', '109.47123134', '3', '180.00000000', '0']]]}
+assign_geom         = True
+calcs               =
+[{'geom': 'ZMAT_fulvene',
+  'identify': 'id_fulvene_test_',
+  'jobs': [{'charge': '0', 'hotline': '# opt freq M062X/6-311+G(d,p)', 'info': {'hasimagfreq', 'xyz_fulvene', 'g_fulvene'}, 'mult': '1'}],
+  'nosub': 0,
+  'nprocs': 4,
+  'path': '/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_2sites_2nd/CALC',
+  'program': 'gaussian',
+  'walltimelimit': '48h'},
+ [{'geom': '_fulvene',
+   'identify': 'id_fulvene_test_1_',
+   'jobs': [{'charge': '0', 'hotline': '# M062X/6-311+G(d,p) td=(singlets,nstates=3)', 'info': {'tdenergy_S', 'etenergies_S'}, 'mult': '1'}],
+   'nosub': 0,
+   'nprocs': 4,
+   'path': '/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_2sites_2nd/CALC',
+   'program': 'gaussian',
+   'walltimelimit': '8h'},
+  {'geom': '_fulvene',
+   'identify': 'id_fulvene_test_2_',
+   'jobs': [{'charge': '0', 'hotline': '# M062X/6-311+G(d,p) td=(triplets,nstates=3)', 'info': {'etenergies_T', 'tdenergy_T'}, 'mult': '1'}],
+   'nosub': 0,
+   'nprocs': 4,
+   'path': '/theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_2sites_2nd/CALC',
+   'program': 'gaussian',
+   'walltimelimit': '8h'}]]
+corresp             = {7: 1, 11: 4, 15: 6, 19: 5, 23: 3, 27: 1}
+debug               = True
+directory           = /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_2sites_2nd
+extension           = .com
+extrawaittime       = 10.0
+func_args           = {'tdenergy_T', 'tdenergy_S'}
+function            =lambda function: tdenergy_S[0] - 2 * tdenergy_T[0]
+hasimagfreq         = True
+identify            = id_fulvene_test_
+logging             = 20
+maxiter             = 10
+ncore               = 6
+nlinks              = 2
+node                = login1.cerberus.os
+nprocs              = 8
+nrandsites          = 2
+nsites              = 2
+optimum             = maximum
+path                = /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_2sites_2nd/CALC
+pid                 = 100090
+ppid                = 99738
+procedure           = bfs
+program             = gaussian
+property            = func
+props               = {'tdenergy_T', 'tdenergy_S'}
+readtable           = True
+script              = ID_gauss
+seed                = 72
+sites               = [7, 11, 23, 27]
+starttime           = 1679074632.1776195
+symlinks            = [[1, 4], [2, 3]]
+tablename           = table.json
+test_ready          = 2
+timelimit           = 250000
+timestep            = 300
+try_ready           = 1
+workdir             = /theia/scratch/brussel/106/vsc10603/Calcs/CINDES_fulvenes_2sites_2nd
+write               = True
+zmatrixfile         = ZMAT_fulvene
+empty attributes    =
+ adjust_dihedrals     batchsize            bc                   cutoff               defaultgroups       
+ difmodel             extra_props          extrajobs            geom2                ignore              
+ jobs                 ml                   montecarlo           no1sub               norandom            
+ nosub                optga                predictions          prejobs              regression          
+ restart              restrictions         secret_file          sequence             stab                
+ stabjobs             startind             threading            worker              
+loaded json database with 43 molecules
+required properties: {'tdenergy_T', 'tdenergy_S'}
+made a table with 43 molecules that have the required properties
+---------------------------
+  Global Iteration No.: 1  
+---------------------------
+SEQUENCE: [1, 0]
+================================
+  k(site)= 1 l(nsite)= 0 (c=1)  
+================================
+random start molecule: 
+constructed random start configuration
+startconf:'CNOO_CCl'
+pybel not installed
+QML not imported!
+15 molecules are already in database
+|      NEW POPULATION CONSTRUCTED:
+|   mols_todo:
+|      -
+|   mols_nodo:
+|      Molecule: CNOO_CNOO
+|      Molecule: CNOO_CCN
+|      Molecule: CNOO_CCFFF
+|      Molecule: CNOO_CCl
+|      Molecule: CNOO_CF
+|      Molecule: CNOO_CBFF
+|      Molecule: CNOO_CBHH
+|      Molecule: CNOO_CH
+|      Molecule: CNOO_CSiHHH
+|      Molecule: CNOO_CCHHH
+|      Molecule: CNOO_CSH
+|      Molecule: CNOO_COCHHH
+|      Molecule: CNOO_COH
+|      Molecule: CNOO_CNHH
+|      Molecule: CNOO_CNMeMe
+
+                                     *************************
+                                     **  BEFORE: predictor  **
+                                     *************************
+
+    no predictions will be made    len(table)=43
+
+                                     *************************
+                                     **   AFTER: predictor  **
+                                     *************************
+
+| n_indices_tocal: 0
+|    n_data_nocal: 15
+kwargs: {'tdenergy_T': [2.069346705952303, 2.3043406539076488, 2.333239909634923], 'tdenergy_S': [3.077020754269756, 3.6907049494195228, 3.9399985291015125]}
+kwargs: {'tdenergy_T': [1.8212530953662558, 2.317240321689027, 2.6542316427994583], 'tdenergy_S': [2.821027347135422, 3.815101745698864, 3.931498748005256]}
+kwargs: {'tdenergy_T': [2.219942827493048, 2.4100379317752227, 2.4118378854191365], 'tdenergy_S': [3.2210170457828182, 3.841901055508239, 3.9509982458143154]}
+kwargs: {'tdenergy_T': [1.6612572159072978, 2.3861385472810412, 2.4063380270627346], 'tdenergy_S': [2.461536605476075, 3.875200197920635, 4.247090620238052]}
+kwargs: {'tdenergy_T': [1.6821566776616237, 2.3827386348425383, 2.8495266131640493], 'tdenergy_S': [2.510435346135719, 3.8722002751807794, 3.942398467293397]}
+kwargs: {'tdenergy_T': [2.0835463402542858, 2.40123815840498, 2.4149378055836532], 'tdenergy_S': [3.0481214985424816, 3.7753027706834477, 3.8939997137570623]}
+kwargs: {'tdenergy_T': [0.6353836363013886, 2.3614391833895643, 2.5032355315600663], 'tdenergy_S': [1.2350681919984974, 2.9476240867573233, 3.3619134171313636]}
+kwargs: {'tdenergy_T': [1.9257504041378881, 2.481536090408445, 2.4837360337510055], 'tdenergy_S': [2.7832283206132433, 3.8679003859203194, 3.9324987222518737]}
+kwargs: {'tdenergy_T': [1.9576495826050182, 2.490835850901997, 2.4997356216969013], 'tdenergy_S': [2.7778284596815035, 3.836401197151838, 4.229191081223581]}
+kwargs: {'tdenergy_T': [1.7362552844036845, 2.462036592599385, 2.480136126463179], 'tdenergy_S': [2.505835464601274, 3.841901055508239, 3.8753001953452966]}
+kwargs: {'tdenergy_T': [1.6986562527308293, 2.4258375248717954, 2.781728359243316], 'tdenergy_S': [2.4244375609265294, 3.4051123045852822, 3.8159017250961584]}
+kwargs: {'tdenergy_T': [1.434463056774224, 2.4413371256943814, 2.461036618352766], 'tdenergy_S': [2.1525445632709617, 3.9152991652100364, 3.9439984260879872]}
+kwargs: {'tdenergy_T': [1.166169966406483, 2.5139352559988835, 2.52233503967048], 'tdenergy_S': [1.8336527760243255, 3.7161042952836327, 3.849900849481187]}
+kwargs: {'tdenergy_T': [1.0684724825118566, 2.5124352946289563, 2.9108250344817628], 'tdenergy_S': [1.7155558174986816, 3.4336115706139094, 3.857000666632178]}
+kwargs: {'tdenergy_T': [1.4528625829120043, 2.456436736818321, 2.5098353615877484], 'tdenergy_S': [2.089046198610688, 2.571633770028771, 3.745903527832864]}
+
+                                      ************************
+                                      **  BEFORE: loggings  **
+                                      ************************
+
+dumped table in table.json with 43 of the 43 molecules
+first molecule: CNOO_CNOO
+AutoMD         : False
+Cores          : 4
+Mem            : 8GB
+CalcLine       : # M062X/6-311+G(d,p) td=(triplets,nstates=3)
+xyz_fulvene    : 
+[ [-0.001009, 0.937868, -5.1e-05],
+  [0.000868, -0.392318, -0.000439],
+  [1.157227, -1.313618, -0.043448],
+  [-1.154356, -1.315146, 0.043563],
+  [0.734355, -2.587223, -0.006355],
+  [-0.729986, -2.588258, 0.009311],
+  [-1.184731, 1.77244, 0.299317],
+  [-1.816882, 1.453511, 1.274529],
+  [-1.382637, 2.68839, -0.45059],
+  [-2.548895, -0.967103, -0.200811],
+  [-2.753447, 0.010652, -0.885651],
+  [-3.380593, -1.715819, 0.24992],
+  [2.551741, -0.963818, 0.198837],
+  [2.756372, 0.018268, 0.877215],
+  [3.383542, -1.715139, -0.247487],
+  [1.180253, 1.776428, -0.298047],
+  [1.814422, 1.459909, -1.272539],
+  [1.374622, 2.692473, 0.452721],
+  [-1.370599, -3.456742, -0.04227],
+  [1.376233, -3.45468, 0.046774]]
+atomnos_fulvene: [6, 6, 6, 6, 6, 6, 7, 8, 8, 7, 8, 8, 7, 8, 8, 7, 8, 8, 1, 1]
+hasimagfreq    : False
+g_fulvene      : -1049.963687
+tdenergy_S     : [3.077020754269756, 3.6907049494195228, 3.9399985291015125]
+etenergies_S   : -1050.03143006
+tdenergy_T     : [2.069346705952303, 2.3043406539076488, 2.333239909634923]
+etenergies_T   : -1050.03143006
++-----------------------------------------------------------------------------------------------------+
+| index        pred?   function        AutoMD          CalcLine        Cores           Mem            |
+}-----------------------------------------------------------------------------------------------------{
+| CNOO_CNOO    False     -1.06167266           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCN     False     -0.82147884           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCFFF   False     -1.21886861           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCl     False     -0.86097783           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CF      False     -0.85387801           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBFF    False     -1.11897118           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++ CNOO_CBHH    False     -0.03569908           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CH      False     -1.06827249           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CSiHHH  False     -1.13747071           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCHHH   False     -0.96667510           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CSH     False     -0.97287494           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_COCHHH  False     -0.71638155           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_COH     False     -0.49868716           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CNHH    False     -0.42138915           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CNMeMe  False     -0.81667897           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++-----------------------------------------------------------------------------------------------------+
+    &
++-------------------------------------------------------------------------------------+
+| index        pred?   etenergies_S    etenergies_T    g_fulvene       hasimagfreq    |
+}-------------------------------------------------------------------------------------{
+| CNOO_CNOO    False  -1050.03143006  -1050.03143006  -1049.96368700           False  |
+| CNOO_CCN     False   -825.54488784   -825.54488784   -825.48472000           False  |
+| CNOO_CCFFF   False  -1315.17077855  -1315.17077855  -1315.10069900           False  |
+| CNOO_CCl     False  -1560.26871317  -1560.26871317  -1560.22395800           False  |
+| CNOO_CF      False   -839.54552940   -839.54552940   -839.49618300           False  |
+| CNOO_CBFF    False  -1089.23816775  -1089.23816775  -1089.17865400           False  |
++ CNOO_CBHH    False   -691.96294218   -691.96294218   -691.87102100           False  |
+| CNOO_CH      False   -641.09014711   -641.09014711   -641.02190400           False  |
+| CNOO_CSiHHH  False  -1222.44223395  -1222.44223395  -1222.34700500           False  |
+| CNOO_CCHHH   False   -719.70229486   -719.70229486   -719.58085900           False  |
+| CNOO_CSH     False  -1437.45273573  -1437.45273573  -1437.38995300           False  |
+| CNOO_COCHHH  False   -870.10675389   -870.10675389   -869.97943300           False  |
+| CNOO_COH     False   -791.52893164   -791.52893164   -791.45380500           False  |
+| CNOO_CNHH    False   -751.79638789   -751.79638789   -751.69577500           False  |
+| CNOO_CNMeMe  False   -908.96269805   -908.96269805   -908.75782900           False  |
++-------------------------------------------------------------------------------------+
+TIME:17 March 2023 18:37:12
+
+                                      ************************
+                                      **   AFTER: loggings  **
+                                      ************************
+
+BCOK:1
+--- 0.1754910945892334 seconds ---
+optsite:Molecule: CNOO_CBHH
+================================
+  k(site)= 0 l(nsite)= 1 (c=1)  
+================================
+15 molecules are already in database
+|      NEW POPULATION CONSTRUCTED:
+|   mols_todo:
+|      -
+|   mols_nodo:
+|      Molecule: CNOO_CBHH
+|      Molecule: CCN_CBHH
+|      Molecule: CCFFF_CBHH
+|      Molecule: CCl_CBHH
+|      Molecule: CF_CBHH
+|      Molecule: CBFF_CBHH
+|      Molecule: CBHH_CBHH
+|      Molecule: CH_CBHH
+|      Molecule: CCHHH_CBHH
+|      Molecule: CSH_CBHH
+|      Molecule: COCHHH_CBHH
+|      Molecule: COH_CBHH
+|      Molecule: CNHH_CBHH
+|      Molecule: CSiHHH_CBHH
+|      Molecule: CNMeMe_CBHH
+
+                                     *************************
+                                     **  BEFORE: predictor  **
+                                     *************************
+
+    no predictions will be made    len(table)=43
+
+                                     *************************
+                                     **   AFTER: predictor  **
+                                     *************************
+
+| n_indices_tocal: 0
+|    n_data_nocal: 15
+kwargs: {'tdenergy_T': [0.6353836363013886, 2.3614391833895643, 2.5032355315600663], 'tdenergy_S': [1.2350681919984974, 2.9476240867573233, 3.3619134171313636]}
+kwargs: {'tdenergy_T': [1.9218505045760759, 2.2877410814137815, 4.282789700842331], 'tdenergy_S': [2.9739234094433895, 4.166092706261953, 4.586681874389691]}
+kwargs: {'tdenergy_T': [2.0694467033769657, 2.884225719521711, 4.490784344138977], 'tdenergy_S': [3.2049174604122603, 4.659879989242164, 5.0789691959999725]}
+kwargs: {'tdenergy_T': [2.1449447589966613, 2.7097302134867847, 4.564782438388746], 'tdenergy_S': [3.2666158714286215, 4.487484429125135, 4.6904792011886896]}
+kwargs: {'tdenergy_T': [2.23574242058962, 2.593833198303702, 4.672379667324895], 'tdenergy_S': [3.776102750080742, 4.2835896802396265, 4.915473406677851]}
+kwargs: {'tdenergy_T': [2.009748240853841, 2.5321347872873408, 4.068895209490636], 'tdenergy_S': [3.2222170148787606, 4.133093556123543, 4.586881869239013]}
+kwargs: {'tdenergy_T': [1.974649144797532, 2.070546675048246, 3.810801856438404], 'tdenergy_S': [3.3740131055154476, 3.5180093970285102, 3.977897553048354]}
+kwargs: {'tdenergy_T': [2.1401448826128924, 2.61863255961984, 4.397186754655487], 'tdenergy_S': [3.639206275718671, 4.4956842179474075, 4.585781897567733]}
+kwargs: {'tdenergy_T': [2.200843319382635, 2.397838245966477, 4.4119863735054405], 'tdenergy_S': [3.5898075479357177, 3.928098835566753, 4.724578322998381]}
+kwargs: {'tdenergy_T': [2.0255478339504136, 2.5766336412618633, 4.221691274373941], 'tdenergy_S': [3.0218221758564154, 4.127893690041127, 4.780076893685707]}
+kwargs: {'tdenergy_T': [2.2532419699054436, 2.4220376227346447, 4.54448296118239], 'tdenergy_S': [3.699504722789766, 3.88090005112636, 4.952872443501382]}
+kwargs: {'tdenergy_T': [2.213742987164013, 2.2633417097962902, 4.549682827264807], 'tdenergy_S': [3.4177119800926756, 3.7597031724361987, 5.115168263727563]}
+kwargs: {'tdenergy_T': [2.2936409294688302, 2.299940767222527, 4.412386363204088], 'tdenergy_S': [3.303014934005535, 3.756103265148373, 5.018570751504216]}
+kwargs: {'tdenergy_T': [1.9435499457276972, 2.8169274527242867, 3.97499762773316], 'tdenergy_S': [2.971823463525491, 4.1514930822613225, 4.641780455378369]}
+kwargs: {'tdenergy_T': [2.3581392683757234, 2.425237540323824, 3.980097496390914], 'tdenergy_S': [3.2643159306613994, 3.724704073804552, 4.632180702610832]}
+
+                                      ************************
+                                      **  BEFORE: loggings  **
+                                      ************************
+
+dumped table in table.json with 43 of the 43 molecules
+first molecule: CNOO_CBHH
+AutoMD         : False
+Cores          : 4
+Mem            : 8GB
+CalcLine       : # M062X/6-311+G(d,p) td=(triplets,nstates=3)
+xyz_fulvene    : 
+[ [-0.612813, 0.000317, -0.000114],
+  [0.736156, -0.000343, -0.000136],
+  [1.546594, 1.22582, -0.084554],
+  [1.545634, -1.226865, 0.084105],
+  [2.807098, 0.752415, -0.067068],
+  [2.806523, -0.754385, 0.066537],
+  [-1.36699, -1.210576, -0.239301],
+  [-0.773043, -2.308625, -0.152659],
+  [-2.502424, -1.151268, -0.60025],
+  [0.782182, -2.569884, 0.425407],
+  [0.566465, -2.704906, 1.602075],
+  [1.078198, -3.567292, -0.156502],
+  [0.783983, 2.569538, -0.42466],
+  [0.567724, 2.706028, -1.601091],
+  [1.080921, 3.566206, 0.158065],
+  [-1.366022, 1.211444, 0.239105],
+  [-0.77092, 2.309033, 0.153714],
+  [-2.501692, 1.152929, 0.599576],
+  [3.707703, -1.344735, 0.171574],
+  [3.708736, 1.342051, -0.172151]]
+atomnos_fulvene: [6, 6, 6, 6, 6, 6, 7, 8, 8, 5, 1, 1, 5, 1, 1, 7, 8, 8, 1, 1]
+hasimagfreq    : False
+g_fulvene      : -691.871021
+tdenergy_S     : [1.2350681919984974, 2.9476240867573233, 3.3619134171313636]
+etenergies_S   : -691.962942176
+tdenergy_T     : [0.6353836363013886, 2.3614391833895643, 2.5032355315600663]
+etenergies_T   : -691.962942176
++-----------------------------------------------------------------------------------------------------+
+| index        pred?   function        AutoMD          CalcLine        Cores           Mem            |
+}-----------------------------------------------------------------------------------------------------{
++ CNOO_CBHH    False     -0.03569908           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCN_CBHH     False     -0.86977760           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCFFF_CBHH   False     -0.93397595           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCl_CBHH     False     -1.02327365           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CF_CBHH      False     -0.69538209           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CBFF_CBHH    False     -0.79727947           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CBHH_CBHH    False     -0.57528518           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CH_CBHH      False     -0.64108349           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCHHH_CBHH   False     -0.81187909           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CSH_CBHH     False     -1.02927349           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| COCHHH_CBHH  False     -0.80697922           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| COH_CBHH     False     -1.00977399           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNHH_CBHH    False     -1.28426692           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CSiHHH_CBHH  False     -0.91527643           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNMeMe_CBHH  False     -1.45196261           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++-----------------------------------------------------------------------------------------------------+
+    &
++-------------------------------------------------------------------------------------+
+| index        pred?   etenergies_S    etenergies_T    g_fulvene       hasimagfreq    |
+}-------------------------------------------------------------------------------------{
++ CNOO_CBHH    False   -691.96294218   -691.96294218   -691.87102100           False  |
+| CCN_CBHH     False   -467.46928087   -467.46928087   -467.38752800           False  |
+| CCFFF_CBHH   False   -957.09083497   -957.09083497   -956.99979100           False  |
+| CCl_CBHH     False  -1202.19891687  -1202.19891687  -1202.13258900           False  |
+| CF_CBHH      False   -481.49800617   -481.49800617   -481.42587300           False  |
+| CBFF_CBHH    False   -731.15096485   -731.15096485   -731.07146700           False  |
+| CBHH_CBHH    False   -333.87295625   -333.87295625   -333.76361900           False  |
+| CH_CBHH      False   -283.01299418   -283.01299418   -282.92307100           False  |
+| CCHHH_CBHH   False   -361.62243310   -361.62243310   -361.47958500           False  |
+| CSH_CBHH     False  -1079.38981783  -1079.38981783  -1079.30523900           False  |
+| COCHHH_CBHH  False   -512.04627948   -512.04627948   -511.89809000           False  |
+| COH_CBHH     False   -433.49267808   -433.49267808   -433.39381900           False  |
+| CNHH_CBHH    False   -393.75346393   -393.75346393   -393.63100900           False  |
+| CSiHHH_CBHH  False   -864.35884363   -864.35884363   -864.24100900           False  |
+| CNMeMe_CBHH  False   -550.93039327   -550.93039327   -550.69995000           False  |
++-------------------------------------------------------------------------------------+
+TIME:17 March 2023 18:37:12
+
+                                      ************************
+                                      **   AFTER: loggings  **
+                                      ************************
+
+BCOK:1
+--- 0.18827295303344727 seconds ---
+optsite:Molecule: CNOO_CBHH
+---------------------------
+  Global Iteration No.: 2  
+---------------------------
+SEQUENCE: [0, 1]
+================================
+  k(site)= 0 l(nsite)= 0 (c=2)  
+================================
+15 molecules are already in database
+|      NEW POPULATION CONSTRUCTED:
+|   mols_todo:
+|      -
+|   mols_nodo:
+|      Molecule: CNOO_CBHH
+|      Molecule: CCN_CBHH
+|      Molecule: CCFFF_CBHH
+|      Molecule: CCl_CBHH
+|      Molecule: CF_CBHH
+|      Molecule: CBFF_CBHH
+|      Molecule: CBHH_CBHH
+|      Molecule: CH_CBHH
+|      Molecule: CCHHH_CBHH
+|      Molecule: CSH_CBHH
+|      Molecule: COCHHH_CBHH
+|      Molecule: COH_CBHH
+|      Molecule: CNHH_CBHH
+|      Molecule: CSiHHH_CBHH
+|      Molecule: CNMeMe_CBHH
+
+                                     *************************
+                                     **  BEFORE: predictor  **
+                                     *************************
+
+    no predictions will be made    len(table)=43
+
+                                     *************************
+                                     **   AFTER: predictor  **
+                                     *************************
+
+| n_indices_tocal: 0
+|    n_data_nocal: 15
+kwargs: {'tdenergy_T': [0.6353836363013886, 2.3614391833895643, 2.5032355315600663], 'tdenergy_S': [1.2350681919984974, 2.9476240867573233, 3.3619134171313636]}
+kwargs: {'tdenergy_T': [1.9218505045760759, 2.2877410814137815, 4.282789700842331], 'tdenergy_S': [2.9739234094433895, 4.166092706261953, 4.586681874389691]}
+kwargs: {'tdenergy_T': [2.0694467033769657, 2.884225719521711, 4.490784344138977], 'tdenergy_S': [3.2049174604122603, 4.659879989242164, 5.0789691959999725]}
+kwargs: {'tdenergy_T': [2.1449447589966613, 2.7097302134867847, 4.564782438388746], 'tdenergy_S': [3.2666158714286215, 4.487484429125135, 4.6904792011886896]}
+kwargs: {'tdenergy_T': [2.23574242058962, 2.593833198303702, 4.672379667324895], 'tdenergy_S': [3.776102750080742, 4.2835896802396265, 4.915473406677851]}
+kwargs: {'tdenergy_T': [2.009748240853841, 2.5321347872873408, 4.068895209490636], 'tdenergy_S': [3.2222170148787606, 4.133093556123543, 4.586881869239013]}
+kwargs: {'tdenergy_T': [1.974649144797532, 2.070546675048246, 3.810801856438404], 'tdenergy_S': [3.3740131055154476, 3.5180093970285102, 3.977897553048354]}
+kwargs: {'tdenergy_T': [2.1401448826128924, 2.61863255961984, 4.397186754655487], 'tdenergy_S': [3.639206275718671, 4.4956842179474075, 4.585781897567733]}
+kwargs: {'tdenergy_T': [2.200843319382635, 2.397838245966477, 4.4119863735054405], 'tdenergy_S': [3.5898075479357177, 3.928098835566753, 4.724578322998381]}
+kwargs: {'tdenergy_T': [2.0255478339504136, 2.5766336412618633, 4.221691274373941], 'tdenergy_S': [3.0218221758564154, 4.127893690041127, 4.780076893685707]}
+kwargs: {'tdenergy_T': [2.2532419699054436, 2.4220376227346447, 4.54448296118239], 'tdenergy_S': [3.699504722789766, 3.88090005112636, 4.952872443501382]}
+kwargs: {'tdenergy_T': [2.213742987164013, 2.2633417097962902, 4.549682827264807], 'tdenergy_S': [3.4177119800926756, 3.7597031724361987, 5.115168263727563]}
+kwargs: {'tdenergy_T': [2.2936409294688302, 2.299940767222527, 4.412386363204088], 'tdenergy_S': [3.303014934005535, 3.756103265148373, 5.018570751504216]}
+kwargs: {'tdenergy_T': [1.9435499457276972, 2.8169274527242867, 3.97499762773316], 'tdenergy_S': [2.971823463525491, 4.1514930822613225, 4.641780455378369]}
+kwargs: {'tdenergy_T': [2.3581392683757234, 2.425237540323824, 3.980097496390914], 'tdenergy_S': [3.2643159306613994, 3.724704073804552, 4.632180702610832]}
+
+                                      ************************
+                                      **  BEFORE: loggings  **
+                                      ************************
+
+dumped table in table.json with 43 of the 43 molecules
+first molecule: CNOO_CBHH
+AutoMD         : False
+Cores          : 4
+Mem            : 8GB
+CalcLine       : # M062X/6-311+G(d,p) td=(triplets,nstates=3)
+xyz_fulvene    : 
+[ [-0.612813, 0.000317, -0.000114],
+  [0.736156, -0.000343, -0.000136],
+  [1.546594, 1.22582, -0.084554],
+  [1.545634, -1.226865, 0.084105],
+  [2.807098, 0.752415, -0.067068],
+  [2.806523, -0.754385, 0.066537],
+  [-1.36699, -1.210576, -0.239301],
+  [-0.773043, -2.308625, -0.152659],
+  [-2.502424, -1.151268, -0.60025],
+  [0.782182, -2.569884, 0.425407],
+  [0.566465, -2.704906, 1.602075],
+  [1.078198, -3.567292, -0.156502],
+  [0.783983, 2.569538, -0.42466],
+  [0.567724, 2.706028, -1.601091],
+  [1.080921, 3.566206, 0.158065],
+  [-1.366022, 1.211444, 0.239105],
+  [-0.77092, 2.309033, 0.153714],
+  [-2.501692, 1.152929, 0.599576],
+  [3.707703, -1.344735, 0.171574],
+  [3.708736, 1.342051, -0.172151]]
+atomnos_fulvene: [6, 6, 6, 6, 6, 6, 7, 8, 8, 5, 1, 1, 5, 1, 1, 7, 8, 8, 1, 1]
+hasimagfreq    : False
+g_fulvene      : -691.871021
+tdenergy_S     : [1.2350681919984974, 2.9476240867573233, 3.3619134171313636]
+etenergies_S   : -691.962942176
+tdenergy_T     : [0.6353836363013886, 2.3614391833895643, 2.5032355315600663]
+etenergies_T   : -691.962942176
++-----------------------------------------------------------------------------------------------------+
+| index        pred?   function        AutoMD          CalcLine        Cores           Mem            |
+}-----------------------------------------------------------------------------------------------------{
++ CNOO_CBHH    False     -0.03569908           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCN_CBHH     False     -0.86977760           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCFFF_CBHH   False     -0.93397595           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCl_CBHH     False     -1.02327365           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CF_CBHH      False     -0.69538209           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CBFF_CBHH    False     -0.79727947           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CBHH_CBHH    False     -0.57528518           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CH_CBHH      False     -0.64108349           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CCHHH_CBHH   False     -0.81187909           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CSH_CBHH     False     -1.02927349           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| COCHHH_CBHH  False     -0.80697922           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| COH_CBHH     False     -1.00977399           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNHH_CBHH    False     -1.28426692           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CSiHHH_CBHH  False     -0.91527643           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNMeMe_CBHH  False     -1.45196261           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++-----------------------------------------------------------------------------------------------------+
+    &
++-------------------------------------------------------------------------------------+
+| index        pred?   etenergies_S    etenergies_T    g_fulvene       hasimagfreq    |
+}-------------------------------------------------------------------------------------{
++ CNOO_CBHH    False   -691.96294218   -691.96294218   -691.87102100           False  |
+| CCN_CBHH     False   -467.46928087   -467.46928087   -467.38752800           False  |
+| CCFFF_CBHH   False   -957.09083497   -957.09083497   -956.99979100           False  |
+| CCl_CBHH     False  -1202.19891687  -1202.19891687  -1202.13258900           False  |
+| CF_CBHH      False   -481.49800617   -481.49800617   -481.42587300           False  |
+| CBFF_CBHH    False   -731.15096485   -731.15096485   -731.07146700           False  |
+| CBHH_CBHH    False   -333.87295625   -333.87295625   -333.76361900           False  |
+| CH_CBHH      False   -283.01299418   -283.01299418   -282.92307100           False  |
+| CCHHH_CBHH   False   -361.62243310   -361.62243310   -361.47958500           False  |
+| CSH_CBHH     False  -1079.38981783  -1079.38981783  -1079.30523900           False  |
+| COCHHH_CBHH  False   -512.04627948   -512.04627948   -511.89809000           False  |
+| COH_CBHH     False   -433.49267808   -433.49267808   -433.39381900           False  |
+| CNHH_CBHH    False   -393.75346393   -393.75346393   -393.63100900           False  |
+| CSiHHH_CBHH  False   -864.35884363   -864.35884363   -864.24100900           False  |
+| CNMeMe_CBHH  False   -550.93039327   -550.93039327   -550.69995000           False  |
++-------------------------------------------------------------------------------------+
+TIME:17 March 2023 18:37:12
+
+                                      ************************
+                                      **   AFTER: loggings  **
+                                      ************************
+
+BCOK:1
+--- 0.19953060150146484 seconds ---
+optsite:Molecule: CNOO_CBHH
+================================
+  k(site)= 1 l(nsite)= 1 (c=2)  
+================================
+15 molecules are already in database
+|      NEW POPULATION CONSTRUCTED:
+|   mols_todo:
+|      -
+|   mols_nodo:
+|      Molecule: CNOO_CNOO
+|      Molecule: CNOO_CCN
+|      Molecule: CNOO_CCFFF
+|      Molecule: CNOO_CCl
+|      Molecule: CNOO_CF
+|      Molecule: CNOO_CBFF
+|      Molecule: CNOO_CBHH
+|      Molecule: CNOO_CH
+|      Molecule: CNOO_CSiHHH
+|      Molecule: CNOO_CCHHH
+|      Molecule: CNOO_CSH
+|      Molecule: CNOO_COCHHH
+|      Molecule: CNOO_COH
+|      Molecule: CNOO_CNHH
+|      Molecule: CNOO_CNMeMe
+
+                                     *************************
+                                     **  BEFORE: predictor  **
+                                     *************************
+
+    no predictions will be made    len(table)=43
+
+                                     *************************
+                                     **   AFTER: predictor  **
+                                     *************************
+
+| n_indices_tocal: 0
+|    n_data_nocal: 15
+kwargs: {'tdenergy_T': [2.069346705952303, 2.3043406539076488, 2.333239909634923], 'tdenergy_S': [3.077020754269756, 3.6907049494195228, 3.9399985291015125]}
+kwargs: {'tdenergy_T': [1.8212530953662558, 2.317240321689027, 2.6542316427994583], 'tdenergy_S': [2.821027347135422, 3.815101745698864, 3.931498748005256]}
+kwargs: {'tdenergy_T': [2.219942827493048, 2.4100379317752227, 2.4118378854191365], 'tdenergy_S': [3.2210170457828182, 3.841901055508239, 3.9509982458143154]}
+kwargs: {'tdenergy_T': [1.6612572159072978, 2.3861385472810412, 2.4063380270627346], 'tdenergy_S': [2.461536605476075, 3.875200197920635, 4.247090620238052]}
+kwargs: {'tdenergy_T': [1.6821566776616237, 2.3827386348425383, 2.8495266131640493], 'tdenergy_S': [2.510435346135719, 3.8722002751807794, 3.942398467293397]}
+kwargs: {'tdenergy_T': [2.0835463402542858, 2.40123815840498, 2.4149378055836532], 'tdenergy_S': [3.0481214985424816, 3.7753027706834477, 3.8939997137570623]}
+kwargs: {'tdenergy_T': [0.6353836363013886, 2.3614391833895643, 2.5032355315600663], 'tdenergy_S': [1.2350681919984974, 2.9476240867573233, 3.3619134171313636]}
+kwargs: {'tdenergy_T': [1.9257504041378881, 2.481536090408445, 2.4837360337510055], 'tdenergy_S': [2.7832283206132433, 3.8679003859203194, 3.9324987222518737]}
+kwargs: {'tdenergy_T': [1.9576495826050182, 2.490835850901997, 2.4997356216969013], 'tdenergy_S': [2.7778284596815035, 3.836401197151838, 4.229191081223581]}
+kwargs: {'tdenergy_T': [1.7362552844036845, 2.462036592599385, 2.480136126463179], 'tdenergy_S': [2.505835464601274, 3.841901055508239, 3.8753001953452966]}
+kwargs: {'tdenergy_T': [1.6986562527308293, 2.4258375248717954, 2.781728359243316], 'tdenergy_S': [2.4244375609265294, 3.4051123045852822, 3.8159017250961584]}
+kwargs: {'tdenergy_T': [1.434463056774224, 2.4413371256943814, 2.461036618352766], 'tdenergy_S': [2.1525445632709617, 3.9152991652100364, 3.9439984260879872]}
+kwargs: {'tdenergy_T': [1.166169966406483, 2.5139352559988835, 2.52233503967048], 'tdenergy_S': [1.8336527760243255, 3.7161042952836327, 3.849900849481187]}
+kwargs: {'tdenergy_T': [1.0684724825118566, 2.5124352946289563, 2.9108250344817628], 'tdenergy_S': [1.7155558174986816, 3.4336115706139094, 3.857000666632178]}
+kwargs: {'tdenergy_T': [1.4528625829120043, 2.456436736818321, 2.5098353615877484], 'tdenergy_S': [2.089046198610688, 2.571633770028771, 3.745903527832864]}
+
+                                      ************************
+                                      **  BEFORE: loggings  **
+                                      ************************
+
+dumped table in table.json with 43 of the 43 molecules
+first molecule: CNOO_CNOO
+AutoMD         : False
+Cores          : 4
+Mem            : 8GB
+CalcLine       : # M062X/6-311+G(d,p) td=(triplets,nstates=3)
+xyz_fulvene    : 
+[ [-0.001009, 0.937868, -5.1e-05],
+  [0.000868, -0.392318, -0.000439],
+  [1.157227, -1.313618, -0.043448],
+  [-1.154356, -1.315146, 0.043563],
+  [0.734355, -2.587223, -0.006355],
+  [-0.729986, -2.588258, 0.009311],
+  [-1.184731, 1.77244, 0.299317],
+  [-1.816882, 1.453511, 1.274529],
+  [-1.382637, 2.68839, -0.45059],
+  [-2.548895, -0.967103, -0.200811],
+  [-2.753447, 0.010652, -0.885651],
+  [-3.380593, -1.715819, 0.24992],
+  [2.551741, -0.963818, 0.198837],
+  [2.756372, 0.018268, 0.877215],
+  [3.383542, -1.715139, -0.247487],
+  [1.180253, 1.776428, -0.298047],
+  [1.814422, 1.459909, -1.272539],
+  [1.374622, 2.692473, 0.452721],
+  [-1.370599, -3.456742, -0.04227],
+  [1.376233, -3.45468, 0.046774]]
+atomnos_fulvene: [6, 6, 6, 6, 6, 6, 7, 8, 8, 7, 8, 8, 7, 8, 8, 7, 8, 8, 1, 1]
+hasimagfreq    : False
+g_fulvene      : -1049.963687
+tdenergy_S     : [3.077020754269756, 3.6907049494195228, 3.9399985291015125]
+etenergies_S   : -1050.03143006
+tdenergy_T     : [2.069346705952303, 2.3043406539076488, 2.333239909634923]
+etenergies_T   : -1050.03143006
++-----------------------------------------------------------------------------------------------------+
+| index        pred?   function        AutoMD          CalcLine        Cores           Mem            |
+}-----------------------------------------------------------------------------------------------------{
+| CNOO_CNOO    False     -1.06167266           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCN     False     -0.82147884           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCFFF   False     -1.21886861           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCl     False     -0.86097783           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CF      False     -0.85387801           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CBFF    False     -1.11897118           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++ CNOO_CBHH    False     -0.03569908           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CH      False     -1.06827249           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CSiHHH  False     -1.13747071           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CCHHH   False     -0.96667510           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CSH     False     -0.97287494           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_COCHHH  False     -0.71638155           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_COH     False     -0.49868716           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CNHH    False     -0.42138915           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
+| CNOO_CNMeMe  False     -0.81667897           False # M062X/6-311+G(d,p) td=(triplets,nstates=3)               4             8GB  |
++-----------------------------------------------------------------------------------------------------+
+    &
++-------------------------------------------------------------------------------------+
+| index        pred?   etenergies_S    etenergies_T    g_fulvene       hasimagfreq    |
+}-------------------------------------------------------------------------------------{
+| CNOO_CNOO    False  -1050.03143006  -1050.03143006  -1049.96368700           False  |
+| CNOO_CCN     False   -825.54488784   -825.54488784   -825.48472000           False  |
+| CNOO_CCFFF   False  -1315.17077855  -1315.17077855  -1315.10069900           False  |
+| CNOO_CCl     False  -1560.26871317  -1560.26871317  -1560.22395800           False  |
+| CNOO_CF      False   -839.54552940   -839.54552940   -839.49618300           False  |
+| CNOO_CBFF    False  -1089.23816775  -1089.23816775  -1089.17865400           False  |
++ CNOO_CBHH    False   -691.96294218   -691.96294218   -691.87102100           False  |
+| CNOO_CH      False   -641.09014711   -641.09014711   -641.02190400           False  |
+| CNOO_CSiHHH  False  -1222.44223395  -1222.44223395  -1222.34700500           False  |
+| CNOO_CCHHH   False   -719.70229486   -719.70229486   -719.58085900           False  |
+| CNOO_CSH     False  -1437.45273573  -1437.45273573  -1437.38995300           False  |
+| CNOO_COCHHH  False   -870.10675389   -870.10675389   -869.97943300           False  |
+| CNOO_COH     False   -791.52893164   -791.52893164   -791.45380500           False  |
+| CNOO_CNHH    False   -751.79638789   -751.79638789   -751.69577500           False  |
+| CNOO_CNMeMe  False   -908.96269805   -908.96269805   -908.75782900           False  |
++-------------------------------------------------------------------------------------+
+TIME:17 March 2023 18:37:12
+
+                                      ************************
+                                      **   AFTER: loggings  **
+                                      ************************
+
+BCOK:1
+--- 0.21067190170288086 seconds ---
+optsite:Molecule: CNOO_CBHH
+optimum is the same as in previous iteration: converged to a optimum configuration!
+ALGORITHM DONE
+EOF __main__.py
