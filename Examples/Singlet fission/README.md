@@ -12,8 +12,10 @@ Irene Casademont-Reig, Roger Monreal-Corona, Eline Desmedt, Freija De Vleeschouw
 
 The **INPUT** file is explained below:
 
-program gaussian    $`\textcolor{blue}{\text{_computational chemistry software_}}`$
-procedure bfs
+program gaussian                                                                _computational chemistry software_
+
+procedure bfs                                                                   _inverse design algorithm_
+
 property function
  tdenergy_S[0] - 2 * tdenergy_T[0] 
 optimum maximum
