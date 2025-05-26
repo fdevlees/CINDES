@@ -12,7 +12,7 @@ Irene Casademont-Reig, Roger Monreal-Corona, Eline Desmedt, Freija De Vleeschouw
 
 The **INPUT** file is explained below:
 
-**program gaussian** _#computational chemistry software_
+**program gaussian** _#computational chemistry software_  
 **procedure bfs**                                                                   #_inverse design algorithm_  
 **property function                                                               #_target objective_  
  **tdenergy_S[0] - 2 * tdenergy_T[0]**                                              #_here: first singlet-fission criterion_  
