@@ -79,7 +79,7 @@ chmod +x ID_gauss
 chmod +x cindes_submit
 ```
 
-Also, make the script **qsta** generally available and executable, for example in a bin/ folder in your **$HOME** directory:
+Also, make the script **qsta** generally available and executable, for example in a bin/ folder in your **$HOME** directory (Note: adapt $HOME accordingly):
 ```
 mkdir  $HOME/bin/
 cp qsta $HOME/bin/qsta
