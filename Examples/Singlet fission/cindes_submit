@@ -8,21 +8,21 @@
 #SBATCH --output=logs/cindes_%j.out
 #SBATCH --error=logs/cindes_%j.err
 
-# Zorg dat de logs-map bestaat
+# Make sure the logs directory exists
 mkdir -p logs
 
-# Laad de juiste module
+# Load the right module
 module load matplotlib/3.9.2-gfbf-2024a
 
-# Zet PYTHONPATH zodat Python je package vindt
-export PYTHONPATH=$PYTHONPATH:/user/brussel/101/vsc10196/testing_program/CINDES/
+# Set PYTHONPATH so that Python finds your package
+export PYTHONPATH=$PYTHONPATH:/data/brussel/101/vsc10196/testing_program/cindes/
 
-# Zet PATH zodat module qsta vindt
+# Set PATH so that module finds qsta script
 export PATH=$VSC_HOME/bin:$PATH
 
-# Ga naar de juiste werkdirectory (optioneel)
+# Go to the right work directory (optional)
 #cd /path/to/folder
 
-# Voer het programma uit
-python -m CINDES -i INPUT_FINAL > cindes_output.log
+# Execute the program
+python -m CINDES -i INPUT > cindes_output.log
 
