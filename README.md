@@ -88,7 +88,7 @@ cp qsta $HOME/bin/qsta
 chmod +x $HOME/bin/qsta
 ```
 
-In $HOMO/.bashrc, you add the following:
+In $HOME/.bashrc, you add the following:
 
 ```
 export PATH=$HOME/bin:$PATH
