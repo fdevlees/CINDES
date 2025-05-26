@@ -59,6 +59,7 @@ module load matplotlib/3.9.2-gfbf-2024a
 Additional packages are required via setup.py.
 
 ```
+cd cindes/
 pip install .
 
 ```
