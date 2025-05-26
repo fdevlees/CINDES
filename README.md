@@ -65,11 +65,11 @@ pip install .
 
 ### Usage
 
-Before running the script, make sure the following files are in the **Project** directory:
+Before running the script, make sure the following files are in the **Project/cindes/** directory:
 
 *   **INPUT** (input with keywords required for running CINDES) and **ZMAT** (Z-matrix of your molecule). For examples, see **/Examples/**
 *   **ID_gauss**, your computational software submission script
-*   **cindes_submit**, potentially your CINDES submission script, where PYTHONPATH refers to the _Project_ directory.
+*   **cindes_submit**, potentially your CINDES submission script, where PYTHONPATH refers to the _Project/cindes/_ directory.
 
 Also, make the script **qsta** generally available and executable, for example in a bin/ folder in your **$HOME** directory:
 ```
@@ -84,8 +84,10 @@ In $HOMO/.bashrc, you add the following:
 export PATH=$HOME/bin:$PATH
 ```
  
- Also, include the path in **cindes_submit**. 
- The **qsta** script collects relevant data from the slurm scheduler, needed to verify whether calculations are still running, have failed or have completed.
+Also, include the path in **cindes_submit**. 
+The **qsta** script collects relevant data from the slurm scheduler, needed to verify whether calculations are still running, have failed or have completed.
+
+Modify **ID_gauss**, the Gaussian software submission script, for your usage.
 
 Run the module.
 
