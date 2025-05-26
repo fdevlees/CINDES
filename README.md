@@ -76,7 +76,6 @@ Make the following scipts executable:
 
 ```
 chmod +x ID_gauss
-
 chmod +x cindes_submit
 ```
 
