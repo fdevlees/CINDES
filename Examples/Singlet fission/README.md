@@ -14,7 +14,7 @@ The **INPUT** file is explained below:
 
 **program gaussian** _#computational chemistry software_  
 **procedure bfs**                                                                   #_inverse design algorithm_  
-**property function                                                               #_target objective_  
+**property function**                                                               #_target objective_  
  **tdenergy_S[0] - 2 * tdenergy_T[0]**                                              #_here: first singlet-fission criterion_  
 **optimum maximum**                                                                 #_minimum or maximum_   
 **hasimagfreq**                                                                     #_checks for imaginary frequencies (opt+freq)_  
