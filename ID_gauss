@@ -1,0 +1,50 @@
+#!/bin/bash -l
+
+
+if [ -e $1 ]; then
+NPS=`grep -m1 -i %nprocshared $1`
+NP=${NPS##*=}
+if [ "$NP" = "" ]; then
+NP=1
+fi
+MEMS=`grep -m1 -i %mem $1`
+MEM=${MEMS##*=}
+if [ "$MEM" = "" ]; then
+MEM=32000000
+fi
+mem_inw=`echo $MEM |sed -e 's/mw/*1048576/i' -e 's/gw/*1073741824/i' -e 's/mb/*131072/i' -e 's/gb/*134217728/i'`
+memory_s_inw=$(( $mem_inw + 67108864 ))   
+memory_s=$(( $memory_s_inw / 131072 +1 ))
+echo Submitting $1 on $NP processors, requested memory is $memory_s Mb. 
+
+sbatch << END_END
+#!/bin/bash -l
+#SBATCH --job-name=$i
+#SBATCH --time=20:00:00
+##SBATCH --time=${2:-120}:00:00
+#SBATCH --mem=${memory_s}
+#SBATCH --cpus-per-task=$NP
+
+#module load Gaussian/G16.A.03-intel-2017b
+module load Gaussian/G16.B.01
+mkdir \$WORKDIR/\$SLURM_JOB_ID
+cd \$WORKDIR/\$SLURM_JOB_ID
+#export GAUSS_SCRDIR=\$TMPDIR/\$SLURM_JOB_ID
+export GAUSS_SCRDIR=\$VSC_SCRATCH_VO/\$SLURM_JOB_ID
+if [ ! -d \$GAUSS_SCRDIR ] ; then mkdir \$GAUSS_SCRDIR; fi
+( for i in {1..60}; do sleep 24h; touch \$GAUSS_SCRDIR/*; done )&
+time g16 <\$SLURM_SUBMIT_DIR/$i>\$SLURM_SUBMIT_DIR/${i%.*}.log
+rmdir \$GAUSS_SCRDIR
+kill \$!
+END_END
+
+unset NPS
+unset NP
+unset MEMS
+unset MEM
+else
+echo File $i does not exist!
+fi
+done
+
+
