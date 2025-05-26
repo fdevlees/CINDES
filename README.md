@@ -68,8 +68,17 @@ pip install .
 Before running the script, make sure the following files are in the **Project/cindes/** directory:
 
 *   **INPUT** (input with keywords required for running CINDES) and **ZMAT** (Z-matrix of your molecule). For examples, see **/Examples/**
+
+Make the following scipts executable:
+
 *   **ID_gauss**, your computational software submission script
 *   **cindes_submit**, potentially your CINDES submission script, where PYTHONPATH refers to the _Project/cindes/_ directory.
+
+```
+chmod +x ID_gauss
+
+chmod +x cindes_submit
+```
 
 Also, make the script **qsta** generally available and executable, for example in a bin/ folder in your **$HOME** directory:
 ```
