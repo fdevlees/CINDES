@@ -118,7 +118,7 @@ class BaseMolecule(object):
         self.ignoremol = False
         self.opt = False
         # for jsonification:
-        self.props = {}
+#        self.props = {}
         print(self.props)
         return
 
