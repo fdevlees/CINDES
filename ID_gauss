@@ -1,13 +1,14 @@
 #!/bin/bash -l
 
-
-if [ -e $1 ]; then
-NPS=`grep -m1 -i %nprocshared $1`
+for i in $@
+do
+if [ -e $i ]; then
+NPS=`grep -m1 -i %nproc $i`
 NP=${NPS##*=}
 if [ "$NP" = "" ]; then
 NP=1
 fi
-MEMS=`grep -m1 -i %mem $1`
+MEMS=`grep -m1 -i %mem $i`
 MEM=${MEMS##*=}
 if [ "$MEM" = "" ]; then
 MEM=32000000
