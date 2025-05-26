@@ -290,7 +290,7 @@ def test_ready1(indices, myrun):
             print("⏰ Time limit has been reached.")
             break
 
-    pathscopy = paths[:]
+        pathscopy = paths[:]
         for pathje in pathscopy:
             if glob.glob(pathje):
                 paths.remove(pathje)
