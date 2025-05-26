@@ -1,5 +1,4 @@
 program gaussian
-#procedure genconf
 procedure bfs
 property function
  tdenergy_S[0] - 2 * tdenergy_T[0] 
@@ -29,9 +28,9 @@ timestep 300
 zmatrixfile ZMAT_fulvene
 extrawaittime 10
 debug
-startind CNMeMe_CSiHHH_CNHH
-sequences 1
-1 0 2
+#startind CNMeMe_CSiHHH_CNHH
+#sequences 1
+#1 0 2
 try_ready
 readtable
 #SYMLINKS every nr in left column needs to be lower than every nr in right column; may need to change sites order to achieve this
