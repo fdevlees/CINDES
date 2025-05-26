@@ -1,5 +1,4 @@
 program gaussian
-#procedure genconf
 procedure bfs
 property function
  tdenergy_S[0] - 2 * tdenergy_T[0] 
