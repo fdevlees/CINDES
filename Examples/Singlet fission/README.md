@@ -12,13 +12,13 @@ Irene Casademont-Reig, Roger Monreal-Corona, Eline Desmedt, Freija De Vleeschouw
 
 The **INPUT** file is explained below:
 
-program gaussian*Tabspace**Tabspace**Tabspace**Tabspace**Tabspace**Tabspace**Tabspace*_computational chemistry software_  
-procedure bfs                                                                   _inverse design algorithm_  
-property function                                                               _target objective_  
- tdenergy_S[0] - 2 * tdenergy_T[0]                                              _here: first singlet-fission criterion_  
-optimum maximum                                                                 _minimum or maximum_   
-hasimagfreq                                                                     _checks for imaginary frequencies (opt+freq)_  
-startcalcs                                                                      _details on the Gaussian input_  
+program gaussian #_computational chemistry software_  
+procedure bfs                                                                   #_inverse design algorithm_  
+property function                                                               #_target objective_  
+ tdenergy_S[0] - 2 * tdenergy_T[0]                                              #_here: first singlet-fission criterion_  
+optimum maximum                                                                 #_minimum or maximum_   
+hasimagfreq                                                                     #_checks for imaginary frequencies (opt+freq)_  
+startcalcs                                                                      #_details on the Gaussian input_  
   1.1  
     nprocs 16  
     walltimelimit 48h  
@@ -39,26 +39,26 @@ startcalcs                                                                      
     0 1 # M062X/6-311+G(d,p) td=(triplets,nstates=3)  
 endcalcs  
 timestep 300  
-zmatrixfile ZMAT_fulvene                                                        _Z-matrix input geometry_  
+zmatrixfile ZMAT_fulvene                                                        #_Z-matrix input geometry_  
 extrawaittime 10  
 debug  
-#startind CNMeMe_CSiHHH_CNHH                                                    _start structure when restarting failed run_  
-#sequences 1                                                                    _number of global iterations when restarting failed run_  
-#1 0 2                                                                          _site sequence when restarting failed run_  
-try_ready                                                                       _looks for output files in the CALC directory_  
-readtable                                                                       _reads the JSON table file_  
+#startind CNMeMe_CSiHHH_CNHH                                                    #_start structure when restarting failed run_  
+#sequences 1                                                                    #_number of global iterations when restarting failed run_  
+#1 0 2                                                                          #_site sequence when restarting failed run_  
+try_ready                                                                       #_looks for output files in the CALC directory_  
+readtable                                                                       #_reads the JSON table file_  
 #SYMLINKS every nr in left column needs to be lower than every nr in right column; may need to change sites order to achieve this  
 nprocs 8  
-sites 7 11 15 27 23 19                                                          _sites to be modified_  
-symlinks 3                                                                      _number of paired sites_  
-1 4                                                                             _symmetry in sites_  
+sites 7 11 15 27 23 19                                                          #_sites to be modified_  
+symlinks 3                                                                      #_number of paired sites_  
+1 4                                                                             #_symmetry in sites_  
 2 5  
 3 6  
-identify ID_fulvene                                                             _identifier for files_  
-natomscore 6                                                                    _number of core atoms (nonmodifiable atoms)_  
-nch3 6                                                                          _number of substituents (initially set to methyl)_  
+identify ID_fulvene                                                             #_identifier for files_  
+natomscore 6                                                                    #_number of core atoms (nonmodifiable atoms)_  
+nch3 6                                                                          #_number of substituents (initially set to methyl)_  
 END  
-nsubsit1 15                                                                     _substituent library size of site 1_  
+nsubsit1 15                                                                     #_substituent library size of site 1_  
 C N O O  
 C C N  
 C C F F F  
