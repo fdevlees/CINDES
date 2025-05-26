@@ -9,6 +9,7 @@ The CINDES package containing two modules:
 ## Information
 
 Prof. Dr. Freija De Vleeschouwer
+
 Algemene Chemie (ALGC) – General Chemistry, Vrije Universiteit Brussel (VUB)
 
 Main developer: Jos L. Teunissen
