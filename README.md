@@ -67,7 +67,7 @@ pip install .
 
 Before running the script, make sure the following files are in the **Project** directory:
 
-*   **INPUT** (input with keywords required for running CINDES) and **ZMAT** (Z-matrix of your molecule)
+*   **INPUT** (input with keywords required for running CINDES) and **ZMAT** (Z-matrix of your molecule). For examples, see **/Examples/**
 *   **ID_gauss**, your computational software submission script
 *   **cindes_submit**, potentially your CINDES submission script, where PYTHONPATH refers to the _Project_ directory.
 
