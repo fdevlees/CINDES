@@ -107,3 +107,8 @@ The **INPUT** file is explained below:
 **C Si H H H**  
 **C N Me Me**  
 
+## Output files
+
+* cindes_output.log
+* cyclesinfo
+* table.json
