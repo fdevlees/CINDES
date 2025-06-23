@@ -112,3 +112,12 @@ The **INPUT** file is explained below:
 * cindes_output.log
 * cyclesinfo
 * table.json
+
+## Data analysis file
+
+A Jupyter notebook file (Fulvene_analysis.ipynb) is provided in the Output folder that makes an analysis of the fulvene database (via AllData.csv).
+
+To run the Jupyter notebook, several options exist:
+
+1) Via Anaconda Navigator, where you can launch Jupyter Notebook
+2) Install Jupyter via pip and put "jupyter notebook".
