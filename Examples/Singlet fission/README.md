@@ -122,3 +122,11 @@ To run the Jupyter notebook, several options exist:
 1) Via Anaconda Navigator, where you can launch Jupyter Notebook
 2) Install Jupyter via pip and put "jupyter notebook".
 
+Make sure that all necessary packages are installed.
+Alternatively, you can use Google's Colab Notebooks with Jupyter notebook and csv file installed in your My Drive folder.
+
+The notebook does the following:
+
+* Database duplicates removal
+* Database extension with and sorting of relevant quantities and substituent list
+* Plot generation: barplot with substituent counts, scatterplot E(S1) vs E(T1), including plots with range indication of high potential derivatives, substituent/site superposition, 100 best structures (Figures have been separately included)
