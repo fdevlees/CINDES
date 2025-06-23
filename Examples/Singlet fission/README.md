@@ -121,3 +121,4 @@ To run the Jupyter notebook, several options exist:
 
 1) Via Anaconda Navigator, where you can launch Jupyter Notebook
 2) Install Jupyter via pip and put "jupyter notebook".
+
