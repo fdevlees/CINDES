@@ -18,6 +18,8 @@ Contributors: Eline Desmedt, David Smets
 
 Email correspondence: freija.de.vleeschouwer@vub.be
 
+DOI: 10.5281/zenodo.15753864
+
 ## Related publications
 
 *   Jos L. Teunissen, Frank De Proft, Freija De Vleeschouwer, Tuning the HOMO-LUMO Gap of Small Diamondoids Using Inverse Molecular Design. _J. Chem. Theory Comput_. **2017**, _13_, 1351.
